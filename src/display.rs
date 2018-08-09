@@ -1,6 +1,5 @@
 use std::cmp::Ordering;
 use std::fmt::{Binary, Debug, Display, Formatter, LowerHex, Octal, Result as FmtResult, UpperHex};
-use std::mem;
 use std::str;
 use FixedNum;
 
@@ -50,7 +49,7 @@ fn fmt_radix2<F: FixedNum, R: Radix2>(num: F, _radix: R, fmt: &mut Formatter) ->
     let (int_bits, frac_bits) = (F::int_bits(), F::frac_bits());
     let (is_neg, mut int, mut frac) = num.parts();
     // 128 binary digits, one radix point, one leading zero
-    let mut buf: [u8; 130] = unsafe { mem::uninitialized() };
+    let mut buf: [u8; 130] = [0; 130];
     let max_int_digits = (int_bits + digit_bits - 1) / digit_bits;
     let frac_digits = (frac_bits + digit_bits - 1) / digit_bits;
     let mut int_start;
@@ -81,7 +80,7 @@ fn fmt_radix2<F: FixedNum, R: Radix2>(num: F, _radix: R, fmt: &mut Formatter) ->
             *r = R::digit(F::take_frac_digit(&mut frac, digit_bits));
         }
     }
-    let buf = unsafe { str::from_utf8_unchecked(&buf[int_start as usize..end as usize]) };
+    let buf = str::from_utf8(&buf[int_start as usize..end as usize]).unwrap();
     fmt.pad_integral(!is_neg, R::prefix(), buf)
 }
 
@@ -172,7 +171,7 @@ fn fmt_dec<F: FixedNum>(num: F, fmt: &mut Formatter) -> FmtResult {
     // + 1 dec point,
     // + 1 leading zero or padding for carry due to rounding up,
     // = 170
-    let mut buf: [u8; 170] = unsafe { mem::uninitialized() };
+    let mut buf: [u8; 170] = [0; 170];
     let max_int_digits = dec_int_digits(int_bits);
     let req_frac_digits = dec_frac_digits(frac_bits);
     // precision is limited to frac bits, which would always print
@@ -242,7 +241,7 @@ fn fmt_dec<F: FixedNum>(num: F, fmt: &mut Formatter) -> FmtResult {
             }
         }
     }
-    let buf = unsafe { str::from_utf8_unchecked(&buf[int_start as usize..end as usize]) };
+    let buf = str::from_utf8(&buf[int_start as usize..end as usize]).unwrap();
     fmt.pad_integral(!is_neg, "", buf)
 }
 

@@ -173,14 +173,14 @@ macro_rules! to_f {
                 let bits_sign = if neg { !(!0 >> 1) } else { 0 };
                 let bits_exp = biased_exponent << ($prec - 1);
                 let bits_mantissa = (if int_bits + frac_bits >= $prec - 1 {
-                    (mantissa >> (int_bits + frac_bits - $prec + 1)) as $u
+                    (mantissa >> (int_bits + frac_bits - ($prec - 1))) as $u
                 } else {
-                    (mantissa as $u) << ($prec - 1 - int_bits - frac_bits)
+                    (mantissa as $u) << ($prec - 1 - (int_bits + frac_bits))
                 }) & !(!0 << ($prec - 1));
                 let mut bits_exp_mantissa = bits_exp | bits_mantissa;
                 if round_up {
-                    // cannot be infinite already
-                    debug_assert!(bits_exp_mantissa != !0 >> 1);
+                    // cannot be infinite already, so we won't get NaN
+                    debug_assert!(bits_exp_mantissa != $f::INFINITY.to_bits());
                     bits_exp_mantissa += 1;
                 }
                 $f::from_bits(bits_sign | bits_exp_mantissa)

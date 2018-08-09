@@ -377,12 +377,12 @@ impl FallbackHelper for u128 {
             return self;
         }
         if shift == 0 {
-            assert!(self == 0, "overflow");
+            debug_assert!(self == 0, "overflow");
             return lo;
         }
         let lo = lo >> shift;
         let hi = self << (128 - shift);
-        assert!(self >> shift == 0, "overflow");
+        debug_assert!(self >> shift == 0, "overflow");
         lo | hi
     }
 
@@ -420,13 +420,13 @@ impl FallbackHelper for i128 {
         }
         if shift == 0 {
             let ans = lo as i128;
-            assert!(ans >> 64 >> 64 == self, "overflow");
+            debug_assert!(ans >> 64 >> 64 == self, "overflow");
             return ans;
         }
         let lo = (lo >> shift) as i128;
         let hi = self << (128 - shift);
         let ans = lo | hi;
-        assert!(ans >> 64 >> 64 == self >> shift, "overflow");
+        debug_assert!(ans >> 64 >> 64 == self >> shift, "overflow");
         ans
     }
 

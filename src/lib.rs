@@ -15,6 +15,8 @@ use std::ops::{
     Mul, MulAssign, Neg, Not, Sub, SubAssign,
 };
 
+mod display;
+
 const F: u32 = 7;
 
 macro_rules! refs {
@@ -113,6 +115,7 @@ macro_rules! doc_comment {
 macro_rules! fixed_unsigned {
     ($(#[$attr:meta])* $Fixed:ident($Inner:ty)) => {
         #[derive(Clone, Copy)]
+        #[repr(transparent)]
         $(#[$attr])*
         pub struct $Fixed($Inner);
 
@@ -317,7 +320,7 @@ mul_div_fallback! { i128 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use *;
 
     #[test]
     fn fixed_u16() {

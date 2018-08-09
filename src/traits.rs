@@ -6,18 +6,16 @@ use {
     FixedU8,
 };
 
-const F: u32 = 7;
-
 pub(crate) trait FixedNum: Copy {
     type Part;
     fn parts(self) -> (bool, Self::Part, Self::Part);
     #[inline(always)]
     fn int_bits() -> u32 {
-        mem::size_of::<Self::Part>() as u32 * 8 - F
+        mem::size_of::<Self::Part>() as u32 * 8 - Self::frac_bits()
     }
     #[inline(always)]
     fn frac_bits() -> u32 {
-        F
+        ::F
     }
     fn take_int_digit(int_part: &mut Self::Part, digit_bits: u32) -> u8;
     fn take_frac_digit(frac_part: &mut Self::Part, digit_bits: u32) -> u8;

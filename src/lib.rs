@@ -190,11 +190,22 @@ macro_rules! to_f {
 }
 
 macro_rules! fixed_unsigned {
-    ($(#[$attr:meta])* $Fixed:ident($Inner:ty)) => {
-        #[derive(Clone, Copy)]
-        #[repr(transparent)]
-        $(#[$attr])*
-        pub struct $Fixed($Inner);
+    ($description:expr, $Fixed:ident($Inner:ty)) => {
+        doc_comment! {
+            concat!(
+                $description,
+                "\nwith `F` fractional bits.\n",
+                "\n",
+                "Currently `F` is hard-coded to the arbitrary value 7;\n",
+                "this will be changed to a [const generic] when they are\n",
+                "implemented in the compiler.\n",
+                "\n",
+                "[const generic]: https://github.com/rust-lang/rust/issues/44580\n",
+            ),
+            #[derive(Clone, Copy)]
+            #[repr(transparent)]
+            pub struct $Fixed($Inner);
+        }
 
         impl $Fixed {
             doc_comment! {
@@ -283,53 +294,23 @@ macro_rules! fixed_unsigned {
 }
 
 macro_rules! fixed_signed {
-    ($(#[$attr:meta])* $Fixed:ident($Inner:ty)) => {
-        fixed_unsigned! { $(#[$attr])* $Fixed($Inner) }
+    ($description:expr, $Fixed:ident($Inner:ty)) => {
+        fixed_unsigned! { $description, $Fixed($Inner) }
 
         pass_one! { impl Neg for $Fixed($Inner) { neg } }
     };
 }
 
-fixed_unsigned! {
-    /// An eight-bit fixed-point unsigned integer with `F` fractional bits.
-    FixedU8(u8)
-}
-fixed_unsigned! {
-    /// A 16-bit fixed-point unsigned integer with `F` fractional bits.
-    FixedU16(u16)
-}
-fixed_unsigned! {
-    /// A 32-bit fixed-point unsigned integer with `F` fractional bits.
-    FixedU32(u32)
-}
-fixed_unsigned! {
-    /// A 64-bit fixed-point unsigned integer with `F` fractional bits.
-    FixedU64(u64)
-}
-fixed_unsigned! {
-    /// A 128-bit fixed-point unsigned integer with `F` fractional bits.
-    FixedU128(u128)
-}
-fixed_signed! {
-    /// An eight-bit fixed-point signed integer with `F` fractional bits.
-    FixedI8(i8)
-}
-fixed_signed! {
-    /// A 16-bit fixed-point signed integer with `F` fractional bits.
-    FixedI16(i16)
-}
-fixed_signed! {
-    /// A 32-bit fixed-point signed integer with `F` fractional bits.
-    FixedI32(i32)
-}
-fixed_signed! {
-    /// A 64-bit fixed-point signed integer with `F` fractional bits.
-    FixedI64(i64)
-}
-fixed_signed! {
-    /// A 128-bit fixed-point signed integer with `F` fractional bits.
-    FixedI128(i128)
-}
+fixed_unsigned! { "An eight-bit fixed-point unsigned integer", FixedU8(u8) }
+fixed_unsigned! { "A 16-bit fixed-point unsigned integer", FixedU16(u16) }
+fixed_unsigned! { "A 32-bit fixed-point unsigned integer", FixedU32(u32) }
+fixed_unsigned! { "A 64-bit fixed-point unsigned integer", FixedU64(u64) }
+fixed_unsigned! { "A 128-bit fixed-point unsigned integer", FixedU128(u128) }
+fixed_signed! { "An eight-bit fixed-point signed integer", FixedI8(i8) }
+fixed_signed! { "A 16-bit fixed-point signed integer", FixedI16(i16) }
+fixed_signed! { "A 32-bit fixed-point signed integer", FixedI32(i32) }
+fixed_signed! { "A 64-bit fixed-point signed integer", FixedI64(i64) }
+fixed_signed! { "A 128-bit fixed-point signed integer", FixedI128(i128) }
 
 trait MulDiv {
     fn mul(self, rhs: Self) -> Self;

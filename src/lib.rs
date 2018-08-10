@@ -488,6 +488,19 @@ macro_rules! fixed {
                 "Returns the largest value that can be represented.",
                 $Fixed($Inner) => fn max_value()
             }
+
+            /// Returns the number of integer bits.
+            #[inline]
+            pub fn int_bits() -> u32 {
+                <$Fixed<Frac> as FixedHelper<Frac>>::bits() - <$Fixed<Frac>>::frac_bits()
+            }
+
+            /// Returns the number of fractional bits.
+            #[inline]
+            pub fn frac_bits() -> u32 {
+                Frac::to_u32()
+            }
+            
             pass_method! {
                 "Returns the number of ones in the binary representation.",
                 $Fixed($Inner) => fn count_ones(self) -> u32

@@ -66,7 +66,8 @@ where
     R: Radix2,
 {
     let digit_bits: u32 = R::BITS.into();
-    let (int_bits, frac_bits) = (F::int_bits(), F::frac_bits());
+    let frac_bits = Frac::to_u32();
+    let int_bits = F::bits() - frac_bits;
     let (is_neg, mut int, mut frac) = num.parts();
     // 128 binary digits, one radix point, one leading zero
     let mut buf: [u8; 130] = [0; 130];
@@ -187,7 +188,8 @@ fn fmt_dec<Frac: Unsigned, F>(num: F, fmt: &mut Formatter) -> FmtResult
 where
     F: FixedHelper<Frac>,
 {
-    let (int_bits, frac_bits) = (F::int_bits(), F::frac_bits());
+    let frac_bits = Frac::to_u32();
+    let int_bits = F::bits() - frac_bits;
     let (is_neg, mut int, mut frac) = num.parts();
     // 40 int digits
     // + 128 frac digits

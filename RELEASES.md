@@ -5,6 +5,11 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.1.1 (unreleased)
+==========================
+
+  * New static methods `int_bits` and `frac_bits` were added.
+
 Version 0.1.0 (2018-08-10)
 ==========================
 

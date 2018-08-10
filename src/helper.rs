@@ -31,14 +31,6 @@ pub(crate) trait FixedHelper<Frac: Unsigned>: Sized {
     fn bits() -> u32 {
         mem::size_of::<Self::Part>() as u32 * 8
     }
-    #[inline(always)]
-    fn int_bits() -> u32 {
-        Self::bits() - Self::frac_bits()
-    }
-    #[inline(always)]
-    fn frac_bits() -> u32 {
-        Frac::to_u32()
-    }
     fn take_int_digit(int_part: &mut Self::Part, digit_bits: u32) -> u8;
     fn take_frac_digit(frac_part: &mut Self::Part, digit_bits: u32) -> u8;
     fn take_int_dec_digit(int_part: &mut Self::Part) -> u8;
@@ -107,8 +99,8 @@ macro_rules! fixed_num_unsigned {
 
             #[inline]
             fn one() -> Option<Self> {
-                let int_bits = <$Fixed<Frac> as FixedHelper<Frac>>::int_bits();
-                let frac_bits = <$Fixed<Frac> as FixedHelper<Frac>>::frac_bits();
+                let int_bits = <$Fixed<Frac>>::int_bits();
+                let frac_bits = <$Fixed<Frac>>::frac_bits();
                 if int_bits < 1 {
                     None
                 } else {
@@ -124,8 +116,8 @@ macro_rules! fixed_num_unsigned {
             #[inline]
             fn parts(self) -> (bool, $Part, $Part) {
                 let bits = self.to_bits();
-                let int_bits = <$Fixed<Frac> as FixedHelper<Frac>>::int_bits();
-                let frac_bits = <$Fixed<Frac> as FixedHelper<Frac>>::frac_bits();
+                let int_bits = <$Fixed<Frac>>::int_bits();
+                let frac_bits = <$Fixed<Frac>>::frac_bits();
                 let int_part = if int_bits == 0 { 0 } else { bits >> frac_bits };
                 let frac_part = if frac_bits == 0 { 0 } else { bits << int_bits };
                 (false, int_part, frac_part)
@@ -141,8 +133,8 @@ macro_rules! fixed_num_signed {
 
             #[inline]
             fn one() -> Option<Self> {
-                let int_bits = <$Fixed<Frac> as FixedHelper<Frac>>::int_bits();
-                let frac_bits = <$Fixed<Frac> as FixedHelper<Frac>>::frac_bits();
+                let int_bits = <$Fixed<Frac>>::int_bits();
+                let frac_bits = <$Fixed<Frac>>::frac_bits();
                 if int_bits < 2 {
                     None
                 } else {
@@ -152,8 +144,8 @@ macro_rules! fixed_num_signed {
 
             #[inline]
             fn minus_one() -> Option<Self> {
-                let int_bits = <$Fixed<Frac> as FixedHelper<Frac>>::int_bits();
-                let frac_bits = <$Fixed<Frac> as FixedHelper<Frac>>::frac_bits();
+                let int_bits = <$Fixed<Frac>>::int_bits();
+                let frac_bits = <$Fixed<Frac>>::frac_bits();
                 if int_bits < 1 {
                     None
                 } else {
@@ -164,8 +156,8 @@ macro_rules! fixed_num_signed {
             #[inline]
             fn parts(self) -> (bool, $Part, $Part) {
                 let bits = self.to_bits().wrapping_abs() as $Part;
-                let int_bits = <$Fixed<Frac> as FixedHelper<Frac>>::int_bits();
-                let frac_bits = <$Fixed<Frac> as FixedHelper<Frac>>::frac_bits();
+                let int_bits = <$Fixed<Frac>>::int_bits();
+                let frac_bits = <$Fixed<Frac>>::frac_bits();
                 let int_part = if int_bits == 0 { 0 } else { bits >> frac_bits };
                 let frac_part = if frac_bits == 0 { 0 } else { bits << int_bits };
                 (self.to_bits() < 0, int_part,frac_part)

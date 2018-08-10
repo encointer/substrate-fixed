@@ -35,6 +35,13 @@ fixed-point numbers.
 
 ## What’s new
 
+### Version 0.1.1 (unreleased)
+
+  * New static methods [`int_bits`] and [`frac_bits`] were added.
+  
+[`frac_bits`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedI32.html#method.frac_bits
+[`int_bits`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedI32.html#method.int_bits
+
 ### Version 0.1.0 news (2018-08-10)
 
   * [`Unsigned`] constants provided by the [*typenum* crate] are now

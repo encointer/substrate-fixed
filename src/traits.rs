@@ -164,7 +164,7 @@ macro_rules! fixed_num_signed {
                 let frac_bits = <$Fixed<Frac> as FixedNum<Frac>>::frac_bits();
                 let int_part = if int_bits == 0 { 0 } else { bits >> frac_bits };
                 let frac_part = if frac_bits == 0 { 0 } else { bits << int_bits };
-                (self.0 < 0, int_part,frac_part)
+                (self.to_bits() < 0, int_part,frac_part)
             }
         }
     };

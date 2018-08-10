@@ -17,7 +17,7 @@ use std::cmp::Ordering;
 use std::fmt::{Binary, Debug, Display, Formatter, LowerHex, Octal, Result as FmtResult, UpperHex};
 use std::str;
 use typenum::Unsigned;
-use FixedNum;
+use FixedHelper;
 
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
@@ -62,7 +62,7 @@ radix2! { UpHex(4, "0x"), 0..=9 => b'0', 10..=15 => b'A' - 10 }
 
 fn fmt_radix2<Frac: Unsigned, F, R>(num: F, _radix: R, fmt: &mut Formatter) -> FmtResult
 where
-    F: FixedNum<Frac>,
+    F: FixedHelper<Frac>,
     R: Radix2,
 {
     let digit_bits: u32 = R::BITS.into();
@@ -185,7 +185,7 @@ fn dec_frac_digits(frac_bits: u32) -> u32 {
 
 fn fmt_dec<Frac: Unsigned, F>(num: F, fmt: &mut Formatter) -> FmtResult
 where
-    F: FixedNum<Frac>,
+    F: FixedHelper<Frac>,
 {
     let (int_bits, frac_bits) = (F::int_bits(), F::frac_bits());
     let (is_neg, mut int, mut frac) = num.parts();

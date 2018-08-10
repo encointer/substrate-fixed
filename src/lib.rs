@@ -70,7 +70,7 @@ additional terms or conditions.
 extern crate typenum;
 
 mod display;
-mod traits;
+mod helper;
 
 use std::cmp::Ordering;
 use std::f32;
@@ -83,7 +83,7 @@ use std::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign,
     Mul, MulAssign, Neg, Not, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
-use traits::FixedNum;
+use helper::FixedHelper;
 use typenum::Unsigned;
 
 macro_rules! if_signed {
@@ -726,10 +726,10 @@ macro_rules! fixed {
                     match self.to_bits().cmp(&0) {
                         Ordering::Equal => $Fixed::from_bits(0),
                         Ordering::Greater => {
-                            <$Fixed<Frac> as FixedNum<Frac>>::one().expect("overflow")
+                            <$Fixed<Frac> as FixedHelper<Frac>>::one().expect("overflow")
                         }
                         Ordering::Less => {
-                            <$Fixed<Frac> as FixedNum<Frac>>::minus_one().expect("overflow")
+                            <$Fixed<Frac> as FixedHelper<Frac>>::minus_one().expect("overflow")
                         }
                     }
                 }
@@ -745,6 +745,8 @@ macro_rules! fixed {
                 ),
                 #[inline]
                 pub fn from_bits(v: $Inner) -> $Fixed<Frac> {
+                    let bits = <$Fixed<Frac> as FixedHelper<Frac>>::bits();
+                    assert!(Frac::to_u32() <= bits, "`Frac` too large");
                     $Fixed((v, PhantomData))
                 }
             }
@@ -856,7 +858,7 @@ macro_rules! fixed {
         impl<Frac: Unsigned> Product<$Fixed<Frac>> for $Fixed<Frac> {
             fn product<I: Iterator<Item = $Fixed<Frac>>>(mut iter: I) -> $Fixed<Frac> {
                 match iter.next() {
-                    None => <$Fixed<Frac> as FixedNum<Frac>>::one().expect("overflow"),
+                    None => <$Fixed<Frac> as FixedHelper<Frac>>::one().expect("overflow"),
                     Some(first) => iter.fold(first, Mul::mul),
                 }
             }
@@ -865,7 +867,7 @@ macro_rules! fixed {
         impl<'a, Frac: Unsigned + 'a> Product<&'a $Fixed<Frac>> for $Fixed<Frac> {
             fn product<I: Iterator<Item = &'a $Fixed<Frac>>>(mut iter: I) -> $Fixed<Frac> {
                 match iter.next() {
-                    None => <$Fixed<Frac> as FixedNum<Frac>>::one().expect("overflow"),
+                    None => <$Fixed<Frac> as FixedHelper<Frac>>::one().expect("overflow"),
                     Some(first) => iter.fold(*first, Mul::mul),
                 }
             }

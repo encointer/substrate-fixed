@@ -18,3 +18,4 @@ categories = ["algorithms", "data-structures", "science"]
 license = "MIT/Apache-2.0"
 
 [dependencies]
+typenum = "1"

@@ -16,11 +16,10 @@
 /*!
 # Fixed-point numbers
 
-Fixed provides fixed-point numbers. **It is not yet useful**, as it is
-designed to depend on the as-yet unimplemented [const generics]
-compiler feature. (In the current code, the number of fractional bits
-is hard-coded to the arbitrary value 7, so if you need a fixed-point
-number with seven fractional bits, you’re in luck!)
+Fixed provides fixed-point numbers. Currently it uses the
+[typenum][typenum crate] for the fractional bit count; it is planned
+to move to [const generics] when they are implemented by the Rust
+compiler.
 
 ## Using Fixed
 
@@ -38,11 +37,6 @@ You also need to declare it by adding this to your crate root (usually
 ```rust
 extern crate fixed;
 ```
-
-Fixed requires [const generics], which are not yet implemented in the
-compiler. When they are implemented, Fixed will require the
-[nightly][channels] compiler until the feature makes it way to the
-[stable][channels] release.
 
 ## License
 
@@ -67,10 +61,13 @@ additional terms or conditions.
 [channels]: https://doc.rust-lang.org/book/second-edition/appendix-07-nightly-rust.html
 [const generics]: https://github.com/rust-lang/rust/issues/44580
 [fixed crate]: https://crates.io/crates/fixed
+[typenum crate]: https://crates.io/crates/typenum
 */
 #![warn(missing_docs)]
 #![doc(html_root_url = "https://docs.rs/rug/0.0.1")]
 #![doc(test(attr(deny(warnings))))]
+
+extern crate typenum;
 
 mod display;
 mod traits;
@@ -79,14 +76,14 @@ use std::cmp::Ordering;
 use std::f32;
 use std::f64;
 use std::iter::{Product, Sum};
+use std::marker::PhantomData;
 use std::mem;
 use std::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign,
     Mul, MulAssign, Neg, Not, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 use traits::FixedNum;
-
-const FRAC: u32 = 7;
+use typenum::Unsigned;
 
 macro_rules! if_signed {
     (Signed => $($rem:tt)+) => {
@@ -105,27 +102,27 @@ macro_rules! if_unsigned {
 
 macro_rules! refs {
     (impl $Imp:ident for $Fixed:ident($Inner:ty) { $method:ident }) => {
-        impl<'a> $Imp<$Fixed> for &'a $Fixed {
-            type Output = $Fixed;
+        impl<'a, Frac: Unsigned> $Imp<$Fixed<Frac>> for &'a $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
             #[inline]
-            fn $method(self, rhs: $Fixed) -> $Fixed {
-                <$Fixed as $Imp<$Fixed>>::$method(*self, rhs)
+            fn $method(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                <$Fixed<Frac> as $Imp<$Fixed<Frac>>>::$method(*self, rhs)
             }
         }
 
-        impl<'a> $Imp<&'a $Fixed> for $Fixed {
-            type Output = $Fixed;
+        impl<'a, Frac: Unsigned> $Imp<&'a $Fixed<Frac>> for $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
             #[inline]
-            fn $method(self, rhs: &$Fixed) -> $Fixed {
-                <$Fixed as $Imp<$Fixed>>::$method(self, *rhs)
+            fn $method(self, rhs: &$Fixed<Frac>) -> $Fixed<Frac> {
+                <$Fixed<Frac> as $Imp<$Fixed<Frac>>>::$method(self, *rhs)
             }
         }
 
-        impl<'a, 'b> $Imp<&'a $Fixed> for &'b $Fixed {
-            type Output = $Fixed;
+        impl<'a, 'b, Frac: Unsigned> $Imp<&'a $Fixed<Frac>> for &'b $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
             #[inline]
-            fn $method(self, rhs: &$Fixed) -> $Fixed {
-                <$Fixed as $Imp<$Fixed>>::$method(*self, *rhs)
+            fn $method(self, rhs: &$Fixed<Frac>) -> $Fixed<Frac> {
+                <$Fixed<Frac> as $Imp<$Fixed<Frac>>>::$method(*self, *rhs)
             }
         }
     };
@@ -133,10 +130,10 @@ macro_rules! refs {
 
 macro_rules! refs_assign {
     (impl $Imp:ident for $Fixed:ident($Inner:ty) { $method:ident }) => {
-        impl<'a> $Imp<&'a $Fixed> for $Fixed {
+        impl<'a, Frac: Unsigned> $Imp<&'a $Fixed<Frac>> for $Fixed<Frac> {
             #[inline]
-            fn $method(&mut self, rhs: &$Fixed) {
-                <$Fixed as $Imp<$Fixed>>::$method(self, *rhs);
+            fn $method(&mut self, rhs: &$Fixed<Frac>) {
+                <$Fixed<Frac> as $Imp<$Fixed<Frac>>>::$method(self, *rhs);
             }
         }
     };
@@ -144,11 +141,11 @@ macro_rules! refs_assign {
 
 macro_rules! pass {
     (impl $Imp:ident for $Fixed:ident($Inner:ty) { $method:ident }) => {
-        impl $Imp<$Fixed> for $Fixed {
-            type Output = $Fixed;
+        impl<Frac: Unsigned> $Imp<$Fixed<Frac>> for $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
             #[inline]
-            fn $method(self, rhs: $Fixed) -> $Fixed {
-                $Fixed(<$Inner as $Imp<$Inner>>::$method(self.0, rhs.0))
+            fn $method(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                $Fixed::from_bits(<$Inner as $Imp<$Inner>>::$method(self.0, rhs.0))
             }
         }
 
@@ -158,9 +155,9 @@ macro_rules! pass {
 
 macro_rules! pass_assign {
     (impl $Imp:ident for $Fixed:ident($Inner:ty) { $method:ident }) => {
-        impl $Imp<$Fixed> for $Fixed {
+        impl<Frac: Unsigned> $Imp<$Fixed<Frac>> for $Fixed<Frac> {
             #[inline]
-            fn $method(&mut self, rhs: $Fixed) {
+            fn $method(&mut self, rhs: $Fixed<Frac>) {
                 <$Inner as $Imp<$Inner>>::$method(&mut self.0, rhs.0);
             }
         }
@@ -171,19 +168,19 @@ macro_rules! pass_assign {
 
 macro_rules! pass_one {
     (impl $Imp:ident for $Fixed:ident($Inner:ty) { $method:ident }) => {
-        impl $Imp for $Fixed {
-            type Output = $Fixed;
+        impl<Frac: Unsigned> $Imp for $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
             #[inline]
-            fn $method(self) -> $Fixed {
-                $Fixed(<$Inner as $Imp>::$method(self.0))
+            fn $method(self) -> $Fixed<Frac> {
+                $Fixed::from_bits(<$Inner as $Imp>::$method(self.0))
             }
         }
 
-        impl<'a> $Imp for &'a $Fixed {
-            type Output = $Fixed;
+        impl<'a, Frac: Unsigned> $Imp for &'a $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
             #[inline]
-            fn $method(self) -> $Fixed {
-                <$Fixed as $Imp>::$method(*self)
+            fn $method(self) -> $Fixed<Frac> {
+                <$Fixed<Frac> as $Imp>::$method(*self)
             }
         }
     };
@@ -193,15 +190,15 @@ macro_rules! pass_method {
     ($comment:expr, $Fixed:ident($Inner:ty) => fn $method:ident()) => {
         #[doc = $comment]
         #[inline]
-        pub fn $method() -> $Fixed {
-            $Fixed(<$Inner>::$method())
+        pub fn $method() -> $Fixed<Frac> {
+            $Fixed::from_bits(<$Inner>::$method())
         }
     };
     ($comment:expr, $Fixed:ident($Inner:ty) => fn $method:ident(self)) => {
         #[doc = $comment]
         #[inline]
-        pub fn $method(self) -> $Fixed {
-            $Fixed(<$Inner>::$method(self.0))
+        pub fn $method(self) -> $Fixed<Frac> {
+            $Fixed::from_bits(<$Inner>::$method(self.0))
         }
     };
     ($comment:expr, $Fixed:ident($Inner:ty) => fn $method:ident(self) -> $ret_ty:ty) => {
@@ -217,43 +214,43 @@ macro_rules! pass_method {
     ) => {
         #[doc = $comment]
         #[inline]
-        pub fn $method(self, $param: $param_ty) -> $Fixed {
-            $Fixed(<$Inner>::$method(self.0, $param))
+        pub fn $method(self, $param: $param_ty) -> $Fixed<Frac> {
+            $Fixed::from_bits(<$Inner>::$method(self.0, $param))
         }
     };
 }
 
 macro_rules! shift {
     (impl $Imp:ident < $Rhs:ty > for $Fixed:ident($Inner:ty) { $method:ident }) => {
-        impl $Imp<$Rhs> for $Fixed {
-            type Output = $Fixed;
+        impl<Frac: Unsigned> $Imp<$Rhs> for $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
             #[inline]
-            fn $method(self, rhs: $Rhs) -> $Fixed {
-                $Fixed(<$Inner as $Imp<$Rhs>>::$method(self.0, rhs))
+            fn $method(self, rhs: $Rhs) -> $Fixed<Frac> {
+                $Fixed::from_bits(<$Inner as $Imp<$Rhs>>::$method(self.0, rhs))
             }
         }
 
-        impl<'a> $Imp<$Rhs> for &'a $Fixed {
-            type Output = $Fixed;
+        impl<'a, Frac: Unsigned> $Imp<$Rhs> for &'a $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
             #[inline]
-            fn $method(self, rhs: $Rhs) -> $Fixed {
-                <$Fixed as $Imp<$Rhs>>::$method(*self, rhs)
+            fn $method(self, rhs: $Rhs) -> $Fixed<Frac> {
+                <$Fixed<Frac> as $Imp<$Rhs>>::$method(*self, rhs)
             }
         }
 
-        impl<'a> $Imp<&'a $Rhs> for $Fixed {
-            type Output = $Fixed;
+        impl<'a, Frac: Unsigned> $Imp<&'a $Rhs> for $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
             #[inline]
-            fn $method(self, rhs: &$Rhs) -> $Fixed {
-                <$Fixed as $Imp<$Rhs>>::$method(self, *rhs)
+            fn $method(self, rhs: &$Rhs) -> $Fixed<Frac> {
+                <$Fixed<Frac> as $Imp<$Rhs>>::$method(self, *rhs)
             }
         }
 
-        impl<'a, 'b> $Imp<&'a $Rhs> for &'b $Fixed {
-            type Output = $Fixed;
+        impl<'a, 'b, Frac: Unsigned> $Imp<&'a $Rhs> for &'b $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
             #[inline]
-            fn $method(self, rhs: &$Rhs) -> $Fixed {
-                <$Fixed as $Imp<$Rhs>>::$method(*self, *rhs)
+            fn $method(self, rhs: &$Rhs) -> $Fixed<Frac> {
+                <$Fixed<Frac> as $Imp<$Rhs>>::$method(*self, *rhs)
             }
         }
     };
@@ -261,17 +258,17 @@ macro_rules! shift {
 
 macro_rules! shift_assign {
     (impl $Imp:ident < $Rhs:ty > for $Fixed:ident($Inner:ty) { $method:ident }) => {
-        impl $Imp<$Rhs> for $Fixed {
+        impl<Frac: Unsigned> $Imp<$Rhs> for $Fixed<Frac> {
             #[inline]
             fn $method(&mut self, rhs: $Rhs) {
                 <$Inner as $Imp<$Rhs>>::$method(&mut self.0, rhs);
             }
         }
 
-        impl<'a> $Imp<&'a $Rhs> for $Fixed {
+        impl<'a, Frac: Unsigned> $Imp<&'a $Rhs> for $Fixed<Frac> {
             #[inline]
             fn $method(&mut self, rhs: &$Rhs) {
-                <$Fixed as $Imp<$Rhs>>::$method(self, *rhs);
+                <$Fixed<Frac> as $Imp<$Rhs>>::$method(self, *rhs);
             }
         }
     };
@@ -373,20 +370,52 @@ macro_rules! fixed {
         doc_comment! {
             concat!(
                 $description,
-                "\nwith `FRAC` fractional bits.\n",
+                "\nwith `Frac` fractional bits.\n",
                 "\n",
-                "Currently `FRAC` is hard-coded to the arbitrary value 7;\n",
-                "this will be changed to a [const generic] when they are\n",
-                "implemented in the compiler.\n",
+                "Currently `Frac` is an [`Unsigned`] as provided by\n",
+                "the [typenum crate]; it is planned to move to\n",
+                "[const generics] when they are implemented by the\n",
+                "Rust compiler.\n",
                 "\n",
-                "[const generic]: https://github.com/rust-lang/rust/issues/44580\n",
+                "# Examples\n",
+                "\n",
+                "```rust\n",
+                "extern crate fixed;\n",
+                "extern crate typenum;\n",
+                "use fixed::", stringify!($Fixed), ";\n",
+                "fn main() {\n",
+                "    let eleven: ", stringify!($Fixed), "<typenum::U3> = ",
+                stringify!($Fixed), "::from_bits(11 << 3);\n",
+                "    let five_five = eleven >> 1u32;\n",
+                "    assert_eq!(eleven.to_string(), \"11.0\");\n",
+                "    assert_eq!(five_five.to_string(), \"5.5\");\n",
+                "}\n",
+                "```\n",
+                "\n",
+                "[`Unsigned`]: https://docs.rs/typenum/^1/typenum/marker_traits/trait.Unsigned.html\n",
+                "[const generics]: https://github.com/rust-lang/rust/issues/44580\n",
+                "[typenum crate]: https://crates.io/crates/typenum\n"
             ),
-            #[derive(Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
             #[repr(transparent)]
-            pub struct $Fixed($Inner);
+            #[derive(Eq, Hash, Ord, PartialEq, PartialOrd)]
+            pub struct $Fixed<Frac: Unsigned>($Inner, PhantomData<Frac>);
         }
 
-        impl $Fixed {
+        impl<Frac: Unsigned> Clone for $Fixed<Frac> {
+            fn clone(&self) -> $Fixed<Frac> {
+                $Fixed::from_bits(self.to_bits())
+            }
+        }
+
+        impl<Frac: Unsigned> Copy for $Fixed<Frac> {}
+
+        impl<Frac: Unsigned> Default for $Fixed<Frac> {
+            fn default() -> $Fixed<Frac> {
+                $Fixed::from_bits(<$Inner as Default>::default())
+            }
+        }
+
+        impl<Frac: Unsigned> $Fixed<Frac> {
             pass_method! {
                 "Returns the smallest value that can be represented.",
                 $Fixed($Inner) => fn min_value()
@@ -422,51 +451,51 @@ macro_rules! fixed {
 
             /// Checked negation.
             #[inline]
-            pub fn checked_neg(self) -> Option<$Fixed> {
+            pub fn checked_neg(self) -> Option<$Fixed<Frac>> {
                 <$Inner>::checked_neg(self.0).map($Fixed::from_bits)
             }
 
             /// Checked fixed-point addition.
             #[inline]
-            pub fn checked_add(self, rhs: $Fixed) -> Option<$Fixed> {
+            pub fn checked_add(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
                 <$Inner>::checked_add(self.0, rhs.0).map($Fixed::from_bits)
             }
 
             /// Checked fixed-point subtraction.
             #[inline]
-            pub fn checked_sub(self, rhs: $Fixed) -> Option<$Fixed> {
+            pub fn checked_sub(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
                 <$Inner>::checked_sub(self.0, rhs.0).map($Fixed::from_bits)
             }
 
             /// Checked fixed-point multiplication.
             #[inline]
-            pub fn checked_mul(self, rhs: $Fixed) -> Option<$Fixed> {
-                let (ans, dir) = self.0.mul_dir(rhs.0);
+            pub fn checked_mul(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
+                let (ans, dir) = self.0.mul_dir(rhs.0, Frac::to_u32());
                 match dir {
-                    Ordering::Equal => Some($Fixed(ans)),
+                    Ordering::Equal => Some($Fixed::from_bits(ans)),
                     _ => None,
                 }
             }
 
             /// Checked fixed-point division.
             #[inline]
-            pub fn checked_div(self, rhs: $Fixed) -> Option<$Fixed> {
-                let (ans, dir) = self.0.div_dir(rhs.0);
+            pub fn checked_div(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
+                let (ans, dir) = self.0.div_dir(rhs.0, Frac::to_u32());
                 match dir {
-                    Ordering::Equal => Some($Fixed(ans)),
+                    Ordering::Equal => Some($Fixed::from_bits(ans)),
                     _ => None,
                 }
             }
 
             /// Checked fixed-point left shift.
             #[inline]
-            pub fn checked_shl(self, rhs: u32) -> Option<$Fixed> {
+            pub fn checked_shl(self, rhs: u32) -> Option<$Fixed<Frac>> {
                 <$Inner>::checked_shl(self.0, rhs).map($Fixed::from_bits)
             }
 
             /// Checked fixed-point right shift.
             #[inline]
-            pub fn checked_shr(self, rhs: u32) -> Option<$Fixed> {
+            pub fn checked_shr(self, rhs: u32) -> Option<$Fixed<Frac>> {
                 <$Inner>::checked_shr(self.0, rhs).map($Fixed::from_bits)
             }
 
@@ -474,29 +503,29 @@ macro_rules! fixed {
                 $Signedness =>
                 /// Checked absolute value.
                 #[inline]
-                pub fn checked_abs(self) -> Option<$Fixed> {
+                pub fn checked_abs(self) -> Option<$Fixed<Frac>> {
                     <$Inner>::checked_abs(self.0).map($Fixed::from_bits)
                 }
             }
 
             /// Saturating fixed-point addition.
             #[inline]
-            pub fn saturating_add(self, rhs: $Fixed) -> $Fixed {
-                $Fixed(<$Inner>::saturating_add(self.0, rhs.0))
+            pub fn saturating_add(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                $Fixed::from_bits(<$Inner>::saturating_add(self.0, rhs.0))
             }
 
             /// Saturating fixed-point subtraction.
             #[inline]
-            pub fn saturating_sub(self, rhs: $Fixed) -> $Fixed {
-                $Fixed(<$Inner>::saturating_sub(self.0, rhs.0))
+            pub fn saturating_sub(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                $Fixed::from_bits(<$Inner>::saturating_sub(self.0, rhs.0))
             }
 
             /// Saturating fixed-point multiplication.
             #[inline]
-            pub fn saturating_mul(self, rhs: $Fixed) -> $Fixed {
-                let (ans, dir) = self.0.mul_dir(rhs.0);
+            pub fn saturating_mul(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                let (ans, dir) = self.0.mul_dir(rhs.0, Frac::to_u32());
                 match dir {
-                    Ordering::Equal => $Fixed(ans),
+                    Ordering::Equal => $Fixed::from_bits(ans),
                     Ordering::Less => $Fixed::max_value(),
                     Ordering::Greater => $Fixed::min_value(),
                 }
@@ -504,10 +533,10 @@ macro_rules! fixed {
 
             /// Saturating fixed-point division.
             #[inline]
-            pub fn saturating_div(self, rhs: $Fixed) -> $Fixed {
-                let (ans, dir) = self.0.div_dir(rhs.0);
+            pub fn saturating_div(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                let (ans, dir) = self.0.div_dir(rhs.0, Frac::to_u32());
                 match dir {
-                    Ordering::Equal => $Fixed(ans),
+                    Ordering::Equal => $Fixed::from_bits(ans),
                     Ordering::Less => $Fixed::max_value(),
                     Ordering::Greater => $Fixed::min_value(),
                 }
@@ -515,113 +544,113 @@ macro_rules! fixed {
 
             /// Wrapping negation.
             #[inline]
-            pub fn wrapping_neg(self) -> $Fixed {
-                $Fixed(<$Inner>::wrapping_neg(self.0))
+            pub fn wrapping_neg(self) -> $Fixed<Frac> {
+                $Fixed::from_bits(<$Inner>::wrapping_neg(self.0))
             }
 
             /// Wrapping fixed-point addition.
             #[inline]
-            pub fn wrapping_add(self, rhs: $Fixed) -> $Fixed {
-                $Fixed(<$Inner>::wrapping_add(self.0, rhs.0))
+            pub fn wrapping_add(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                $Fixed::from_bits(<$Inner>::wrapping_add(self.0, rhs.0))
             }
 
             /// Wrapping fixed-point subtraction.
             #[inline]
-            pub fn wrapping_sub(self, rhs: $Fixed) -> $Fixed {
-                $Fixed(<$Inner>::wrapping_sub(self.0, rhs.0))
+            pub fn wrapping_sub(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                $Fixed::from_bits(<$Inner>::wrapping_sub(self.0, rhs.0))
             }
 
             /// Wrapping fixed-point multiplication.
             #[inline]
-            pub fn wrapping_mul(self, rhs: $Fixed) -> $Fixed {
-                let (ans, _dir) = self.0.mul_dir(rhs.0);
-                $Fixed(ans)
+            pub fn wrapping_mul(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                let (ans, _dir) = self.0.mul_dir(rhs.0, Frac::to_u32());
+                $Fixed::from_bits(ans)
             }
 
             /// Wrapping fixed-point division.
             #[inline]
-            pub fn wrapping_div(self, rhs: $Fixed) -> $Fixed {
-                let (ans, _dir) = self.0.div_dir(rhs.0);
-                $Fixed(ans)
+            pub fn wrapping_div(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                let (ans, _dir) = self.0.div_dir(rhs.0, Frac::to_u32());
+                $Fixed::from_bits(ans)
             }
 
             /// Wrapping fixed-point left shift.
             #[inline]
-            pub fn wrapping_shl(self, rhs: u32) -> $Fixed {
-                $Fixed(<$Inner>::wrapping_shl(self.0, rhs))
+            pub fn wrapping_shl(self, rhs: u32) -> $Fixed<Frac> {
+                $Fixed::from_bits(<$Inner>::wrapping_shl(self.0, rhs))
             }
 
             /// Wrapping fixed-point right shift.
             #[inline]
-            pub fn wrapping_shr(self, rhs: u32) -> $Fixed {
-                $Fixed(<$Inner>::wrapping_shr(self.0, rhs))
+            pub fn wrapping_shr(self, rhs: u32) -> $Fixed<Frac> {
+                $Fixed::from_bits(<$Inner>::wrapping_shr(self.0, rhs))
             }
 
             if_signed! {
                 $Signedness =>
                 /// Wrapping absolute value.
                 #[inline]
-                pub fn wrapping_abs(self) -> $Fixed {
-                    $Fixed(<$Inner>::wrapping_abs(self.0))
+                pub fn wrapping_abs(self) -> $Fixed<Frac> {
+                    $Fixed::from_bits(<$Inner>::wrapping_abs(self.0))
                 }
             }
 
             /// Overflowing negation.
             #[inline]
-            pub fn overflowing_neg(self) -> ($Fixed, bool) {
+            pub fn overflowing_neg(self) -> ($Fixed<Frac>, bool) {
                 let (ans, o) = <$Inner>::overflowing_neg(self.0);
-                ($Fixed(ans), o)
+                ($Fixed::from_bits(ans), o)
             }
 
             /// Overflowing fixed-point addition.
             #[inline]
-            pub fn overflowing_add(self, rhs: $Fixed) -> ($Fixed, bool) {
+            pub fn overflowing_add(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
                 let (ans, o) = <$Inner>::overflowing_add(self.0, rhs.0);
-                ($Fixed(ans), o)
+                ($Fixed::from_bits(ans), o)
             }
 
             /// Overflowing fixed-point subtraction.
             #[inline]
-            pub fn overflowing_sub(self, rhs: $Fixed) -> ($Fixed, bool) {
+            pub fn overflowing_sub(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
                 let (ans, o) = <$Inner>::overflowing_sub(self.0, rhs.0);
-                ($Fixed(ans), o)
+                ($Fixed::from_bits(ans), o)
             }
 
             /// Overflowing fixed-point multiplication.
             #[inline]
-            pub fn overflowing_mul(self, rhs: $Fixed) -> ($Fixed, bool) {
-                let (ans, dir) = self.0.mul_dir(rhs.0);
-                ($Fixed(ans), dir != Ordering::Equal)
+            pub fn overflowing_mul(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
+                let (ans, dir) = self.0.mul_dir(rhs.0, Frac::to_u32());
+                ($Fixed::from_bits(ans), dir != Ordering::Equal)
             }
 
             /// Overflowing fixed-point division.
             #[inline]
-            pub fn overflowing_div(self, rhs: $Fixed) -> ($Fixed, bool) {
-                let (ans, dir) = self.0.div_dir(rhs.0);
-                ($Fixed(ans), dir != Ordering::Equal)
+            pub fn overflowing_div(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
+                let (ans, dir) = self.0.div_dir(rhs.0, Frac::to_u32());
+                ($Fixed::from_bits(ans), dir != Ordering::Equal)
             }
 
             /// Overflowing fixed-point left shift.
             #[inline]
-            pub fn overflowing_shl(self, rhs: u32) -> ($Fixed, bool) {
+            pub fn overflowing_shl(self, rhs: u32) -> ($Fixed<Frac>, bool) {
                 let (ans, o) = <$Inner>::overflowing_shl(self.0, rhs);
-                ($Fixed(ans), o)
+                ($Fixed::from_bits(ans), o)
             }
 
             /// Overflowing fixed-point right shift.
             #[inline]
-            pub fn overflowing_shr(self, rhs: u32) -> ($Fixed, bool) {
+            pub fn overflowing_shr(self, rhs: u32) -> ($Fixed<Frac>, bool) {
                 let (ans, o) = <$Inner>::overflowing_shr(self.0, rhs);
-                ($Fixed(ans), o)
+                ($Fixed::from_bits(ans), o)
             }
 
             if_signed! {
                 $Signedness =>
                 /// Overflowing absolute value.
                 #[inline]
-                pub fn overflowing_abs(self) -> ($Fixed, bool) {
+                pub fn overflowing_abs(self) -> ($Fixed<Frac>, bool) {
                     let (ans, o) = <$Inner>::overflowing_abs(self.0);
-                    ($Fixed(ans), o)
+                    ($Fixed::from_bits(ans), o)
                 }
             }
 
@@ -645,7 +674,7 @@ macro_rules! fixed {
                 /// Returns the smallest power of two ≥ `self`, or `None`
                 /// if the next power of two is too large to represent.
                 #[inline]
-                pub fn checked_next_power_of_two(self) -> Option<$Fixed> {
+                pub fn checked_next_power_of_two(self) -> Option<$Fixed<Frac>> {
                     <$Inner>::checked_next_power_of_two(self.0).map($Fixed::from_bits)
                 }
             }
@@ -661,11 +690,15 @@ macro_rules! fixed {
                 $Signedness =>
                 /// Returns a number representing the sign of `self`.
                 #[inline]
-                pub fn signum(self) -> $Fixed {
+                pub fn signum(self) -> $Fixed<Frac> {
                     match self.0.cmp(&0) {
-                        Ordering::Equal => $Fixed(0),
-                        Ordering::Greater => <$Fixed as FixedNum>::one().expect("overflow"),
-                        Ordering::Less => <$Fixed as FixedNum>::minus_one().expect("overflow"),
+                        Ordering::Equal => $Fixed::from_bits(0),
+                        Ordering::Greater => {
+                            <$Fixed<Frac> as FixedNum<Frac>>::one().expect("overflow")
+                        }
+                        Ordering::Less => {
+                            <$Fixed<Frac> as FixedNum<Frac>>::minus_one().expect("overflow")
+                        }
                     }
                 }
             }
@@ -679,8 +712,8 @@ macro_rules! fixed {
                     "` value."
                 ),
                 #[inline]
-                pub fn from_bits(v: $Inner) -> $Fixed {
-                    $Fixed(v)
+                pub fn from_bits(v: $Inner) -> $Fixed<Frac> {
+                    $Fixed(v, PhantomData)
                 }
             }
 
@@ -711,43 +744,43 @@ macro_rules! fixed {
         pass! { impl Sub for $Fixed($Inner) { sub } }
         pass_assign! { impl SubAssign for $Fixed($Inner) { sub_assign } }
 
-        impl Mul<$Fixed> for $Fixed {
-            type Output = $Fixed;
+        impl<Frac: Unsigned> Mul<$Fixed<Frac>> for $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
             #[inline]
-            fn mul(self, rhs: $Fixed) -> $Fixed {
-                let (ans, dir) = self.0.mul_dir(rhs.0);
+            fn mul(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                let (ans, dir) = self.0.mul_dir(rhs.0, Frac::to_u32());
                 debug_assert!(dir == Ordering::Equal, "overflow");
-                $Fixed(ans)
+                $Fixed::from_bits(ans)
             }
         }
 
         refs! { impl Mul for $Fixed($Inner) { mul } }
 
-        impl MulAssign<$Fixed> for $Fixed {
+        impl<Frac: Unsigned> MulAssign<$Fixed<Frac>> for $Fixed<Frac> {
             #[inline]
-            fn mul_assign(&mut self, rhs: $Fixed) {
-                *self = <$Fixed as Mul>::mul(*self, rhs)
+            fn mul_assign(&mut self, rhs: $Fixed<Frac>) {
+                *self = <$Fixed<Frac> as Mul>::mul(*self, rhs)
             }
         }
 
         refs_assign! { impl MulAssign for $Fixed($Inner) { mul_assign } }
 
-        impl Div<$Fixed> for $Fixed {
-            type Output = $Fixed;
+        impl<Frac: Unsigned> Div<$Fixed<Frac>> for $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
             #[inline]
-            fn div(self, rhs: $Fixed) -> $Fixed {
-                let (ans, dir) = self.0.div_dir(rhs.0);
+            fn div(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                let (ans, dir) = self.0.div_dir(rhs.0, Frac::to_u32());
                 debug_assert!(dir == Ordering::Equal, "overflow");
-                $Fixed(ans)
+                $Fixed::from_bits(ans)
             }
         }
 
         refs! { impl Div for $Fixed($Inner) { div } }
 
-        impl DivAssign<$Fixed> for $Fixed {
+        impl<Frac: Unsigned> DivAssign<$Fixed<Frac>> for $Fixed<Frac> {
             #[inline]
-            fn div_assign(&mut self, rhs: $Fixed) {
-                *self = <$Fixed as Div>::div(*self, rhs)
+            fn div_assign(&mut self, rhs: $Fixed<Frac>) {
+                *self = <$Fixed<Frac> as Div>::div(*self, rhs)
             }
         }
 
@@ -776,31 +809,31 @@ macro_rules! fixed {
             }
         }
 
-        impl Sum<$Fixed> for $Fixed {
-            fn sum<I: Iterator<Item = $Fixed>>(iter: I) -> $Fixed {
+        impl<Frac: Unsigned> Sum<$Fixed<Frac>> for $Fixed<Frac> {
+            fn sum<I: Iterator<Item = $Fixed<Frac>>>(iter: I) -> $Fixed<Frac> {
                 iter.fold($Fixed::from_bits(0), Add::add)
             }
         }
 
-        impl<'a> Sum<&'a $Fixed> for $Fixed {
-            fn sum<I: Iterator<Item = &'a $Fixed>>(iter: I) -> $Fixed {
+        impl<'a, Frac: Unsigned + 'a> Sum<&'a $Fixed<Frac>> for $Fixed<Frac> {
+            fn sum<I: Iterator<Item = &'a $Fixed<Frac>>>(iter: I) -> $Fixed<Frac> {
                 iter.fold($Fixed::from_bits(0), Add::add)
             }
         }
 
-        impl Product<$Fixed> for $Fixed {
-            fn product<I: Iterator<Item = $Fixed>>(mut iter: I) -> $Fixed {
+        impl<Frac: Unsigned> Product<$Fixed<Frac>> for $Fixed<Frac> {
+            fn product<I: Iterator<Item = $Fixed<Frac>>>(mut iter: I) -> $Fixed<Frac> {
                 match iter.next() {
-                    None => <$Fixed as FixedNum>::one().expect("overflow"),
+                    None => <$Fixed<Frac> as FixedNum<Frac>>::one().expect("overflow"),
                     Some(first) => iter.fold(first, Mul::mul),
                 }
             }
         }
 
-        impl<'a> Product<&'a $Fixed> for $Fixed {
-            fn product<I: Iterator<Item = &'a $Fixed>>(mut iter: I) -> $Fixed {
+        impl<'a, Frac: Unsigned + 'a> Product<&'a $Fixed<Frac>> for $Fixed<Frac> {
+            fn product<I: Iterator<Item = &'a $Fixed<Frac>>>(mut iter: I) -> $Fixed<Frac> {
                 match iter.next() {
-                    None => <$Fixed as FixedNum>::one().expect("overflow"),
+                    None => <$Fixed<Frac> as FixedNum<Frac>>::one().expect("overflow"),
                     Some(first) => iter.fold(*first, Mul::mul),
                 }
             }
@@ -820,19 +853,19 @@ fixed! { "A 64-bit fixed-point signed integer", FixedI64(i64), Signed }
 fixed! { "A 128-bit fixed-point signed integer", FixedI128(i128), Signed }
 
 trait MulDivDir: Sized {
-    fn mul_dir(self, rhs: Self) -> (Self, Ordering);
-    fn div_dir(self, rhs: Self) -> (Self, Ordering);
+    fn mul_dir(self, rhs: Self, frac_bits: u32) -> (Self, Ordering);
+    fn div_dir(self, rhs: Self, frac_bits: u32) -> (Self, Ordering);
 }
 
 macro_rules! mul_div_widen {
     ($Single:ty, $Double:ty, $Signedness:tt) => {
         impl MulDivDir for $Single {
             #[inline]
-            fn mul_dir(self, rhs: $Single) -> ($Single, Ordering) {
+            fn mul_dir(self, rhs: $Single, frac_bits: u32) -> ($Single, Ordering) {
                 const BITS: u32 = mem::size_of::<$Single>() as u32 * 8;
-                const I: u32 = BITS - FRAC;
+                let int_bits: u32 = BITS - frac_bits;
                 let lhs2 = self as $Double;
-                let rhs2 = rhs as $Double << I;
+                let rhs2 = rhs as $Double << int_bits;
                 let (prod2, overflow) = lhs2.overflowing_mul(rhs2);
                 let dir;
                 if_unsigned! { $Signedness => {
@@ -855,8 +888,8 @@ macro_rules! mul_div_widen {
             }
 
             #[inline]
-            fn div_dir(self, rhs: $Single) -> ($Single, Ordering) {
-                let lhs2 = self as $Double << FRAC;
+            fn div_dir(self, rhs: $Single, frac_bits: u32) -> ($Single, Ordering) {
+                let lhs2 = self as $Double << frac_bits;
                 let rhs2 = rhs as $Double;
                 let quot2 = lhs2 / rhs2;
                 let quot = quot2 as $Single;
@@ -969,8 +1002,8 @@ impl FallbackHelper for i128 {
 macro_rules! mul_div_fallback {
     ($Single:ty, $Signedness:tt) => {
         impl MulDivDir for $Single {
-            fn mul_dir(self, rhs: $Single) -> ($Single, Ordering) {
-                if FRAC == 0 {
+            fn mul_dir(self, rhs: $Single, frac_bits: u32) -> ($Single, Ordering) {
+                if frac_bits == 0 {
                     let (ans, overflow) = self.overflowing_mul(rhs);
                     let dir;
                     if_unsigned! { $Signedness => {
@@ -1006,12 +1039,12 @@ macro_rules! mul_div_fallback {
                     let carries = carry_col2 as $Single + carry_col3.shift_lo_up();
                     let ans23 = col23.wrapping_add(carries).wrapping_add(col12_hi);
 
-                    ans23.combine_lo_then_shl(ans01, FRAC)
+                    ans23.combine_lo_then_shl(ans01, frac_bits)
                 }
             }
 
-            fn div_dir(self, rhs: $Single) -> ($Single, Ordering) {
-                if FRAC == 0 {
+            fn div_dir(self, rhs: $Single, frac_bits: u32) -> ($Single, Ordering) {
+                if frac_bits == 0 {
                     let (ans, overflow) = self.overflowing_div(rhs);
                     let dir;
                     if_unsigned! { $Signedness => {
@@ -1056,86 +1089,95 @@ mod tests {
 
     #[test]
     fn fixed_u16() {
+        use typenum::U7 as Frac;
+        let frac = Frac::to_u32();
         let a = 12;
         let b = 4;
-        let af = FixedU16::from_bits(a << FRAC);
-        let bf = FixedU16::from_bits(b << FRAC);
-        assert_eq!((af + bf).to_bits(), (a << FRAC) + (b << FRAC));
-        assert_eq!((af - bf).to_bits(), (a << FRAC) - (b << FRAC));
-        assert_eq!((af * bf).to_bits(), (a << FRAC) * b);
-        assert_eq!((af / bf).to_bits(), (a << FRAC) / b);
-        assert_eq!((af & bf).to_bits(), (a << FRAC) & (b << FRAC));
-        assert_eq!((af | bf).to_bits(), (a << FRAC) | (b << FRAC));
-        assert_eq!((af ^ bf).to_bits(), (a << FRAC) ^ (b << FRAC));
-        assert_eq!((!af).to_bits(), !(a << FRAC));
-        assert_eq!((af << 4u8).to_bits(), (a << FRAC) << 4);
-        assert_eq!((af >> 4i128).to_bits(), (a << FRAC) >> 4);
+        let af = FixedU16::<Frac>::from_bits(a << Frac::to_u32());
+        let bf = FixedU16::<Frac>::from_bits(b << Frac::to_u32());
+        assert_eq!((af + bf).to_bits(), (a << frac) + (b << frac));
+        assert_eq!((af - bf).to_bits(), (a << frac) - (b << frac));
+        assert_eq!((af * bf).to_bits(), (a << frac) * b);
+        assert_eq!((af / bf).to_bits(), (a << frac) / b);
+        assert_eq!((af & bf).to_bits(), (a << frac) & (b << frac));
+        assert_eq!((af | bf).to_bits(), (a << frac) | (b << frac));
+        assert_eq!((af ^ bf).to_bits(), (a << frac) ^ (b << frac));
+        assert_eq!((!af).to_bits(), !(a << frac));
+        assert_eq!((af << 4u8).to_bits(), (a << frac) << 4);
+        assert_eq!((af >> 4i128).to_bits(), (a << frac) >> 4);
     }
 
     #[test]
     fn fixed_i16() {
+        use typenum::U7 as Frac;
+        let frac = Frac::to_u32();
         let a = 12;
         let b = 4;
         for &pair in &[(a, b), (a, -b), (-a, b), (-a, -b)] {
             let (a, b) = pair;
-            let af = FixedI16::from_bits(a << FRAC);
-            let bf = FixedI16::from_bits(b << FRAC);
-            assert_eq!((af + bf).to_bits(), (a << FRAC) + (b << FRAC));
-            assert_eq!((af - bf).to_bits(), (a << FRAC) - (b << FRAC));
-            assert_eq!((af * bf).to_bits(), (a << FRAC) * b);
-            assert_eq!((af / bf).to_bits(), (a << FRAC) / b);
-            assert_eq!((af & bf).to_bits(), (a << FRAC) & (b << FRAC));
-            assert_eq!((af | bf).to_bits(), (a << FRAC) | (b << FRAC));
-            assert_eq!((af ^ bf).to_bits(), (a << FRAC) ^ (b << FRAC));
-            assert_eq!((-af).to_bits(), -(a << FRAC));
-            assert_eq!((!af).to_bits(), !(a << FRAC));
-            assert_eq!((af << 4u8).to_bits(), (a << FRAC) << 4);
-            assert_eq!((af >> 4i128).to_bits(), (a << FRAC) >> 4);
+            let af = FixedI16::<Frac>::from_bits(a << frac);
+            let bf = FixedI16::<Frac>::from_bits(b << frac);
+            assert_eq!((af + bf).to_bits(), (a << frac) + (b << frac));
+            assert_eq!((af - bf).to_bits(), (a << frac) - (b << frac));
+            assert_eq!((af * bf).to_bits(), (a << frac) * b);
+            assert_eq!((af / bf).to_bits(), (a << frac) / b);
+            assert_eq!((af & bf).to_bits(), (a << frac) & (b << frac));
+            assert_eq!((af | bf).to_bits(), (a << frac) | (b << frac));
+            assert_eq!((af ^ bf).to_bits(), (a << frac) ^ (b << frac));
+            assert_eq!((-af).to_bits(), -(a << frac));
+            assert_eq!((!af).to_bits(), !(a << frac));
+            assert_eq!((af << 4u8).to_bits(), (a << frac) << 4);
+            assert_eq!((af >> 4i128).to_bits(), (a << frac) >> 4);
         }
     }
 
     #[test]
     fn fixed_u128() {
+        use typenum::U7 as Frac;
+        let frac = Frac::to_u32();
         let a = 0x0003456789abcdef_0123456789abcdef_u128;
         let b = 5;
-        let af = FixedU128::from_bits(a << FRAC);
-        let bf = FixedU128::from_bits(b << FRAC);
-        assert_eq!((af + bf).to_bits(), (a << FRAC) + (b << FRAC));
-        assert_eq!((af - bf).to_bits(), (a << FRAC) - (b << FRAC));
-        assert_eq!((af * bf).to_bits(), (a << FRAC) * b);
-        // assert_eq!((af / bf).to_bits(), (a << FRAC) / b);
-        assert_eq!((af & bf).to_bits(), (a << FRAC) & (b << FRAC));
-        assert_eq!((af | bf).to_bits(), (a << FRAC) | (b << FRAC));
-        assert_eq!((af ^ bf).to_bits(), (a << FRAC) ^ (b << FRAC));
-        assert_eq!((!af).to_bits(), !(a << FRAC));
+        let af = FixedU128::<Frac>::from_bits(a << frac);
+        let bf = FixedU128::<Frac>::from_bits(b << frac);
+        assert_eq!((af + bf).to_bits(), (a << frac) + (b << frac));
+        assert_eq!((af - bf).to_bits(), (a << frac) - (b << frac));
+        assert_eq!((af * bf).to_bits(), (a << frac) * b);
+        // assert_eq!((af / bf).to_bits(), (a << frac) / b);
+        assert_eq!((af & bf).to_bits(), (a << frac) & (b << frac));
+        assert_eq!((af | bf).to_bits(), (a << frac) | (b << frac));
+        assert_eq!((af ^ bf).to_bits(), (a << frac) ^ (b << frac));
+        assert_eq!((!af).to_bits(), !(a << frac));
     }
 
     #[test]
     fn fixed_i128() {
+        use typenum::U7 as Frac;
+        let frac = Frac::to_u32();
         let a = 0x0003456789abcdef_0123456789abcdef_i128;
         let b = 5;
         for &pair in &[(a, b), (a, -b), (-a, b), (-a, -b)] {
             let (a, b) = pair;
-            let af = FixedI128::from_bits(a << FRAC);
-            let bf = FixedI128::from_bits(b << FRAC);
-            assert_eq!((af + bf).to_bits(), (a << FRAC) + (b << FRAC));
-            assert_eq!((af - bf).to_bits(), (a << FRAC) - (b << FRAC));
-            assert_eq!((af * bf).to_bits(), (a << FRAC) * b);
-            // assert_eq!((af / bf).to_bits(), (a << FRAC) / b);
-            assert_eq!((af & bf).to_bits(), (a << FRAC) & (b << FRAC));
-            assert_eq!((af | bf).to_bits(), (a << FRAC) | (b << FRAC));
-            assert_eq!((af ^ bf).to_bits(), (a << FRAC) ^ (b << FRAC));
-            assert_eq!((!af).to_bits(), !(a << FRAC));
+            let af = FixedI128::<Frac>::from_bits(a << frac);
+            let bf = FixedI128::<Frac>::from_bits(b << frac);
+            assert_eq!((af + bf).to_bits(), (a << frac) + (b << frac));
+            assert_eq!((af - bf).to_bits(), (a << frac) - (b << frac));
+            assert_eq!((af * bf).to_bits(), (a << frac) * b);
+            // assert_eq!((af / bf).to_bits(), (a << frac) / b);
+            assert_eq!((af & bf).to_bits(), (a << frac) & (b << frac));
+            assert_eq!((af | bf).to_bits(), (a << frac) | (b << frac));
+            assert_eq!((af ^ bf).to_bits(), (a << frac) ^ (b << frac));
+            assert_eq!((!af).to_bits(), !(a << frac));
         }
     }
 
     #[test]
     fn to_f32() {
+        use typenum::U7 as Frac;
         for u in 0x00..=0xff {
-            let fu = FixedU8::from_bits(u);
+            let fu = FixedU8::<Frac>::from_bits(u);
             assert_eq!(fu.to_f32(), u as f32 / 128.0);
             let i = u as i8;
-            let fi = FixedI8::from_bits(i);
+            let fi = FixedI8::<Frac>::from_bits(i);
             assert_eq!(fi.to_f32(), i as f32 / 128.0);
 
             for hi in &[
@@ -1148,10 +1190,10 @@ mod tests {
                 0xffff_ff00,
             ] {
                 let uu = *hi | u as u32;
-                let fuu = FixedU32::from_bits(uu);
+                let fuu = FixedU32::<Frac>::from_bits(uu);
                 assert_eq!(fuu.to_f32(), uu as f32 / 128.0);
                 let ii = uu as i32;
-                let fii = FixedI32::from_bits(ii);
+                let fii = FixedI32::<Frac>::from_bits(ii);
                 assert_eq!(fii.to_f32(), ii as f32 / 128.0);
             }
 
@@ -1165,10 +1207,10 @@ mod tests {
                 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
             ] {
                 let uu = *hi | u as u128;
-                let fuu = FixedU128::from_bits(uu);
+                let fuu = FixedU128::<Frac>::from_bits(uu);
                 assert_eq!(fuu.to_f32(), (uu as f64 / 128.0) as f32);
                 let ii = uu as i128;
-                let fii = FixedI128::from_bits(ii);
+                let fii = FixedI128::<Frac>::from_bits(ii);
                 assert_eq!(fii.to_f32(), (ii as f64 / 128.0) as f32);
             }
         }
@@ -1176,11 +1218,12 @@ mod tests {
 
     #[test]
     fn to_f64() {
+        use typenum::U7 as Frac;
         for u in 0x00..=0xff {
-            let fu = FixedU8::from_bits(u);
+            let fu = FixedU8::<Frac>::from_bits(u);
             assert_eq!(fu.to_f32(), u as f32 / 128.0);
             let i = u as i8;
-            let fi = FixedI8::from_bits(i);
+            let fi = FixedI8::<Frac>::from_bits(i);
             assert_eq!(fi.to_f32(), i as f32 / 128.0);
 
             for hi in &[
@@ -1193,10 +1236,10 @@ mod tests {
                 0xffff_ffff_ffff_ff00,
             ] {
                 let uu = *hi | u as u64;
-                let fuu = FixedU64::from_bits(uu);
+                let fuu = FixedU64::<Frac>::from_bits(uu);
                 assert_eq!(fuu.to_f64(), uu as f64 / 128.0);
                 let ii = uu as i64;
-                let fii = FixedI64::from_bits(ii);
+                let fii = FixedI64::<Frac>::from_bits(ii);
                 assert_eq!(fii.to_f64(), ii as f64 / 128.0);
             }
 
@@ -1210,10 +1253,10 @@ mod tests {
                 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
             ] {
                 let uu = *hi | u as u128;
-                let fuu = FixedU128::from_bits(uu);
+                let fuu = FixedU128::<Frac>::from_bits(uu);
                 assert_eq!(fuu.to_f64(), uu as f64 / 128.0);
                 let ii = uu as i128;
-                let fii = FixedI128::from_bits(ii);
+                let fii = FixedI128::<Frac>::from_bits(ii);
                 assert_eq!(fii.to_f64(), ii as f64 / 128.0);
             }
         }

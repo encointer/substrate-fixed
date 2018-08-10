@@ -7,11 +7,10 @@ as-is, without any warranty. -->
 
 # Fixed-point numbers
 
-Fixed provides fixed-point numbers. **It is not yet useful**, as it is
-designed to depend on the as-yet unimplemented [const generics]
-compiler feature. (In the current code, the number of fractional bits
-is hard-coded to the arbitrary value 7, so if you need a fixed-point
-number with seven fractional bits, you’re in luck!)
+Fixed provides fixed-point numbers. Currently it uses the
+[typenum][typenum crate] for the fractional bit count; it is planned
+to move to [const generics] when they are implemented by the Rust
+compiler.
 
 ## Using Fixed
 
@@ -29,11 +28,6 @@ You also need to declare it by adding this to your crate root (usually
 ```rust
 extern crate fixed;
 ```
-
-Fixed requires [const generics], which are not yet implemented in the
-compiler. When they are implemented, Fixed will require the
-[nightly][channels] compiler until the feature makes it way to the
-[stable][channels] release.
 
 ## License
 
@@ -58,3 +52,4 @@ additional terms or conditions.
 [channels]: https://doc.rust-lang.org/book/second-edition/appendix-07-nightly-rust.html
 [const generics]: https://github.com/rust-lang/rust/issues/44580
 [fixed crate]: https://crates.io/crates/fixed
+[typenum crate]: https://crates.io/crates/typenum

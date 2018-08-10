@@ -16,6 +16,7 @@
 use std::cmp::Ordering;
 use std::fmt::{Binary, Debug, Display, Formatter, LowerHex, Octal, Result as FmtResult, UpperHex};
 use std::str;
+use typenum::Unsigned;
 use FixedNum;
 
 use {
@@ -59,7 +60,11 @@ radix2! { Oct(3, "0o"), 0..=7 => b'0' }
 radix2! { LowHex(4, "0x"), 0..=9 => b'0', 10..=15 => b'a' - 10 }
 radix2! { UpHex(4, "0x"), 0..=9 => b'0', 10..=15 => b'A' - 10 }
 
-fn fmt_radix2<F: FixedNum, R: Radix2>(num: F, _radix: R, fmt: &mut Formatter) -> FmtResult {
+fn fmt_radix2<Frac: Unsigned, F, R>(num: F, _radix: R, fmt: &mut Formatter) -> FmtResult
+where
+    F: FixedNum<Frac>,
+    R: Radix2,
+{
     let digit_bits: u32 = R::BITS.into();
     let (int_bits, frac_bits) = (F::int_bits(), F::frac_bits());
     let (is_neg, mut int, mut frac) = num.parts();
@@ -101,32 +106,32 @@ fn fmt_radix2<F: FixedNum, R: Radix2>(num: F, _radix: R, fmt: &mut Formatter) ->
 
 macro_rules! impl_fmt {
     ($($Fixed:ident)*) => { $(
-        impl Display for $Fixed {
+        impl<Frac: Unsigned> Display for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
                 fmt_dec(*self, f)
             }
         }
-        impl Debug for $Fixed {
+        impl<Frac: Unsigned>  Debug for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
                 fmt_dec(*self, f)
             }
         }
-        impl Binary for $Fixed {
+        impl<Frac: Unsigned>  Binary for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
                 fmt_radix2(*self, Bin, f)
             }
         }
-        impl Octal for $Fixed {
+        impl<Frac: Unsigned>  Octal for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
                 fmt_radix2(*self, Oct, f)
             }
         }
-        impl LowerHex for $Fixed {
+        impl<Frac: Unsigned>  LowerHex for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
                 fmt_radix2(*self, LowHex, f)
             }
         }
-        impl UpperHex for $Fixed {
+        impl<Frac: Unsigned>  UpperHex for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
                 fmt_radix2(*self, UpHex, f)
             }
@@ -178,7 +183,10 @@ fn dec_frac_digits(frac_bits: u32) -> u32 {
     digits
 }
 
-fn fmt_dec<F: FixedNum>(num: F, fmt: &mut Formatter) -> FmtResult {
+fn fmt_dec<Frac: Unsigned, F>(num: F, fmt: &mut Formatter) -> FmtResult
+where
+    F: FixedNum<Frac>,
+{
     let (int_bits, frac_bits) = (F::int_bits(), F::frac_bits());
     let (is_neg, mut int, mut frac) = num.parts();
     // 40 int digits
@@ -266,28 +274,32 @@ mod tests {
 
     #[test]
     fn hex() {
-        for i in 0..128 {
+        use typenum::U7 as Frac;
+        let frac = Frac::to_u32();
+        for i in 0..(1 << frac) {
             let p = 0x1234_5678_9abc_def0u64 ^ i as u64;
             let n = -0x1234_5678_9abc_def0i64 ^ i as i64;
-            let f_p = FixedU64::from_bits(p);
-            let f_n = FixedI64::from_bits(n);
+            let f_p = FixedU64::<Frac>::from_bits(p);
+            let f_n = FixedI64::<Frac>::from_bits(n);
             assert_eq!(
                 format!("{:x}", f_p),
-                format!("{:x}.{:02x}", p >> 7, (p & 0x7f) << 1)
+                format!("{:x}.{:02x}", p >> frac, (p & 0x7f) << 1)
             );
             assert_eq!(
                 format!("{:x}", f_n),
-                format!("-{:x}.{:02x}", n.abs() >> 7, (n.abs() & 0x7f) << 1)
+                format!("-{:x}.{:02x}", n.abs() >> frac, (n.abs() & 0x7f) << 1)
             );
         }
     }
 
     #[test]
     fn dec() {
-        for i in 0..128 {
+        use typenum::U7 as Frac;
+        let frac = Frac::to_u32();
+        for i in 0..(1 << frac) {
             let bits = !0u32 ^ i;
-            let flt = bits as f64 / 128.0;
-            let fix = FixedU32::from_bits(bits);
+            let flt = bits as f64 / (frac as f64).exp2();
+            let fix = FixedU32::<Frac>::from_bits(bits);
             println!("i is {}", i);
             assert_eq!(format!("{}", fix), format!("{:.2}", flt));
         }

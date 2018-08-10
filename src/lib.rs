@@ -203,7 +203,7 @@ macro_rules! fixed_unsigned {
                 "\n",
                 "[const generic]: https://github.com/rust-lang/rust/issues/44580\n",
             ),
-            #[derive(Clone, Copy)]
+            #[derive(Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
             #[repr(transparent)]
             pub struct $Fixed($Inner);
         }

@@ -87,6 +87,14 @@ use traits::FixedNum;
 
 const F: u32 = 7;
 
+macro_rules! if_signed {
+    (Signed => $($rem:tt)+) => {
+        $($rem)+
+    };
+    (Unsigned => $($rem:tt)+) => {
+    };
+}
+
 macro_rules! refs {
     (impl $Imp:ident for $Fixed:ident($Inner:ty) { $method:ident }) => {
         impl<'a> $Imp<$Fixed> for &'a $Fixed {
@@ -318,8 +326,8 @@ macro_rules! to_f {
     };
 }
 
-macro_rules! fixed_unsigned {
-    ($description:expr, $Fixed:ident($Inner:ty)) => {
+macro_rules! fixed {
+    ($description:expr, $Fixed:ident($Inner:ty), $Signedness:tt) => {
         doc_comment! {
             concat!(
                 $description,
@@ -367,6 +375,10 @@ macro_rules! fixed_unsigned {
 
             to_f! { to_f32 -> f32(u32), 8, 24 }
             to_f! { to_f64 -> f64(u64), 11, 53 }
+        }
+
+        if_signed! {
+            $Signedness => pass_one! { impl Neg for $Fixed($Inner) { neg } }
         }
 
         pass! { impl Add for $Fixed($Inner) { add } }
@@ -467,24 +479,17 @@ macro_rules! fixed_unsigned {
     };
 }
 
-macro_rules! fixed_signed {
-    ($description:expr, $Fixed:ident($Inner:ty)) => {
-        fixed_unsigned! { $description, $Fixed($Inner) }
 
-        pass_one! { impl Neg for $Fixed($Inner) { neg } }
-    };
-}
-
-fixed_unsigned! { "An eight-bit fixed-point unsigned integer", FixedU8(u8) }
-fixed_unsigned! { "A 16-bit fixed-point unsigned integer", FixedU16(u16) }
-fixed_unsigned! { "A 32-bit fixed-point unsigned integer", FixedU32(u32) }
-fixed_unsigned! { "A 64-bit fixed-point unsigned integer", FixedU64(u64) }
-fixed_unsigned! { "A 128-bit fixed-point unsigned integer", FixedU128(u128) }
-fixed_signed! { "An eight-bit fixed-point signed integer", FixedI8(i8) }
-fixed_signed! { "A 16-bit fixed-point signed integer", FixedI16(i16) }
-fixed_signed! { "A 32-bit fixed-point signed integer", FixedI32(i32) }
-fixed_signed! { "A 64-bit fixed-point signed integer", FixedI64(i64) }
-fixed_signed! { "A 128-bit fixed-point signed integer", FixedI128(i128) }
+fixed! { "An eight-bit fixed-point unsigned integer", FixedU8(u8), Unsigned }
+fixed! { "A 16-bit fixed-point unsigned integer", FixedU16(u16), Unsigned }
+fixed! { "A 32-bit fixed-point unsigned integer", FixedU32(u32), Unsigned }
+fixed! { "A 64-bit fixed-point unsigned integer", FixedU64(u64), Unsigned }
+fixed! { "A 128-bit fixed-point unsigned integer", FixedU128(u128), Unsigned }
+fixed! { "An eight-bit fixed-point signed integer", FixedI8(i8), Signed }
+fixed! { "A 16-bit fixed-point signed integer", FixedI16(i16), Signed }
+fixed! { "A 32-bit fixed-point signed integer", FixedI32(i32), Signed }
+fixed! { "A 64-bit fixed-point signed integer", FixedI64(i64), Signed }
+fixed! { "A 128-bit fixed-point signed integer", FixedI128(i128), Signed }
 
 trait MulDiv {
     fn mul(self, rhs: Self) -> Self;

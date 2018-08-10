@@ -332,9 +332,7 @@ macro_rules! to_f {
     ($method:ident -> $f:ident($u:ident), $exp_bits:expr, $prec:expr) => {
         doc_comment! {
             concat!(
-                "Converts the fixed-point number to `",
-                stringify!($f),
-                "`."
+                "Converts the fixed-point number to `", stringify!($f), "`."
             ),
             pub fn $method(self) -> $f {
                 // exponent is IEEE754 style (1 <= significand < 2)
@@ -420,8 +418,8 @@ macro_rules! fixed {
                 "extern crate typenum;\n",
                 "use fixed::", stringify!($Fixed), ";\n",
                 "fn main() {\n",
-                "    let eleven: ", stringify!($Fixed), "<typenum::U3> = ",
-                stringify!($Fixed), "::from_bits(11 << 3);\n",
+                "    use typenum::U3;\n",
+                "    let eleven = ", stringify!($Fixed), "::<U3>::from_bits(11 << 3);\n",
                 "    let five_five = eleven >> 1u32;\n",
                 "    assert_eq!(eleven.to_string(), \"11.0\");\n",
                 "    assert_eq!(five_five.to_string(), \"5.5\");\n",
@@ -500,7 +498,7 @@ macro_rules! fixed {
             pub fn frac_bits() -> u32 {
                 Frac::to_u32()
             }
-            
+
             pass_method! {
                 "Returns the number of ones in the binary representation.",
                 $Fixed($Inner) => fn count_ones(self) -> u32
@@ -782,11 +780,9 @@ macro_rules! fixed {
 
             doc_comment! {
                 concat!(
-                    "Creates a fixed-point number of type `",
-                    stringify!($Fixed),
-                    "` that has a bitwise representation identical to the `",
-                    stringify!($Inner),
-                    "` value."
+                    "Creates a fixed-point number of type `", stringify!($Fixed), "`\n",
+                    "that has a bitwise representation identical to the\n",
+                    "`", stringify!($Inner), "` value."
                 ),
                 #[inline]
                 pub fn from_bits(v: $Inner) -> $Fixed<Frac> {
@@ -798,11 +794,9 @@ macro_rules! fixed {
 
             doc_comment! {
                 concat!(
-                    "Creates an integer of type `",
-                    stringify!($Inner),
-                    "` that has a bitwise representation identical to the `",
-                    stringify!($Fixed),
-                    "` value."
+                    "Creates an integer of type `", stringify!($Inner), "`\n",
+                    "that has a bitwise representation identical to the\n",
+                    "`", stringify!($Fixed), "` value."
                 ),
                 #[inline]
                 pub fn to_bits(self) -> $Inner {

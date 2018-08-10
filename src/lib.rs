@@ -396,7 +396,7 @@ macro_rules! fixed {
                 "}\n",
                 "```\n",
                 "\n",
-                "[`Unsigned`]: https://docs.rs/typenum/^1/typenum/marker_traits/trait.Unsigned.html\n",
+                "[`Unsigned`]: https://docs.rs/typenum/^1.3/typenum/marker_traits/trait.Unsigned.html\n",
                 "[const generics]: https://github.com/rust-lang/rust/issues/44580\n",
                 "[typenum crate]: https://crates.io/crates/typenum\n"
             ),

@@ -37,10 +37,11 @@ compiler. When they are implemented, Fixed will require the
 
 ## License
 
-This crate is licensed under either the
+This crate is free software: you can redistribute it and/or modify it
+under the terms of either
 
- * [Apache License, Version 2.0][LICENSE-APACHE] or
- * [MIT License][LICENSE-MIT]
+ * the [Apache License, Version 2.0][LICENSE-APACHE] or
+ * the [MIT License][LICENSE-MIT]
 
 at your option.
 

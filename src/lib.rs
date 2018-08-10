@@ -14,6 +14,7 @@ mod traits;
 
 use std::f32;
 use std::f64;
+use std::iter::{Product, Sum};
 use std::mem;
 use std::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign,
@@ -290,6 +291,24 @@ macro_rules! fixed_unsigned {
         pass_assign! { impl BitOrAssign for $Fixed($Inner) { bitor_assign } }
         pass! { impl BitXor for $Fixed($Inner) { bitxor } }
         pass_assign! { impl BitXorAssign for $Fixed($Inner) { bitxor_assign } }
+
+        impl Product<$Fixed> for $Fixed {
+            fn product<I: Iterator<Item = $Fixed>>(mut iter: I) -> $Fixed {
+                match iter.next() {
+                    None => <$Fixed as FixedNum>::one().expect("overflow"),
+                    Some(first) => iter.fold(first, Mul::mul),
+                }
+            }
+        }
+
+        impl<'a> Product<&'a $Fixed> for $Fixed {
+            fn product<I: Iterator<Item = &'a $Fixed>>(mut iter: I) -> $Fixed {
+                match iter.next() {
+                    None => <$Fixed as FixedNum>::one().expect("overflow"),
+                    Some(first) => iter.fold(*first, Mul::mul),
+                }
+            }
+        }
     };
 }
 

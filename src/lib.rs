@@ -18,7 +18,7 @@ use std::iter::{Product, Sum};
 use std::mem;
 use std::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign,
-    Mul, MulAssign, Neg, Not, Sub, SubAssign,
+    Mul, MulAssign, Neg, Not, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 use traits::FixedNum;
 
@@ -30,7 +30,7 @@ macro_rules! refs {
             type Output = $Fixed;
             #[inline]
             fn $method(self, rhs: $Fixed) -> $Fixed {
-                <$Fixed as $Imp>::$method(*self, rhs)
+                <$Fixed as $Imp<$Fixed>>::$method(*self, rhs)
             }
         }
 
@@ -38,7 +38,7 @@ macro_rules! refs {
             type Output = $Fixed;
             #[inline]
             fn $method(self, rhs: &$Fixed) -> $Fixed {
-                <$Fixed as $Imp>::$method(self, *rhs)
+                <$Fixed as $Imp<$Fixed>>::$method(self, *rhs)
             }
         }
 
@@ -46,7 +46,7 @@ macro_rules! refs {
             type Output = $Fixed;
             #[inline]
             fn $method(self, rhs: &$Fixed) -> $Fixed {
-                <$Fixed as $Imp>::$method(*self, *rhs)
+                <$Fixed as $Imp<$Fixed>>::$method(*self, *rhs)
             }
         }
     };
@@ -57,7 +57,7 @@ macro_rules! refs_assign {
         impl<'a> $Imp<&'a $Fixed> for $Fixed {
             #[inline]
             fn $method(&mut self, rhs: &$Fixed) {
-                <$Fixed as $Imp>::$method(self, *rhs);
+                <$Fixed as $Imp<$Fixed>>::$method(self, *rhs);
             }
         }
     };
@@ -69,7 +69,7 @@ macro_rules! pass {
             type Output = $Fixed;
             #[inline]
             fn $method(self, rhs: $Fixed) -> $Fixed {
-                $Fixed(<$Inner as $Imp>::$method(self.0, rhs.0))
+                $Fixed(<$Inner as $Imp<$Inner>>::$method(self.0, rhs.0))
             }
         }
 
@@ -82,7 +82,7 @@ macro_rules! pass_assign {
         impl $Imp<$Fixed> for $Fixed {
             #[inline]
             fn $method(&mut self, rhs: $Fixed) {
-                <$Inner as $Imp>::$method(&mut self.0, rhs.0);
+                <$Inner as $Imp<$Inner>>::$method(&mut self.0, rhs.0);
             }
         }
 
@@ -108,6 +108,71 @@ macro_rules! pass_one {
             }
         }
     };
+}
+
+macro_rules! shift {
+    (impl $Imp:ident < $Rhs:ty > for $Fixed:ident($Inner:ty) { $method:ident }) => {
+        impl $Imp<$Rhs> for $Fixed {
+            type Output = $Fixed;
+            #[inline]
+            fn $method(self, rhs: $Rhs) -> $Fixed {
+                $Fixed(<$Inner as $Imp<$Rhs>>::$method(self.0, rhs))
+            }
+        }
+
+        impl<'a> $Imp<$Rhs> for &'a $Fixed {
+            type Output = $Fixed;
+            #[inline]
+            fn $method(self, rhs: $Rhs) -> $Fixed {
+                <$Fixed as $Imp<$Rhs>>::$method(*self, rhs)
+            }
+        }
+
+        impl<'a> $Imp<&'a $Rhs> for $Fixed {
+            type Output = $Fixed;
+            #[inline]
+            fn $method(self, rhs: &$Rhs) -> $Fixed {
+                <$Fixed as $Imp<$Rhs>>::$method(self, *rhs)
+            }
+        }
+
+        impl<'a, 'b> $Imp<&'a $Rhs> for &'b $Fixed {
+            type Output = $Fixed;
+            #[inline]
+            fn $method(self, rhs: &$Rhs) -> $Fixed {
+                <$Fixed as $Imp<$Rhs>>::$method(*self, *rhs)
+            }
+        }
+    };
+}
+
+macro_rules! shift_assign {
+    (impl $Imp:ident < $Rhs:ty > for $Fixed:ident($Inner:ty) { $method:ident }) => {
+        impl $Imp<$Rhs> for $Fixed {
+            #[inline]
+            fn $method(&mut self, rhs: $Rhs) {
+                <$Inner as $Imp<$Rhs>>::$method(&mut self.0, rhs);
+            }
+        }
+
+        impl<'a> $Imp<&'a $Rhs> for $Fixed {
+            #[inline]
+            fn $method(&mut self, rhs: &$Rhs) {
+                <$Fixed as $Imp<$Rhs>>::$method(self, *rhs);
+            }
+        }
+    };
+}
+
+macro_rules! shift_all {
+    (
+        impl {$Imp:ident, $ImpAssign:ident}<{$($Rhs:ty),*}>
+            for $Fixed:ident($Inner:ty)
+        { $method:ident, $method_assign:ident }
+    ) => { $(
+        shift! { impl $Imp<$Rhs> for $Fixed($Inner) { $method } }
+        shift_assign! { impl $ImpAssign<$Rhs> for $Fixed($Inner) { $method_assign } }
+    )* };
 }
 
 macro_rules! doc_comment {
@@ -291,6 +356,33 @@ macro_rules! fixed_unsigned {
         pass_assign! { impl BitOrAssign for $Fixed($Inner) { bitor_assign } }
         pass! { impl BitXor for $Fixed($Inner) { bitxor } }
         pass_assign! { impl BitXorAssign for $Fixed($Inner) { bitxor_assign } }
+
+        shift_all! {
+            impl {Shl, ShlAssign}<{
+                i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize
+            }> for $Fixed($Inner) {
+                shl, shl_assign
+            }
+        }
+        shift_all! {
+            impl {Shr, ShrAssign}<{
+                i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize
+            }> for $Fixed($Inner) {
+                shr, shr_assign
+            }
+        }
+
+        impl Sum<$Fixed> for $Fixed {
+            fn sum<I: Iterator<Item = $Fixed>>(iter: I) -> $Fixed {
+                iter.fold($Fixed::from_bits(0), Add::add)
+            }
+        }
+
+        impl<'a> Sum<&'a $Fixed> for $Fixed {
+            fn sum<I: Iterator<Item = &'a $Fixed>>(iter: I) -> $Fixed {
+                iter.fold($Fixed::from_bits(0), Add::add)
+            }
+        }
 
         impl Product<$Fixed> for $Fixed {
             fn product<I: Iterator<Item = $Fixed>>(mut iter: I) -> $Fixed {
@@ -532,6 +624,8 @@ mod tests {
         assert_eq!((af | bf).to_bits(), (a << F) | (b << F));
         assert_eq!((af ^ bf).to_bits(), (a << F) ^ (b << F));
         assert_eq!((!af).to_bits(), !(a << F));
+        assert_eq!((af << 4u8).to_bits(), (a << F) << 4);
+        assert_eq!((af >> 4i128).to_bits(), (a << F) >> 4);
     }
 
     #[test]
@@ -551,6 +645,8 @@ mod tests {
             assert_eq!((af ^ bf).to_bits(), (a << F) ^ (b << F));
             assert_eq!((-af).to_bits(), -(a << F));
             assert_eq!((!af).to_bits(), !(a << F));
+            assert_eq!((af << 4u8).to_bits(), (a << F) << 4);
+            assert_eq!((af >> 4i128).to_bits(), (a << F) >> 4);
         }
     }
 

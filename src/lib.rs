@@ -555,6 +555,9 @@ macro_rules! fixed {
             /// Checked fixed-point division.
             #[inline]
             pub fn checked_div(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
+                if rhs.to_bits() == 0 {
+                    return None;
+                }
                 let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::to_u32());
                 match dir {
                     Ordering::Equal => Some($Fixed::from_bits(ans)),

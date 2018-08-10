@@ -89,15 +89,15 @@ additional terms or conditions.
 [*typenum* crate]: https://crates.io/crates/typenum
 [LICENSE-APACHE]: https://www.apache.org/licenses/LICENSE-2.0
 [LICENSE-MIT]: https://opensource.org/licenses/MIT
-[`FixedI128`]: https://docs.rs/fixed/0.0.1/fixed/struct.FixedI128.html
-[`FixedI16`]: https://docs.rs/fixed/0.0.1/fixed/struct.FixedI16.html
-[`FixedI32`]: https://docs.rs/fixed/0.0.1/fixed/struct.FixedI32.html
-[`FixedI64`]: https://docs.rs/fixed/0.0.1/fixed/struct.FixedI64.html
-[`FixedI8`]: https://docs.rs/fixed/0.0.1/fixed/struct.FixedI8.html
-[`FixedU128`]: https://docs.rs/fixed/0.0.1/fixed/struct.FixedU128.html
-[`FixedU16`]: https://docs.rs/fixed/0.0.1/fixed/struct.FixedU16.html
-[`FixedU32`]: https://docs.rs/fixed/0.0.1/fixed/struct.FixedU32.html
-[`FixedU64`]: https://docs.rs/fixed/0.0.1/fixed/struct.FixedU64.html
-[`FixedU8`]: https://docs.rs/fixed/0.0.1/fixed/struct.FixedU8.html
+[`FixedI128`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedI128.html
+[`FixedI16`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedI16.html
+[`FixedI32`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedI32.html
+[`FixedI64`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedI64.html
+[`FixedI8`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedI8.html
+[`FixedU128`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedU128.html
+[`FixedU16`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedU16.html
+[`FixedU32`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedU32.html
+[`FixedU64`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedU64.html
+[`FixedU8`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedU8.html
 [channels]: https://doc.rust-lang.org/book/second-edition/appendix-07-nightly-rust.html
 [const generics]: https://github.com/rust-lang/rust/issues/44580

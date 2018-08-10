@@ -33,6 +33,23 @@ fixed-point number lies in the range −0.5 ≤ *x* < 0.5 for signed
 fixed-point numbers, and in the range 0 ≤ *x* < 1 for unsigned
 fixed-point numbers.
 
+## What’s new
+
+### Version 0.1.0 news (2018-08-10)
+
+  * [`Unsigned`] constants provided by the [*typenum* crate] are now
+    used for the number of fractional bits.
+  * Many methods and trait implementations available for primitive
+    integers are now also supported by the fixed-point numbers.
+
+[`Unsigned`]: https://docs.rs/typenum/^1.3/typenum/marker_traits/trait.Unsigned.html
+
+### Other releases
+
+Details on other releases can be found in [*RELEASES.md*].
+
+[*RELEASES.md*]: https://gitlab.com/tspiteri/fixed/blob/master/RELEASES.md
+
 ## Using the *fixed* crate
 
 The *fixed* crate is available on [crates.io][*fixed* crate]. To use
@@ -40,7 +57,7 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 
 ```toml
 [dependencies]
-fixed = "0.0.1"
+fixed = "0.1.0"
 ```
 
 You also need to declare it by adding this to your crate root (usually

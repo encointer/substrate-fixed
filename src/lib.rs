@@ -49,7 +49,7 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 
 ```toml
 [dependencies]
-fixed = "0.0.1"
+fixed = "0.1.0"
 ```
 
 You also need to declare it by adding this to your crate root (usually
@@ -95,7 +95,7 @@ additional terms or conditions.
 [const generics]: https://github.com/rust-lang/rust/issues/44580
 */
 #![warn(missing_docs)]
-#![doc(html_root_url = "https://docs.rs/fixed/0.0.1")]
+#![doc(html_root_url = "https://docs.rs/fixed/0.1.0")]
 #![doc(test(attr(deny(warnings))))]
 #![cfg_attr(nightly_repr_transparent, feature(repr_transparent))]
 

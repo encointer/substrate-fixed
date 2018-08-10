@@ -32,7 +32,7 @@ pub(crate) trait FixedNum: Copy {
     }
     #[inline(always)]
     fn frac_bits() -> u32 {
-        ::F
+        ::FRAC
     }
     fn take_int_digit(int_part: &mut Self::Part, digit_bits: u32) -> u8;
     fn take_frac_digit(frac_part: &mut Self::Part, digit_bits: u32) -> u8;

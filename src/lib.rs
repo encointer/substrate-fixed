@@ -86,7 +86,7 @@ use std::ops::{
 };
 use traits::FixedNum;
 
-const F: u32 = 7;
+const FRAC: u32 = 7;
 
 macro_rules! if_signed {
     (Signed => $($rem:tt)+) => {
@@ -373,9 +373,9 @@ macro_rules! fixed {
         doc_comment! {
             concat!(
                 $description,
-                "\nwith `F` fractional bits.\n",
+                "\nwith `FRAC` fractional bits.\n",
                 "\n",
-                "Currently `F` is hard-coded to the arbitrary value 7;\n",
+                "Currently `FRAC` is hard-coded to the arbitrary value 7;\n",
                 "this will be changed to a [const generic] when they are\n",
                 "implemented in the compiler.\n",
                 "\n",
@@ -830,7 +830,7 @@ macro_rules! mul_div_widen {
             #[inline]
             fn mul_dir(self, rhs: $Single) -> ($Single, Ordering) {
                 const BITS: u32 = mem::size_of::<$Single>() as u32 * 8;
-                const I: u32 = BITS - F;
+                const I: u32 = BITS - FRAC;
                 let lhs2 = self as $Double;
                 let rhs2 = rhs as $Double << I;
                 let (prod2, overflow) = lhs2.overflowing_mul(rhs2);
@@ -856,7 +856,7 @@ macro_rules! mul_div_widen {
 
             #[inline]
             fn div_dir(self, rhs: $Single) -> ($Single, Ordering) {
-                let lhs2 = self as $Double << F;
+                let lhs2 = self as $Double << FRAC;
                 let rhs2 = rhs as $Double;
                 let quot2 = lhs2 / rhs2;
                 let quot = quot2 as $Single;
@@ -970,7 +970,7 @@ macro_rules! mul_div_fallback {
     ($Single:ty, $Signedness:tt) => {
         impl MulDivDir for $Single {
             fn mul_dir(self, rhs: $Single) -> ($Single, Ordering) {
-                if F == 0 {
+                if FRAC == 0 {
                     let (ans, overflow) = self.overflowing_mul(rhs);
                     let dir;
                     if_unsigned! { $Signedness => {
@@ -1006,12 +1006,12 @@ macro_rules! mul_div_fallback {
                     let carries = carry_col2 as $Single + carry_col3.shift_lo_up();
                     let ans23 = col23.wrapping_add(carries).wrapping_add(col12_hi);
 
-                    ans23.combine_lo_then_shl(ans01, F)
+                    ans23.combine_lo_then_shl(ans01, FRAC)
                 }
             }
 
             fn div_dir(self, rhs: $Single) -> ($Single, Ordering) {
-                if F == 0 {
+                if FRAC == 0 {
                     let (ans, overflow) = self.overflowing_div(rhs);
                     let dir;
                     if_unsigned! { $Signedness => {
@@ -1058,18 +1058,18 @@ mod tests {
     fn fixed_u16() {
         let a = 12;
         let b = 4;
-        let af = FixedU16::from_bits(a << F);
-        let bf = FixedU16::from_bits(b << F);
-        assert_eq!((af + bf).to_bits(), (a << F) + (b << F));
-        assert_eq!((af - bf).to_bits(), (a << F) - (b << F));
-        assert_eq!((af * bf).to_bits(), (a << F) * b);
-        assert_eq!((af / bf).to_bits(), (a << F) / b);
-        assert_eq!((af & bf).to_bits(), (a << F) & (b << F));
-        assert_eq!((af | bf).to_bits(), (a << F) | (b << F));
-        assert_eq!((af ^ bf).to_bits(), (a << F) ^ (b << F));
-        assert_eq!((!af).to_bits(), !(a << F));
-        assert_eq!((af << 4u8).to_bits(), (a << F) << 4);
-        assert_eq!((af >> 4i128).to_bits(), (a << F) >> 4);
+        let af = FixedU16::from_bits(a << FRAC);
+        let bf = FixedU16::from_bits(b << FRAC);
+        assert_eq!((af + bf).to_bits(), (a << FRAC) + (b << FRAC));
+        assert_eq!((af - bf).to_bits(), (a << FRAC) - (b << FRAC));
+        assert_eq!((af * bf).to_bits(), (a << FRAC) * b);
+        assert_eq!((af / bf).to_bits(), (a << FRAC) / b);
+        assert_eq!((af & bf).to_bits(), (a << FRAC) & (b << FRAC));
+        assert_eq!((af | bf).to_bits(), (a << FRAC) | (b << FRAC));
+        assert_eq!((af ^ bf).to_bits(), (a << FRAC) ^ (b << FRAC));
+        assert_eq!((!af).to_bits(), !(a << FRAC));
+        assert_eq!((af << 4u8).to_bits(), (a << FRAC) << 4);
+        assert_eq!((af >> 4i128).to_bits(), (a << FRAC) >> 4);
     }
 
     #[test]
@@ -1078,19 +1078,19 @@ mod tests {
         let b = 4;
         for &pair in &[(a, b), (a, -b), (-a, b), (-a, -b)] {
             let (a, b) = pair;
-            let af = FixedI16::from_bits(a << F);
-            let bf = FixedI16::from_bits(b << F);
-            assert_eq!((af + bf).to_bits(), (a << F) + (b << F));
-            assert_eq!((af - bf).to_bits(), (a << F) - (b << F));
-            assert_eq!((af * bf).to_bits(), (a << F) * b);
-            assert_eq!((af / bf).to_bits(), (a << F) / b);
-            assert_eq!((af & bf).to_bits(), (a << F) & (b << F));
-            assert_eq!((af | bf).to_bits(), (a << F) | (b << F));
-            assert_eq!((af ^ bf).to_bits(), (a << F) ^ (b << F));
-            assert_eq!((-af).to_bits(), -(a << F));
-            assert_eq!((!af).to_bits(), !(a << F));
-            assert_eq!((af << 4u8).to_bits(), (a << F) << 4);
-            assert_eq!((af >> 4i128).to_bits(), (a << F) >> 4);
+            let af = FixedI16::from_bits(a << FRAC);
+            let bf = FixedI16::from_bits(b << FRAC);
+            assert_eq!((af + bf).to_bits(), (a << FRAC) + (b << FRAC));
+            assert_eq!((af - bf).to_bits(), (a << FRAC) - (b << FRAC));
+            assert_eq!((af * bf).to_bits(), (a << FRAC) * b);
+            assert_eq!((af / bf).to_bits(), (a << FRAC) / b);
+            assert_eq!((af & bf).to_bits(), (a << FRAC) & (b << FRAC));
+            assert_eq!((af | bf).to_bits(), (a << FRAC) | (b << FRAC));
+            assert_eq!((af ^ bf).to_bits(), (a << FRAC) ^ (b << FRAC));
+            assert_eq!((-af).to_bits(), -(a << FRAC));
+            assert_eq!((!af).to_bits(), !(a << FRAC));
+            assert_eq!((af << 4u8).to_bits(), (a << FRAC) << 4);
+            assert_eq!((af >> 4i128).to_bits(), (a << FRAC) >> 4);
         }
     }
 
@@ -1098,16 +1098,16 @@ mod tests {
     fn fixed_u128() {
         let a = 0x0003456789abcdef_0123456789abcdef_u128;
         let b = 5;
-        let af = FixedU128::from_bits(a << F);
-        let bf = FixedU128::from_bits(b << F);
-        assert_eq!((af + bf).to_bits(), (a << F) + (b << F));
-        assert_eq!((af - bf).to_bits(), (a << F) - (b << F));
-        assert_eq!((af * bf).to_bits(), (a << F) * b);
-        // assert_eq!((af / bf).to_bits(), (a << F) / b);
-        assert_eq!((af & bf).to_bits(), (a << F) & (b << F));
-        assert_eq!((af | bf).to_bits(), (a << F) | (b << F));
-        assert_eq!((af ^ bf).to_bits(), (a << F) ^ (b << F));
-        assert_eq!((!af).to_bits(), !(a << F));
+        let af = FixedU128::from_bits(a << FRAC);
+        let bf = FixedU128::from_bits(b << FRAC);
+        assert_eq!((af + bf).to_bits(), (a << FRAC) + (b << FRAC));
+        assert_eq!((af - bf).to_bits(), (a << FRAC) - (b << FRAC));
+        assert_eq!((af * bf).to_bits(), (a << FRAC) * b);
+        // assert_eq!((af / bf).to_bits(), (a << FRAC) / b);
+        assert_eq!((af & bf).to_bits(), (a << FRAC) & (b << FRAC));
+        assert_eq!((af | bf).to_bits(), (a << FRAC) | (b << FRAC));
+        assert_eq!((af ^ bf).to_bits(), (a << FRAC) ^ (b << FRAC));
+        assert_eq!((!af).to_bits(), !(a << FRAC));
     }
 
     #[test]
@@ -1116,16 +1116,16 @@ mod tests {
         let b = 5;
         for &pair in &[(a, b), (a, -b), (-a, b), (-a, -b)] {
             let (a, b) = pair;
-            let af = FixedI128::from_bits(a << F);
-            let bf = FixedI128::from_bits(b << F);
-            assert_eq!((af + bf).to_bits(), (a << F) + (b << F));
-            assert_eq!((af - bf).to_bits(), (a << F) - (b << F));
-            assert_eq!((af * bf).to_bits(), (a << F) * b);
-            // assert_eq!((af / bf).to_bits(), (a << F) / b);
-            assert_eq!((af & bf).to_bits(), (a << F) & (b << F));
-            assert_eq!((af | bf).to_bits(), (a << F) | (b << F));
-            assert_eq!((af ^ bf).to_bits(), (a << F) ^ (b << F));
-            assert_eq!((!af).to_bits(), !(a << F));
+            let af = FixedI128::from_bits(a << FRAC);
+            let bf = FixedI128::from_bits(b << FRAC);
+            assert_eq!((af + bf).to_bits(), (a << FRAC) + (b << FRAC));
+            assert_eq!((af - bf).to_bits(), (a << FRAC) - (b << FRAC));
+            assert_eq!((af * bf).to_bits(), (a << FRAC) * b);
+            // assert_eq!((af / bf).to_bits(), (a << FRAC) / b);
+            assert_eq!((af & bf).to_bits(), (a << FRAC) & (b << FRAC));
+            assert_eq!((af | bf).to_bits(), (a << FRAC) | (b << FRAC));
+            assert_eq!((af ^ bf).to_bits(), (a << FRAC) ^ (b << FRAC));
+            assert_eq!((!af).to_bits(), !(a << FRAC));
         }
     }
 

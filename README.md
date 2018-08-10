@@ -12,10 +12,26 @@ the [*typenum* crate] for the fractional bit count; it is planned to
 move to [const generics] when they are implemented by the Rust
 compiler.
 
-The crate provides unsigned fixed-point numbers [`FixedU8`],
-[`FixedU16`], [`FixedU32`], [`FixedU64`] and [`FixedU128`], and signed
-fixed-point numbers [`FixedI8`], [`FixedI16`], [`FixedI32`],
-[`FixedI64`] and [`FixedI128`].
+The crate provides the following types:
+
+  * [`FixedI8`] is a signed eight-bit fixed-point number,
+  * [`FixedI16`] is a signed 16-bit fixed-point number,
+  * [`FixedI32`] is a signed 32-bit fixed-point number,
+  * [`FixedI64`] is a signed 64-bit fixed-point number,
+  * [`FixedI128`] is a signed 128-bit fixed-point number,
+  * [`FixedU8`] is an unsigned eight-bit fixed-point number,
+  * [`FixedU16`] is an unsigned 16-bit fixed-point number,
+  * [`FixedU32`] is an unsigned 32-bit fixed-point number,
+  * [`FixedU64`] is an unsigned 64-bit fixed-point number, and
+  * [`FixedU128`] is an unsigned 128-bit fixed-point number.
+
+All fixed-point numbers can have `Frac` fractional bits, where `Frac`
+can have any value from 0 up to and including the size of the number
+in bits. When `Frac` is 0, the fixed-point number behaves like an
+integer. When `Frac` is equal to the number of bits, the value of the
+fixed-point number lies in the range −0.5 ≤ *x* < 0.5 for signed
+fixed-point numbers, and in the range 0 ≤ *x* < 1 for unsigned
+fixed-point numbers.
 
 ## Using the *fixed* crate
 

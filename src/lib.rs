@@ -114,7 +114,7 @@ use std::marker::PhantomData;
 use std::mem;
 use std::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign,
-    Mul, MulAssign, Neg, Not, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
+    Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 use typenum::Unsigned;
 
@@ -562,6 +562,24 @@ macro_rules! fixed {
                 }
             }
 
+            /// Checked fixed-point multiplication by integer.
+            #[inline]
+            pub fn checked_mul_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
+                <$Inner>::checked_mul(self.to_bits(), rhs).map($Fixed::from_bits)
+            }
+
+            /// Checked fixed-point division by integer.
+            #[inline]
+            pub fn checked_div_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
+                <$Inner>::checked_div(self.to_bits(), rhs).map($Fixed::from_bits)
+            }
+
+            /// Checked fixed-point remainder for division by integer.
+            #[inline]
+            pub fn checked_rem_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
+                <$Inner>::checked_rem(self.to_bits(), rhs).map($Fixed::from_bits)
+            }
+
             /// Checked fixed-point left shift.
             #[inline]
             pub fn checked_shl(self, rhs: u32) -> Option<$Fixed<Frac>> {
@@ -617,6 +635,12 @@ macro_rules! fixed {
                 }
             }
 
+            /// Saturating fixed-point multiplication by integer.
+            #[inline]
+            pub fn saturating_mul_int(self, rhs: $Inner) -> $Fixed<Frac> {
+                $Fixed::from_bits(<$Inner>::saturating_mul(self.to_bits(), rhs))
+            }
+
             /// Wrapping negation.
             #[inline]
             pub fn wrapping_neg(self) -> $Fixed<Frac> {
@@ -647,6 +671,24 @@ macro_rules! fixed {
             pub fn wrapping_div(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
                 let (ans, _dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::to_u32());
                 $Fixed::from_bits(ans)
+            }
+
+            /// Wrapping fixed-point multiplication by integer.
+            #[inline]
+            pub fn wrapping_mul_int(self, rhs: $Inner) -> $Fixed<Frac> {
+                $Fixed::from_bits(<$Inner>::wrapping_mul(self.to_bits(), rhs))
+            }
+
+            /// Wrapping fixed-point division by integer.
+            #[inline]
+            pub fn wrapping_div_int(self, rhs: $Inner) -> $Fixed<Frac> {
+                $Fixed::from_bits(<$Inner>::wrapping_div(self.to_bits(), rhs))
+            }
+
+            /// Wrapping fixed-point remainder for division by integer.
+            #[inline]
+            pub fn wrapping_rem_int(self, rhs: $Inner) -> $Fixed<Frac> {
+                $Fixed::from_bits(<$Inner>::wrapping_rem(self.to_bits(), rhs))
             }
 
             /// Wrapping fixed-point left shift.
@@ -703,6 +745,27 @@ macro_rules! fixed {
             pub fn overflowing_div(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
                 let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::to_u32());
                 ($Fixed::from_bits(ans), dir != Ordering::Equal)
+            }
+
+            /// Overflowing fixed-point multiplication by integer.
+            #[inline]
+            pub fn overflowing_mul_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
+                let (ans, o) = <$Inner>::overflowing_mul(self.to_bits(), rhs);
+                ($Fixed::from_bits(ans), o)
+            }
+
+            /// Overflowing fixed-point division by integer.
+            #[inline]
+            pub fn overflowing_div_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
+                let (ans, o) = <$Inner>::overflowing_div(self.to_bits(), rhs);
+                ($Fixed::from_bits(ans), o)
+            }
+
+            /// Overflowing fixed-point remainder for division by integer.
+            #[inline]
+            pub fn overflowing_rem_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
+                let (ans, o) = <$Inner>::overflowing_rem(self.to_bits(), rhs);
+                ($Fixed::from_bits(ans), o)
             }
 
             /// Overflowing fixed-point left shift.
@@ -987,6 +1050,51 @@ macro_rules! fixed {
             #[inline]
             fn div_assign(&mut self, rhs: &$Inner) {
                 *self = <$Fixed<Frac> as Div<$Inner>>::div(*self, *rhs)
+            }
+        }
+
+        impl<Frac: Unsigned> Rem<$Inner> for $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
+            #[inline]
+            fn rem(self, rhs: $Inner) -> $Fixed<Frac> {
+                $Fixed::from_bits(self.to_bits() % rhs)
+            }
+        }
+
+        impl<'a, Frac: Unsigned> Rem<$Inner> for &'a $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
+            #[inline]
+            fn rem(self, rhs: $Inner) -> $Fixed<Frac> {
+                <$Fixed<Frac> as Rem<$Inner>>::rem(*self, rhs)
+            }
+        }
+
+        impl<'a, Frac: Unsigned> Rem<&'a $Inner> for $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
+            #[inline]
+            fn rem(self, rhs: &$Inner) -> $Fixed<Frac> {
+                <$Fixed<Frac> as Rem<$Inner>>::rem(self, *rhs)
+            }
+        }
+        impl<'a, 'b, Frac: Unsigned> Rem<&'a $Inner> for &'b $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
+            #[inline]
+            fn rem(self, rhs: &$Inner) -> $Fixed<Frac> {
+                <$Fixed<Frac> as Rem<$Inner>>::rem(*self, *rhs)
+            }
+        }
+
+        impl<Frac: Unsigned> RemAssign<$Inner> for $Fixed<Frac> {
+            #[inline]
+            fn rem_assign(&mut self, rhs: $Inner) {
+                *self = <$Fixed<Frac> as Rem<$Inner>>::rem(*self, rhs)
+            }
+        }
+
+        impl<'a, Frac: Unsigned> RemAssign<&'a $Inner> for $Fixed<Frac> {
+            #[inline]
+            fn rem_assign(&mut self, rhs: &$Inner) {
+                *self = <$Fixed<Frac> as Rem<$Inner>>::rem(*self, *rhs)
             }
         }
 

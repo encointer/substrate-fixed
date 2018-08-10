@@ -35,9 +35,10 @@ fixed-point numbers.
 
 ## What’s new
 
-### Version 0.1.1 (unreleased)
+### Version 0.1.1 news (unreleased)
 
   * New static methods [`int_bits`] and [`frac_bits`] were added.
+  * Support for multiplication and division by integers was added.
   
 [`frac_bits`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedI32.html#method.frac_bits
 [`int_bits`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedI32.html#method.int_bits

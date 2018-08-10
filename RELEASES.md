@@ -9,6 +9,7 @@ Version 0.1.1 (unreleased)
 ==========================
 
   * New static methods `int_bits` and `frac_bits` were added.
+  * Support for multiplication and division by integers was added.
 
 Version 0.1.0 (2018-08-10)
 ==========================

@@ -832,7 +832,7 @@ macro_rules! fixed {
         impl<Frac: Unsigned> MulAssign<$Fixed<Frac>> for $Fixed<Frac> {
             #[inline]
             fn mul_assign(&mut self, rhs: $Fixed<Frac>) {
-                *self = <$Fixed<Frac> as Mul>::mul(*self, rhs)
+                *self = <$Fixed<Frac> as Mul<$Fixed<Frac>>>::mul(*self, rhs)
             }
         }
 
@@ -853,7 +853,7 @@ macro_rules! fixed {
         impl<Frac: Unsigned> DivAssign<$Fixed<Frac>> for $Fixed<Frac> {
             #[inline]
             fn div_assign(&mut self, rhs: $Fixed<Frac>) {
-                *self = <$Fixed<Frac> as Div>::div(*self, rhs)
+                *self = <$Fixed<Frac> as Div<$Fixed<Frac>>>::div(*self, rhs)
             }
         }
 
@@ -866,6 +866,129 @@ macro_rules! fixed {
         pass_assign! { impl BitOrAssign for $Fixed($Inner) { bitor_assign } }
         pass! { impl BitXor for $Fixed($Inner) { bitxor } }
         pass_assign! { impl BitXorAssign for $Fixed($Inner) { bitxor_assign } }
+
+        impl<Frac: Unsigned> Mul<$Inner> for $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
+            #[inline]
+            fn mul(self, rhs: $Inner) -> $Fixed<Frac> {
+                $Fixed::from_bits(self.to_bits() * rhs)
+            }
+        }
+
+        impl<Frac: Unsigned> Mul<$Fixed<Frac>> for $Inner {
+            type Output = $Fixed<Frac>;
+            #[inline]
+            fn mul(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                <$Fixed<Frac> as Mul<$Inner>>::mul(rhs, self)
+            }
+        }
+
+        impl<'a, Frac: Unsigned> Mul<$Inner> for &'a $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
+            #[inline]
+            fn mul(self, rhs: $Inner) -> $Fixed<Frac> {
+                <$Fixed<Frac> as Mul<$Inner>>::mul(*self, rhs)
+            }
+        }
+
+        impl<'a, Frac: Unsigned> Mul<&'a $Fixed<Frac>> for $Inner {
+            type Output = $Fixed<Frac>;
+            #[inline]
+            fn mul(self, rhs: &$Fixed<Frac>) -> $Fixed<Frac> {
+                <$Fixed<Frac> as Mul<$Inner>>::mul(*rhs, self)
+            }
+        }
+
+        impl<'a, Frac: Unsigned> Mul<&'a $Inner> for $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
+            #[inline]
+            fn mul(self, rhs: &$Inner) -> $Fixed<Frac> {
+                <$Fixed<Frac> as Mul<$Inner>>::mul(self, *rhs)
+            }
+        }
+
+        impl<'a, Frac: Unsigned> Mul<$Fixed<Frac>> for &'a $Inner {
+            type Output = $Fixed<Frac>;
+            #[inline]
+            fn mul(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                <$Fixed<Frac> as Mul<$Inner>>::mul(rhs, *self)
+            }
+        }
+
+        impl<'a, 'b, Frac: Unsigned> Mul<&'a $Inner> for &'b $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
+            #[inline]
+            fn mul(self, rhs: &$Inner) -> $Fixed<Frac> {
+                <$Fixed<Frac> as Mul<$Inner>>::mul(*self, *rhs)
+            }
+        }
+
+        impl<'a, 'b, Frac: Unsigned> Mul<&'a $Fixed<Frac>> for &'b $Inner {
+            type Output = $Fixed<Frac>;
+            #[inline]
+            fn mul(self, rhs: &$Fixed<Frac>) -> $Fixed<Frac> {
+                <$Fixed<Frac> as Mul<$Inner>>::mul(*rhs, *self)
+            }
+        }
+
+        impl<Frac: Unsigned> MulAssign<$Inner> for $Fixed<Frac> {
+            #[inline]
+            fn mul_assign(&mut self, rhs: $Inner) {
+                *self = <$Fixed<Frac> as Mul<$Inner>>::mul(*self, rhs)
+            }
+        }
+
+        impl<'a, Frac: Unsigned> MulAssign<&'a $Inner> for $Fixed<Frac> {
+            #[inline]
+            fn mul_assign(&mut self, rhs: &$Inner) {
+                *self = <$Fixed<Frac> as Mul<$Inner>>::mul(*self, *rhs)
+            }
+        }
+
+        impl<Frac: Unsigned> Div<$Inner> for $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
+            #[inline]
+            fn div(self, rhs: $Inner) -> $Fixed<Frac> {
+                $Fixed::from_bits(self.to_bits() / rhs)
+            }
+        }
+
+        impl<'a, Frac: Unsigned> Div<$Inner> for &'a $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
+            #[inline]
+            fn div(self, rhs: $Inner) -> $Fixed<Frac> {
+                <$Fixed<Frac> as Div<$Inner>>::div(*self, rhs)
+            }
+        }
+
+        impl<'a, Frac: Unsigned> Div<&'a $Inner> for $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
+            #[inline]
+            fn div(self, rhs: &$Inner) -> $Fixed<Frac> {
+                <$Fixed<Frac> as Div<$Inner>>::div(self, *rhs)
+            }
+        }
+        impl<'a, 'b, Frac: Unsigned> Div<&'a $Inner> for &'b $Fixed<Frac> {
+            type Output = $Fixed<Frac>;
+            #[inline]
+            fn div(self, rhs: &$Inner) -> $Fixed<Frac> {
+                <$Fixed<Frac> as Div<$Inner>>::div(*self, *rhs)
+            }
+        }
+
+        impl<Frac: Unsigned> DivAssign<$Inner> for $Fixed<Frac> {
+            #[inline]
+            fn div_assign(&mut self, rhs: $Inner) {
+                *self = <$Fixed<Frac> as Div<$Inner>>::div(*self, rhs)
+            }
+        }
+
+        impl<'a, Frac: Unsigned> DivAssign<&'a $Inner> for $Fixed<Frac> {
+            #[inline]
+            fn div_assign(&mut self, rhs: &$Inner) {
+                *self = <$Fixed<Frac> as Div<$Inner>>::div(*self, *rhs)
+            }
+        }
 
         shift_all! {
             impl {Shl, ShlAssign}<{

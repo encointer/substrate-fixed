@@ -81,6 +81,7 @@ additional terms or conditions.
 #![warn(missing_docs)]
 #![doc(html_root_url = "https://docs.rs/fixed/0.0.1")]
 #![doc(test(attr(deny(warnings))))]
+#![cfg_attr(nightly_repr_transparent, feature(repr_transparent))]
 
 extern crate typenum;
 
@@ -415,7 +416,7 @@ macro_rules! fixed {
                 "[const generics]: https://github.com/rust-lang/rust/issues/44580\n",
                 "[typenum crate]: https://crates.io/crates/typenum\n"
             ),
-            #[repr(transparent)]
+            #[cfg_attr(repr_transparent, repr(transparent))]
             pub struct $Fixed<Frac: Unsigned>(($Inner, PhantomData<Frac>));
         }
 

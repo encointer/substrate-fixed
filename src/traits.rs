@@ -24,6 +24,7 @@ use {
 pub(crate) trait FixedNum: Copy {
     type Part;
     fn one() -> Option<Self>;
+    fn minus_one() -> Option<Self>;
     fn parts(self) -> (bool, Self::Part, Self::Part);
     #[inline(always)]
     fn int_bits() -> u32 {
@@ -111,6 +112,11 @@ macro_rules! fixed_num_unsigned {
             }
 
             #[inline]
+            fn minus_one() -> Option<Self> {
+                None
+            }
+
+            #[inline]
             fn parts(self) -> (bool, $Part, $Part) {
                 let bits = self.to_bits();
                 let int_bits = <$Fixed as FixedNum>::int_bits();
@@ -136,6 +142,17 @@ macro_rules! fixed_num_signed {
                     None
                 } else {
                     Some($Fixed::from_bits(1 << frac_bits))
+                }
+            }
+
+            #[inline]
+            fn minus_one() -> Option<Self> {
+                let int_bits = <$Fixed as FixedNum>::int_bits();
+                let frac_bits = <$Fixed as FixedNum>::frac_bits();
+                if int_bits < 1 {
+                    None
+                } else {
+                    Some($Fixed::from_bits(!0 << frac_bits))
                 }
             }
 

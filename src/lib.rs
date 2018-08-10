@@ -470,6 +470,15 @@ macro_rules! fixed {
                 <$Inner>::checked_shr(self.0, rhs).map($Fixed::from_bits)
             }
 
+            if_signed! {
+                $Signedness =>
+                /// Checked absolute value.
+                #[inline]
+                pub fn checked_abs(self) -> Option<$Fixed> {
+                    <$Inner>::checked_abs(self.0).map($Fixed::from_bits)
+                }
+            }
+
             /// Saturating fixed-point addition.
             #[inline]
             pub fn saturating_add(self, rhs: $Fixed) -> $Fixed {
@@ -548,6 +557,15 @@ macro_rules! fixed {
                 $Fixed(<$Inner>::wrapping_shr(self.0, rhs))
             }
 
+            if_signed! {
+                $Signedness =>
+                /// Wrapping absolute value.
+                #[inline]
+                pub fn wrapping_abs(self) -> $Fixed {
+                    $Fixed(<$Inner>::wrapping_abs(self.0))
+                }
+            }
+
             /// Overflowing negation.
             #[inline]
             pub fn overflowing_neg(self) -> ($Fixed, bool) {
@@ -595,6 +613,61 @@ macro_rules! fixed {
             pub fn overflowing_shr(self, rhs: u32) -> ($Fixed, bool) {
                 let (ans, o) = <$Inner>::overflowing_shr(self.0, rhs);
                 ($Fixed(ans), o)
+            }
+
+            if_signed! {
+                $Signedness =>
+                /// Overflowing absolute value.
+                #[inline]
+                pub fn overflowing_abs(self) -> ($Fixed, bool) {
+                    let (ans, o) = <$Inner>::overflowing_abs(self.0);
+                    ($Fixed(ans), o)
+                }
+            }
+
+            if_unsigned! {
+                $Signedness => pass_method! {
+                    "Returns `true` if the fixed-point number is \
+                     2<sup><i>k</i></sup> for some <i>k</i>.",
+                    $Fixed($Inner) => fn is_power_of_two(self) -> bool
+                }
+            }
+
+            if_unsigned! {
+                $Signedness => pass_method! {
+                    "Returns the smallest power of two ≥ `self`.",
+                    $Fixed($Inner) => fn next_power_of_two(self)
+                }
+            }
+
+            if_unsigned! {
+                $Signedness =>
+                /// Returns the smallest power of two ≥ `self`, or `None`
+                /// if the next power of two is too large to represent.
+                #[inline]
+                pub fn checked_next_power_of_two(self) -> Option<$Fixed> {
+                    <$Inner>::checked_next_power_of_two(self.0).map($Fixed::from_bits)
+                }
+            }
+
+            if_signed! {
+                $Signedness => pass_method! {
+                    "Returns the absolute value of two ≥ `self`.",
+                    $Fixed($Inner) => fn abs(self)
+                }
+            }
+
+            if_signed! {
+                $Signedness =>
+                /// Returns a number representing the sign of `self`.
+                #[inline]
+                pub fn signum(self) -> $Fixed {
+                    match self.0.cmp(&0) {
+                        Ordering::Equal => $Fixed(0),
+                        Ordering::Greater => <$Fixed as FixedNum>::one().expect("overflow"),
+                        Ordering::Less => <$Fixed as FixedNum>::minus_one().expect("overflow"),
+                    }
+                }
             }
 
             doc_comment! {

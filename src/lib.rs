@@ -75,6 +75,7 @@ mod traits;
 use std::cmp::Ordering;
 use std::f32;
 use std::f64;
+use std::hash::{Hash, Hasher};
 use std::iter::{Product, Sum};
 use std::marker::PhantomData;
 use std::mem;
@@ -400,7 +401,6 @@ macro_rules! fixed {
                 "[typenum crate]: https://crates.io/crates/typenum\n"
             ),
             #[repr(transparent)]
-            #[derive(Eq, Hash, Ord, PartialEq, PartialOrd)]
             pub struct $Fixed<Frac: Unsigned>(($Inner, PhantomData<Frac>));
         }
 
@@ -415,6 +415,35 @@ macro_rules! fixed {
         impl<Frac: Unsigned> Default for $Fixed<Frac> {
             fn default() -> $Fixed<Frac> {
                 $Fixed::from_bits(<$Inner as Default>::default())
+            }
+        }
+
+        impl<Frac: Unsigned> Eq for $Fixed<Frac> {}
+
+        impl<Frac: Unsigned> PartialEq<$Fixed<Frac>> for $Fixed<Frac> {
+            fn eq(&self, rhs: &$Fixed<Frac>) -> bool {
+                self.to_bits().eq(&rhs.to_bits())
+            }
+        }
+
+        impl<Frac: Unsigned> Ord for $Fixed<Frac> {
+            fn cmp(&self, rhs: &$Fixed<Frac>) -> Ordering {
+                self.to_bits().cmp(&rhs.to_bits())
+            }
+        }
+
+        impl<Frac: Unsigned> PartialOrd<$Fixed<Frac>> for $Fixed<Frac> {
+            fn partial_cmp(&self, rhs: &$Fixed<Frac>) -> Option<Ordering> {
+                self.to_bits().partial_cmp(&rhs.to_bits())
+            }
+        }
+
+        impl<Frac: Unsigned> Hash for $Fixed<Frac> {
+            fn hash<H>(&self, state: &mut H)
+            where
+                H: Hasher
+            {
+                self.to_bits().hash(state);
             }
         }
 

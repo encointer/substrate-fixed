@@ -75,6 +75,7 @@ additional terms or conditions.
 mod display;
 mod traits;
 
+use std::cmp::Ordering;
 use std::f32;
 use std::f64;
 use std::iter::{Product, Sum};
@@ -92,6 +93,13 @@ macro_rules! if_signed {
         $($rem)+
     };
     (Unsigned => $($rem:tt)+) => {
+    };
+}
+macro_rules! if_unsigned {
+    (Signed => $($rem:tt)+) => {
+    };
+    (Unsigned => $($rem:tt)+) => {
+        $($rem)+
     };
 }
 
@@ -177,6 +185,40 @@ macro_rules! pass_one {
             fn $method(self) -> $Fixed {
                 <$Fixed as $Imp>::$method(*self)
             }
+        }
+    };
+}
+
+macro_rules! pass_method {
+    ($comment:expr, $Fixed:ident($Inner:ty) => fn $method:ident()) => {
+        #[doc = $comment]
+        #[inline]
+        pub fn $method() -> $Fixed {
+            $Fixed(<$Inner>::$method())
+        }
+    };
+    ($comment:expr, $Fixed:ident($Inner:ty) => fn $method:ident(self)) => {
+        #[doc = $comment]
+        #[inline]
+        pub fn $method(self) -> $Fixed {
+            $Fixed(<$Inner>::$method(self.0))
+        }
+    };
+    ($comment:expr, $Fixed:ident($Inner:ty) => fn $method:ident(self) -> $ret_ty:ty) => {
+        #[doc = $comment]
+        #[inline]
+        pub fn $method(self) -> $ret_ty {
+            <$Inner>::$method(self.0)
+        }
+    };
+    (
+        $comment:expr,
+        $Fixed:ident($Inner:ty) => fn $method:ident(self, $param:ident: $param_ty:ty)
+    ) => {
+        #[doc = $comment]
+        #[inline]
+        pub fn $method(self, $param: $param_ty) -> $Fixed {
+            $Fixed(<$Inner>::$method(self.0, $param))
         }
     };
 }
@@ -345,6 +387,216 @@ macro_rules! fixed {
         }
 
         impl $Fixed {
+            pass_method! {
+                "Returns the smallest value that can be represented.",
+                $Fixed($Inner) => fn min_value()
+            }
+            pass_method! {
+                "Returns the largest value that can be represented.",
+                $Fixed($Inner) => fn max_value()
+            }
+            pass_method! {
+                "Returns the number of ones in the binary representation.",
+                $Fixed($Inner) => fn count_ones(self) -> u32
+            }
+            pass_method! {
+                "Returns the number of zeros in the binary representation.",
+                $Fixed($Inner) => fn count_zeros(self) -> u32
+            }
+            pass_method! {
+                "Returns the number of leading zeros in the binary representation.",
+                $Fixed($Inner) => fn leading_zeros(self) -> u32
+            }
+            pass_method! {
+                "Returns the number of trailing zeros in the binary representation.",
+                $Fixed($Inner) => fn trailing_zeros(self) -> u32
+            }
+            pass_method! {
+                "Shifts to the left by `n` bits, wrapping the truncated bits to the right end.",
+                $Fixed($Inner) => fn rotate_left(self, n: u32)
+            }
+            pass_method! {
+                "Shifts to the right by `n` bits, wrapping the truncated bits to the left end.",
+                $Fixed($Inner) => fn rotate_right(self, n: u32)
+            }
+
+            /// Checked negation.
+            #[inline]
+            pub fn checked_neg(self) -> Option<$Fixed> {
+                <$Inner>::checked_neg(self.0).map($Fixed::from_bits)
+            }
+
+            /// Checked fixed-point addition.
+            #[inline]
+            pub fn checked_add(self, rhs: $Fixed) -> Option<$Fixed> {
+                <$Inner>::checked_add(self.0, rhs.0).map($Fixed::from_bits)
+            }
+
+            /// Checked fixed-point subtraction.
+            #[inline]
+            pub fn checked_sub(self, rhs: $Fixed) -> Option<$Fixed> {
+                <$Inner>::checked_sub(self.0, rhs.0).map($Fixed::from_bits)
+            }
+
+            /// Checked fixed-point multiplication.
+            #[inline]
+            pub fn checked_mul(self, rhs: $Fixed) -> Option<$Fixed> {
+                let (ans, dir) = self.0.mul_dir(rhs.0);
+                match dir {
+                    Ordering::Equal => Some($Fixed(ans)),
+                    _ => None,
+                }
+            }
+
+            /// Checked fixed-point division.
+            #[inline]
+            pub fn checked_div(self, rhs: $Fixed) -> Option<$Fixed> {
+                let (ans, dir) = self.0.div_dir(rhs.0);
+                match dir {
+                    Ordering::Equal => Some($Fixed(ans)),
+                    _ => None,
+                }
+            }
+
+            /// Checked fixed-point left shift.
+            #[inline]
+            pub fn checked_shl(self, rhs: u32) -> Option<$Fixed> {
+                <$Inner>::checked_shl(self.0, rhs).map($Fixed::from_bits)
+            }
+
+            /// Checked fixed-point right shift.
+            #[inline]
+            pub fn checked_shr(self, rhs: u32) -> Option<$Fixed> {
+                <$Inner>::checked_shr(self.0, rhs).map($Fixed::from_bits)
+            }
+
+            /// Saturating fixed-point addition.
+            #[inline]
+            pub fn saturating_add(self, rhs: $Fixed) -> $Fixed {
+                $Fixed(<$Inner>::saturating_add(self.0, rhs.0))
+            }
+
+            /// Saturating fixed-point subtraction.
+            #[inline]
+            pub fn saturating_sub(self, rhs: $Fixed) -> $Fixed {
+                $Fixed(<$Inner>::saturating_sub(self.0, rhs.0))
+            }
+
+            /// Saturating fixed-point multiplication.
+            #[inline]
+            pub fn saturating_mul(self, rhs: $Fixed) -> $Fixed {
+                let (ans, dir) = self.0.mul_dir(rhs.0);
+                match dir {
+                    Ordering::Equal => $Fixed(ans),
+                    Ordering::Less => $Fixed::max_value(),
+                    Ordering::Greater => $Fixed::min_value(),
+                }
+            }
+
+            /// Saturating fixed-point division.
+            #[inline]
+            pub fn saturating_div(self, rhs: $Fixed) -> $Fixed {
+                let (ans, dir) = self.0.div_dir(rhs.0);
+                match dir {
+                    Ordering::Equal => $Fixed(ans),
+                    Ordering::Less => $Fixed::max_value(),
+                    Ordering::Greater => $Fixed::min_value(),
+                }
+            }
+
+            /// Wrapping negation.
+            #[inline]
+            pub fn wrapping_neg(self) -> $Fixed {
+                $Fixed(<$Inner>::wrapping_neg(self.0))
+            }
+
+            /// Wrapping fixed-point addition.
+            #[inline]
+            pub fn wrapping_add(self, rhs: $Fixed) -> $Fixed {
+                $Fixed(<$Inner>::wrapping_add(self.0, rhs.0))
+            }
+
+            /// Wrapping fixed-point subtraction.
+            #[inline]
+            pub fn wrapping_sub(self, rhs: $Fixed) -> $Fixed {
+                $Fixed(<$Inner>::wrapping_sub(self.0, rhs.0))
+            }
+
+            /// Wrapping fixed-point multiplication.
+            #[inline]
+            pub fn wrapping_mul(self, rhs: $Fixed) -> $Fixed {
+                let (ans, _dir) = self.0.mul_dir(rhs.0);
+                $Fixed(ans)
+            }
+
+            /// Wrapping fixed-point division.
+            #[inline]
+            pub fn wrapping_div(self, rhs: $Fixed) -> $Fixed {
+                let (ans, _dir) = self.0.div_dir(rhs.0);
+                $Fixed(ans)
+            }
+
+            /// Wrapping fixed-point left shift.
+            #[inline]
+            pub fn wrapping_shl(self, rhs: u32) -> $Fixed {
+                $Fixed(<$Inner>::wrapping_shl(self.0, rhs))
+            }
+
+            /// Wrapping fixed-point right shift.
+            #[inline]
+            pub fn wrapping_shr(self, rhs: u32) -> $Fixed {
+                $Fixed(<$Inner>::wrapping_shr(self.0, rhs))
+            }
+
+            /// Overflowing negation.
+            #[inline]
+            pub fn overflowing_neg(self) -> ($Fixed, bool) {
+                let (ans, o) = <$Inner>::overflowing_neg(self.0);
+                ($Fixed(ans), o)
+            }
+
+            /// Overflowing fixed-point addition.
+            #[inline]
+            pub fn overflowing_add(self, rhs: $Fixed) -> ($Fixed, bool) {
+                let (ans, o) = <$Inner>::overflowing_add(self.0, rhs.0);
+                ($Fixed(ans), o)
+            }
+
+            /// Overflowing fixed-point subtraction.
+            #[inline]
+            pub fn overflowing_sub(self, rhs: $Fixed) -> ($Fixed, bool) {
+                let (ans, o) = <$Inner>::overflowing_sub(self.0, rhs.0);
+                ($Fixed(ans), o)
+            }
+
+            /// Overflowing fixed-point multiplication.
+            #[inline]
+            pub fn overflowing_mul(self, rhs: $Fixed) -> ($Fixed, bool) {
+                let (ans, dir) = self.0.mul_dir(rhs.0);
+                ($Fixed(ans), dir != Ordering::Equal)
+            }
+
+            /// Overflowing fixed-point division.
+            #[inline]
+            pub fn overflowing_div(self, rhs: $Fixed) -> ($Fixed, bool) {
+                let (ans, dir) = self.0.div_dir(rhs.0);
+                ($Fixed(ans), dir != Ordering::Equal)
+            }
+
+            /// Overflowing fixed-point left shift.
+            #[inline]
+            pub fn overflowing_shl(self, rhs: u32) -> ($Fixed, bool) {
+                let (ans, o) = <$Inner>::overflowing_shl(self.0, rhs);
+                ($Fixed(ans), o)
+            }
+
+            /// Overflowing fixed-point right shift.
+            #[inline]
+            pub fn overflowing_shr(self, rhs: u32) -> ($Fixed, bool) {
+                let (ans, o) = <$Inner>::overflowing_shr(self.0, rhs);
+                ($Fixed(ans), o)
+            }
+
             doc_comment! {
                 concat!(
                     "Creates a fixed-point number of type `",
@@ -390,7 +642,9 @@ macro_rules! fixed {
             type Output = $Fixed;
             #[inline]
             fn mul(self, rhs: $Fixed) -> $Fixed {
-                $Fixed(<$Inner as MulDiv>::mul(self.0, rhs.0))
+                let (ans, dir) = self.0.mul_dir(rhs.0);
+                debug_assert!(dir == Ordering::Equal, "overflow");
+                $Fixed(ans)
             }
         }
 
@@ -399,7 +653,7 @@ macro_rules! fixed {
         impl MulAssign<$Fixed> for $Fixed {
             #[inline]
             fn mul_assign(&mut self, rhs: $Fixed) {
-                self.0 = <$Inner as MulDiv>::mul(self.0, rhs.0)
+                *self = <$Fixed as Mul>::mul(*self, rhs)
             }
         }
 
@@ -409,7 +663,9 @@ macro_rules! fixed {
             type Output = $Fixed;
             #[inline]
             fn div(self, rhs: $Fixed) -> $Fixed {
-                $Fixed(<$Inner as MulDiv>::div(self.0, rhs.0))
+                let (ans, dir) = self.0.div_dir(rhs.0);
+                debug_assert!(dir == Ordering::Equal, "overflow");
+                $Fixed(ans)
             }
         }
 
@@ -418,7 +674,7 @@ macro_rules! fixed {
         impl DivAssign<$Fixed> for $Fixed {
             #[inline]
             fn div_assign(&mut self, rhs: $Fixed) {
-                self.0 = <$Inner as MulDiv>::div(self.0, rhs.0)
+                *self = <$Fixed as Div>::div(*self, rhs)
             }
         }
 
@@ -479,7 +735,6 @@ macro_rules! fixed {
     };
 }
 
-
 fixed! { "An eight-bit fixed-point unsigned integer", FixedU8(u8), Unsigned }
 fixed! { "A 16-bit fixed-point unsigned integer", FixedU16(u16), Unsigned }
 fixed! { "A 32-bit fixed-point unsigned integer", FixedU32(u32), Unsigned }
@@ -491,32 +746,49 @@ fixed! { "A 32-bit fixed-point signed integer", FixedI32(i32), Signed }
 fixed! { "A 64-bit fixed-point signed integer", FixedI64(i64), Signed }
 fixed! { "A 128-bit fixed-point signed integer", FixedI128(i128), Signed }
 
-trait MulDiv {
-    fn mul(self, rhs: Self) -> Self;
-    fn div(self, rhs: Self) -> Self;
+trait MulDivDir: Sized {
+    fn mul_dir(self, rhs: Self) -> (Self, Ordering);
+    fn div_dir(self, rhs: Self) -> (Self, Ordering);
 }
 
 macro_rules! mul_div_widen {
-    ($Single:ty, $Double:ty) => {
-        impl MulDiv for $Single {
+    ($Single:ty, $Double:ty, $Signedness:tt) => {
+        impl MulDivDir for $Single {
             #[inline]
-            fn mul(self, rhs: $Single) -> $Single {
+            fn mul_dir(self, rhs: $Single) -> ($Single, Ordering) {
                 const BITS: u32 = mem::size_of::<$Single>() as u32 * 8;
                 const I: u32 = BITS - F;
                 let lhs2 = self as $Double;
                 let rhs2 = rhs as $Double << I;
-                let prod2 = lhs2 * rhs2;
-                (prod2 >> BITS) as $Single
+                let (prod2, overflow) = lhs2.overflowing_mul(rhs2);
+                let dir;
+                if_unsigned! { $Signedness => {
+                    dir = if !overflow {
+                        Ordering::Equal
+                    } else {
+                        Ordering::Less
+                    };
+                } }
+                if_signed! { $Signedness => {
+                    dir = if !overflow {
+                        Ordering::Equal
+                    } else if (self < 0) == (rhs < 0) {
+                        Ordering::Less
+                    } else {
+                        Ordering::Greater
+                    };
+                } }
+                ((prod2 >> BITS) as $Single, dir)
             }
 
             #[inline]
-            fn div(self, rhs: $Single) -> $Single {
+            fn div_dir(self, rhs: $Single) -> ($Single, Ordering) {
                 let lhs2 = self as $Double << F;
                 let rhs2 = rhs as $Double;
                 let quot2 = lhs2 / rhs2;
                 let quot = quot2 as $Single;
-                debug_assert!(quot as $Double == quot2, "overflow");
-                quot
+                let dir = (quot as $Double).cmp(&quot2);
+                (quot, dir)
             }
         }
     };
@@ -527,7 +799,7 @@ trait FallbackHelper: Sized {
     fn hi_lo(self) -> (Self, Self);
     fn shift_lo_up(self) -> Self;
     fn shift_lo_up_unsigned(self) -> Self::Unsigned;
-    fn combine_lo_then_shl(self, lo: Self::Unsigned, shift: u32) -> Self;
+    fn combine_lo_then_shl(self, lo: Self::Unsigned, shift: u32) -> (Self, Ordering);
     fn carrying_add(self, other: Self) -> (Self, Self);
 }
 
@@ -551,18 +823,16 @@ impl FallbackHelper for u128 {
     }
 
     #[inline]
-    fn combine_lo_then_shl(self, lo: u128, shift: u32) -> u128 {
+    fn combine_lo_then_shl(self, lo: u128, shift: u32) -> (u128, Ordering) {
         if shift == 128 {
-            return self;
+            return (self, Ordering::Equal);
         }
         if shift == 0 {
-            debug_assert!(self == 0, "overflow");
-            return lo;
+            return (lo, 0.cmp(&self));
         }
         let lo = lo >> shift;
         let hi = self << (128 - shift);
-        debug_assert!(self >> shift == 0, "overflow");
-        lo | hi
+        (lo | hi, 0.cmp(&(self >> shift)))
     }
 
     #[inline]
@@ -593,20 +863,18 @@ impl FallbackHelper for i128 {
     }
 
     #[inline]
-    fn combine_lo_then_shl(self, lo: u128, shift: u32) -> i128 {
+    fn combine_lo_then_shl(self, lo: u128, shift: u32) -> (i128, Ordering) {
         if shift == 128 {
-            return self;
+            return (self, Ordering::Equal);
         }
         if shift == 0 {
             let ans = lo as i128;
-            debug_assert!(ans >> 64 >> 64 == self, "overflow");
-            return ans;
+            return (ans, (ans >> 64 >> 64).cmp(&self));
         }
         let lo = (lo >> shift) as i128;
         let hi = self << (128 - shift);
         let ans = lo | hi;
-        debug_assert!(ans >> 64 >> 64 == self >> shift, "overflow");
-        ans
+        (ans, (ans >> 64 >> 64).cmp(&(self >> shift)))
     }
 
     #[inline]
@@ -626,11 +894,29 @@ impl FallbackHelper for i128 {
 }
 
 macro_rules! mul_div_fallback {
-    ($Single:ty) => {
-        impl MulDiv for $Single {
-            fn mul(self, rhs: $Single) -> $Single {
+    ($Single:ty, $Signedness:tt) => {
+        impl MulDivDir for $Single {
+            fn mul_dir(self, rhs: $Single) -> ($Single, Ordering) {
                 if F == 0 {
-                    self * rhs
+                    let (ans, overflow) = self.overflowing_mul(rhs);
+                    let dir;
+                    if_unsigned! { $Signedness => {
+                        dir = if !overflow {
+                            Ordering::Equal
+                        } else {
+                            Ordering::Less
+                        };
+                    } }
+                    if_signed! { $Signedness => {
+                        dir = if !overflow {
+                            Ordering::Equal
+                        } else if (self < 0) == (rhs < 0) {
+                            Ordering::Less
+                        } else {
+                            Ordering::Greater
+                        };
+                    } }
+                    (ans, dir)
                 } else {
                     let (lh, ll) = self.hi_lo();
                     let (rh, rl) = rhs.hi_lo();
@@ -651,10 +937,27 @@ macro_rules! mul_div_fallback {
                 }
             }
 
-            #[inline]
-            fn div(self, rhs: $Single) -> $Single {
+            fn div_dir(self, rhs: $Single) -> ($Single, Ordering) {
                 if F == 0 {
-                    self / rhs
+                    let (ans, overflow) = self.overflowing_div(rhs);
+                    let dir;
+                    if_unsigned! { $Signedness => {
+                        dir = if !overflow {
+                            Ordering::Equal
+                        } else {
+                            Ordering::Less
+                        };
+                    } }
+                    if_signed! { $Signedness => {
+                        dir = if !overflow {
+                            Ordering::Equal
+                        } else if (self < 0) == (rhs < 0) {
+                            Ordering::Less
+                        } else {
+                            Ordering::Greater
+                        };
+                    } }
+                    (ans, dir)
                 } else {
                     unimplemented!()
                 }
@@ -663,16 +966,16 @@ macro_rules! mul_div_fallback {
     };
 }
 
-mul_div_widen! { u8, u16 }
-mul_div_widen! { u16, u32 }
-mul_div_widen! { u32, u64 }
-mul_div_widen! { u64, u128 }
-mul_div_fallback! { u128 }
-mul_div_widen! { i8, i16 }
-mul_div_widen! { i16, i32 }
-mul_div_widen! { i32, i64 }
-mul_div_widen! { i64, i128 }
-mul_div_fallback! { i128 }
+mul_div_widen! { u8, u16, Unsigned }
+mul_div_widen! { u16, u32, Unsigned }
+mul_div_widen! { u32, u64, Unsigned }
+mul_div_widen! { u64, u128, Unsigned }
+mul_div_fallback! { u128, Unsigned }
+mul_div_widen! { i8, i16, Signed }
+mul_div_widen! { i16, i32, Signed }
+mul_div_widen! { i32, i64, Signed }
+mul_div_widen! { i64, i128, Signed }
+mul_div_fallback! { i128, Signed }
 
 #[cfg(test)]
 mod tests {

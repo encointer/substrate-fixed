@@ -1104,12 +1104,11 @@ mod tests {
 
     #[test]
     fn to_f32() {
-        use frac::U7 as Frac;
         for u in 0x00..=0xff {
-            let fu = FixedU8::<Frac>::from_bits(u);
+            let fu = FixedU8::<frac::U7>::from_bits(u);
             assert_eq!(fu.to_f32(), u as f32 / 128.0);
             let i = u as i8;
-            let fi = FixedI8::<Frac>::from_bits(i);
+            let fi = FixedI8::<frac::U7>::from_bits(i);
             assert_eq!(fi.to_f32(), i as f32 / 128.0);
 
             for hi in &[
@@ -1122,10 +1121,10 @@ mod tests {
                 0xffff_ff00,
             ] {
                 let uu = *hi | u as u32;
-                let fuu = FixedU32::<Frac>::from_bits(uu);
+                let fuu = FixedU32::<frac::U7>::from_bits(uu);
                 assert_eq!(fuu.to_f32(), uu as f32 / 128.0);
                 let ii = uu as i32;
-                let fii = FixedI32::<Frac>::from_bits(ii);
+                let fii = FixedI32::<frac::U7>::from_bits(ii);
                 assert_eq!(fii.to_f32(), ii as f32 / 128.0);
             }
 
@@ -1139,23 +1138,50 @@ mod tests {
                 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
             ] {
                 let uu = *hi | u as u128;
-                let fuu = FixedU128::<Frac>::from_bits(uu);
+                let fuu = FixedU128::<frac::U7>::from_bits(uu);
                 assert_eq!(fuu.to_f32(), (uu as f64 / 128.0) as f32);
                 let ii = uu as i128;
-                let fii = FixedI128::<Frac>::from_bits(ii);
+                let fii = FixedI128::<frac::U7>::from_bits(ii);
                 assert_eq!(fii.to_f32(), (ii as f64 / 128.0) as f32);
             }
         }
     }
 
     #[test]
+    fn to_infinite_f32() {
+        // too_large is 1.ffff_ffff_ffff... << 127,
+        // which will be rounded to 1.0 << 128.
+        let too_large = FixedU128::<frac::U0>::max_value();
+        assert_eq!(too_large.count_ones(), 128);
+        assert!(too_large.to_f32().is_infinite());
+
+        // still_too_large is 1.ffff_ff << 127,
+        // which is exactly midway between 1.0 << 128 (even)
+        // and the largest normal f32 that is 1.ffff_fe << 127 (odd).
+        // The tie will be rounded to even, which is to 1.0 << 128.
+        let still_too_large = too_large << 103u32;
+        assert_eq!(still_too_large.count_ones(), 25);
+        assert!(still_too_large.to_f32().is_infinite());
+
+        // not_too_large is 1.ffff_feff_ffff... << 127,
+        // which will be rounded to 1.ffff_fe << 127.
+        let not_too_large = still_too_large - FixedU128::from_bits(1);
+        assert_eq!(not_too_large.count_ones(), 127);
+        assert!(!not_too_large.to_f32().is_infinite());
+
+        // min_128 is -1.0 << 127.
+        let min_i128 = FixedI128::<frac::U0>::min_value();
+        assert_eq!(min_i128.count_ones(), 1);
+        assert_eq!(min_i128.to_f32(), -127f32.exp2());
+    }
+
+    #[test]
     fn to_f64() {
-        use frac::U7 as Frac;
         for u in 0x00..=0xff {
-            let fu = FixedU8::<Frac>::from_bits(u);
+            let fu = FixedU8::<frac::U7>::from_bits(u);
             assert_eq!(fu.to_f32(), u as f32 / 128.0);
             let i = u as i8;
-            let fi = FixedI8::<Frac>::from_bits(i);
+            let fi = FixedI8::<frac::U7>::from_bits(i);
             assert_eq!(fi.to_f32(), i as f32 / 128.0);
 
             for hi in &[
@@ -1168,10 +1194,10 @@ mod tests {
                 0xffff_ffff_ffff_ff00,
             ] {
                 let uu = *hi | u as u64;
-                let fuu = FixedU64::<Frac>::from_bits(uu);
+                let fuu = FixedU64::<frac::U7>::from_bits(uu);
                 assert_eq!(fuu.to_f64(), uu as f64 / 128.0);
                 let ii = uu as i64;
-                let fii = FixedI64::<Frac>::from_bits(ii);
+                let fii = FixedI64::<frac::U7>::from_bits(ii);
                 assert_eq!(fii.to_f64(), ii as f64 / 128.0);
             }
 
@@ -1185,10 +1211,10 @@ mod tests {
                 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
             ] {
                 let uu = *hi | u as u128;
-                let fuu = FixedU128::<Frac>::from_bits(uu);
+                let fuu = FixedU128::<frac::U7>::from_bits(uu);
                 assert_eq!(fuu.to_f64(), uu as f64 / 128.0);
                 let ii = uu as i128;
-                let fii = FixedI128::<Frac>::from_bits(ii);
+                let fii = FixedI128::<frac::U7>::from_bits(ii);
                 assert_eq!(fii.to_f64(), ii as f64 / 128.0);
             }
         }

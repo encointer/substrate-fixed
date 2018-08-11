@@ -117,6 +117,7 @@ additional terms or conditions.
 
 extern crate typenum;
 
+mod cmp;
 mod display;
 pub mod frac;
 mod helper;
@@ -455,6 +456,7 @@ macro_rules! fixed {
         }
 
         impl<Frac: Unsigned> Clone for $Fixed<Frac> {
+            #[inline]
             fn clone(&self) -> $Fixed<Frac> {
                 $Fixed::from_bits(self.to_bits())
             }
@@ -463,32 +465,14 @@ macro_rules! fixed {
         impl<Frac: Unsigned> Copy for $Fixed<Frac> {}
 
         impl<Frac: Unsigned> Default for $Fixed<Frac> {
+            #[inline]
             fn default() -> $Fixed<Frac> {
                 $Fixed::from_bits(<$Inner as Default>::default())
             }
         }
 
-        impl<Frac: Unsigned> Eq for $Fixed<Frac> {}
-
-        impl<Frac: Unsigned> PartialEq<$Fixed<Frac>> for $Fixed<Frac> {
-            fn eq(&self, rhs: &$Fixed<Frac>) -> bool {
-                self.to_bits().eq(&rhs.to_bits())
-            }
-        }
-
-        impl<Frac: Unsigned> Ord for $Fixed<Frac> {
-            fn cmp(&self, rhs: &$Fixed<Frac>) -> Ordering {
-                self.to_bits().cmp(&rhs.to_bits())
-            }
-        }
-
-        impl<Frac: Unsigned> PartialOrd<$Fixed<Frac>> for $Fixed<Frac> {
-            fn partial_cmp(&self, rhs: &$Fixed<Frac>) -> Option<Ordering> {
-                self.to_bits().partial_cmp(&rhs.to_bits())
-            }
-        }
-
         impl<Frac: Unsigned> Hash for $Fixed<Frac> {
+            #[inline]
             fn hash<H>(&self, state: &mut H)
             where
                 H: Hasher

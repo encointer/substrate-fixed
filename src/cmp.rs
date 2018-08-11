@@ -134,7 +134,7 @@ mod tests {
     use *;
 
     #[test]
-    fn fixed_cmp() {
+    fn cmp_signed() {
         use std::cmp::Ordering::*;
         let neg1_16 = FixedI32::<frac::U16>::from_int(-1).unwrap();
         let neg1_20 = FixedI32::<frac::U20>::from_int(-1).unwrap();
@@ -156,5 +156,54 @@ mod tests {
         assert!(a.ne(&b) && b.ne(&a));
         assert_eq!(a.partial_cmp(&b), Some(Less));
         assert_eq!(b.partial_cmp(&a), Some(Greater));
+        a = neg1_16 << 11;
+        b = neg1_20 << 11;
+        // a = f800.0000 = -2^11, b = 800.00000 = -2^11
+        assert!(a.eq(&b) && b.eq(&a));
+        assert_eq!(a.partial_cmp(&b), Some(Equal));
+        assert_eq!(b.partial_cmp(&a), Some(Equal));
+        a <<= 1;
+        b <<= 1;
+        // a = f000.0000 = -2^-12, b = 000.00000 = 0
+        assert!(a.ne(&b) && b.ne(&a));
+        assert_eq!(a.partial_cmp(&b), Some(Less));
+        assert_eq!(b.partial_cmp(&a), Some(Greater));
+    }
+
+    #[test]
+    fn cmp_unsigned() {
+        use std::cmp::Ordering::*;
+        let one_16 = FixedU32::<frac::U16>::from_int(1).unwrap();
+        let one_20 = FixedU32::<frac::U20>::from_int(1).unwrap();
+        let mut a = one_16;
+        let mut b = one_20;
+        // a = 0001.0000 = 1, b = 001.00000 = 1
+        assert!(a.eq(&b) && b.eq(&a));
+        assert_eq!(a.partial_cmp(&b), Some(Equal));
+        assert_eq!(b.partial_cmp(&a), Some(Equal));
+        a >>= 16;
+        b >>= 16;
+        // a = 0000.0001 = 2^-16, b = 000.00010 = 2^-16
+        assert!(a.eq(&b) && b.eq(&a));
+        assert_eq!(a.partial_cmp(&b), Some(Equal));
+        assert_eq!(b.partial_cmp(&a), Some(Equal));
+        a >>= 1;
+        b >>= 1;
+        // a = 0000.0000 = 0, b = 000.00008 = 2^-17
+        assert!(a.ne(&b) && b.ne(&a));
+        assert_eq!(a.partial_cmp(&b), Some(Less));
+        assert_eq!(b.partial_cmp(&a), Some(Greater));
+        a = one_16 << 11;
+        b = one_20 << 11;
+        // a = 0800.0000 = 2^11, b = 800.00000 = 2^11
+        assert!(a.eq(&b) && b.eq(&a));
+        assert_eq!(a.partial_cmp(&b), Some(Equal));
+        assert_eq!(b.partial_cmp(&a), Some(Equal));
+        a <<= 1;
+        b <<= 1;
+        // a = 1000.0000 = 2^12, b = 000.00000 = 0
+        assert!(a.ne(&b) && b.ne(&a));
+        assert_eq!(a.partial_cmp(&b), Some(Greater));
+        assert_eq!(b.partial_cmp(&a), Some(Less));
     }
 }

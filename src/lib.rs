@@ -1233,14 +1233,14 @@ mod tests {
         assert_eq!(f.to_int_floor(), -1);
         assert_eq!(f.to_int_round(), -1);
 
-        // -0.5 + δ
+        // -0.5 + Δ
         let f = I0F32::from_bits((-1 << 31) + 1);
         assert_eq!(f.to_int(), 0);
         assert_eq!(f.to_int_ceil(), 0);
         assert_eq!(f.to_int_floor(), -1);
         assert_eq!(f.to_int_round(), 0);
 
-        // 0.5 - δ
+        // 0.5 - Δ
         let f = I0F32::from_bits((1 << 30) - 1 + (1 << 30));
         assert_eq!(f.to_int(), 0);
         assert_eq!(f.to_int_ceil(), 1);
@@ -1249,7 +1249,7 @@ mod tests {
 
         type U0F32 = FixedU32<U32>;
 
-        // 0.5 - δ
+        // 0.5 - Δ
         let f = U0F32::from_bits((1 << 31) - 1);
         assert_eq!(f.to_int(), 0);
         assert_eq!(f.to_int_ceil(), 1);
@@ -1263,7 +1263,7 @@ mod tests {
         assert_eq!(f.to_int_floor(), 0);
         assert_eq!(f.to_int_round(), 1);
 
-        // 0.5 + δ
+        // 0.5 + Δ
         let f = U0F32::from_bits((1 << 31) + 1);
         assert_eq!(f.to_int(), 0);
         assert_eq!(f.to_int_ceil(), 1);
@@ -1272,7 +1272,7 @@ mod tests {
 
         type I16F16 = FixedI32<U16>;
 
-        // -3.5 - δ
+        // -3.5 - Δ
         let f = I16F16::from_bits(((-7) << 15) - 1);
         assert_eq!(f.to_int(), -3);
         assert_eq!(f.to_int_ceil(), -3);
@@ -1286,14 +1286,14 @@ mod tests {
         assert_eq!(f.to_int_floor(), -4);
         assert_eq!(f.to_int_round(), -4);
 
-        // -3.5 + δ
+        // -3.5 + Δ
         let f = I16F16::from_bits(((-7) << 15) + 1);
         assert_eq!(f.to_int(), -3);
         assert_eq!(f.to_int_ceil(), -3);
         assert_eq!(f.to_int_floor(), -4);
         assert_eq!(f.to_int_round(), -3);
 
-        // -0.5 - δ
+        // -0.5 - Δ
         let f = I16F16::from_bits(((-1) << 15) - 1);
         assert_eq!(f.to_int(), 0);
         assert_eq!(f.to_int_ceil(), 0);
@@ -1307,14 +1307,14 @@ mod tests {
         assert_eq!(f.to_int_floor(), -1);
         assert_eq!(f.to_int_round(), -1);
 
-        // -0.5 + δ
+        // -0.5 + Δ
         let f = I16F16::from_bits(((-1) << 15) + 1);
         assert_eq!(f.to_int(), 0);
         assert_eq!(f.to_int_ceil(), 0);
         assert_eq!(f.to_int_floor(), -1);
         assert_eq!(f.to_int_round(), 0);
 
-        // 0.5 - δ
+        // 0.5 - Δ
         let f = I16F16::from_bits((1 << 15) - 1);
         assert_eq!(f.to_int(), 0);
         assert_eq!(f.to_int_ceil(), 1);
@@ -1328,14 +1328,14 @@ mod tests {
         assert_eq!(f.to_int_floor(), 0);
         assert_eq!(f.to_int_round(), 1);
 
-        // 0.5 + δ
+        // 0.5 + Δ
         let f = I16F16::from_bits((1 << 15) + 1);
         assert_eq!(f.to_int(), 0);
         assert_eq!(f.to_int_ceil(), 1);
         assert_eq!(f.to_int_floor(), 0);
         assert_eq!(f.to_int_round(), 1);
 
-        // 3.5 - δ
+        // 3.5 - Δ
         let f = I16F16::from_bits((7 << 15) - 1);
         assert_eq!(f.to_int(), 3);
         assert_eq!(f.to_int_ceil(), 4);
@@ -1349,7 +1349,7 @@ mod tests {
         assert_eq!(f.to_int_floor(), 3);
         assert_eq!(f.to_int_round(), 4);
 
-        // 3.5 + δ
+        // 3.5 + Δ
         let f = I16F16::from_bits((7 << 15) + 1);
         assert_eq!(f.to_int(), 3);
         assert_eq!(f.to_int_ceil(), 4);
@@ -1358,7 +1358,7 @@ mod tests {
 
         type U16F16 = FixedU32<U16>;
 
-        // 0.5 - δ
+        // 0.5 - Δ
         let f = U16F16::from_bits((1 << 15) - 1);
         assert_eq!(f.to_int(), 0);
         assert_eq!(f.to_int_ceil(), 1);
@@ -1372,14 +1372,14 @@ mod tests {
         assert_eq!(f.to_int_floor(), 0);
         assert_eq!(f.to_int_round(), 1);
 
-        // 0.5 + δ
+        // 0.5 + Δ
         let f = U16F16::from_bits((1 << 15) + 1);
         assert_eq!(f.to_int(), 0);
         assert_eq!(f.to_int_ceil(), 1);
         assert_eq!(f.to_int_floor(), 0);
         assert_eq!(f.to_int_round(), 1);
 
-        // 3.5 - δ
+        // 3.5 - Δ
         let f = U16F16::from_bits((7 << 15) - 1);
         assert_eq!(f.to_int(), 3);
         assert_eq!(f.to_int_ceil(), 4);
@@ -1393,7 +1393,7 @@ mod tests {
         assert_eq!(f.to_int_floor(), 3);
         assert_eq!(f.to_int_round(), 4);
 
-        // 3.5 + δ
+        // 3.5 + Δ
         let f = U16F16::from_bits((7 << 15) + 1);
         assert_eq!(f.to_int(), 3);
         assert_eq!(f.to_int_ceil(), 4);

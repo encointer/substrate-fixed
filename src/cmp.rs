@@ -24,10 +24,10 @@ macro_rules! fixed_cmp {
     ($Fixed:ident($Inner:ty, $bits_count:expr)) => {
         impl<Frac: Unsigned> Eq for $Fixed<Frac> {}
 
-        impl<FracLhs: Unsigned, FracRhs: Unsigned> PartialEq<$Fixed<FracRhs>> for $Fixed<FracLhs> {
+        impl<Frac: Unsigned, FracRhs: Unsigned> PartialEq<$Fixed<FracRhs>> for $Fixed<Frac> {
             #[inline]
             fn eq(&self, rhs: &$Fixed<FracRhs>) -> bool {
-                let (fl, fr) = (FracLhs::to_u32(), FracRhs::to_u32());
+                let (fl, fr) = (Frac::to_u32(), FracRhs::to_u32());
                 if fl == fr {
                     self.to_bits() == rhs.to_bits()
                 } else if fl < fr {
@@ -69,10 +69,10 @@ macro_rules! fixed_cmp {
             }
         }
 
-        impl<FracLhs: Unsigned, FracRhs: Unsigned> PartialOrd<$Fixed<FracRhs>> for $Fixed<FracLhs> {
+        impl<Frac: Unsigned, FracRhs: Unsigned> PartialOrd<$Fixed<FracRhs>> for $Fixed<Frac> {
             #[inline]
             fn partial_cmp(&self, rhs: &$Fixed<FracRhs>) -> Option<Ordering> {
-                let (fl, fr) = (FracLhs::to_u32(), FracRhs::to_u32());
+                let (fl, fr) = (Frac::to_u32(), FracRhs::to_u32());
                 if fl == fr {
                     self.to_bits().partial_cmp(&rhs.to_bits())
                 } else if fl < fr {

@@ -76,12 +76,12 @@ use fixed::FixedI32;
 
 // 20 integer bits, 12 fractional bits
 type I20F12 = FixedI32<frac::U12>;
-// 25/4 = 6 1/4
-let six_and_quarter = I20F12::from_int(25).unwrap() / 4;
+// 19/3 = 6 1/3
+let six_and_third = I20F12::from_int(19).unwrap() / 3;
 // four decimal digits for 12 binary digits
-assert_eq!(six_and_quarter.to_string(), "6.2500");
+assert_eq!(six_and_third.to_string(), "6.3333");
 // convert to i32, taking the ceil
-assert_eq!(six_and_quarter.to_int_ceil(), 7);
+assert_eq!(six_and_third.to_int_ceil(), 7);
 ```
 
 ## Using the *fixed* crate

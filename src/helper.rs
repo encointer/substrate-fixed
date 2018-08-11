@@ -65,7 +65,6 @@ macro_rules! fixed_num_common {
 
             #[inline]
             fn take_int_dec_digit(int_part: &mut $Part) -> u8 {
-                println!("int part {}", int_part);
                 let ret = (*int_part % 10) as u8;
                 *int_part /= 10;
                 ret

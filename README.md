@@ -43,15 +43,15 @@ fixed-point numbers.
   * New methods [`int`] and [`frac`] were added.
   * Support for multiplication and division by integers was added.
   
-[`frac_bits`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedI32.html#method.frac_bits
-[`frac`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedI32.html#method.frac
-[`from_int`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedI32.html#method.from_int
-[`to_int_bits`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedI32.html#method.to_int_bits
-[`to_int_ceil`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedI32.html#method.to_int_ceil
-[`to_int_floor`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedI32.html#method.to_int_floor
-[`to_int_round`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedI32.html#method.to_int_round
-[`to_int`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedI32.html#method.to_int
-[`int`]: https://docs.rs/fixed/0.1.0/fixed/struct.FixedI32.html#method.int
+[`frac_bits`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.frac_bits
+[`frac`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.frac
+[`from_int`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.from_int
+[`int_bits`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.int_bits
+[`to_int_ceil`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.to_int_ceil
+[`to_int_floor`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.to_int_floor
+[`to_int_round`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.to_int_round
+[`to_int`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.to_int
+[`int`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.int
 
 ### Version 0.1.0 news (2018-08-10)
 

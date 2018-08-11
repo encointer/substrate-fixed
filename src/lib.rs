@@ -102,8 +102,10 @@ additional terms or conditions.
 extern crate typenum;
 
 mod display;
+pub mod frac;
 mod helper;
 
+use frac::Unsigned;
 use helper::FixedHelper;
 use std::cmp::Ordering;
 use std::f32;
@@ -116,7 +118,6 @@ use std::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign,
     Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
-use typenum::Unsigned;
 
 macro_rules! if_signed {
     (Signed => $($rem:tt)+) => {
@@ -328,6 +329,13 @@ macro_rules! doc_comment {
     };
 }
 
+macro_rules! doc_comment_signed_unsigned {
+    ($Signedness:tt, $signed:expr, $unsigned:expr, $($tt:tt)*) => {
+        if_signed! { $Signedness => doc_comment! { $signed, $($tt)* } }
+        if_unsigned! { $Signedness => doc_comment! { $unsigned, $($tt)* } }
+    };
+}
+
 macro_rules! to_f {
     ($method:ident -> $f:ident($u:ident), $exp_bits:expr, $prec:expr) => {
         doc_comment! {
@@ -400,7 +408,7 @@ macro_rules! to_f {
 }
 
 macro_rules! fixed {
-    ($description:expr, $Fixed:ident($Inner:ty), $Signedness:tt) => {
+    ($description:expr, $Fixed:ident($Inner:ty, $bits_count:expr), $Signedness:tt) => {
         doc_comment! {
             concat!(
                 $description,
@@ -414,16 +422,12 @@ macro_rules! fixed {
                 "# Examples\n",
                 "\n",
                 "```rust\n",
-                "extern crate fixed;\n",
-                "extern crate typenum;\n",
+                "use fixed::frac::U3;\n",
                 "use fixed::", stringify!($Fixed), ";\n",
-                "fn main() {\n",
-                "    use typenum::U3;\n",
-                "    let eleven = ", stringify!($Fixed), "::<U3>::from_bits(11 << 3);\n",
-                "    let five_five = eleven >> 1u32;\n",
-                "    assert_eq!(eleven.to_string(), \"11.0\");\n",
-                "    assert_eq!(five_five.to_string(), \"5.5\");\n",
-                "}\n",
+                "let eleven = ", stringify!($Fixed), "::<U3>::from_bits(11 << 3);\n",
+                "let five_half = eleven >> 1u32;\n",
+                "assert_eq!(eleven.to_string(), \"11.0\");\n",
+                "assert_eq!(five_half.to_string(), \"5.5\");\n",
                 "```\n",
                 "\n",
                 "[`Unsigned`]: https://docs.rs/typenum/^1.3/typenum/marker_traits/trait.Unsigned.html\n",
@@ -498,6 +502,394 @@ macro_rules! fixed {
             pub fn frac_bits() -> u32 {
                 Frac::to_u32()
             }
+
+            doc_comment! {
+                concat!(
+                    "Creates a fixed-point number of type `", stringify!($Fixed), "`\n",
+                    "that has a bitwise representation identical to the\n",
+                    "`", stringify!($Inner), "` value."
+                ),
+                #[inline]
+                pub fn from_bits(v: $Inner) -> $Fixed<Frac> {
+                    let bits = <$Fixed<Frac> as FixedHelper<Frac>>::bits();
+                    assert!(Frac::to_u32() <= bits, "`Frac` too large");
+                    $Fixed((v, PhantomData))
+                }
+            }
+
+            doc_comment! {
+                concat!(
+                    "Creates an integer of type `", stringify!($Inner), "`\n",
+                    "that has a bitwise representation identical to the\n",
+                    "`", stringify!($Fixed), "` value."
+                ),
+                #[inline]
+                pub fn to_bits(self) -> $Inner {
+                    (self.0).0
+                }
+            }
+
+            doc_comment! {
+                concat!(
+                    "Creates a fixed-point number of type `", stringify!($Fixed), "`\n",
+                    "that has the same value as an integer of type\n",
+                    "`", stringify!($Inner), "` if it fits.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "let fix_one = Fix::from_bits(1 << 4);\n",
+                    "assert_eq!(Fix::from_int(1), Some(fix_one));\n",
+                    "let too_large = 1 << (", stringify!($bits_count), " - 2);\n",
+                    "assert_eq!(Fix::from_int(too_large), None);\n",
+                    "```\n"
+                ),
+                #[inline]
+                pub fn from_int(v: $Inner) -> Option<$Fixed<Frac>> {
+                    let frac_bits = <$Fixed<Frac>>::frac_bits();
+                    let bits = v.checked_shl(frac_bits).unwrap_or(0);
+                    let all_frac_check;
+                    if_signed! { $Signedness => all_frac_check = bits >> (frac_bits - 1); }
+                    if_unsigned! { $Signedness => all_frac_check = 0; }
+
+                    let check = bits.checked_shr(frac_bits).unwrap_or(all_frac_check);
+                    if check == v {
+                        Some($Fixed::from_bits(bits))
+                    } else {
+                        None
+                    }
+                }
+            }
+
+            doc_comment_signed_unsigned! {
+                $Signedness,
+                concat!(
+                    "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
+                    "to an integer of type\n",
+                    "`", stringify!($Inner), "` truncating the fractional bits.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "let two_half = Fix::from_int(5).unwrap() / 2;\n",
+                    "assert_eq!(two_half.to_int(), 2);\n",
+                    "let neg_two_half = -two_half;\n",
+                    "assert_eq!(neg_two_half.to_int(), -2);\n",
+                    "```\n"
+                ),
+                concat!(
+                    "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
+                    "to an integer of type\n",
+                    "`", stringify!($Inner), "` truncating the fractional bits.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "let two_half = Fix::from_int(5).unwrap() / 2;\n",
+                    "assert_eq!(two_half.to_int(), 2);\n",
+                    "```\n"
+                ),
+                #[inline]
+                pub fn to_int(self) -> $Inner {
+                    let floor = self.to_int_floor();
+                    if_signed! { $Signedness => {
+                        let no_frac = self.frac().to_bits() == 0;
+                        if no_frac || self.to_bits() >= 0 {
+                            floor
+                        } else {
+                            floor + 1
+                        }
+                    } }
+                    if_unsigned! { $Signedness => {
+                        floor
+                    } }
+                }
+            }
+
+            doc_comment_signed_unsigned! {
+                $Signedness,
+                concat!(
+                    "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
+                    "to an integer of type\n",
+                    "`", stringify!($Inner), "` rounding towards +∞.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "let two_half = Fix::from_int(5).unwrap() / 2;\n",
+                    "assert_eq!(two_half.to_int_ceil(), 3);\n",
+                    "let neg_two_half = -two_half;\n",
+                    "assert_eq!(neg_two_half.to_int_ceil(), -2);\n",
+                    "```\n"
+                ),
+                concat!(
+                    "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
+                    "to an integer of type\n",
+                    "`", stringify!($Inner), "` rounding towards +∞.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "let two_half = Fix::from_int(5).unwrap() / 2;\n",
+                    "assert_eq!(two_half.to_int_ceil(), 3);\n",
+                    "```\n"
+                ),
+                #[inline]
+                pub fn to_int_ceil(self) -> $Inner {
+                    let floor = self.to_int_floor();
+                    let no_frac = self.frac().to_bits() == 0;
+                    if no_frac {
+                        floor
+                    } else {
+                        floor + 1
+                    }
+                }
+            }
+
+            doc_comment_signed_unsigned! {
+                $Signedness,
+                concat!(
+                    "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
+                    "to an integer of type\n",
+                    "`", stringify!($Inner), "` rounding towards −∞.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "let two_half = Fix::from_int(5).unwrap() / 2;\n",
+                    "assert_eq!(two_half.to_int_floor(), 2);\n",
+                    "let neg_two_half = -two_half;\n",
+                    "assert_eq!(neg_two_half.to_int_floor(), -3);\n",
+                    "```\n"
+                ),
+                concat!(
+                    "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
+                    "to an integer of type\n",
+                    "`", stringify!($Inner), "` rounding towards −∞.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "let two_half = Fix::from_int(5).unwrap() / 2;\n",
+                    "assert_eq!(two_half.to_int_floor(), 2);\n",
+                    "```\n"
+                ),
+                #[inline]
+                pub fn to_int_floor(self) -> $Inner {
+                    let bits = self.to_bits();
+                    if Self::int_bits() == 0 {
+                        if_signed! { $Signedness => bits >> (Self::frac_bits() - 1) }
+                        if_unsigned! { $Signedness => 0 }
+                    } else {
+                        bits >> Self::frac_bits()
+                    }
+                }
+            }
+
+            doc_comment_signed_unsigned! {
+                $Signedness,
+                concat!(
+                    "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
+                    "to an integer of type\n",
+                    "`", stringify!($Inner), "` rounding towards the nearest.\n",
+                    "Ties are rounded away from zero.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "let two_half = Fix::from_int(5).unwrap() / 2;\n",
+                    "assert_eq!(two_half.to_int_round(), 3);\n",
+                    "let neg_two_half = -two_half;\n",
+                    "assert_eq!(neg_two_half.to_int_round(), -3);\n",
+                    "let one_quarter = two_half / 2;\n",
+                    "assert_eq!(one_quarter.to_int_round(), 1);\n",
+                    "```\n"
+                ),
+                concat!(
+                    "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
+                    "to an integer of type\n",
+                    "`", stringify!($Inner), "` rounding towards −∞.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "let two_half = Fix::from_int(5).unwrap() / 2;\n",
+                    "assert_eq!(two_half.to_int_round(), 3);\n",
+                    "let one_quarter = two_half / 2;\n",
+                    "assert_eq!(one_quarter.to_int_round(), 1);\n",
+                    "```\n"
+                ),
+                #[inline]
+                pub fn to_int_round(self) -> $Inner {
+                    let frac_bits = <$Fixed<Frac>>::frac_bits();
+                    let floor = self.to_int_floor();
+                    if frac_bits == 0 {
+                        return floor;
+                    }
+                    let half_bit = 1 << (frac_bits - 1);
+                    if_signed! { $Signedness => {
+                        if self.to_bits() >= 0 {
+                            if (self.to_bits() & half_bit) != 0 {
+                                floor + 1
+                            } else {
+                                floor
+                            }
+                        } else {
+                            let neg =  self.to_bits().wrapping_neg();
+                            if (neg & half_bit) != 0 {
+                                floor
+                            } else {
+                                floor + 1
+                            }
+                        }
+                    } }
+                    if_unsigned! { $Signedness => {
+                        if (self.to_bits() & half_bit) != 0 {
+                            floor + 1
+                        } else {
+                            floor
+                        }
+                    } }
+                }
+            }
+
+            doc_comment_signed_unsigned! {
+                $Signedness,
+                concat!(
+                    "Returns the integer part.\n",
+                    "\n",
+                    "Note that since the numbers are stored in two’s\n",
+                    "complement, negative numbers with non-zero fractional\n",
+                    "parts will be rounded towards −∞, except in the case\n",
+                    "where there are no integer bits, that is `",
+                    stringify!($Fixed), "<U", stringify!($bits_count), ">`,\n",
+                    "where the return value is always zero.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "// 0010.0000\n",
+                    "let two = Fix::from_int(2).unwrap();\n",
+                    "// 0010.0100\n",
+                    "let two_and_quarter = two + two / 8;\n",
+                    "assert_eq!(two_and_quarter.int(), two);\n",
+                    "// 1101.0000\n",
+                    "let neg_three = Fix::from_int(-3).unwrap();\n",
+                    "// 1101.1100\n",
+                    "let neg_two_and_quarter = -two_and_quarter;\n",
+                    "assert_eq!(neg_two_and_quarter.int(), neg_three);\n",
+                    "```\n"
+                ),
+                concat!(
+                    "Returns the integer part.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "// 0010.0000\n",
+                    "let two = Fix::from_int(2).unwrap();\n",
+                    "// 0010.0100\n",
+                    "let two_and_quarter = two + two / 8;\n",
+                    "assert_eq!(two_and_quarter.int(), two);\n",
+                    "```\n"
+                ),
+                #[inline]
+                pub fn int(self) -> $Fixed<Frac> {
+                    let frac_bits = <$Fixed<Frac>>::frac_bits();
+                    let mask = <$Inner>::checked_shl(!0, frac_bits).unwrap_or(0);
+                    $Fixed::from_bits(self.to_bits() & mask)
+                }
+            }
+
+            doc_comment_signed_unsigned! {
+                $Signedness,
+                concat!(
+                    "Returns the fractional part.\n",
+                    "\n",
+                    "Note that since the numbers are stored in two’s\n",
+                    "complement, the returned fraction will be non-negative\n",
+                    "for negative numbers, except in the case where\n",
+                    "there are no integer bits, that is `",
+                    stringify!($Fixed), "<U", stringify!($bits_count), ">`,\n",
+                    "where the return value is always equal to `self`.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "// 0000.0100\n",
+                    "let quarter = Fix::from_int(1).unwrap() / 4;\n",
+                    "// 0010.0100\n",
+                    "let two_and_quarter = quarter * 9;\n",
+                    "assert_eq!(two_and_quarter.frac(), quarter);\n",
+                    "// 0000.1100\n",
+                    "let three_quarters = quarter * 3;\n",
+                    "// 1101.1100\n",
+                    "let neg_two_and_quarter = -two_and_quarter;\n",
+                    "assert_eq!(neg_two_and_quarter.frac(), three_quarters);\n",
+                    "```\n"
+                ),
+                concat!(
+                    "Returns the fractional part.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "// 0000.0100\n",
+                    "let quarter = Fix::from_int(1).unwrap() / 4;\n",
+                    "// 0010.0100\n",
+                    "let two_and_quarter = quarter * 9;\n",
+                    "assert_eq!(two_and_quarter.frac(), quarter);\n",
+                    "```\n"
+                ),
+                #[inline]
+                pub fn frac(self) -> $Fixed<Frac> {
+                    let frac_bits = <$Fixed<Frac>>::frac_bits();
+                    let inv_mask = <$Inner>::checked_shl(!0, frac_bits).unwrap_or(0);
+                    $Fixed::from_bits(self.to_bits() & !inv_mask)
+                }
+            }
+
+            to_f! { to_f32 -> f32(u32), 8, 24 }
+            to_f! { to_f64 -> f64(u64), 11, 53 }
 
             pass_method! {
                 "Returns the number of ones in the binary representation.",
@@ -843,35 +1235,6 @@ macro_rules! fixed {
                     }
                 }
             }
-
-            doc_comment! {
-                concat!(
-                    "Creates a fixed-point number of type `", stringify!($Fixed), "`\n",
-                    "that has a bitwise representation identical to the\n",
-                    "`", stringify!($Inner), "` value."
-                ),
-                #[inline]
-                pub fn from_bits(v: $Inner) -> $Fixed<Frac> {
-                    let bits = <$Fixed<Frac> as FixedHelper<Frac>>::bits();
-                    assert!(Frac::to_u32() <= bits, "`Frac` too large");
-                    $Fixed((v, PhantomData))
-                }
-            }
-
-            doc_comment! {
-                concat!(
-                    "Creates an integer of type `", stringify!($Inner), "`\n",
-                    "that has a bitwise representation identical to the\n",
-                    "`", stringify!($Fixed), "` value."
-                ),
-                #[inline]
-                pub fn to_bits(self) -> $Inner {
-                    (self.0).0
-                }
-            }
-
-            to_f! { to_f32 -> f32(u32), 8, 24 }
-            to_f! { to_f64 -> f64(u64), 11, 53 }
         }
 
         if_signed! {
@@ -1148,16 +1511,16 @@ macro_rules! fixed {
     };
 }
 
-fixed! { "An eight-bit fixed-point unsigned integer", FixedU8(u8), Unsigned }
-fixed! { "A 16-bit fixed-point unsigned integer", FixedU16(u16), Unsigned }
-fixed! { "A 32-bit fixed-point unsigned integer", FixedU32(u32), Unsigned }
-fixed! { "A 64-bit fixed-point unsigned integer", FixedU64(u64), Unsigned }
-fixed! { "A 128-bit fixed-point unsigned integer", FixedU128(u128), Unsigned }
-fixed! { "An eight-bit fixed-point signed integer", FixedI8(i8), Signed }
-fixed! { "A 16-bit fixed-point signed integer", FixedI16(i16), Signed }
-fixed! { "A 32-bit fixed-point signed integer", FixedI32(i32), Signed }
-fixed! { "A 64-bit fixed-point signed integer", FixedI64(i64), Signed }
-fixed! { "A 128-bit fixed-point signed integer", FixedI128(i128), Signed }
+fixed! { "An eight-bit fixed-point unsigned integer", FixedU8(u8, 8), Unsigned }
+fixed! { "A 16-bit fixed-point unsigned integer", FixedU16(u16, 16), Unsigned }
+fixed! { "A 32-bit fixed-point unsigned integer", FixedU32(u32, 32), Unsigned }
+fixed! { "A 64-bit fixed-point unsigned integer", FixedU64(u64, 64), Unsigned }
+fixed! { "A 128-bit fixed-point unsigned integer", FixedU128(u128, 128), Unsigned }
+fixed! { "An eight-bit fixed-point signed integer", FixedI8(i8, 8), Signed }
+fixed! { "A 16-bit fixed-point signed integer", FixedI16(i16, 16), Signed }
+fixed! { "A 32-bit fixed-point signed integer", FixedI32(i32, 32), Signed }
+fixed! { "A 64-bit fixed-point signed integer", FixedI64(i64, 64), Signed }
+fixed! { "A 128-bit fixed-point signed integer", FixedI128(i128, 128), Signed }
 
 trait MulDivDir: Sized {
     fn mul_dir(self, rhs: Self, frac_bits: u32) -> (Self, Ordering);
@@ -1396,7 +1759,7 @@ mod tests {
 
     #[test]
     fn fixed_u16() {
-        use typenum::U7 as Frac;
+        use frac::U7 as Frac;
         let frac = Frac::to_u32();
         let a = 12;
         let b = 4;
@@ -1416,7 +1779,7 @@ mod tests {
 
     #[test]
     fn fixed_i16() {
-        use typenum::U7 as Frac;
+        use frac::U7 as Frac;
         let frac = Frac::to_u32();
         let a = 12;
         let b = 4;
@@ -1440,7 +1803,7 @@ mod tests {
 
     #[test]
     fn fixed_u128() {
-        use typenum::U7 as Frac;
+        use frac::U7 as Frac;
         let frac = Frac::to_u32();
         let a = 0x0003456789abcdef_0123456789abcdef_u128;
         let b = 5;
@@ -1458,7 +1821,7 @@ mod tests {
 
     #[test]
     fn fixed_i128() {
-        use typenum::U7 as Frac;
+        use frac::U7 as Frac;
         let frac = Frac::to_u32();
         let a = 0x0003456789abcdef_0123456789abcdef_i128;
         let b = 5;
@@ -1479,7 +1842,7 @@ mod tests {
 
     #[test]
     fn to_f32() {
-        use typenum::U7 as Frac;
+        use frac::U7 as Frac;
         for u in 0x00..=0xff {
             let fu = FixedU8::<Frac>::from_bits(u);
             assert_eq!(fu.to_f32(), u as f32 / 128.0);
@@ -1525,7 +1888,7 @@ mod tests {
 
     #[test]
     fn to_f64() {
-        use typenum::U7 as Frac;
+        use frac::U7 as Frac;
         for u in 0x00..=0xff {
             let fu = FixedU8::<Frac>::from_bits(u);
             assert_eq!(fu.to_f32(), u as f32 / 128.0);
@@ -1567,5 +1930,186 @@ mod tests {
                 assert_eq!(fii.to_f64(), ii as f64 / 128.0);
             }
         }
+    }
+
+    #[test]
+    fn rounding() {
+        use typenum::{U16, U32};
+
+        type I0F32 = FixedI32<U32>;
+
+        // -0.5
+        let f = I0F32::from_bits(-1 << 31);
+        assert_eq!(f.to_int(), 0);
+        assert_eq!(f.to_int_ceil(), 0);
+        assert_eq!(f.to_int_floor(), -1);
+        assert_eq!(f.to_int_round(), -1);
+
+        // -0.5 + δ
+        let f = I0F32::from_bits((-1 << 31) + 1);
+        assert_eq!(f.to_int(), 0);
+        assert_eq!(f.to_int_ceil(), 0);
+        assert_eq!(f.to_int_floor(), -1);
+        assert_eq!(f.to_int_round(), 0);
+
+        // 0.5 - δ
+        let f = I0F32::from_bits((1 << 30) - 1 + (1 << 30));
+        assert_eq!(f.to_int(), 0);
+        assert_eq!(f.to_int_ceil(), 1);
+        assert_eq!(f.to_int_floor(), 0);
+        assert_eq!(f.to_int_round(), 0);
+
+        type U0F32 = FixedU32<U32>;
+
+        // 0.5 - δ
+        let f = U0F32::from_bits((1 << 31) - 1);
+        assert_eq!(f.to_int(), 0);
+        assert_eq!(f.to_int_ceil(), 1);
+        assert_eq!(f.to_int_floor(), 0);
+        assert_eq!(f.to_int_round(), 0);
+
+        // 0.5
+        let f = U0F32::from_bits(1 << 31);
+        assert_eq!(f.to_int(), 0);
+        assert_eq!(f.to_int_ceil(), 1);
+        assert_eq!(f.to_int_floor(), 0);
+        assert_eq!(f.to_int_round(), 1);
+
+        // 0.5 + δ
+        let f = U0F32::from_bits((1 << 31) + 1);
+        assert_eq!(f.to_int(), 0);
+        assert_eq!(f.to_int_ceil(), 1);
+        assert_eq!(f.to_int_floor(), 0);
+        assert_eq!(f.to_int_round(), 1);
+
+        type I16F16 = FixedI32<U16>;
+
+        // -3.5 - δ
+        let f = I16F16::from_bits(((-7) << 15) - 1);
+        assert_eq!(f.to_int(), -3);
+        assert_eq!(f.to_int_ceil(), -3);
+        assert_eq!(f.to_int_floor(), -4);
+        assert_eq!(f.to_int_round(), -4);
+
+        // -3.5
+        let f = I16F16::from_bits((-7) << 15);
+        assert_eq!(f.to_int(), -3);
+        assert_eq!(f.to_int_ceil(), -3);
+        assert_eq!(f.to_int_floor(), -4);
+        assert_eq!(f.to_int_round(), -4);
+
+        // -3.5 + δ
+        let f = I16F16::from_bits(((-7) << 15) + 1);
+        assert_eq!(f.to_int(), -3);
+        assert_eq!(f.to_int_ceil(), -3);
+        assert_eq!(f.to_int_floor(), -4);
+        assert_eq!(f.to_int_round(), -3);
+
+        // -0.5 - δ
+        let f = I16F16::from_bits(((-1) << 15) - 1);
+        assert_eq!(f.to_int(), 0);
+        assert_eq!(f.to_int_ceil(), 0);
+        assert_eq!(f.to_int_floor(), -1);
+        assert_eq!(f.to_int_round(), -1);
+
+        // -0.5
+        let f = I16F16::from_bits((-1) << 15);
+        assert_eq!(f.to_int(), 0);
+        assert_eq!(f.to_int_ceil(), 0);
+        assert_eq!(f.to_int_floor(), -1);
+        assert_eq!(f.to_int_round(), -1);
+
+        // -0.5 + δ
+        let f = I16F16::from_bits(((-1) << 15) + 1);
+        assert_eq!(f.to_int(), 0);
+        assert_eq!(f.to_int_ceil(), 0);
+        assert_eq!(f.to_int_floor(), -1);
+        assert_eq!(f.to_int_round(), 0);
+
+        // 0.5 - δ
+        let f = I16F16::from_bits((1 << 15) - 1);
+        assert_eq!(f.to_int(), 0);
+        assert_eq!(f.to_int_ceil(), 1);
+        assert_eq!(f.to_int_floor(), 0);
+        assert_eq!(f.to_int_round(), 0);
+
+        // 0.5
+        let f = I16F16::from_bits(1 << 15);
+        assert_eq!(f.to_int(), 0);
+        assert_eq!(f.to_int_ceil(), 1);
+        assert_eq!(f.to_int_floor(), 0);
+        assert_eq!(f.to_int_round(), 1);
+
+        // 0.5 + δ
+        let f = I16F16::from_bits((1 << 15) + 1);
+        assert_eq!(f.to_int(), 0);
+        assert_eq!(f.to_int_ceil(), 1);
+        assert_eq!(f.to_int_floor(), 0);
+        assert_eq!(f.to_int_round(), 1);
+
+        // 3.5 - δ
+        let f = I16F16::from_bits((7 << 15) - 1);
+        assert_eq!(f.to_int(), 3);
+        assert_eq!(f.to_int_ceil(), 4);
+        assert_eq!(f.to_int_floor(), 3);
+        assert_eq!(f.to_int_round(), 3);
+
+        // 3.5
+        let f = I16F16::from_bits(7 << 15);
+        assert_eq!(f.to_int(), 3);
+        assert_eq!(f.to_int_ceil(), 4);
+        assert_eq!(f.to_int_floor(), 3);
+        assert_eq!(f.to_int_round(), 4);
+
+        // 3.5 + δ
+        let f = I16F16::from_bits((7 << 15) + 1);
+        assert_eq!(f.to_int(), 3);
+        assert_eq!(f.to_int_ceil(), 4);
+        assert_eq!(f.to_int_floor(), 3);
+        assert_eq!(f.to_int_round(), 4);
+
+        type U16F16 = FixedU32<U16>;
+
+        // 0.5 - δ
+        let f = U16F16::from_bits((1 << 15) - 1);
+        assert_eq!(f.to_int(), 0);
+        assert_eq!(f.to_int_ceil(), 1);
+        assert_eq!(f.to_int_floor(), 0);
+        assert_eq!(f.to_int_round(), 0);
+
+        // 0.5
+        let f = U16F16::from_bits(1 << 15);
+        assert_eq!(f.to_int(), 0);
+        assert_eq!(f.to_int_ceil(), 1);
+        assert_eq!(f.to_int_floor(), 0);
+        assert_eq!(f.to_int_round(), 1);
+
+        // 0.5 + δ
+        let f = U16F16::from_bits((1 << 15) + 1);
+        assert_eq!(f.to_int(), 0);
+        assert_eq!(f.to_int_ceil(), 1);
+        assert_eq!(f.to_int_floor(), 0);
+        assert_eq!(f.to_int_round(), 1);
+
+        // 3.5 - δ
+        let f = U16F16::from_bits((7 << 15) - 1);
+        assert_eq!(f.to_int(), 3);
+        assert_eq!(f.to_int_ceil(), 4);
+        assert_eq!(f.to_int_floor(), 3);
+        assert_eq!(f.to_int_round(), 3);
+
+        // 3.5
+        let f = U16F16::from_bits(7 << 15);
+        assert_eq!(f.to_int(), 3);
+        assert_eq!(f.to_int_ceil(), 4);
+        assert_eq!(f.to_int_floor(), 3);
+        assert_eq!(f.to_int_round(), 4);
+
+        // 3.5 + δ
+        let f = U16F16::from_bits((7 << 15) + 1);
+        assert_eq!(f.to_int(), 3);
+        assert_eq!(f.to_int_ceil(), 4);
+        assert_eq!(f.to_int_floor(), 3);
+        assert_eq!(f.to_int_round(), 4);
     }
 }

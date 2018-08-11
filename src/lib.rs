@@ -42,6 +42,22 @@ fixed-point number lies in the range −0.5 ≤ *x* < 0.5 for signed
 fixed-point numbers, and in the range 0 ≤ *x* < 1 for unsigned
 fixed-point numbers.
 
+## Quick example
+
+```rust
+use fixed::frac;
+use fixed::FixedI32;
+
+// 20 integer bits, 12 fractional bits
+type I20F12 = FixedI32<frac::U12>;
+// 25/4 = 6 1/4
+let six_and_quarter = I20F12::from_int(25).unwrap() / 4;
+// four decimal digits for 12 binary digits
+assert_eq!(six_and_quarter.to_string(), "6.2500");
+// convert to i32, taking the ceil
+assert_eq!(six_and_quarter.to_int_ceil(), 7);
+```
+
 ## Using the *fixed* crate
 
 The *fixed* crate is available on [crates.io][*fixed* crate]. To use

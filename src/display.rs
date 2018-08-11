@@ -24,7 +24,7 @@ use {
     FixedU8,
 };
 
-trait Radix2 {
+trait Radix2: Copy {
     const BITS: u8;
     fn radix() -> u8;
     fn prefix() -> &'static str;
@@ -33,6 +33,7 @@ trait Radix2 {
 
 macro_rules! radix2 {
     ($Radix:ident($bits:expr, $prefix:expr), $($range:pat => $inc:expr),+) => {
+        #[derive(Clone, Copy)]
         struct $Radix;
         impl Radix2 for $Radix {
             const BITS: u8 = $bits;
@@ -73,8 +74,7 @@ where
     let mut buf: [u8; 130] = [0; 130];
     let max_int_digits = (int_bits + digit_bits - 1) / digit_bits;
     let frac_digits = (frac_bits + digit_bits - 1) / digit_bits;
-    let mut int_start;
-    let frac_start;
+    let (mut int_start, frac_start);
     if max_int_digits == 0 {
         buf[0] = b'0';
         buf[1] = b'.';
@@ -158,7 +158,9 @@ fn dec_int_digits(int_bits: u32) -> u32 {
     let digits = (int_bits * 3 + i) / 10;
 
     // check that digits is ceil(log10(2^int_bits - 1)), except when int_bits < 2
-    debug_assert!(int_bits < 2 || digits == ((int_bits as f64).exp2() - 1.0).log10().ceil() as u32);
+    debug_assert!(
+        int_bits < 2 || digits == (f64::from(int_bits).exp2() - 1.0).log10().ceil() as u32
+    );
 
     digits
 }
@@ -177,9 +179,9 @@ fn dec_frac_digits(frac_bits: u32) -> u32 {
     // check that error < delta, where
     // error = 0.5 * 10^-digits
     // delta = 2^-frac_bits
-    debug_assert!(0.5 * 10f64.powi(0 - digits as i32) < (-(frac_bits as f64)).exp2());
+    debug_assert!(0.5 * 10f64.powi(0 - digits as i32) < (-f64::from(frac_bits)).exp2());
     // check that error with one less digit >= delta
-    debug_assert!(0.5 * 10f64.powi(1 - digits as i32) >= (-(frac_bits as f64)).exp2());
+    debug_assert!(0.5 * 10f64.powi(1 - digits as i32) >= (-f64::from(frac_bits)).exp2());
 
     digits
 }

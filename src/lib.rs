@@ -250,9 +250,15 @@ macro_rules! to_f {
                 let bits_sign = if neg { !(!0 >> 1) } else { 0 };
                 let bits_exp = biased_exponent << ($prec - 1);
                 let bits_mantissa = (if int_bits + frac_bits >= $prec - 1 {
-                    (mantissa >> (int_bits + frac_bits - ($prec - 1))) as $u
+                    #[cfg_attr(feature = "cargo-clippy", allow(cast_lossless))]
+                    {
+                        (mantissa >> (int_bits + frac_bits - ($prec - 1))) as $u
+                    }
                 } else {
-                    (mantissa as $u) << ($prec - 1 - (int_bits + frac_bits))
+                    #[cfg_attr(feature = "cargo-clippy", allow(cast_lossless))]
+                    {
+                        (mantissa as $u) << ($prec - 1 - (int_bits + frac_bits))
+                    }
                 }) & !(!0 << ($prec - 1));
                 let mut bits_exp_mantissa = bits_exp | bits_mantissa;
                 if round_up {

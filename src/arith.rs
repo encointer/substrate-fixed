@@ -479,8 +479,8 @@ macro_rules! mul_div_widen {
             fn mul_dir(self, rhs: $Single, frac_bits: u32) -> ($Single, Ordering) {
                 const BITS: u32 = mem::size_of::<$Single>() as u32 * 8;
                 let int_bits: u32 = BITS - frac_bits;
-                let lhs2 = self as $Double;
-                let rhs2 = rhs as $Double << int_bits;
+                let lhs2 = <$Double as From<$Single>>::from(self);
+                let rhs2 = <$Double as From<$Single>>::from(rhs) << int_bits;
                 let (prod2, overflow) = lhs2.overflowing_mul(rhs2);
                 let dir;
                 if_unsigned! { $Signedness => {
@@ -504,11 +504,11 @@ macro_rules! mul_div_widen {
 
             #[inline]
             fn div_dir(self, rhs: $Single, frac_bits: u32) -> ($Single, Ordering) {
-                let lhs2 = self as $Double << frac_bits;
-                let rhs2 = rhs as $Double;
+                let lhs2 = <$Double as From<$Single>>::from(self) << frac_bits;
+                let rhs2 = <$Double as From<$Single>>::from(rhs);
                 let quot2 = lhs2 / rhs2;
                 let quot = quot2 as $Single;
-                let dir = (quot as $Double).cmp(&quot2);
+                let dir = <$Double as From<$Single>>::from(quot).cmp(&quot2);
                 (quot, dir)
             }
         }

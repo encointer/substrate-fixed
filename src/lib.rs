@@ -212,7 +212,7 @@ macro_rules! pass_assign {
         impl<Frac: Unsigned> $Imp<$Fixed<Frac>> for $Fixed<Frac> {
             #[inline]
             fn $method(&mut self, rhs: $Fixed<Frac>) {
-                <$Inner as $Imp<$Inner>>::$method(&mut self.to_bits(), rhs.to_bits());
+                <$Inner as $Imp<$Inner>>::$method(&mut (self.0).0, rhs.to_bits());
             }
         }
 
@@ -315,7 +315,7 @@ macro_rules! shift_assign {
         impl<Frac: Unsigned> $Imp<$Rhs> for $Fixed<Frac> {
             #[inline]
             fn $method(&mut self, rhs: $Rhs) {
-                <$Inner as $Imp<$Rhs>>::$method(&mut self.to_bits(), rhs);
+                <$Inner as $Imp<$Rhs>>::$method(&mut (self.0).0, rhs);
             }
         }
 

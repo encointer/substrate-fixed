@@ -39,7 +39,9 @@ macro_rules! radix2 {
         struct $Radix;
         impl Radix2 for $Radix {
             #[inline]
-            fn digit_bits(&self) -> u32 { $bits }
+            fn digit_bits(&self) -> u32 {
+                $bits
+            }
 
             #[inline]
             fn prefix(&self) -> &'static str {
@@ -72,7 +74,7 @@ trait FmtRadix2Helper {
 }
 
 macro_rules! fmt_radix2_helper {
-    ($Inner:ty) => {
+    ($($Inner:ty)*) => { $(
         impl FmtRadix2Helper for $Inner {
             #[inline]
             fn int_frac_bits() -> u32 {
@@ -102,14 +104,10 @@ macro_rules! fmt_radix2_helper {
                 ret
             }
         }
-    };
+    )* };
 }
 
-fmt_radix2_helper!(u8);
-fmt_radix2_helper!(u16);
-fmt_radix2_helper!(u32);
-fmt_radix2_helper!(u64);
-fmt_radix2_helper!(u128);
+fmt_radix2_helper! { u8 u16 u32 u64 u128 }
 
 fn fmt_radix2_helper<F>(
     frac_bits: u32,
@@ -160,13 +158,16 @@ where
 }
 
 #[inline]
-fn fmt_radix2<Frac: Unsigned, F, Inner, R>(num: F, radix: R, fmt: &mut Formatter) -> FmtResult
+fn fmt_radix2<Frac: Unsigned, F, Inner>(
+    num: F,
+    radix: &dyn Radix2,
+    fmt: &mut Formatter,
+) -> FmtResult
 where
     F: FixedHelper<Frac, Inner = Inner>,
     Inner: FmtRadix2Helper,
-    R: Radix2,
 {
-    fmt_radix2_helper(Frac::to_u32(), num.parts(), &radix, fmt)
+    fmt_radix2_helper(Frac::to_u32(), num.parts(), radix, fmt)
 }
 
 macro_rules! impl_fmt {
@@ -183,22 +184,22 @@ macro_rules! impl_fmt {
         }
         impl<Frac: Unsigned>  Binary for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
-                fmt_radix2(*self, Bin, f)
+                fmt_radix2(*self, &Bin, f)
             }
         }
         impl<Frac: Unsigned>  Octal for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
-                fmt_radix2(*self, Oct, f)
+                fmt_radix2(*self, &Oct, f)
             }
         }
         impl<Frac: Unsigned>  LowerHex for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
-                fmt_radix2(*self, LowHex, f)
+                fmt_radix2(*self, &LowHex, f)
             }
         }
         impl<Frac: Unsigned>  UpperHex for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
-                fmt_radix2(*self, UpHex, f)
+                fmt_radix2(*self, &UpHex, f)
             }
         }
     )* };
@@ -262,7 +263,7 @@ trait FmtDecHelper {
 }
 
 macro_rules! fmt_dec_helper {
-    ($Inner:ty) => {
+    ($($Inner:ty)*) => { $(
         impl FmtDecHelper for $Inner {
             #[inline]
             fn int_frac_bits() -> u32 {
@@ -294,14 +295,10 @@ macro_rules! fmt_dec_helper {
                 ret
             }
         }
-    };
+    )* };
 }
 
-fmt_dec_helper!(u8);
-fmt_dec_helper!(u16);
-fmt_dec_helper!(u32);
-fmt_dec_helper!(u64);
-fmt_dec_helper!(u128);
+fmt_dec_helper! { u8 u16 u32 u64 u128 }
 
 fn fmt_dec_helper<F>(
     frac_bits: u32,

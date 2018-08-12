@@ -13,87 +13,30 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-use core::cmp::Ordering;
 use core::mem;
-use typenum::Unsigned;
+use frac::Unsigned;
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
 
 pub(crate) trait FixedHelper<Frac: Unsigned>: Sized {
-    type Part;
+    type Inner;
+
+    #[inline]
+    fn int_frac_bits() -> u32 {
+        mem::size_of::<Self::Inner>() as u32 * 8
+    }
+
     fn one() -> Option<Self>;
     fn minus_one() -> Option<Self>;
-    fn parts(self) -> (bool, Self::Part, Self::Part);
-    #[inline(always)]
-    fn bits() -> u32 {
-        mem::size_of::<Self::Part>() as u32 * 8
-    }
-    fn take_int_digit(int_part: &mut Self::Part, digit_bits: u32) -> u8;
-    fn take_frac_digit(frac_part: &mut Self::Part, digit_bits: u32) -> u8;
-    fn take_int_dec_digit(int_part: &mut Self::Part) -> u8;
-    fn take_frac_dec_digit(int_part: &mut Self::Part) -> u8;
-    fn part_is_zero(part: &Self::Part) -> bool;
-    fn part_cmp_half(part: &Self::Part) -> Ordering;
-}
-
-macro_rules! fixed_num_common {
-    ($Fixed:ident($Part:ty); $($rem:tt)+) => {
-        impl<Frac: Unsigned> FixedHelper<Frac> for $Fixed<Frac> {
-            type Part = $Part;
-
-            $($rem)+
-
-            #[inline]
-            fn take_int_digit(int_part: &mut $Part, digit_bits: u32) -> u8 {
-                let mask = (1 << digit_bits) - 1;
-                let ret = (*int_part & mask) as u8;
-                *int_part >>= digit_bits;
-                ret
-            }
-
-            #[inline]
-            fn take_frac_digit(frac_part: &mut $Part, digit_bits: u32) -> u8 {
-                let rem_bits = <$Fixed<Frac> as FixedHelper<Frac>>::bits() - digit_bits;
-                let mask = !0 << rem_bits;
-                let ret = ((*frac_part & mask) >> rem_bits) as u8;
-                *frac_part <<= digit_bits;
-                ret
-            }
-
-            #[inline]
-            fn take_int_dec_digit(int_part: &mut $Part) -> u8 {
-                let ret = (*int_part % 10) as u8;
-                *int_part /= 10;
-                ret
-            }
-
-            #[inline]
-            fn take_frac_dec_digit(frac_part: &mut $Part) -> u8 {
-                let next = frac_part.wrapping_mul(10);
-                let ret = ((*frac_part - next / 10) / (!0 / 10)) as u8;
-                *frac_part = next;
-                ret
-            }
-
-            #[inline]
-            fn part_is_zero(part: &$Part) -> bool {
-                *part == 0
-            }
-
-            #[inline]
-            fn part_cmp_half(part: &$Part) -> Ordering {
-                part.cmp(&!(!0 >> 1))
-            }
-        }
-    };
+    fn parts(self) -> (bool, Self::Inner, Self::Inner);
 }
 
 macro_rules! fixed_num_unsigned {
-    ($Fixed:ident($Part:ty)) => {
-        fixed_num_common! {
-            $Fixed($Part);
+    ($Fixed:ident($Inner:ty)) => {
+        impl<Frac: Unsigned> FixedHelper<Frac> for $Fixed<Frac> {
+            type Inner = $Inner;
 
             #[inline]
             fn one() -> Option<Self> {
@@ -112,7 +55,7 @@ macro_rules! fixed_num_unsigned {
             }
 
             #[inline]
-            fn parts(self) -> (bool, $Part, $Part) {
+            fn parts(self) -> (bool, $Inner, $Inner) {
                 let bits = self.to_bits();
                 let int_bits = <$Fixed<Frac>>::int_bits();
                 let frac_bits = <$Fixed<Frac>>::frac_bits();
@@ -125,9 +68,9 @@ macro_rules! fixed_num_unsigned {
 }
 
 macro_rules! fixed_num_signed {
-    ($Fixed:ident($Part:ty)) => {
-        fixed_num_common! {
-            $Fixed($Part);
+    ($Fixed:ident($Inner:ty)) => {
+        impl<Frac: Unsigned> FixedHelper<Frac> for $Fixed<Frac> {
+            type Inner = $Inner;
 
             #[inline]
             fn one() -> Option<Self> {
@@ -152,13 +95,13 @@ macro_rules! fixed_num_signed {
             }
 
             #[inline]
-            fn parts(self) -> (bool, $Part, $Part) {
-                let bits = self.to_bits().wrapping_abs() as $Part;
+            fn parts(self) -> (bool, $Inner, $Inner) {
+                let bits = self.to_bits().wrapping_abs() as $Inner;
                 let int_bits = <$Fixed<Frac>>::int_bits();
                 let frac_bits = <$Fixed<Frac>>::frac_bits();
                 let int_part = if int_bits == 0 { 0 } else { bits >> frac_bits };
                 let frac_part = if frac_bits == 0 { 0 } else { bits << int_bits };
-                (self.to_bits() < 0, int_part,frac_part)
+                (self.to_bits() < 0, int_part, frac_part)
             }
         }
     };

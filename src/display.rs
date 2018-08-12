@@ -17,8 +17,9 @@ use core::cmp::Ordering;
 use core::fmt::{
     Binary, Debug, Display, Formatter, LowerHex, Octal, Result as FmtResult, UpperHex,
 };
+use core::mem;
 use core::str;
-use typenum::Unsigned;
+use frac::Unsigned;
 use FixedHelper;
 
 use {
@@ -26,11 +27,10 @@ use {
     FixedU8,
 };
 
-trait Radix2: Copy {
-    const BITS: u8;
-    fn radix() -> u8;
-    fn prefix() -> &'static str;
-    fn digit(val: u8) -> u8;
+trait Radix2 {
+    fn digit_bits(&self) -> u32;
+    fn prefix(&self) -> &'static str;
+    fn encode_digits(&self, digits: &mut [u8]);
 }
 
 macro_rules! radix2 {
@@ -38,20 +38,21 @@ macro_rules! radix2 {
         #[derive(Clone, Copy)]
         struct $Radix;
         impl Radix2 for $Radix {
-            const BITS: u8 = $bits;
-            #[inline(always)]
-            fn radix() -> u8 {
-                1 << <$Radix as Radix2>::BITS
-            }
-            #[inline(always)]
-            fn prefix() -> &'static str {
+            #[inline]
+            fn digit_bits(&self) -> u32 { $bits }
+
+            #[inline]
+            fn prefix(&self) -> &'static str {
                 $prefix
             }
+
             #[inline]
-            fn digit(val: u8) -> u8 {
-                match val {
-                    $($range => val + $inc,)+
-                    _ => unreachable!(),
+            fn encode_digits(&self, digits: &mut [u8]) {
+                for digit in digits.iter_mut() {
+                    *digit += match *digit {
+                        $($range => $inc,)+
+                        _ => continue,
+                    };
                 }
             }
         }
@@ -63,15 +64,64 @@ radix2! { Oct(3, "0o"), 0..=7 => b'0' }
 radix2! { LowHex(4, "0x"), 0..=9 => b'0', 10..=15 => b'a' - 10 }
 radix2! { UpHex(4, "0x"), 0..=9 => b'0', 10..=15 => b'A' - 10 }
 
-fn fmt_radix2<Frac: Unsigned, F, R>(num: F, _radix: R, fmt: &mut Formatter) -> FmtResult
+trait FmtRadix2Helper {
+    fn int_frac_bits() -> u32;
+    fn is_zero(&self) -> bool;
+    fn take_int_digit(&mut self, digit_bits: u32) -> u8;
+    fn take_frac_digit(&mut self, digit_bits: u32) -> u8;
+}
+
+macro_rules! fmt_radix2_helper {
+    ($Inner:ty) => {
+        impl FmtRadix2Helper for $Inner {
+            #[inline]
+            fn int_frac_bits() -> u32 {
+                mem::size_of::<$Inner>() as u32 * 8
+            }
+
+            #[inline]
+            fn is_zero(&self) -> bool {
+                *self == 0
+            }
+
+            #[inline]
+            fn take_int_digit(&mut self, digit_bits: u32) -> u8 {
+                let mask = (1 << digit_bits) - 1;
+                let ret = (*self & mask) as u8;
+                *self >>= digit_bits;
+                ret
+            }
+
+            #[inline]
+            fn take_frac_digit(&mut self, digit_bits: u32) -> u8 {
+                let int_frac_bits = <$Inner as FmtRadix2Helper>::int_frac_bits();
+                let rem_bits = int_frac_bits - digit_bits;
+                let mask = !0 << rem_bits;
+                let ret = ((*self & mask) >> rem_bits) as u8;
+                *self <<= digit_bits;
+                ret
+            }
+        }
+    };
+}
+
+fmt_radix2_helper!(u8);
+fmt_radix2_helper!(u16);
+fmt_radix2_helper!(u32);
+fmt_radix2_helper!(u64);
+fmt_radix2_helper!(u128);
+
+fn fmt_radix2_helper<F>(
+    frac_bits: u32,
+    (is_neg, mut int, mut frac): (bool, F, F),
+    radix: &dyn Radix2,
+    fmt: &mut Formatter,
+) -> FmtResult
 where
-    F: FixedHelper<Frac>,
-    R: Radix2,
+    F: FmtRadix2Helper,
 {
-    let digit_bits: u32 = R::BITS.into();
-    let frac_bits = Frac::to_u32();
-    let int_bits = F::bits() - frac_bits;
-    let (is_neg, mut int, mut frac) = num.parts();
+    let int_bits = F::int_frac_bits() - frac_bits;
+    let digit_bits: u32 = radix.digit_bits();
     // 128 binary digits, one radix point, one leading zero
     let mut buf: [u8; 130] = [0; 130];
     let max_int_digits = (int_bits + digit_bits - 1) / digit_bits;
@@ -85,9 +135,9 @@ where
     } else {
         int_start = max_int_digits;
         for r in buf[0..max_int_digits as usize].iter_mut().rev() {
-            *r = R::digit(F::take_int_digit(&mut int, digit_bits));
+            *r = int.take_int_digit(digit_bits);
             int_start -= 1;
-            if F::part_is_zero(&int) {
+            if int.is_zero() {
                 break;
             }
         }
@@ -100,11 +150,23 @@ where
     } else {
         end = frac_start + frac_digits;
         for r in buf[frac_start as usize..end as usize].iter_mut() {
-            *r = R::digit(F::take_frac_digit(&mut frac, digit_bits));
+            *r = frac.take_frac_digit(digit_bits);
         }
     }
-    let buf = str::from_utf8(&buf[int_start as usize..end as usize]).unwrap();
-    fmt.pad_integral(!is_neg, R::prefix(), buf)
+    let used_buf = &mut buf[int_start as usize..end as usize];
+    radix.encode_digits(used_buf);
+    let str_buf = str::from_utf8(used_buf).unwrap();
+    fmt.pad_integral(!is_neg, radix.prefix(), str_buf)
+}
+
+#[inline]
+fn fmt_radix2<Frac: Unsigned, F, Inner, R>(num: F, radix: R, fmt: &mut Formatter) -> FmtResult
+where
+    F: FixedHelper<Frac, Inner = Inner>,
+    Inner: FmtRadix2Helper,
+    R: Radix2,
+{
+    fmt_radix2_helper(Frac::to_u32(), num.parts(), &radix, fmt)
 }
 
 macro_rules! impl_fmt {
@@ -191,13 +253,65 @@ fn dec_frac_digits(frac_bits: u32) -> u32 {
     digits
 }
 
-fn fmt_dec<Frac: Unsigned, F>(num: F, fmt: &mut Formatter) -> FmtResult
+trait FmtDecHelper {
+    fn int_frac_bits() -> u32;
+    fn is_zero(&self) -> bool;
+    fn cmp_half(&self) -> Ordering;
+    fn take_int_digit(&mut self) -> u8;
+    fn take_frac_digit(&mut self) -> u8;
+}
+
+macro_rules! fmt_dec_helper {
+    ($Inner:ty) => {
+        impl FmtDecHelper for $Inner {
+            #[inline]
+            fn int_frac_bits() -> u32 {
+                mem::size_of::<$Inner>() as u32 * 8
+            }
+
+            #[inline]
+            fn is_zero(&self) -> bool {
+                *self == 0
+            }
+
+            #[inline]
+            fn cmp_half(&self) -> Ordering {
+                self.cmp(&!(!0 >> 1))
+            }
+
+            #[inline]
+            fn take_int_digit(&mut self) -> u8 {
+                let ret = (*self % 10) as u8;
+                *self /= 10;
+                ret
+            }
+
+            #[inline]
+            fn take_frac_digit(&mut self) -> u8 {
+                let next = self.wrapping_mul(10);
+                let ret = ((*self - next / 10) / (!0 / 10)) as u8;
+                *self = next;
+                ret
+            }
+        }
+    };
+}
+
+fmt_dec_helper!(u8);
+fmt_dec_helper!(u16);
+fmt_dec_helper!(u32);
+fmt_dec_helper!(u64);
+fmt_dec_helper!(u128);
+
+fn fmt_dec_helper<F>(
+    frac_bits: u32,
+    (is_neg, mut int, mut frac): (bool, F, F),
+    fmt: &mut Formatter,
+) -> FmtResult
 where
-    F: FixedHelper<Frac>,
+    F: FmtDecHelper,
 {
-    let frac_bits = Frac::to_u32();
-    let int_bits = F::bits() - frac_bits;
-    let (is_neg, mut int, mut frac) = num.parts();
+    let int_bits = F::int_frac_bits() - frac_bits;
     // 40 int digits
     // + 128 frac digits
     // + 1 dec point,
@@ -230,9 +344,9 @@ where
         buf[int_start as usize] = b'.';
         frac_start = int_start + 1;
         for r in buf[1..int_start as usize].iter_mut().rev() {
-            *r = b'0' + F::take_int_dec_digit(&mut int);
+            *r = b'0' + int.take_int_digit();
             int_start -= 1;
-            if F::part_is_zero(&int) {
+            if int.is_zero() {
                 break;
             }
         }
@@ -243,10 +357,10 @@ where
     } else {
         end = frac_start + frac_digits;
         for r in buf[frac_start as usize..end as usize].iter_mut() {
-            *r = b'0' + F::take_frac_dec_digit(&mut frac);
+            *r = b'0' + frac.take_frac_digit();
         }
         // check for rounding up
-        let round_up = match F::part_cmp_half(&frac) {
+        let round_up = match frac.cmp_half() {
             Ordering::Less => false,
             Ordering::Greater => true,
             Ordering::Equal => {
@@ -277,13 +391,22 @@ where
     fmt.pad_integral(!is_neg, "", buf)
 }
 
+#[inline]
+fn fmt_dec<Frac: Unsigned, F, Inner>(num: F, fmt: &mut Formatter) -> FmtResult
+where
+    F: FixedHelper<Frac, Inner = Inner>,
+    Inner: FmtDecHelper,
+{
+    fmt_dec_helper(Frac::to_u32(), num.parts(), fmt)
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use *;
 
     #[test]
     fn hex() {
-        use typenum::U7 as Frac;
+        use frac::U7 as Frac;
         let frac = Frac::to_u32();
         for i in 0..(1 << frac) {
             let p = 0x1234_5678_9abc_def0u64 ^ i as u64;
@@ -303,7 +426,7 @@ mod tests {
 
     #[test]
     fn dec() {
-        use typenum::U7 as Frac;
+        use frac::U7 as Frac;
         let frac = Frac::to_u32();
         for i in 0..(1 << frac) {
             let bits = !0u32 ^ i;

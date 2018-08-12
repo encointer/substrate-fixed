@@ -370,7 +370,7 @@ macro_rules! fixed {
             /// Returns the number of integer bits.
             #[inline]
             pub fn int_bits() -> u32 {
-                <$Fixed<Frac> as FixedHelper<Frac>>::bits() - <$Fixed<Frac>>::frac_bits()
+                <$Fixed<Frac> as FixedHelper<Frac>>::int_frac_bits() - <$Fixed<Frac>>::frac_bits()
             }
 
             /// Returns the number of fractional bits.
@@ -387,8 +387,8 @@ macro_rules! fixed {
                 ),
                 #[inline]
                 pub fn from_bits(v: $Inner) -> $Fixed<Frac> {
-                    let bits = <$Fixed<Frac> as FixedHelper<Frac>>::bits();
-                    assert!(Frac::to_u32() <= bits, "`Frac` too large");
+                    let int_frac_bits = <$Fixed<Frac> as FixedHelper<Frac>>::int_frac_bits();
+                    assert!(Frac::to_u32() <= int_frac_bits, "`Frac` too large");
                     $Fixed((v, PhantomData))
                 }
             }
@@ -1250,7 +1250,7 @@ mod tests {
 
     #[test]
     fn rounding() {
-        use typenum::{U16, U32};
+        use frac::{U16, U32};
 
         type I0F32 = FixedI32<U32>;
 

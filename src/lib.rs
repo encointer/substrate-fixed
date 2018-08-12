@@ -208,7 +208,13 @@ macro_rules! to_f {
                 let (int_bits, frac_bits) = (Self::int_bits(), Self::frac_bits());
 
                 let (neg, int, frac) = self.parts();
-                let int_frac = (int << frac_bits) | (frac >> int_bits);
+                let int_frac = if frac_bits == 0 {
+                    int
+                } else if int_bits == 0 {
+                    frac
+                } else {
+                    (int << frac_bits) | (frac >> int_bits)
+                };
                 let leading_zeros = int_frac.leading_zeros();
                 let signif_bits = int_bits + frac_bits - leading_zeros;
                 if signif_bits == 0 {

@@ -75,24 +75,6 @@ You also need to declare it by adding this to your crate root (usually
 extern crate fixed;
 ```
 
-## Optional features
-
-The *fixed* crate has one optional features:
-
- 1. `std`, enabled by default. This adds a dependency on the standard
-    library `std`. Currently this makes no difference functionally,
-    but that may change in the future.
-
-The `std` feature is enabled by default; to use the crate without a
-dependency on the standard library `std`, you can add the dependency
-like this to [*Cargo.toml*]:
-
-```toml
-[dependencies.fixed]
-version = "0.1.1"
-default-features = false
-```
-
 ## License
 
 This crate is free software: you can redistribute it and/or modify it
@@ -128,14 +110,11 @@ additional terms or conditions.
 [channels]: https://doc.rust-lang.org/book/second-edition/appendix-07-nightly-rust.html
 [const generics]: https://github.com/rust-lang/rust/issues/44580
 */
-#![cfg_attr(not(feature = "std"), no_std)]
+#![no_std]
 #![warn(missing_docs)]
 #![doc(html_root_url = "https://docs.rs/fixed/0.1.1")]
 #![doc(test(attr(deny(warnings))))]
 #![cfg_attr(nightly_repr_transparent, feature(repr_transparent))]
-
-#[cfg(feature = "std")]
-extern crate core;
 
 extern crate typenum;
 

@@ -222,11 +222,16 @@ fn dec_int_digits(int_bits: u32) -> u32 {
     };
     let digits = (int_bits * 3 + i) / 10;
 
+    /*
+       This debug assertion can be enabled in a crate with std,
+       as core does not have f64::exp2.
+
     // check that digits is ceil(log10(2^int_bits - 1)), except when int_bits < 2
-    #[cfg(feature = "std")]
     debug_assert!(
         int_bits < 2 || digits == (f64::from(int_bits).exp2() - 1.0).log10().ceil() as u32
     );
+
+    */
 
     digits
 }
@@ -242,14 +247,18 @@ fn dec_frac_digits(frac_bits: u32) -> u32 {
     };
     let digits = (frac_bits * 3 + i) / 10;
 
+    /*
+       These debug assertions can be enabled in a crate with std,
+       as core does not have f64::exp2 and f64::powi.
+
     // check that error < delta, where
     // error = 0.5 * 10^-digits
     // delta = 2^-frac_bits
-    #[cfg(feature = "std")]
     debug_assert!(0.5 * 10f64.powi(0 - digits as i32) < (-f64::from(frac_bits)).exp2());
     // check that error with one less digit >= delta
-    #[cfg(feature = "std")]
     debug_assert!(0.5 * 10f64.powi(1 - digits as i32) >= (-f64::from(frac_bits)).exp2());
+
+    */
 
     digits
 }
@@ -397,9 +406,75 @@ where
     fmt_dec_helper(Frac::to_u32(), num.parts(), fmt)
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
+    use core::fmt::{Debug, Error as FmtError, Formatter, Result as FmtResult, Write};
     use *;
+
+    struct Buf([u8; 256]);
+    impl Buf {
+        fn new() -> Buf {
+            Buf([0u8; 256])
+        }
+        fn target(&mut self) -> BufSlice {
+            BufSlice(self, 0)
+        }
+    }
+
+    struct BufSlice<'a>(&'a mut Buf, usize);
+
+    impl<'a> Write for BufSlice<'a> {
+        fn write_str(&mut self, s: &str) -> FmtResult {
+            let start = self.1;
+            let s_len = s.len();
+            if s_len > (self.0).0.len() - start {
+                Err(FmtError)
+            } else {
+                (self.0).0[start..s_len + start].copy_from_slice(s.as_bytes());
+                self.1 += s_len;
+                Ok(())
+            }
+        }
+    }
+
+    impl Eq for Buf {}
+
+    impl PartialEq<Buf> for Buf {
+        fn eq(&self, rhs: &Buf) -> bool {
+            for (&a, &b) in self.0.iter().zip(rhs.0.iter()) {
+                if a != b {
+                    return false;
+                }
+            }
+            true
+        }
+    }
+
+    impl Debug for Buf {
+        fn fmt(&self, f: &mut Formatter) -> FmtResult {
+            f.write_str("\"")?;
+            for &i in &self.0[..] {
+                if i == 0 {
+                    break;
+                } else if i < 0x20 || i > 0x7f {
+                    write!(f, "\\x{:02x}", i)?;
+                } else {
+                    f.write_char(i as char)?;
+                }
+            }
+            f.write_str("\"")
+        }
+    }
+
+    macro_rules! assert_eq_fmt {
+        (($f1:expr, $($arg1:tt)*), ($f2:expr, $($arg2:tt)*)) => {({
+            let mut buf1 = Buf::new();
+            write!(buf1.target(), $f1, $($arg1)*).unwrap();
+            let mut buf2 = Buf::new();
+            write!(buf2.target(), $f2, $($arg2)*).unwrap();
+            assert_eq!(buf1, buf2);
+        })}
+    }
 
     #[test]
     fn hex() {
@@ -410,13 +485,10 @@ mod tests {
             let n = -0x1234_5678_9abc_def0i64 ^ i as i64;
             let f_p = FixedU64::<Frac>::from_bits(p);
             let f_n = FixedI64::<Frac>::from_bits(n);
-            assert_eq!(
-                format!("{:x}", f_p),
-                format!("{:x}.{:02x}", p >> frac, (p & 0x7f) << 1)
-            );
-            assert_eq!(
-                format!("{:x}", f_n),
-                format!("-{:x}.{:02x}", n.abs() >> frac, (n.abs() & 0x7f) << 1)
+            assert_eq_fmt!(("{:x}", f_p), ("{:x}.{:02x}", p >> frac, (p & 0x7f) << 1));
+            assert_eq_fmt!(
+                ("{:x}", f_n),
+                ("-{:x}.{:02x}", n.abs() >> frac, (n.abs() & 0x7f) << 1)
             );
         }
     }
@@ -429,7 +501,7 @@ mod tests {
             let bits = !0u32 ^ i;
             let flt = bits as f64 / (frac as f64).exp2();
             let fix = FixedU32::<Frac>::from_bits(bits);
-            assert_eq!(format!("{}", fix), format!("{:.2}", flt));
+            assert_eq_fmt!(("{}", fix), ("{:.2}", flt));
         }
     }
 }

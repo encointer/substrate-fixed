@@ -13,8 +13,8 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
+use core::cmp::Ordering;
 use frac::{self, Unsigned};
-use std::cmp::Ordering;
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
@@ -135,7 +135,7 @@ mod tests {
 
     #[test]
     fn cmp_signed() {
-        use std::cmp::Ordering::*;
+        use core::cmp::Ordering::*;
         let neg1_16 = FixedI32::<frac::U16>::from_int(-1).unwrap();
         let neg1_20 = FixedI32::<frac::U20>::from_int(-1).unwrap();
         let mut a = neg1_16;
@@ -172,7 +172,7 @@ mod tests {
 
     #[test]
     fn cmp_unsigned() {
-        use std::cmp::Ordering::*;
+        use core::cmp::Ordering::*;
         let one_16 = FixedU32::<frac::U16>::from_int(1).unwrap();
         let one_20 = FixedU32::<frac::U20>::from_int(1).unwrap();
         let mut a = one_16;

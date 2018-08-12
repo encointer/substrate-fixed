@@ -5,6 +5,11 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.1.2 (unreleased)
+==========================
+
+  * The crate can now be used without the standard library `std`.
+
 Version 0.1.1 (2018-08-11)
 ==========================
 

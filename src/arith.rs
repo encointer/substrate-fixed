@@ -13,14 +13,14 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-use frac::Unsigned;
-use std::cmp::Ordering;
-use std::iter::{Product, Sum};
-use std::mem;
-use std::ops::{
+use core::cmp::Ordering;
+use core::iter::{Product, Sum};
+use core::mem;
+use core::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign,
     Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
+use frac::Unsigned;
 use {
     FixedHelper, FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32,
     FixedU64, FixedU8,

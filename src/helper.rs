@@ -13,9 +13,8 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-use std::cmp::Ordering;
-use std::mem;
-
+use core::cmp::Ordering;
+use core::mem;
 use typenum::Unsigned;
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,

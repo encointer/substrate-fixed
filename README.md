@@ -35,6 +35,10 @@ fixed-point numbers.
 
 ## What’s new
 
+### Version 0.1.2 news (unreleased)
+
+  * The crate can now be used without the standard library `std`.
+
 ### Version 0.1.1 news (2018-08-11)
 
   * Comparisons are now supported between all fixed-point numbers with
@@ -101,6 +105,24 @@ You also need to declare it by adding this to your crate root (usually
 
 ```rust
 extern crate fixed;
+```
+
+## Optional features
+
+The *fixed* crate has one optional features:
+
+ 1. `std`, enabled by default. This adds a dependency on the standard
+    library `std`. Currently this makes no difference functionally,
+    but that may change in the future.
+
+The `std` feature is enabled by default; to use the crate without a
+dependency on the standard library `std`, you can add the dependency
+like this to [*Cargo.toml*]:
+
+```toml
+[dependencies.fixed]
+version = "0.1.1"
+default-features = false
 ```
 
 ## License

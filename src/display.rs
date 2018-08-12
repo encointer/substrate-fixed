@@ -13,9 +13,11 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-use std::cmp::Ordering;
-use std::fmt::{Binary, Debug, Display, Formatter, LowerHex, Octal, Result as FmtResult, UpperHex};
-use std::str;
+use core::cmp::Ordering;
+use core::fmt::{
+    Binary, Debug, Display, Formatter, LowerHex, Octal, Result as FmtResult, UpperHex,
+};
+use core::str;
 use typenum::Unsigned;
 use FixedHelper;
 
@@ -158,6 +160,7 @@ fn dec_int_digits(int_bits: u32) -> u32 {
     let digits = (int_bits * 3 + i) / 10;
 
     // check that digits is ceil(log10(2^int_bits - 1)), except when int_bits < 2
+    #[cfg(feature = "std")]
     debug_assert!(
         int_bits < 2 || digits == (f64::from(int_bits).exp2() - 1.0).log10().ceil() as u32
     );
@@ -179,8 +182,10 @@ fn dec_frac_digits(frac_bits: u32) -> u32 {
     // check that error < delta, where
     // error = 0.5 * 10^-digits
     // delta = 2^-frac_bits
+    #[cfg(feature = "std")]
     debug_assert!(0.5 * 10f64.powi(0 - digits as i32) < (-f64::from(frac_bits)).exp2());
     // check that error with one less digit >= delta
+    #[cfg(feature = "std")]
     debug_assert!(0.5 * 10f64.powi(1 - digits as i32) >= (-f64::from(frac_bits)).exp2());
 
     digits
@@ -272,7 +277,7 @@ where
     fmt.pad_integral(!is_neg, "", buf)
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use *;
 
@@ -304,7 +309,6 @@ mod tests {
             let bits = !0u32 ^ i;
             let flt = bits as f64 / (frac as f64).exp2();
             let fix = FixedU32::<Frac>::from_bits(bits);
-            println!("i is {}", i);
             assert_eq!(format!("{}", fix), format!("{:.2}", flt));
         }
     }

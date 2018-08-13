@@ -29,7 +29,7 @@ pub(crate) trait FloatHelper {
     fn exp_max() -> i32;
 
     fn zero(neg: bool) -> Self;
-    fn infinite(neg: bool) -> Self;
+    fn infinity(neg: bool) -> Self;
     fn from_parts(neg: bool, exp: i32, mant: Self::Bits) -> Self;
     fn parts(self) -> (bool, i32, Self::Bits);
 }
@@ -70,7 +70,7 @@ macro_rules! float_helper {
             }
 
             #[inline]
-            fn infinite(neg: bool) -> $Float {
+            fn infinity(neg: bool) -> $Float {
                 let nbits = mem::size_of::<$Bits>() * 8;
                 let neg_mask = !0 << (nbits - 1);
                 let mant_mask = !(!0 << ($prec - 1));

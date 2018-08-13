@@ -138,6 +138,7 @@ macro_rules! if_unsigned {
 mod arith;
 mod cmp;
 mod display;
+mod flt;
 pub mod frac;
 mod helper;
 
@@ -147,8 +148,9 @@ use core::f32;
 use core::f64;
 use core::hash::{Hash, Hasher};
 use core::marker::PhantomData;
+use flt::FltConv;
 use frac::Unsigned;
-use helper::{FixedHelper, FloatHelper};
+use helper::FixedHelper;
 
 macro_rules! pass_method {
     ($comment:expr, $Fixed:ident($Inner:ty) => fn $method:ident()) => {
@@ -199,18 +201,14 @@ macro_rules! doc_comment_signed_unsigned {
 }
 
 macro_rules! to_f {
-    (fn $method:ident(self) -> $f:ident) => {
+    (fn $method:ident(self) -> $Flt:ident) => {
         doc_comment! {
             concat!(
-                "Converts the fixed-point number to `", stringify!($f), "`."
+                "Converts the fixed-point number to `", stringify!($Flt), "`."
             ),
-            pub fn $method(self) -> $f {
-                type Bits = <$f as FloatHelper>::Bits;
-                let prec = <$f as FloatHelper>::prec();
-                let exp_min = <$f as FloatHelper>::exp_min();
-                let exp_max = <$f as FloatHelper>::exp_max();
+            #[inline]
+            pub fn $method(self) -> $Flt {
                 let (int_bits, frac_bits) = (Self::int_bits(), Self::frac_bits());
-
                 let (neg, int, frac) = self.parts();
                 let int_frac = if frac_bits == 0 {
                     int
@@ -219,64 +217,7 @@ macro_rules! to_f {
                 } else {
                     (int << frac_bits) | (frac >> int_bits)
                 };
-                let leading_zeros = int_frac.leading_zeros();
-                let signif_bits = int_bits + frac_bits - leading_zeros;
-                if signif_bits == 0 {
-                    debug_assert!(!neg);
-                    return 0.0;
-                }
-                // remove leading zeros and implicit one
-                let mut mantissa = int_frac << leading_zeros << 1;
-                let exponent = int_bits as i32 - 1 - leading_zeros as i32;
-                let biased_exponent = if exponent > exp_max {
-                    return if neg { $f::NEG_INFINITY } else { $f::INFINITY };
-                } else if exponent < exp_min {
-                    let lost_prec = exp_min - exponent;
-                    if lost_prec as u32 >= (int_bits + frac_bits) {
-                        mantissa = 0;
-                    } else {
-                        // reinsert implicit one
-                        mantissa = (mantissa >> 1) | !(!0 >> 1);
-                        mantissa >>= lost_prec - 1;
-                    }
-                    0
-                } else {
-                    (exponent + exp_max) as Bits
-                };
-                // check for rounding
-                let round_up = (int_bits + frac_bits >= prec) && {
-                    let shift = prec - 1;
-                    let mid_bit = !(!0 >> 1) >> shift;
-                    let lower_bits = mid_bit - 1;
-                    if mantissa & mid_bit == 0 {
-                        false
-                    } else if mantissa & lower_bits != 0 {
-                        true
-                    } else {
-                        // round to even
-                        mantissa & (mid_bit << 1) != 0
-                    }
-                };
-                let bits_sign = if neg { !(!0 >> 1) } else { 0 };
-                let bits_exp = biased_exponent << (prec - 1);
-                let bits_mantissa = (if int_bits + frac_bits >= prec - 1 {
-                    #[cfg_attr(feature = "cargo-clippy", allow(cast_lossless))]
-                    {
-                        (mantissa >> (int_bits + frac_bits - (prec - 1))) as Bits
-                    }
-                } else {
-                    #[cfg_attr(feature = "cargo-clippy", allow(cast_lossless))]
-                    {
-                        (mantissa as Bits) << (prec - 1 - (int_bits + frac_bits))
-                    }
-                }) & !(!0 << (prec - 1));
-                let mut bits_exp_mantissa = bits_exp | bits_mantissa;
-                if round_up {
-                    // cannot be infinite already, so we won't get NaN
-                    debug_assert!(bits_exp_mantissa != $f::INFINITY.to_bits());
-                    bits_exp_mantissa += 1;
-                }
-                $f::from_bits(bits_sign | bits_exp_mantissa)
+                FltConv::$method(int_frac, neg, frac_bits)
             }
         }
     };

@@ -330,7 +330,7 @@ macro_rules! fixed {
             #[inline]
             fn hash<H>(&self, state: &mut H)
             where
-                H: Hasher
+                H: Hasher,
             {
                 self.to_bits().hash(state);
             }

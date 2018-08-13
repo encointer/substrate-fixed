@@ -177,27 +177,27 @@ macro_rules! impl_fmt {
                 fmt_dec(*self, f)
             }
         }
-        impl<Frac: Unsigned>  Debug for $Fixed<Frac> {
+        impl<Frac: Unsigned> Debug for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
                 fmt_dec(*self, f)
             }
         }
-        impl<Frac: Unsigned>  Binary for $Fixed<Frac> {
+        impl<Frac: Unsigned> Binary for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
                 fmt_radix2(*self, &Bin, f)
             }
         }
-        impl<Frac: Unsigned>  Octal for $Fixed<Frac> {
+        impl<Frac: Unsigned> Octal for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
                 fmt_radix2(*self, &Oct, f)
             }
         }
-        impl<Frac: Unsigned>  LowerHex for $Fixed<Frac> {
+        impl<Frac: Unsigned> LowerHex for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
                 fmt_radix2(*self, &LowHex, f)
             }
         }
-        impl<Frac: Unsigned>  UpperHex for $Fixed<Frac> {
+        impl<Frac: Unsigned> UpperHex for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
                 fmt_radix2(*self, &UpHex, f)
             }
@@ -441,12 +441,7 @@ mod tests {
 
     impl PartialEq<Buf> for Buf {
         fn eq(&self, rhs: &Buf) -> bool {
-            for (&a, &b) in self.0.iter().zip(rhs.0.iter()) {
-                if a != b {
-                    return false;
-                }
-            }
-            true
+            self.0.iter().zip(rhs.0.iter()).all(|(a, b)| a == b)
         }
     }
 
@@ -467,13 +462,13 @@ mod tests {
     }
 
     macro_rules! assert_eq_fmt {
-        (($f1:expr, $($arg1:tt)*), ($f2:expr, $($arg2:tt)*)) => {({
+        (($f1:expr, $($arg1:tt)*), ($f2:expr, $($arg2:tt)*)) => {{
             let mut buf1 = Buf::new();
             write!(buf1.target(), $f1, $($arg1)*).unwrap();
             let mut buf2 = Buf::new();
             write!(buf2.target(), $f2, $($arg2)*).unwrap();
             assert_eq!(buf1, buf2);
-        })}
+        }};
     }
 
     #[test]

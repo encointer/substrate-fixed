@@ -114,22 +114,23 @@ float_helper! { f32(u32, 24) }
 float_helper! { f64(u64, 53) }
 
 pub(crate) trait FixedHelper<Frac: Unsigned>: Sized {
-    type Inner;
+    type UInner;
 
     #[inline]
     fn int_frac_bits() -> u32 {
-        mem::size_of::<Self::Inner>() as u32 * 8
+        mem::size_of::<Self::UInner>() as u32 * 8
     }
 
     fn one() -> Option<Self>;
     fn minus_one() -> Option<Self>;
-    fn parts(self) -> (bool, Self::Inner, Self::Inner);
+    fn from_parts(neg: bool, int_abs: Self::UInner, frac_abs: Self::UInner) -> Self;
+    fn parts(self) -> (bool, Self::UInner, Self::UInner);
 }
 
 macro_rules! fixed_num_unsigned {
-    ($Fixed:ident($Inner:ty)) => {
+    ($Fixed:ident($UInner:ty)) => {
         impl<Frac: Unsigned> FixedHelper<Frac> for $Fixed<Frac> {
-            type Inner = $Inner;
+            type UInner = $UInner;
 
             #[inline]
             fn one() -> Option<Self> {
@@ -148,10 +149,33 @@ macro_rules! fixed_num_unsigned {
             }
 
             #[inline]
-            fn parts(self) -> (bool, $Inner, $Inner) {
-                let bits = self.to_bits();
+            fn from_parts(
+                neg: bool,
+                int_abs: Self::UInner,
+                frac_abs: Self::UInner,
+            ) -> $Fixed<Frac> {
                 let int_bits = <$Fixed<Frac>>::int_bits();
                 let frac_bits = <$Fixed<Frac>>::frac_bits();
+
+                let _ = neg;
+                debug_assert!(!neg);
+
+                let int_frac = if int_bits == 0 {
+                    frac_abs
+                } else if frac_bits == 0 {
+                    int_abs
+                } else {
+                    (int_abs << frac_bits) | (frac_abs >> int_bits)
+                };
+                $Fixed::from_bits(int_frac)
+            }
+
+            #[inline]
+            fn parts(self) -> (bool, $UInner, $UInner) {
+                let int_bits = <$Fixed<Frac>>::int_bits();
+                let frac_bits = <$Fixed<Frac>>::frac_bits();
+
+                let bits = self.to_bits();
                 let int_part = if int_bits == 0 { 0 } else { bits >> frac_bits };
                 let frac_part = if frac_bits == 0 { 0 } else { bits << int_bits };
                 (false, int_part, frac_part)
@@ -161,9 +185,9 @@ macro_rules! fixed_num_unsigned {
 }
 
 macro_rules! fixed_num_signed {
-    ($Fixed:ident($Inner:ty)) => {
+    ($Fixed:ident($UInner:ty)) => {
         impl<Frac: Unsigned> FixedHelper<Frac> for $Fixed<Frac> {
-            type Inner = $Inner;
+            type UInner = $UInner;
 
             #[inline]
             fn one() -> Option<Self> {
@@ -188,13 +212,47 @@ macro_rules! fixed_num_signed {
             }
 
             #[inline]
-            fn parts(self) -> (bool, $Inner, $Inner) {
-                let bits = self.to_bits().wrapping_abs() as $Inner;
+            fn from_parts(
+                neg: bool,
+                int_abs: Self::UInner,
+                frac_abs: Self::UInner,
+            ) -> $Fixed<Frac> {
                 let int_bits = <$Fixed<Frac>>::int_bits();
                 let frac_bits = <$Fixed<Frac>>::frac_bits();
-                let int_part = if int_bits == 0 { 0 } else { bits >> frac_bits };
-                let frac_part = if frac_bits == 0 { 0 } else { bits << int_bits };
-                (self.to_bits() < 0, int_part, frac_part)
+
+                let int_frac_abs = if int_bits == 0 {
+                    frac_abs
+                } else if frac_bits == 0 {
+                    int_abs
+                } else {
+                    (int_abs << frac_bits) | (frac_abs >> int_bits)
+                };
+                let int_frac = if neg {
+                    int_frac_abs.wrapping_neg()
+                } else {
+                    int_frac_abs
+                };
+                $Fixed::from_bits(int_frac as _)
+            }
+
+            #[inline]
+            fn parts(self) -> (bool, $UInner, $UInner) {
+                let int_bits = <$Fixed<Frac>>::int_bits();
+                let frac_bits = <$Fixed<Frac>>::frac_bits();
+
+                let (neg, abs) = if self.to_bits() < 0 {
+                    (true, self.to_bits().wrapping_neg() as $UInner)
+                } else {
+                    (false, self.to_bits() as $UInner)
+                };
+                let (int_abs, frac_abs) = if int_bits == 0 {
+                    (0, abs)
+                } else if frac_bits == 0 {
+                    (abs, 0)
+                } else {
+                    ((abs >> frac_bits), (abs << int_bits))
+                };
+                (neg, int_abs, frac_abs)
             }
         }
     };

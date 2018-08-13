@@ -21,7 +21,6 @@ use core::mem;
 use core::str;
 use frac::Unsigned;
 use FixedHelper;
-
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
@@ -74,11 +73,11 @@ trait FmtRadix2Helper {
 }
 
 macro_rules! fmt_radix2_helper {
-    ($($Inner:ty)*) => { $(
-        impl FmtRadix2Helper for $Inner {
+    ($($UInner:ty)*) => { $(
+        impl FmtRadix2Helper for $UInner {
             #[inline]
             fn int_frac_bits() -> u32 {
-                mem::size_of::<$Inner>() as u32 * 8
+                mem::size_of::<$UInner>() as u32 * 8
             }
 
             #[inline]
@@ -96,7 +95,7 @@ macro_rules! fmt_radix2_helper {
 
             #[inline]
             fn take_frac_digit(&mut self, digit_bits: u32) -> u8 {
-                let int_frac_bits = <$Inner as FmtRadix2Helper>::int_frac_bits();
+                let int_frac_bits = <$UInner as FmtRadix2Helper>::int_frac_bits();
                 let rem_bits = int_frac_bits - digit_bits;
                 let mask = !0 << rem_bits;
                 let ret = ((*self & mask) >> rem_bits) as u8;
@@ -158,14 +157,14 @@ where
 }
 
 #[inline]
-fn fmt_radix2<Frac: Unsigned, F, Inner>(
+fn fmt_radix2<Frac: Unsigned, F, UInner>(
     num: F,
     radix: &dyn Radix2,
     fmt: &mut Formatter,
 ) -> FmtResult
 where
-    F: FixedHelper<Frac, Inner = Inner>,
-    Inner: FmtRadix2Helper,
+    F: FixedHelper<Frac, UInner = UInner>,
+    UInner: FmtRadix2Helper,
 {
     fmt_radix2_helper(Frac::to_u32(), num.parts(), radix, fmt)
 }
@@ -272,11 +271,11 @@ trait FmtDecHelper {
 }
 
 macro_rules! fmt_dec_helper {
-    ($($Inner:ty)*) => { $(
-        impl FmtDecHelper for $Inner {
+    ($($UInner:ty)*) => { $(
+        impl FmtDecHelper for $UInner {
             #[inline]
             fn int_frac_bits() -> u32 {
-                mem::size_of::<$Inner>() as u32 * 8
+                mem::size_of::<$UInner>() as u32 * 8
             }
 
             #[inline]
@@ -398,10 +397,10 @@ where
 }
 
 #[inline]
-fn fmt_dec<Frac: Unsigned, F, Inner>(num: F, fmt: &mut Formatter) -> FmtResult
+fn fmt_dec<Frac: Unsigned, F, UInner>(num: F, fmt: &mut Formatter) -> FmtResult
 where
-    F: FixedHelper<Frac, Inner = Inner>,
-    Inner: FmtDecHelper,
+    F: FixedHelper<Frac, UInner = UInner>,
+    UInner: FmtDecHelper,
 {
     fmt_dec_helper(Frac::to_u32(), num.parts(), fmt)
 }

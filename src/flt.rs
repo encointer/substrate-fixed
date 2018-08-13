@@ -14,7 +14,9 @@
 // <https://opensource.org/licenses/MIT>.
 
 use core::mem;
+use frac::Unsigned;
 use helper::FloatHelper;
+use {FixedI16, FixedI32, FixedI8, FixedU16, FixedU32, FixedU8};
 
 macro_rules! to_f {
     (fn $method:ident($Uns:ty) -> $Flt:ty) => {
@@ -99,3 +101,25 @@ macro_rules! flt_conv {
     )* };
 }
 flt_conv! { u8 u16 u32 u64 u128 }
+
+macro_rules! lossless {
+    ($Fixed:ident:: $method:ident -> $Flt:ident) => {
+        impl<Frac: Unsigned> From<$Fixed<Frac>> for $Flt {
+            #[inline]
+            fn from(src: $Fixed<Frac>) -> $Flt {
+                src.$method()
+            }
+        }
+    };
+}
+
+lossless! { FixedI8::to_f32 -> f32 }
+lossless! { FixedI16::to_f32 -> f32 }
+lossless! { FixedU8::to_f32 -> f32 }
+lossless! { FixedU16::to_f32 -> f32 }
+lossless! { FixedI8::to_f64 -> f64 }
+lossless! { FixedI16::to_f64 -> f64 }
+lossless! { FixedI32::to_f64 -> f64 }
+lossless! { FixedU8::to_f64 -> f64 }
+lossless! { FixedU16::to_f64 -> f64 }
+lossless! { FixedU32::to_f64 -> f64 }

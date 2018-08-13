@@ -21,8 +21,60 @@ use {FixedI16, FixedI32, FixedI8, FixedU16, FixedU32, FixedU8};
 macro_rules! from_float {
     (fn $method:ident($Float:ty) -> $Uns:ty) => {
         fn $method(val: $Float, frac_bits: u32) -> Option<($Uns, bool)> {
-            let _ = (val, frac_bits);
-            unimplemented!()
+            let float_bits = mem::size_of::<$Float>() as i32 * 8;
+            let prec = <$Float as FloatHelper>::prec() as i32;
+            let exp_min = <$Float as FloatHelper>::exp_min();
+            let exp_max = <$Float as FloatHelper>::exp_max();
+            let fix_bits = mem::size_of::<$Uns>() as i32 * 8;
+
+            let (neg, exp, mut mantissa) = <$Float as FloatHelper>::parts(val);
+            if exp > exp_max {
+                return None;
+            }
+            // if not subnormal, add implicit bit
+            if exp >= exp_min {
+                mantissa |= 1 << (prec - 1);
+            }
+            if mantissa == 0 {
+                return Some((0, neg));
+            }
+            let leading_zeros = mantissa.leading_zeros();
+            mantissa <<= leading_zeros;
+            let mut need_to_shr = -exp + leading_zeros as i32 + prec - 1 - frac_bits as i32;
+            let rounding_bit = need_to_shr - 1;
+            if 0 <= rounding_bit && rounding_bit < float_bits && mantissa & (1 << rounding_bit) != 0
+            {
+                // Rounding bit is one.
+                // If any lower bit is one, round up.
+                // If bit exactly above rounding is one, round up (tie to even).
+                let round_up = (rounding_bit > 0 && mantissa & ((1 << rounding_bit) - 1) != 0)
+                    || (rounding_bit + 1 < float_bits && mantissa & (1 << (rounding_bit + 1)) != 0);
+                if round_up {
+                    mantissa = match mantissa.overflowing_add(1 << rounding_bit) {
+                        (m, false) => m,
+                        (m, true) => {
+                            need_to_shr -= 1;
+                            (m >> 1) | (1 << (float_bits - 1))
+                        }
+                    };
+                }
+            }
+            // now rounding is done, we can truncate extra right bits
+            if float_bits - need_to_shr > fix_bits {
+                return None;
+            }
+            #[cfg_attr(feature = "cargo-clippy", allow(cast_lossless))]
+            {
+                if need_to_shr == 0 {
+                    Some(((mantissa as $Uns), neg))
+                } else if need_to_shr < 0 {
+                    Some(((mantissa as $Uns) << -need_to_shr, neg))
+                } else if need_to_shr < float_bits {
+                    Some(((mantissa >> need_to_shr) as $Uns, neg))
+                } else {
+                    Some((0, neg))
+                }
+            }
         }
     };
 }
@@ -136,3 +188,208 @@ lossless_from_fixed! { FixedI32::to_f64 -> f64 }
 lossless_from_fixed! { FixedU8::to_f64 -> f64 }
 lossless_from_fixed! { FixedU16::to_f64 -> f64 }
 lossless_from_fixed! { FixedU32::to_f64 -> f64 }
+
+#[cfg(test)]
+mod tests {
+    use *;
+
+    #[test]
+    fn signed_from_f32() {
+        type Fix = FixedI8<frac::U4>;
+        // 1.1 -> 0001.1000
+        assert_eq!(Fix::from_f32(3.0 / 2.0).unwrap(), Fix::from_bits(24));
+        // 0.11 -> 0000.1100
+        assert_eq!(Fix::from_f32(3.0 / 4.0).unwrap(), Fix::from_bits(12));
+        // 0.011 -> 0000.0110
+        assert_eq!(Fix::from_f32(3.0 / 8.0).unwrap(), Fix::from_bits(6));
+        // 0.0011 -> 0000.0011
+        assert_eq!(Fix::from_f32(3.0 / 16.0).unwrap(), Fix::from_bits(3));
+        // 0.00011 -> 0000.0010 (tie to even)
+        assert_eq!(Fix::from_f32(3.0 / 32.0).unwrap(), Fix::from_bits(2));
+        // 0.00101 -> 0000.0010 (tie to even)
+        assert_eq!(Fix::from_f32(5.0 / 32.0).unwrap(), Fix::from_bits(2));
+        // 0.000011 -> 0000.0001 (nearest)
+        assert_eq!(Fix::from_f32(3.0 / 64.0).unwrap(), Fix::from_bits(1));
+        // 0.00001 -> 0000.0000 (tie to even)
+        assert_eq!(Fix::from_f32(1.0 / 32.0).unwrap(), Fix::from_bits(0));
+
+        // -1.1 -> -0001.1000
+        assert_eq!(Fix::from_f32(-3.0 / 2.0).unwrap(), Fix::from_bits(-24));
+        // -0.11 -> -0000.1100
+        assert_eq!(Fix::from_f32(-3.0 / 4.0).unwrap(), Fix::from_bits(-12));
+        // -0.011 -> -0000.0110
+        assert_eq!(Fix::from_f32(-3.0 / 8.0).unwrap(), Fix::from_bits(-6));
+        // -0.0011 -> -0000.0011
+        assert_eq!(Fix::from_f32(-3.0 / 16.0).unwrap(), Fix::from_bits(-3));
+        // -0.00011 -> -0000.0010 (tie to even)
+        assert_eq!(Fix::from_f32(-3.0 / 32.0).unwrap(), Fix::from_bits(-2));
+        // -0.00101 -> -0000.0010 (tie to even)
+        assert_eq!(Fix::from_f32(-5.0 / 32.0).unwrap(), Fix::from_bits(-2));
+        // -0.000011 -> -0000.0001 (nearest)
+        assert_eq!(Fix::from_f32(-3.0 / 64.0).unwrap(), Fix::from_bits(-1));
+        // -0.00001 -> 0000.0000 (tie to even)
+        assert_eq!(Fix::from_f32(-1.0 / 32.0).unwrap(), Fix::from_bits(0));
+
+        // 111.1111 -> 111.1111
+        assert_eq!(Fix::from_f32(127.0 / 16.0).unwrap(), Fix::from_bits(127));
+        // 111.11111 -> too large (tie to even)
+        assert!(Fix::from_f32(255.0 / 32.0).is_none());
+
+        // -111.1111 -> -111.1111
+        assert_eq!(Fix::from_f32(-127.0 / 16.0).unwrap(), Fix::from_bits(-127));
+        // -111.11111 -> -1000.0000
+        assert_eq!(Fix::from_f32(-255.0 / 32.0).unwrap(), Fix::from_bits(-128));
+        // -1000.00001 -> -1000.0000 (tie to even)
+        assert_eq!(Fix::from_f32(-257.0 / 32.0).unwrap(), Fix::from_bits(-128));
+        // -1000.0001 -> too small
+        assert!(Fix::from_f32(-129.0 / 16.0).is_none());
+    }
+
+    #[test]
+    fn unsigned_from_f32() {
+        type Fix = FixedU8<frac::U4>;
+        // 1.1 -> 0001.1000
+        assert_eq!(Fix::from_f32(3.0 / 2.0).unwrap(), Fix::from_bits(24));
+        // 0.11 -> 0000.1100
+        assert_eq!(Fix::from_f32(3.0 / 4.0).unwrap(), Fix::from_bits(12));
+        // 0.011 -> 0000.0110
+        assert_eq!(Fix::from_f32(3.0 / 8.0).unwrap(), Fix::from_bits(6));
+        // 0.0011 -> 0000.0011
+        assert_eq!(Fix::from_f32(3.0 / 16.0).unwrap(), Fix::from_bits(3));
+        // 0.00011 -> 0000.0010 (tie to even)
+        assert_eq!(Fix::from_f32(3.0 / 32.0).unwrap(), Fix::from_bits(2));
+        // 0.00101 -> 0000.0010 (tie to even)
+        assert_eq!(Fix::from_f32(5.0 / 32.0).unwrap(), Fix::from_bits(2));
+        // 0.000011 -> 0000.0001 (nearest)
+        assert_eq!(Fix::from_f32(3.0 / 64.0).unwrap(), Fix::from_bits(1));
+        // 0.00001 -> 0000.0000 (tie to even)
+        assert_eq!(Fix::from_f32(1.0 / 32.0).unwrap(), Fix::from_bits(0));
+        // -0.00001 -> 0000.0000 (tie to even)
+        assert_eq!(Fix::from_f32(-1.0 / 32.0).unwrap(), Fix::from_bits(0));
+        // -0.0001 -> -ve
+        assert!(Fix::from_f32(-1.0 / 16.0).is_none());
+
+        // 1111.1111 -> 1111.1111
+        assert_eq!(Fix::from_f32(255.0 / 16.0).unwrap(), Fix::from_bits(255));
+        // 1111.11111 -> too large (tie to even)
+        assert!(Fix::from_f32(511.0 / 32.0).is_none());
+    }
+
+    #[test]
+    fn to_f32() {
+        for u in 0x00..=0xff {
+            let fu = FixedU8::<frac::U7>::from_bits(u);
+            assert_eq!(fu.to_f32(), u as f32 / 128.0);
+            let i = u as i8;
+            let fi = FixedI8::<frac::U7>::from_bits(i);
+            assert_eq!(fi.to_f32(), i as f32 / 128.0);
+
+            for hi in &[
+                0u32,
+                0x0000_0100,
+                0x7fff_ff00,
+                0x8000_0000,
+                0x8100_0000,
+                0xffff_fe00,
+                0xffff_ff00,
+            ] {
+                let uu = *hi | u as u32;
+                let fuu = FixedU32::<frac::U7>::from_bits(uu);
+                assert_eq!(fuu.to_f32(), uu as f32 / 128.0);
+                let ii = uu as i32;
+                let fii = FixedI32::<frac::U7>::from_bits(ii);
+                assert_eq!(fii.to_f32(), ii as f32 / 128.0);
+            }
+
+            for hi in &[
+                0u128,
+                0x0000_0000_0000_0000_0000_0000_0000_0100,
+                0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
+                0x8000_0000_0000_0000_0000_0000_0000_0000,
+                0x8100_0000_0000_0000_0000_0000_0000_0000,
+                0xffff_ffff_ffff_ffff_ffff_ffff_ffff_fe00,
+                0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
+            ] {
+                let uu = *hi | u as u128;
+                let fuu = FixedU128::<frac::U7>::from_bits(uu);
+                assert_eq!(fuu.to_f32(), (uu as f64 / 128.0) as f32);
+                let ii = uu as i128;
+                let fii = FixedI128::<frac::U7>::from_bits(ii);
+                assert_eq!(fii.to_f32(), (ii as f64 / 128.0) as f32);
+            }
+        }
+    }
+
+    #[test]
+    fn to_infinite_f32() {
+        // too_large is 1.ffff_ffff_ffff... << 127,
+        // which will be rounded to 1.0 << 128.
+        let too_large = FixedU128::<frac::U0>::max_value();
+        assert_eq!(too_large.count_ones(), 128);
+        assert!(too_large.to_f32().is_infinite());
+
+        // still_too_large is 1.ffff_ff << 127,
+        // which is exactly midway between 1.0 << 128 (even)
+        // and the largest normal f32 that is 1.ffff_fe << 127 (odd).
+        // The tie will be rounded to even, which is to 1.0 << 128.
+        let still_too_large = too_large << 103u32;
+        assert_eq!(still_too_large.count_ones(), 25);
+        assert!(still_too_large.to_f32().is_infinite());
+
+        // not_too_large is 1.ffff_feff_ffff... << 127,
+        // which will be rounded to 1.ffff_fe << 127.
+        let not_too_large = still_too_large - FixedU128::from_bits(1);
+        assert_eq!(not_too_large.count_ones(), 127);
+        assert!(!not_too_large.to_f32().is_infinite());
+
+        // min_128 is -1.0 << 127.
+        let min_i128 = FixedI128::<frac::U0>::min_value();
+        assert_eq!(min_i128.count_ones(), 1);
+        assert_eq!(min_i128.to_f32(), -127f32.exp2());
+    }
+
+    #[test]
+    fn to_f64() {
+        for u in 0x00..=0xff {
+            let fu = FixedU8::<frac::U7>::from_bits(u);
+            assert_eq!(fu.to_f32(), u as f32 / 128.0);
+            let i = u as i8;
+            let fi = FixedI8::<frac::U7>::from_bits(i);
+            assert_eq!(fi.to_f32(), i as f32 / 128.0);
+
+            for hi in &[
+                0u64,
+                0x0000_0000_0000_0100,
+                0x7fff_ffff_ffff_ff00,
+                0x8000_0000_0000_0000,
+                0x8100_0000_0000_0000,
+                0xffff_ffff_ffff_fe00,
+                0xffff_ffff_ffff_ff00,
+            ] {
+                let uu = *hi | u as u64;
+                let fuu = FixedU64::<frac::U7>::from_bits(uu);
+                assert_eq!(fuu.to_f64(), uu as f64 / 128.0);
+                let ii = uu as i64;
+                let fii = FixedI64::<frac::U7>::from_bits(ii);
+                assert_eq!(fii.to_f64(), ii as f64 / 128.0);
+            }
+
+            for hi in &[
+                0u128,
+                0x0000_0000_0000_0000_0000_0000_0000_0100,
+                0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
+                0x8000_0000_0000_0000_0000_0000_0000_0000,
+                0x8100_0000_0000_0000_0000_0000_0000_0000,
+                0xffff_ffff_ffff_ffff_ffff_ffff_ffff_fe00,
+                0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
+            ] {
+                let uu = *hi | u as u128;
+                let fuu = FixedU128::<frac::U7>::from_bits(uu);
+                assert_eq!(fuu.to_f64(), uu as f64 / 128.0);
+                let ii = uu as i128;
+                let fii = FixedI128::<frac::U7>::from_bits(ii);
+                assert_eq!(fii.to_f64(), ii as f64 / 128.0);
+            }
+        }
+    }
+}

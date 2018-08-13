@@ -212,6 +212,23 @@ macro_rules! from_float {
                 let frac_bits = Self::frac_bits();
 
                 let (int_frac, neg) = FloatConv::$method(val, frac_bits)?;
+
+                if <$Fixed<$Frac> as FixedHelper<$Frac>>::is_signed() {
+                    // most significant bit (msb) can be one only for min value,
+                    // that is for a negative value with only the msb true.
+                    let msb = 1 << (int_bits + frac_bits - 1);
+                    if int_frac & msb != 0 {
+                        if !neg || (int_frac & !msb) != 0 {
+                            return None;
+                        }
+                    }
+                } else if neg {
+                    if int_frac != 0 {
+                        return None;
+                    }
+                    return Some($Fixed::from_bits(0));
+                }
+
                 let (int, frac) = if frac_bits == 0 {
                     (int_frac, 0)
                 } else if int_bits == 0 {
@@ -219,6 +236,7 @@ macro_rules! from_float {
                 } else {
                     ((int_frac >> frac_bits), (int_frac << int_bits))
                 };
+
                 Some(FixedHelper::from_parts(neg, int, frac))
             }
         }
@@ -1080,124 +1098,6 @@ fixed! { "A 128-bit fixed-point signed integer", FixedI128(i128, 128), Signed }
 #[cfg(test)]
 mod tests {
     use *;
-
-    #[test]
-    fn to_f32() {
-        for u in 0x00..=0xff {
-            let fu = FixedU8::<frac::U7>::from_bits(u);
-            assert_eq!(fu.to_f32(), u as f32 / 128.0);
-            let i = u as i8;
-            let fi = FixedI8::<frac::U7>::from_bits(i);
-            assert_eq!(fi.to_f32(), i as f32 / 128.0);
-
-            for hi in &[
-                0u32,
-                0x0000_0100,
-                0x7fff_ff00,
-                0x8000_0000,
-                0x8100_0000,
-                0xffff_fe00,
-                0xffff_ff00,
-            ] {
-                let uu = *hi | u as u32;
-                let fuu = FixedU32::<frac::U7>::from_bits(uu);
-                assert_eq!(fuu.to_f32(), uu as f32 / 128.0);
-                let ii = uu as i32;
-                let fii = FixedI32::<frac::U7>::from_bits(ii);
-                assert_eq!(fii.to_f32(), ii as f32 / 128.0);
-            }
-
-            for hi in &[
-                0u128,
-                0x0000_0000_0000_0000_0000_0000_0000_0100,
-                0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
-                0x8000_0000_0000_0000_0000_0000_0000_0000,
-                0x8100_0000_0000_0000_0000_0000_0000_0000,
-                0xffff_ffff_ffff_ffff_ffff_ffff_ffff_fe00,
-                0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
-            ] {
-                let uu = *hi | u as u128;
-                let fuu = FixedU128::<frac::U7>::from_bits(uu);
-                assert_eq!(fuu.to_f32(), (uu as f64 / 128.0) as f32);
-                let ii = uu as i128;
-                let fii = FixedI128::<frac::U7>::from_bits(ii);
-                assert_eq!(fii.to_f32(), (ii as f64 / 128.0) as f32);
-            }
-        }
-    }
-
-    #[test]
-    fn to_infinite_f32() {
-        // too_large is 1.ffff_ffff_ffff... << 127,
-        // which will be rounded to 1.0 << 128.
-        let too_large = FixedU128::<frac::U0>::max_value();
-        assert_eq!(too_large.count_ones(), 128);
-        assert!(too_large.to_f32().is_infinite());
-
-        // still_too_large is 1.ffff_ff << 127,
-        // which is exactly midway between 1.0 << 128 (even)
-        // and the largest normal f32 that is 1.ffff_fe << 127 (odd).
-        // The tie will be rounded to even, which is to 1.0 << 128.
-        let still_too_large = too_large << 103u32;
-        assert_eq!(still_too_large.count_ones(), 25);
-        assert!(still_too_large.to_f32().is_infinite());
-
-        // not_too_large is 1.ffff_feff_ffff... << 127,
-        // which will be rounded to 1.ffff_fe << 127.
-        let not_too_large = still_too_large - FixedU128::from_bits(1);
-        assert_eq!(not_too_large.count_ones(), 127);
-        assert!(!not_too_large.to_f32().is_infinite());
-
-        // min_128 is -1.0 << 127.
-        let min_i128 = FixedI128::<frac::U0>::min_value();
-        assert_eq!(min_i128.count_ones(), 1);
-        assert_eq!(min_i128.to_f32(), -127f32.exp2());
-    }
-
-    #[test]
-    fn to_f64() {
-        for u in 0x00..=0xff {
-            let fu = FixedU8::<frac::U7>::from_bits(u);
-            assert_eq!(fu.to_f32(), u as f32 / 128.0);
-            let i = u as i8;
-            let fi = FixedI8::<frac::U7>::from_bits(i);
-            assert_eq!(fi.to_f32(), i as f32 / 128.0);
-
-            for hi in &[
-                0u64,
-                0x0000_0000_0000_0100,
-                0x7fff_ffff_ffff_ff00,
-                0x8000_0000_0000_0000,
-                0x8100_0000_0000_0000,
-                0xffff_ffff_ffff_fe00,
-                0xffff_ffff_ffff_ff00,
-            ] {
-                let uu = *hi | u as u64;
-                let fuu = FixedU64::<frac::U7>::from_bits(uu);
-                assert_eq!(fuu.to_f64(), uu as f64 / 128.0);
-                let ii = uu as i64;
-                let fii = FixedI64::<frac::U7>::from_bits(ii);
-                assert_eq!(fii.to_f64(), ii as f64 / 128.0);
-            }
-
-            for hi in &[
-                0u128,
-                0x0000_0000_0000_0000_0000_0000_0000_0100,
-                0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
-                0x8000_0000_0000_0000_0000_0000_0000_0000,
-                0x8100_0000_0000_0000_0000_0000_0000_0000,
-                0xffff_ffff_ffff_ffff_ffff_ffff_ffff_fe00,
-                0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
-            ] {
-                let uu = *hi | u as u128;
-                let fuu = FixedU128::<frac::U7>::from_bits(uu);
-                assert_eq!(fuu.to_f64(), uu as f64 / 128.0);
-                let ii = uu as i128;
-                let fii = FixedI128::<frac::U7>::from_bits(ii);
-                assert_eq!(fii.to_f64(), ii as f64 / 128.0);
-            }
-        }
-    }
 
     #[test]
     fn rounding() {

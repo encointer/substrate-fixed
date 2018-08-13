@@ -38,6 +38,10 @@ fixed-point numbers.
 ### Version 0.1.2 news (unreleased)
 
   * The crate can now be used without the standard library `std`.
+  * New methods [`from_f32`] and [`from_f64`] were added.
+
+[`from_f32`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.from_f32
+[`from_f64`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.from_f64
 
 ### Version 0.1.1 news (2018-08-11)
 

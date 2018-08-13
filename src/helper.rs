@@ -121,6 +121,7 @@ pub(crate) trait FixedHelper<Frac: Unsigned>: Sized {
         mem::size_of::<Self::UInner>() as u32 * 8
     }
 
+    fn is_signed() -> bool;
     fn one() -> Option<Self>;
     fn minus_one() -> Option<Self>;
     fn from_parts(neg: bool, int_abs: Self::UInner, frac_abs: Self::UInner) -> Self;
@@ -131,6 +132,11 @@ macro_rules! fixed_num_unsigned {
     ($Fixed:ident($UInner:ty)) => {
         impl<Frac: Unsigned> FixedHelper<Frac> for $Fixed<Frac> {
             type UInner = $UInner;
+
+            #[inline]
+            fn is_signed() -> bool {
+                false
+            }
 
             #[inline]
             fn one() -> Option<Self> {
@@ -188,6 +194,11 @@ macro_rules! fixed_num_signed {
     ($Fixed:ident($UInner:ty)) => {
         impl<Frac: Unsigned> FixedHelper<Frac> for $Fixed<Frac> {
             type UInner = $UInner;
+
+            #[inline]
+            fn is_signed() -> bool {
+                true
+            }
 
             #[inline]
             fn one() -> Option<Self> {

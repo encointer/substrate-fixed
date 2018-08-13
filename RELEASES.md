@@ -9,6 +9,7 @@ Version 0.1.2 (unreleased)
 ==========================
 
   * The crate can now be used without the standard library `std`.
+  * New methods `from_f32` and `from_f64` were added.
 
 Version 0.1.1 (2018-08-11)
 ==========================

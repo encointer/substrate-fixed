@@ -107,6 +107,8 @@ You also need to declare it by adding this to your crate root (usually
 extern crate fixed;
 ```
 
+The *fixed* crate requires rustc version 1.28.0 or later.
+
 ## License
 
 This crate is free software: you can redistribute it and/or modify it

@@ -75,6 +75,8 @@ You also need to declare it by adding this to your crate root (usually
 extern crate fixed;
 ```
 
+The *fixed* crate requires rustc version 1.28.0 or later.
+
 ## License
 
 This crate is free software: you can redistribute it and/or modify it
@@ -306,7 +308,7 @@ macro_rules! fixed {
                 "[const generics]: https://github.com/rust-lang/rust/issues/44580\n",
                 "[typenum crate]: https://crates.io/crates/typenum\n"
             ),
-            #[cfg_attr(repr_transparent, repr(transparent))]
+            #[repr(transparent)]
             pub struct $Fixed<Frac: Unsigned>(($Inner, PhantomData<Frac>));
         }
 

@@ -24,22 +24,39 @@ fn main() {
     };
     env.check_feature(
         "repr_transparent",
+        Optional(false),
         TRY_REPR_TRANSPARENT,
         Some("repr_transparent"),
     );
 }
 
+#[derive(PartialEq)]
+struct Optional(bool);
+
 impl Environment {
-    fn check_feature(&self, name: &str, contents: &str, nightly_features: Option<&str>) {
+    //  1. If optional feature is availble (both with and without flag), output:
+    //         cargo:rustc-cfg=<name>
+    //  2. If feature is available with flag (both optional and not), output:
+    //         cargo:rustc-cfg_nightly=<name>
+    //  3. If non-optional feature is not available, panic.
+    fn check_feature(
+        &self,
+        name: &str,
+        optional: Optional,
+        contents: &str,
+        nightly_features: Option<&str>,
+    ) {
         let try_dir = self.out_dir.join(format!("try_{}", name));
         let filename = format!("try_{}.rs", name);
         create_dir_or_panic(&try_dir);
         println!("$ cd {:?}", try_dir);
 
+        #[derive(PartialEq)]
         enum Iteration {
             Stable,
             Unstable,
         }
+        let mut found = false;
         for i in &[Iteration::Stable, Iteration::Unstable] {
             let s;
             let file_contents = match *i {
@@ -61,15 +78,20 @@ impl Environment {
                 .status()
                 .unwrap_or_else(|_| panic!("Unable to execute: {:?}", cmd));
             if status.success() {
-                println!("cargo:rustc-cfg={}", name);
-                if let Iteration::Unstable = *i {
+                if !optional.0 {
+                    println!("cargo:rustc-cfg={}", name);
+                }
+                if *i == Iteration::Unstable {
                     println!("cargo:rustc-cfg=nightly_{}", name);
                 }
+                found = true;
                 break;
             }
         }
-
         remove_dir_or_panic(&try_dir);
+        if !found && !optional.0 {
+            panic!("essential feature not supported by compiler: {}", name);
+        }
     }
 }
 

@@ -148,7 +148,7 @@ use core::f64;
 use core::hash::{Hash, Hasher};
 use core::marker::PhantomData;
 use frac::Unsigned;
-use helper::FixedHelper;
+use helper::{FixedHelper, FloatHelper};
 
 macro_rules! pass_method {
     ($comment:expr, $Fixed:ident($Inner:ty) => fn $method:ident()) => {
@@ -199,15 +199,16 @@ macro_rules! doc_comment_signed_unsigned {
 }
 
 macro_rules! to_f {
-    ($method:ident -> $f:ident($u:ident), $exp_bits:expr, $prec:expr) => {
+    (fn $method:ident(self) -> $f:ident) => {
         doc_comment! {
             concat!(
                 "Converts the fixed-point number to `", stringify!($f), "`."
             ),
             pub fn $method(self) -> $f {
-                // exponent is IEEE754 style (1 <= significand < 2)
-                let exp_max = (1 << ($exp_bits - 1)) - 1;
-                let exp_min = 1 - exp_max;
+                type Bits = <$f as FloatHelper>::Bits;
+                let prec = <$f as FloatHelper>::prec();
+                let exp_min = <$f as FloatHelper>::exp_min();
+                let exp_max = <$f as FloatHelper>::exp_max();
                 let (int_bits, frac_bits) = (Self::int_bits(), Self::frac_bits());
 
                 let (neg, int, frac) = self.parts();
@@ -240,11 +241,11 @@ macro_rules! to_f {
                     }
                     0
                 } else {
-                    (exponent + exp_max) as $u
+                    (exponent + exp_max) as Bits
                 };
                 // check for rounding
-                let round_up = (int_bits + frac_bits >= $prec) && {
-                    let shift = $prec - 1;
+                let round_up = (int_bits + frac_bits >= prec) && {
+                    let shift = prec - 1;
                     let mid_bit = !(!0 >> 1) >> shift;
                     let lower_bits = mid_bit - 1;
                     if mantissa & mid_bit == 0 {
@@ -257,18 +258,18 @@ macro_rules! to_f {
                     }
                 };
                 let bits_sign = if neg { !(!0 >> 1) } else { 0 };
-                let bits_exp = biased_exponent << ($prec - 1);
-                let bits_mantissa = (if int_bits + frac_bits >= $prec - 1 {
+                let bits_exp = biased_exponent << (prec - 1);
+                let bits_mantissa = (if int_bits + frac_bits >= prec - 1 {
                     #[cfg_attr(feature = "cargo-clippy", allow(cast_lossless))]
                     {
-                        (mantissa >> (int_bits + frac_bits - ($prec - 1))) as $u
+                        (mantissa >> (int_bits + frac_bits - (prec - 1))) as Bits
                     }
                 } else {
                     #[cfg_attr(feature = "cargo-clippy", allow(cast_lossless))]
                     {
-                        (mantissa as $u) << ($prec - 1 - (int_bits + frac_bits))
+                        (mantissa as Bits) << (prec - 1 - (int_bits + frac_bits))
                     }
-                }) & !(!0 << ($prec - 1));
+                }) & !(!0 << (prec - 1));
                 let mut bits_exp_mantissa = bits_exp | bits_mantissa;
                 if round_up {
                     // cannot be infinite already, so we won't get NaN
@@ -745,8 +746,8 @@ macro_rules! fixed {
                 }
             }
 
-            to_f! { to_f32 -> f32(u32), 8, 24 }
-            to_f! { to_f64 -> f64(u64), 11, 53 }
+            to_f! { fn to_f32(self) -> f32 }
+            to_f! { fn to_f64(self) -> f64 }
 
             pass_method! {
                 "Returns the number of ones in the binary representation.",

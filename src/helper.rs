@@ -20,6 +20,99 @@ use {
     FixedU8,
 };
 
+pub(crate) trait FloatHelper {
+    type Bits;
+
+    fn prec() -> u32;
+    fn exp_bias() -> i32;
+    fn exp_min() -> i32;
+    fn exp_max() -> i32;
+
+    fn zero(neg: bool) -> Self;
+    fn infinite(neg: bool) -> Self;
+    fn from_parts(neg: bool, exp: i32, mant: Self::Bits) -> Self;
+    fn parts(self) -> (bool, i32, Self::Bits);
+}
+
+macro_rules! float_helper {
+    ($Float:ident($Bits:ty, $prec:expr)) => {
+        impl FloatHelper for $Float {
+            type Bits = $Bits;
+
+            #[inline]
+            fn prec() -> u32 {
+                $prec
+            }
+
+            #[inline]
+            fn exp_bias() -> i32 {
+                let nbits = mem::size_of::<$Bits>() * 8;
+                let exp_bits = nbits - $prec;
+                (1 << (exp_bits - 1)) - 1
+            }
+
+            #[inline]
+            fn exp_min() -> i32 {
+                1 - <$Float as FloatHelper>::exp_bias()
+            }
+
+            #[inline]
+            fn exp_max() -> i32 {
+                <$Float as FloatHelper>::exp_bias()
+            }
+
+            #[inline]
+            fn zero(neg: bool) -> $Float {
+                let nbits = mem::size_of::<$Bits>() * 8;
+                let neg_mask = !0 << (nbits - 1);
+                let neg_bits = if neg { neg_mask } else { 0 };
+                <$Float>::from_bits(neg_bits)
+            }
+
+            #[inline]
+            fn infinite(neg: bool) -> $Float {
+                let nbits = mem::size_of::<$Bits>() * 8;
+                let neg_mask = !0 << (nbits - 1);
+                let mant_mask = !(!0 << ($prec - 1));
+                let exp_mask = !(neg_mask | mant_mask);
+
+                let neg_bits = if neg { neg_mask } else { 0 };
+                <$Float>::from_bits(neg_bits | exp_mask)
+            }
+
+            #[inline]
+            fn from_parts(neg: bool, exp: i32, mant: Self::Bits) -> $Float {
+                let nbits = mem::size_of::<$Bits>() * 8;
+                let neg_mask = !0 << (nbits - 1);
+
+                let neg_bits = if neg { neg_mask } else { 0 };
+                let biased_exp = (exp + <$Float as FloatHelper>::exp_bias()) as Self::Bits;
+                let exp_bits = biased_exp << ($prec - 1);
+                <$Float>::from_bits(neg_bits | exp_bits | mant)
+            }
+
+            #[inline]
+            fn parts(self) -> (bool, i32, $Bits) {
+                let nbits = mem::size_of::<$Bits>() * 8;
+                let neg_mask = !0 << (nbits - 1);
+                let mant_mask = !(!0 << ($prec - 1));
+                let exp_mask = !(neg_mask | mant_mask);
+
+                let bits = self.to_bits();
+                let neg = bits & neg_mask != 0;
+                let biased_exp = (bits & exp_mask) >> ($prec - 1);
+                let exp = (biased_exp as i32) - <$Float as FloatHelper>::exp_bias();
+                let mant = bits & mant_mask;
+
+                (neg, exp, mant)
+            }
+        }
+    };
+}
+
+float_helper! { f32(u32, 24) }
+float_helper! { f64(u64, 53) }
+
 pub(crate) trait FixedHelper<Frac: Unsigned>: Sized {
     type Inner;
 

@@ -138,7 +138,7 @@ macro_rules! if_unsigned {
 mod arith;
 mod cmp;
 mod display;
-mod flt;
+mod float;
 pub mod frac;
 mod helper;
 
@@ -148,7 +148,7 @@ use core::f32;
 use core::f64;
 use core::hash::{Hash, Hasher};
 use core::marker::PhantomData;
-use flt::FltConv;
+use float::FloatConv;
 use frac::Unsigned;
 use helper::FixedHelper;
 
@@ -200,15 +200,41 @@ macro_rules! doc_comment_signed_unsigned {
     };
 }
 
-macro_rules! to_f {
-    (fn $method:ident(self) -> $Flt:ident) => {
+macro_rules! from_float {
+    (fn $method:ident($Float:ident) -> $Fixed:ident < $Frac:ident >) => {
         doc_comment! {
             concat!(
-                "Converts the fixed-point number to `", stringify!($Flt), "`."
+                "Creates a fixed-point number from `", stringify!($Float), "`."
             ),
             #[inline]
-            pub fn $method(self) -> $Flt {
-                let (int_bits, frac_bits) = (Self::int_bits(), Self::frac_bits());
+            pub fn $method(val: $Float) -> Option<$Fixed<$Frac>> {
+                let int_bits = Self::int_bits();
+                let frac_bits = Self::frac_bits();
+
+                let (int_frac, neg) = FloatConv::$method(val, frac_bits)?;
+                let (int, frac) = if frac_bits == 0 {
+                    (int_frac, 0)
+                } else if int_bits == 0 {
+                    (0, int_frac)
+                } else {
+                    ((int_frac >> frac_bits), (int_frac << int_bits))
+                };
+                Some(FixedHelper::from_parts(neg, int, frac))
+            }
+        }
+    };
+}
+
+macro_rules! to_float {
+    (fn $method:ident($Fixed:ident < $Frac:ident >) -> $Float:ident) => {
+        doc_comment! {
+            concat!(
+                "Converts the fixed-point number to `", stringify!($Float), "`."
+            ),
+            #[inline]
+            pub fn $method(self) -> $Float {
+                let int_bits = Self::int_bits();
+                let frac_bits = Self::frac_bits();
                 let (neg, int, frac) = self.parts();
                 let int_frac = if frac_bits == 0 {
                     int
@@ -217,7 +243,7 @@ macro_rules! to_f {
                 } else {
                     (int << frac_bits) | (frac >> int_bits)
                 };
-                FltConv::$method(int_frac, neg, frac_bits)
+                FloatConv::$method(int_frac, neg, frac_bits)
             }
         }
     };
@@ -687,8 +713,10 @@ macro_rules! fixed {
                 }
             }
 
-            to_f! { fn to_f32(self) -> f32 }
-            to_f! { fn to_f64(self) -> f64 }
+            from_float! { fn from_f32(f32) -> $Fixed<Frac> }
+            from_float! { fn from_f64(f64) -> $Fixed<Frac> }
+            to_float! { fn to_f32($Fixed<Frac>) -> f32 }
+            to_float! { fn to_f64($Fixed<Frac>) -> f64 }
 
             pass_method! {
                 "Returns the number of ones in the binary representation.",

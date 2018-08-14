@@ -981,8 +981,8 @@ macro_rules! fixed {
                     "use fixed::frac;\n",
                     "use fixed::", stringify!($Fixed), ";\n",
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
-                    "let bits: ", stringify!($Inner), " = 0b111 << (",
-                    stringify!($bits_count), " - 3) | 0b1010;\n",
+                    "let bits: ", stringify!($Inner), " = (0b111 << (",
+                    stringify!($bits_count), " - 3)) | 0b1010;\n",
                     "let rot = 0b1010111;\n",
                     "assert_eq!(bits.rotate_left(3), rot);\n",
                     "assert_eq!(Fix::from_bits(bits).rotate_left(3), Fix::from_bits(rot));\n",
@@ -1001,8 +1001,8 @@ macro_rules! fixed {
                     "use fixed::", stringify!($Fixed), ";\n",
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "let bits: ", stringify!($Inner), " = 0b1010111;\n",
-                    "let rot = 0b111 << (",
-                    stringify!($bits_count), " - 3) | 0b1010;\n",
+                    "let rot = (0b111 << (",
+                    stringify!($bits_count), " - 3)) | 0b1010;\n",
                     "assert_eq!(bits.rotate_right(3), rot);\n",
                     "assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));\n",
                     "```\n"
@@ -1283,48 +1283,123 @@ macro_rules! fixed {
 
             if_unsigned! {
                 $Signedness => pass_method! {
-                    "Returns `true` if the fixed-point number is \
-                     2<sup><i>k</i></sup> for some <i>k</i>.",
+                    concat!(
+                        "Returns `true` if the fixed-point number is\n",
+                        "2<sup><i>k</i></sup> for some <i>k</i>.\n",
+                        "\n",
+                        "# Examples\n",
+                        "\n",
+                        "```rust\n",
+                        "use fixed::frac;\n",
+                        "use fixed::", stringify!($Fixed), ";\n",
+                        "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                        "// 3/8 is 0.0110\n",
+                        "let three_eights = Fix::from_bits(0b0110);\n",
+                        "// 1/2 is 0.1000\n",
+                        "let half = Fix::from_bits(0b1000);\n",
+                        "assert!(!three_eights.is_power_of_two());\n",
+                        "assert!(half.is_power_of_two());\n",
+                        "```\n"
+                    ),
                     $Fixed($Inner) => fn is_power_of_two(self) -> bool
                 }
             }
 
             if_unsigned! {
                 $Signedness => pass_method! {
-                    "Returns the smallest power of two ≥ `self`.",
+                    concat!(
+                        "Returns the smallest power of two ≥ `self`.\n",
+                        "\n",
+                        "# Examples\n",
+                        "\n",
+                        "```rust\n",
+                        "use fixed::frac;\n",
+                        "use fixed::", stringify!($Fixed), ";\n",
+                        "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                        "// 3/8 is 0.0110\n",
+                        "let three_eights = Fix::from_bits(0b0110);\n",
+                        "// 1/2 is 0.1000\n",
+                        "let half = Fix::from_bits(0b1000);\n",
+                        "assert_eq!(three_eights.next_power_of_two(), half);\n",
+                        "assert_eq!(half.next_power_of_two(), half);\n",
+                        "```\n"
+                    ),
                     $Fixed($Inner) => fn next_power_of_two(self)
                 }
             }
 
             if_unsigned! {
-                $Signedness =>
-                /// Returns the smallest power of two ≥ `self`, or `None`
-                /// if the next power of two is too large to represent.
-                #[inline]
-                pub fn checked_next_power_of_two(self) -> Option<$Fixed<Frac>> {
-                    <$Inner>::checked_next_power_of_two(self.to_bits()).map($Fixed::from_bits)
+                $Signedness => doc_comment! {
+                    concat!(
+                        "Returns the smallest power of two ≥ `self`, or `None`\n",
+                        "if the next power of two is too large to represent.\n",
+                        "\n",
+                        "# Examples\n",
+                        "\n",
+                        "```rust\n",
+                        "use fixed::frac;\n",
+                        "use fixed::", stringify!($Fixed), ";\n",
+                        "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                        "// 3/8 is 0.0110\n",
+                        "let three_eights = Fix::from_bits(0b0110);\n",
+                        "// 1/2 is 0.1000\n",
+                        "let half = Fix::from_bits(0b1000);\n",
+                        "assert_eq!(three_eights.checked_next_power_of_two(), Some(half));\n",
+                        "assert!(Fix::max_value().checked_next_power_of_two().is_none());\n",
+                        "```\n"
+                    ),
+                    #[inline]
+                    pub fn checked_next_power_of_two(self) -> Option<$Fixed<Frac>> {
+                        <$Inner>::checked_next_power_of_two(self.to_bits()).map($Fixed::from_bits)
+                    }
                 }
             }
 
             if_signed! {
                 $Signedness => pass_method! {
-                    "Returns the absolute value of two ≥ `self`.",
+                    concat!(
+                        "Returns the absolute value.\n",
+                        "\n",
+                        "# Examples\n",
+                        "\n",
+                        "```rust\n",
+                        "use fixed::frac;\n",
+                        "use fixed::", stringify!($Fixed), ";\n",
+                        "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                        "assert_eq!(Fix::from_int(5).unwrap().abs(), Fix::from_int(5).unwrap());\n",
+                        "assert_eq!(Fix::from_int(-5).unwrap().abs(), Fix::from_int(5).unwrap());\n",
+                        "```\n"
+                    ),
                     $Fixed($Inner) => fn abs(self)
                 }
             }
 
             if_signed! {
-                $Signedness =>
-                /// Returns a number representing the sign of `self`.
-                #[inline]
-                pub fn signum(self) -> $Fixed<Frac> {
-                    match self.to_bits().cmp(&0) {
-                        Ordering::Equal => $Fixed::from_bits(0),
-                        Ordering::Greater => {
-                            <$Fixed<Frac> as FixedHelper<Frac>>::one().expect("overflow")
-                        }
-                        Ordering::Less => {
-                            <$Fixed<Frac> as FixedHelper<Frac>>::minus_one().expect("overflow")
+                $Signedness => doc_comment! {
+                    concat!(
+                        "Returns a number representing the sign of `self`.\n",
+                        "\n",
+                        "# Examples\n",
+                        "\n",
+                        "```rust\n",
+                        "use fixed::frac;\n",
+                        "use fixed::", stringify!($Fixed), ";\n",
+                        "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                        "assert_eq!(Fix::from_int(5).unwrap().signum(), Fix::from_int(1).unwrap());\n",
+                        "assert_eq!(Fix::from_int(0).unwrap().signum(), Fix::from_int(0).unwrap());\n",
+                        "assert_eq!(Fix::from_int(-5).unwrap().signum(), Fix::from_int(-1).unwrap());\n",
+                        "```\n"
+                    ),
+                    #[inline]
+                    pub fn signum(self) -> $Fixed<Frac> {
+                        match self.to_bits().cmp(&0) {
+                            Ordering::Equal => $Fixed::from_bits(0),
+                            Ordering::Greater => {
+                                <$Fixed<Frac> as FixedHelper<Frac>>::one().expect("overflow")
+                            }
+                            Ordering::Less => {
+                                <$Fixed<Frac> as FixedHelper<Frac>>::minus_one().expect("overflow")
+                            }
                         }
                     }
                 }

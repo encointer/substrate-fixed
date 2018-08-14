@@ -201,10 +201,58 @@ macro_rules! doc_comment_signed_unsigned {
 }
 
 macro_rules! from_float {
-    (fn $method:ident($Float:ident) -> $Fixed:ident < $Frac:ident >) => {
-        doc_comment! {
+    ($Signedness:tt, fn $method:ident($Float:ident) -> $Fixed:ident < $Frac:ident >) => {
+        doc_comment_signed_unsigned! {
+            $Signedness,
             concat!(
-                "Creates a fixed-point number from `", stringify!($Float), "`."
+                "Creates a fixed-point number from `", stringify!($Float), "`.\n",
+                "\n",
+                "This method rounds to the nearest, with ties rounding to even.",
+                "\n",
+                "# Examples\n",
+                "\n",
+                "```rust\n",
+                "use fixed::frac;\n",
+                "use fixed::", stringify!($Fixed), ";\n",
+                "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                "// 1.75 is 0001.1100, that is from_bits(28)\n",
+                "assert_eq!(Fix::from_", stringify!($Float),
+                "(1.75), Some(Fix::from_bits(28)));\n",
+                "assert_eq!(Fix::from_", stringify!($Float),
+                "(-1.75), Some(Fix::from_bits(-28)));\n",
+                "// 1e-10 is too small for four fractional bits\n",
+                "assert_eq!(Fix::from_", stringify!($Float),
+                "(1e-10), Some(Fix::from_bits(0)));\n",
+                "assert_eq!(Fix::from_", stringify!($Float),
+                "(-1e-10), Some(Fix::from_bits(0)));\n",
+                "// 2e38 is too large for ", stringify!($Fixed), "<frac::U4>\n",
+                "assert!(Fix::from_", stringify!($Float),
+                "(2e38).is_none());\n",
+                "assert!(Fix::from_", stringify!($Float),
+                "(-2e38).is_none());\n",
+                "```\n"
+            ),
+            concat!(
+                "Creates a fixed-point number from `", stringify!($Float), "`.\n",
+                "\n",
+                "This method rounds to the nearest, with ties rounding to even.",
+                "\n",
+                "# Examples\n",
+                "\n",
+                "```rust\n",
+                "use fixed::frac;\n",
+                "use fixed::", stringify!($Fixed), ";\n",
+                "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                "// 1.75 is 0001.1100, that is from_bits(28)\n",
+                "assert_eq!(Fix::from_", stringify!($Float),
+                "(1.75), Some(Fix::from_bits(28)));\n",
+                "// 1e-10 is too small for four fractional bits\n",
+                "assert_eq!(Fix::from_", stringify!($Float),
+                "(1e-10), Some(Fix::from_bits(0)));\n",
+                "// 2e38 is too large for ", stringify!($Fixed), "<frac::U4>\n",
+                "assert!(Fix::from_", stringify!($Float),
+                "(2e38).is_none());\n",
+                "```\n"
             ),
             #[inline]
             pub fn $method(val: $Float) -> Option<$Fixed<$Frac>> {
@@ -244,10 +292,42 @@ macro_rules! from_float {
 }
 
 macro_rules! to_float {
-    (fn $method:ident($Fixed:ident < $Frac:ident >) -> $Float:ident) => {
-        doc_comment! {
+    ($Signedness:tt, fn $method:ident($Fixed:ident < $Frac:ident >) -> $Float:ident) => {
+        doc_comment_signed_unsigned! {
+            $Signedness,
             concat!(
-                "Converts the fixed-point number to `", stringify!($Float), "`."
+                "Converts the fixed-point number to `", stringify!($Float), "`.\n",
+                "\n",
+                "This method rounds to the nearest, with ties rounding to even.",
+                "\n",
+                "# Examples\n",
+                "\n",
+                "```rust\n",
+                "use fixed::frac;\n",
+                "use fixed::", stringify!($Fixed), ";\n",
+                "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                "// 1.75 is 0001.1100, that is from_bits(28)\n",
+                "assert_eq!(Fix::from_bits(28).to_", stringify!($Float),
+                "(), 1.75);\n",
+                "assert_eq!(Fix::from_bits(-28).to_", stringify!($Float),
+                "(), -1.75);\n",
+                "```\n"
+            ),
+            concat!(
+                "Converts the fixed-point number to `", stringify!($Float), "`.\n",
+                "\n",
+                "This method rounds to the nearest, with ties rounding to even.",
+                "\n",
+                "# Examples\n",
+                "\n",
+                "```rust\n",
+                "use fixed::frac;\n",
+                "use fixed::", stringify!($Fixed), ";\n",
+                "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                "// 1.75 is 0001.1100, that is from_bits(28)\n",
+                "assert_eq!(Fix::from_bits(28).to_", stringify!($Float),
+                "(), 1.75);\n",
+                "```\n"
             ),
             #[inline]
             pub fn $method(self) -> $Float {
@@ -623,6 +703,11 @@ macro_rules! fixed {
                 }
             }
 
+            from_float! { $Signedness, fn from_f32(f32) -> $Fixed<Frac> }
+            from_float! { $Signedness, fn from_f64(f64) -> $Fixed<Frac> }
+            to_float! { $Signedness, fn to_f32($Fixed<Frac>) -> f32 }
+            to_float! { $Signedness, fn to_f64($Fixed<Frac>) -> f64 }
+
             doc_comment_signed_unsigned! {
                 $Signedness,
                 concat!(
@@ -730,11 +815,6 @@ macro_rules! fixed {
                     $Fixed::from_bits(self.to_bits() & !inv_mask)
                 }
             }
-
-            from_float! { fn from_f32(f32) -> $Fixed<Frac> }
-            from_float! { fn from_f64(f64) -> $Fixed<Frac> }
-            to_float! { fn to_f32($Fixed<Frac>) -> f32 }
-            to_float! { fn to_f64($Fixed<Frac>) -> f64 }
 
             pass_method! {
                 "Returns the number of ones in the binary representation.",

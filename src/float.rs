@@ -237,7 +237,7 @@ mod tests {
 
         // -111.1111 -> -111.1111
         assert_eq!(Fix::from_f32(-127.0 / 16.0).unwrap(), Fix::from_bits(-127));
-        // -111.11111 -> -1000.0000
+        // -111.11111 -> -1000.0000 (tie to even)
         assert_eq!(Fix::from_f32(-255.0 / 32.0).unwrap(), Fix::from_bits(-128));
         // -1000.00001 -> -1000.0000 (tie to even)
         assert_eq!(Fix::from_f32(-257.0 / 32.0).unwrap(), Fix::from_bits(-128));
@@ -266,7 +266,7 @@ mod tests {
         assert_eq!(Fix::from_f32(1.0 / 32.0).unwrap(), Fix::from_bits(0));
         // -0.00001 -> 0000.0000 (tie to even)
         assert_eq!(Fix::from_f32(-1.0 / 32.0).unwrap(), Fix::from_bits(0));
-        // -0.0001 -> -ve
+        // -0.0001 -> too small
         assert!(Fix::from_f32(-1.0 / 16.0).is_none());
 
         // 1111.1111 -> 1111.1111

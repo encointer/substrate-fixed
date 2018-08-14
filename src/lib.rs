@@ -186,6 +186,13 @@ macro_rules! pass_method {
     };
 }
 
+macro_rules! pass_method_signed_unsigned {
+    ($Signedness:tt, $signed:expr, $unsigned:expr, $($tt:tt)*) => {
+        if_signed! { $Signedness => pass_method! { $signed, $($tt)* } }
+        if_unsigned! { $Signedness => pass_method! { $unsigned, $($tt)* } }
+    }
+}
+
 macro_rules! doc_comment {
     ($x:expr, $($tt:tt)*) => {
         #[doc = $x]
@@ -405,32 +412,105 @@ macro_rules! fixed {
         }
 
         impl<Frac: Unsigned> $Fixed<Frac> {
-            pass_method! {
-                "Returns the smallest value that can be represented.",
+            pass_method_signed_unsigned! {
+                $Signedness,
+                concat!(
+                    "Returns the smallest value that can be represented.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "assert_eq!(Fix::min_value(), Fix::from_bits(",
+                    stringify!($Inner), "::min_value()));\n",
+                    "```\n"
+                ),
+                concat!(
+                    "Returns the smallest value that can be represented.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "assert_eq!(Fix::min_value(), Fix::from_bits(0));\n",
+                    "```\n"
+                ),
                 $Fixed($Inner) => fn min_value()
             }
             pass_method! {
-                "Returns the largest value that can be represented.",
+                concat!(
+                    "Returns the smallest value that can be represented.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "assert_eq!(Fix::max_value(), Fix::from_bits(",
+                    stringify!($Inner), "::max_value()));\n",
+                    "```\n"
+                ),
                 $Fixed($Inner) => fn max_value()
             }
 
-            /// Returns the number of integer bits.
-            #[inline]
-            pub fn int_bits() -> u32 {
-                <$Fixed<Frac> as FixedHelper<Frac>>::int_frac_bits() - <$Fixed<Frac>>::frac_bits()
+            doc_comment! {
+                concat!(
+                    "Returns the number of integer bits.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U6>;\n",
+                    "assert_eq!(Fix::int_bits(), ", stringify!($bits_count), " - 6);\n",
+                    "```\n"
+                ),
+                #[inline]
+                pub fn int_bits() -> u32 {
+                    <Self as FixedHelper<Frac>>::int_frac_bits() - Self::frac_bits()
+                }
             }
 
-            /// Returns the number of fractional bits.
-            #[inline]
-            pub fn frac_bits() -> u32 {
-                Frac::to_u32()
+            doc_comment! {
+                concat!(
+                    "Returns the number of fractional bits.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U6>;\n",
+                    "assert_eq!(Fix::frac_bits(), 6);\n",
+                    "```\n"
+                ),
+                #[inline]
+                pub fn frac_bits() -> u32 {
+                    Frac::to_u32()
+                }
             }
 
             doc_comment! {
                 concat!(
                     "Creates a fixed-point number of type `", stringify!($Fixed), "`\n",
                     "that has a bitwise representation identical to the\n",
-                    "`", stringify!($Inner), "` value."
+                    "`", stringify!($Inner), "` value.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "// 0010.0000 == 2\n",
+                    "assert_eq!(Fix::from_bits(0b10_0000), 2);\n",
+                    "```\n"
                 ),
                 #[inline]
                 pub fn from_bits(v: $Inner) -> $Fixed<Frac> {
@@ -444,7 +524,18 @@ macro_rules! fixed {
                 concat!(
                     "Creates an integer of type `", stringify!($Inner), "`\n",
                     "that has a bitwise representation identical to the\n",
-                    "`", stringify!($Fixed), "` value."
+                    "`", stringify!($Fixed), "` value.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "let two = Fix::from_int(2).unwrap();\n",
+                    "// two is 0010.0000\n",
+                    "assert_eq!(two.to_bits(), 0b10_0000);\n",
+                    "```\n"
                 ),
                 #[inline]
                 pub fn to_bits(self) -> $Inner {

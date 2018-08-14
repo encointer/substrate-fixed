@@ -219,20 +219,7 @@ fn dec_int_digits(int_bits: u32) -> u32 {
     } else {
         10
     };
-    let digits = (int_bits * 3 + i) / 10;
-
-    /*
-       This debug assertion can be enabled in a crate with std,
-       as core does not have f64::exp2.
-
-    // check that digits is ceil(log10(2^int_bits - 1)), except when int_bits < 2
-    debug_assert!(
-        int_bits < 2 || digits == (f64::from(int_bits).exp2() - 1.0).log10().ceil() as u32
-    );
-
-    */
-
-    digits
+    (int_bits * 3 + i) / 10
 }
 
 fn dec_frac_digits(frac_bits: u32) -> u32 {
@@ -244,22 +231,7 @@ fn dec_frac_digits(frac_bits: u32) -> u32 {
     } else {
         7
     };
-    let digits = (frac_bits * 3 + i) / 10;
-
-    /*
-       These debug assertions can be enabled in a crate with std,
-       as core does not have f64::exp2 and f64::powi.
-
-    // check that error < delta, where
-    // error = 0.5 * 10^-digits
-    // delta = 2^-frac_bits
-    debug_assert!(0.5 * 10f64.powi(0 - digits as i32) < (-f64::from(frac_bits)).exp2());
-    // check that error with one less digit >= delta
-    debug_assert!(0.5 * 10f64.powi(1 - digits as i32) >= (-f64::from(frac_bits)).exp2());
-
-    */
-
-    digits
+    (frac_bits * 3 + i) / 10
 }
 
 trait FmtDecHelper {
@@ -496,6 +468,57 @@ mod tests {
             let flt = bits as f64 / (frac as f64).exp2();
             let fix = FixedU32::<Frac>::from_bits(bits);
             assert_eq_fmt!(("{}", fix), ("{:.2}", flt));
+        }
+    }
+
+    fn pow(base: u32, mut exp: u32) -> f64 {
+        let mut mult = f64::from(base);
+        let mut result = 1.0;
+        loop {
+            if exp % 2 != 0 {
+                result *= mult;
+            }
+            exp /= 2;
+            if exp == 0 {
+                break;
+            }
+            mult *= mult;
+        }
+        result
+    }
+
+    #[test]
+    fn dec_int_digits() {
+        use super::dec_int_digits;
+        assert_eq!(dec_int_digits(0), 0);
+        assert_eq!(dec_int_digits(1), 1);
+        for int_bits in 2..299 {
+            let check = (pow(2, int_bits) - 1.0).log10().ceil() as u32;
+            assert_eq!(dec_int_digits(int_bits), check, "int_bits {}", int_bits);
+        }
+    }
+
+    #[test]
+    fn dec_frac_digits() {
+        use super::dec_frac_digits;
+        for frac_bits in 0..300 {
+            let error = 0.5 / pow(10, dec_frac_digits(frac_bits));
+            let error_with_one_less_dec_digit = error * 10.0;
+            let delta = 1.0 / pow(2, frac_bits);
+            assert!(
+                error < delta,
+                "frac_bits {}, error {:e}, delta {:e}",
+                frac_bits,
+                error,
+                delta
+            );
+            assert!(
+                error_with_one_less_dec_digit >= delta,
+                "frac_bits {}, error with one less digit {:e}, delta {:e}",
+                frac_bits,
+                error_with_one_less_dec_digit,
+                delta
+            );
         }
     }
 }

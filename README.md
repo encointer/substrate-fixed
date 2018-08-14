@@ -39,9 +39,13 @@ fixed-point numbers.
 
   * The crate can now be used without the standard library `std`.
   * New methods [`from_f32`] and [`from_f64`] were added.
+  * New methods [`is_positive`] and [`is_negative`] were added to
+    signed fixed-point numbers.
 
 [`from_f32`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.from_f32
 [`from_f64`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.from_f64
+[`is_negative`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.is_negative
+[`is_positive`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.is_positive
 
 ### Version 0.1.1 news (2018-08-11)
 

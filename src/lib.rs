@@ -1404,6 +1404,46 @@ macro_rules! fixed {
                     }
                 }
             }
+
+            if_signed! {
+                $Signedness => pass_method! {
+                    concat!(
+                        "Returns `true` if the number is > 0.\n",
+                        "\n",
+                        "# Examples\n",
+                        "\n",
+                        "```rust\n",
+                        "use fixed::frac;\n",
+                        "use fixed::", stringify!($Fixed), ";\n",
+                        "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                        "assert!(Fix::from_int(5).unwrap().is_positive());\n",
+                        "assert!(!Fix::from_int(0).unwrap().is_positive());\n",
+                        "assert!(!Fix::from_int(-5).unwrap().is_positive());\n",
+                        "```\n"
+                    ),
+                    $Fixed($Inner) => fn is_positive(self) -> bool
+                }
+            }
+
+            if_signed! {
+                $Signedness => pass_method! {
+                    concat!(
+                        "Returns `true` if the number is < 0.\n",
+                        "\n",
+                        "# Examples\n",
+                        "\n",
+                        "```rust\n",
+                        "use fixed::frac;\n",
+                        "use fixed::", stringify!($Fixed), ";\n",
+                        "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                        "assert!(!Fix::from_int(5).unwrap().is_negative());\n",
+                        "assert!(!Fix::from_int(0).unwrap().is_negative());\n",
+                        "assert!(Fix::from_int(-5).unwrap().is_negative());\n",
+                        "```\n"
+                    ),
+                    $Fixed($Inner) => fn is_negative(self) -> bool
+                }
+            }
         }
     };
 }

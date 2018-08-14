@@ -35,15 +35,13 @@ macro_rules! fixed_cmp {
                 } else {
                     // self has more fractional bits
                     let diff = fl - fr;
-                    let (aligned, extra);
                     if diff == $bits_count {
-                        aligned = 0;
-                        extra = self.to_bits();
+                        0 == rhs.to_bits() && self.to_bits() == 0
                     } else {
-                        aligned = self.to_bits() >> diff;
-                        extra = self.to_bits() & !(!0 << diff);
+                        let aligned = self.to_bits() >> diff;
+                        let extra = self.to_bits() & !(!0 << diff);
+                        aligned == rhs.to_bits() && extra == 0
                     }
-                    aligned == rhs.to_bits() && extra == 0
                 }
             }
         }
@@ -94,25 +92,112 @@ macro_rules! fixed_cmp {
                     }
                 }
             }
+
+            #[inline]
+            fn lt(&self, rhs: &$Fixed<FracRhs>) -> bool {
+                let (fl, fr) = (Frac::to_u32(), FracRhs::to_u32());
+                if fl == fr {
+                    self.to_bits() < rhs.to_bits()
+                } else if fl < fr {
+                    rhs.gt(self)
+                } else {
+                    // self has more fractional bits
+                    let diff = fl - fr;
+                    let rhs_bits = rhs.to_bits();
+                    #[allow(unused_comparisons)]
+                    {
+                        if diff == $bits_count {
+                            0 < rhs_bits || (0 == rhs_bits && self.to_bits() < 0)
+                        } else {
+                            (self.to_bits() >> diff) < rhs_bits
+                        }
+                    }
+                }
+            }
+
+            #[inline]
+            fn le(&self, rhs: &$Fixed<FracRhs>) -> bool {
+                let (fl, fr) = (Frac::to_u32(), FracRhs::to_u32());
+                if fl == fr {
+                    self.to_bits() <= rhs.to_bits()
+                } else if fl < fr {
+                    rhs.ge(self)
+                } else {
+                    // self has more fractional bits
+                    let diff = fl - fr;
+                    let rhs_bits = rhs.to_bits();
+                    if diff == $bits_count {
+                        0 < rhs_bits || (0 == rhs_bits && self.to_bits() <= 0)
+                    } else {
+                        let aligned = self.to_bits() >> diff;
+                        let extra = self.to_bits() & !(!0 << diff);
+                        aligned < rhs_bits || (aligned == rhs_bits && extra == 0)
+                    }
+                }
+            }
+
+            #[inline]
+            fn gt(&self, rhs: &$Fixed<FracRhs>) -> bool {
+                !self.le(rhs)
+            }
+
+            #[inline]
+            fn ge(&self, rhs: &$Fixed<FracRhs>) -> bool {
+                !self.lt(rhs)
+            }
         }
 
         impl<Frac: Unsigned> PartialOrd<$Inner> for $Fixed<Frac> {
             #[inline]
             fn partial_cmp(&self, rhs: &$Inner) -> Option<Ordering> {
-                <$Fixed<Frac> as PartialOrd<$Fixed<frac::U0>>>::partial_cmp(
-                    self,
-                    &$Fixed::from_bits(*rhs),
-                )
+                self.partial_cmp(&$Fixed::<frac::U0>::from_bits(*rhs))
+            }
+
+            #[inline]
+            fn lt(&self, rhs: &$Inner) -> bool {
+                self.lt(&$Fixed::<frac::U0>::from_bits(*rhs))
+            }
+
+            #[inline]
+            fn le(&self, rhs: &$Inner) -> bool {
+                self.le(&$Fixed::<frac::U0>::from_bits(*rhs))
+            }
+
+            #[inline]
+            fn gt(&self, rhs: &$Inner) -> bool {
+                self.gt(&$Fixed::<frac::U0>::from_bits(*rhs))
+            }
+
+            #[inline]
+            fn ge(&self, rhs: &$Inner) -> bool {
+                self.ge(&$Fixed::<frac::U0>::from_bits(*rhs))
             }
         }
 
         impl<Frac: Unsigned> PartialOrd<$Fixed<Frac>> for $Inner {
             #[inline]
             fn partial_cmp(&self, rhs: &$Fixed<Frac>) -> Option<Ordering> {
-                <$Fixed<frac::U0> as PartialOrd<$Fixed<Frac>>>::partial_cmp(
-                    &$Fixed::from_bits(*self),
-                    rhs,
-                )
+                $Fixed::<frac::U0>::from_bits(*self).partial_cmp(rhs)
+            }
+
+            #[inline]
+            fn lt(&self, rhs: &$Fixed<Frac>) -> bool {
+                $Fixed::<frac::U0>::from_bits(*self).lt(rhs)
+            }
+
+            #[inline]
+            fn le(&self, rhs: &$Fixed<Frac>) -> bool {
+                $Fixed::<frac::U0>::from_bits(*self).le(rhs)
+            }
+
+            #[inline]
+            fn gt(&self, rhs: &$Fixed<Frac>) -> bool {
+                $Fixed::<frac::U0>::from_bits(*self).gt(rhs)
+            }
+
+            #[inline]
+            fn ge(&self, rhs: &$Fixed<Frac>) -> bool {
+                $Fixed::<frac::U0>::from_bits(*self).ge(rhs)
             }
         }
     };

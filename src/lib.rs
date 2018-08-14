@@ -908,27 +908,105 @@ macro_rules! fixed {
             }
 
             pass_method! {
-                "Returns the number of ones in the binary representation.",
+                concat!(
+                    "Returns the number of ones in the binary representation.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "let f = Fix::from_bits(0b11_0010);\n",
+                    "assert_eq!(f.count_ones(), 3);\n",
+                    "```\n"
+                ),
                 $Fixed($Inner) => fn count_ones(self) -> u32
             }
             pass_method! {
-                "Returns the number of zeros in the binary representation.",
+                concat!(
+                    "Returns the number of zeros in the binary representation.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "let f = Fix::from_bits(!0b11_0010);\n",
+                    "assert_eq!(f.count_zeros(), 3);\n",
+                    "```\n"
+                ),
                 $Fixed($Inner) => fn count_zeros(self) -> u32
             }
             pass_method! {
-                "Returns the number of leading zeros in the binary representation.",
+                concat!(
+                    "Returns the number of leading zeros in the binary representation.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "let f = Fix::from_bits(0b10_0000);\n",
+                    "assert_eq!(f.leading_zeros(), ", stringify!($bits_count), " - 6);\n",
+                    "```\n"
+                ),
                 $Fixed($Inner) => fn leading_zeros(self) -> u32
             }
             pass_method! {
-                "Returns the number of trailing zeros in the binary representation.",
+                concat!(
+                    "Returns the number of trailing zeros in the binary representation.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "let f = Fix::from_bits(0b10_0000);\n",
+                    "assert_eq!(f.trailing_zeros(), 5);\n",
+                    "```\n"
+                ),
                 $Fixed($Inner) => fn trailing_zeros(self) -> u32
             }
             pass_method! {
-                "Shifts to the left by `n` bits, wrapping the truncated bits to the right end.",
+                concat!(
+                    "Shifts to the left by *n* bits, wrapping the truncated bits to the right end.\n",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "let bits: ", stringify!($Inner), " = 0b111 << (",
+                    stringify!($bits_count), " - 3) | 0b1010;\n",
+                    "let rot = 0b1010111;\n",
+                    "assert_eq!(bits.rotate_left(3), rot);\n",
+                    "assert_eq!(Fix::from_bits(bits).rotate_left(3), Fix::from_bits(rot));\n",
+                    "```\n"
+                ),
                 $Fixed($Inner) => fn rotate_left(self, n: u32)
             }
             pass_method! {
-                "Shifts to the right by `n` bits, wrapping the truncated bits to the left end.",
+                concat!(
+                    "Shifts to the right by *n* bits, wrapping the truncated bits to the left end.",
+                    "\n",
+                    "# Examples\n",
+                    "\n",
+                    "```rust\n",
+                    "use fixed::frac;\n",
+                    "use fixed::", stringify!($Fixed), ";\n",
+                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
+                    "let bits: ", stringify!($Inner), " = 0b1010111;\n",
+                    "let rot = 0b111 << (",
+                    stringify!($bits_count), " - 3) | 0b1010;\n",
+                    "assert_eq!(bits.rotate_right(3), rot);\n",
+                    "assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));\n",
+                    "```\n"
+                ),
                 $Fixed($Inner) => fn rotate_right(self, n: u32)
             }
 

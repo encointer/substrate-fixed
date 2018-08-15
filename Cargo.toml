@@ -7,7 +7,7 @@
 
 [package]
 name = "fixed"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Trevor Spiteri <tspiteri@ieee.org>"]
 description = "Fixed-point numbers"
 documentation = "https://docs.rs/fixed"
@@ -18,4 +18,4 @@ categories = ["algorithms", "data-structures", "no-std", "science"]
 license = "MIT/Apache-2.0"
 
 [dependencies]
-typenum = "1.3"
+typenum = "1.8"

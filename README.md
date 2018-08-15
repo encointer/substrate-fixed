@@ -35,17 +35,17 @@ fixed-point numbers.
 
 ## What’s new
 
-### Version 0.1.2 news (unreleased)
+### Version 0.1.2 news (2018-08-15)
 
   * The crate can now be used without the standard library `std`.
   * New methods [`from_f32`] and [`from_f64`] were added.
   * New methods [`is_positive`] and [`is_negative`] were added to
     signed fixed-point numbers.
 
-[`from_f32`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.from_f32
-[`from_f64`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.from_f64
-[`is_negative`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.is_negative
-[`is_positive`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.is_positive
+[`from_f32`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedI32.html#method.from_f32
+[`from_f64`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedI32.html#method.from_f64
+[`is_negative`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedI32.html#method.is_negative
+[`is_positive`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedI32.html#method.is_positive
 
 ### Version 0.1.1 news (2018-08-11)
 
@@ -57,24 +57,15 @@ fixed-point numbers.
   * New methods [`int`] and [`frac`] were added.
   * Support for multiplication and division by integers was added.
   
-[`frac_bits`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.frac_bits
-[`frac`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.frac
-[`from_int`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.from_int
-[`int_bits`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.int_bits
-[`to_int_ceil`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.to_int_ceil
-[`to_int_floor`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.to_int_floor
-[`to_int_round`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.to_int_round
-[`to_int`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.to_int
-[`int`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html#method.int
-
-### Version 0.1.0 news (2018-08-10)
-
-  * [`Unsigned`] constants provided by the [*typenum* crate] are now
-    used for the number of fractional bits.
-  * Many methods and trait implementations available for primitive
-    integers are now also supported by the fixed-point numbers.
-
-[`Unsigned`]: https://docs.rs/typenum/^1.3/typenum/marker_traits/trait.Unsigned.html
+[`frac_bits`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedI32.html#method.frac_bits
+[`frac`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedI32.html#method.frac
+[`from_int`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedI32.html#method.from_int
+[`int_bits`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedI32.html#method.int_bits
+[`to_int_ceil`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedI32.html#method.to_int_ceil
+[`to_int_floor`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedI32.html#method.to_int_floor
+[`to_int_round`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedI32.html#method.to_int_round
+[`to_int`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedI32.html#method.to_int
+[`int`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedI32.html#method.int
 
 ### Other releases
 
@@ -105,7 +96,7 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 
 ```toml
 [dependencies]
-fixed = "0.1.1"
+fixed = "0.1.2"
 ```
 
 You also need to declare it by adding this to your crate root (usually
@@ -139,15 +130,15 @@ additional terms or conditions.
 [*typenum* crate]: https://crates.io/crates/typenum
 [LICENSE-APACHE]: https://www.apache.org/licenses/LICENSE-2.0
 [LICENSE-MIT]: https://opensource.org/licenses/MIT
-[`FixedI128`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI128.html
-[`FixedI16`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI16.html
-[`FixedI32`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI32.html
-[`FixedI64`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI64.html
-[`FixedI8`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedI8.html
-[`FixedU128`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedU128.html
-[`FixedU16`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedU16.html
-[`FixedU32`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedU32.html
-[`FixedU64`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedU64.html
-[`FixedU8`]: https://docs.rs/fixed/0.1.1/fixed/struct.FixedU8.html
+[`FixedI128`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedI128.html
+[`FixedI16`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedI16.html
+[`FixedI32`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedI32.html
+[`FixedI64`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedI64.html
+[`FixedI8`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedI8.html
+[`FixedU128`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedU128.html
+[`FixedU16`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedU16.html
+[`FixedU32`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedU32.html
+[`FixedU64`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedU64.html
+[`FixedU8`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedU8.html
 [channels]: https://doc.rust-lang.org/book/second-edition/appendix-07-nightly-rust.html
 [const generics]: https://github.com/rust-lang/rust/issues/44580

@@ -14,7 +14,7 @@
 // <https://opensource.org/licenses/MIT>.
 
 use core::mem;
-use frac::Unsigned;
+use frac::{IsLessOrEqual, True, U128, U16, U32, U64, U8, Unsigned};
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
@@ -113,7 +113,10 @@ macro_rules! float_helper {
 float_helper! { f32(u32, 24) }
 float_helper! { f64(u64, 53) }
 
-pub(crate) trait FixedHelper<Frac: Unsigned>: Sized {
+pub(crate) trait FixedHelper<Frac>: Sized
+where
+    Frac: Unsigned,
+{
     type UInner;
 
     #[inline]
@@ -129,8 +132,11 @@ pub(crate) trait FixedHelper<Frac: Unsigned>: Sized {
 }
 
 macro_rules! fixed_num_unsigned {
-    ($Fixed:ident($UInner:ty)) => {
-        impl<Frac: Unsigned> FixedHelper<Frac> for $Fixed<Frac> {
+    ($Fixed:ident($UInner:ty, $Len:ty)) => {
+        impl<Frac> FixedHelper<Frac> for $Fixed<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+        {
             type UInner = $UInner;
 
             #[inline]
@@ -191,8 +197,11 @@ macro_rules! fixed_num_unsigned {
 }
 
 macro_rules! fixed_num_signed {
-    ($Fixed:ident($UInner:ty)) => {
-        impl<Frac: Unsigned> FixedHelper<Frac> for $Fixed<Frac> {
+    ($Fixed:ident($UInner:ty, $Len:ty)) => {
+        impl<Frac> FixedHelper<Frac> for $Fixed<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+        {
             type UInner = $UInner;
 
             #[inline]
@@ -269,13 +278,13 @@ macro_rules! fixed_num_signed {
     };
 }
 
-fixed_num_unsigned! { FixedU8(u8) }
-fixed_num_unsigned! { FixedU16(u16) }
-fixed_num_unsigned! { FixedU32(u32) }
-fixed_num_unsigned! { FixedU64(u64) }
-fixed_num_unsigned! { FixedU128(u128) }
-fixed_num_signed! { FixedI8(u8) }
-fixed_num_signed! { FixedI16(u16) }
-fixed_num_signed! { FixedI32(u32) }
-fixed_num_signed! { FixedI64(u64) }
-fixed_num_signed! { FixedI128(u128) }
+fixed_num_unsigned! { FixedU8(u8, U8) }
+fixed_num_unsigned! { FixedU16(u16, U16) }
+fixed_num_unsigned! { FixedU32(u32, U32) }
+fixed_num_unsigned! { FixedU64(u64, U64) }
+fixed_num_unsigned! { FixedU128(u128, U128) }
+fixed_num_signed! { FixedI8(u8, U8) }
+fixed_num_signed! { FixedI16(u16, U16) }
+fixed_num_signed! { FixedI32(u32, U32) }
+fixed_num_signed! { FixedI64(u64, U64) }
+fixed_num_signed! { FixedI128(u128, U128) }

@@ -149,7 +149,7 @@ use core::f64;
 use core::hash::{Hash, Hasher};
 use core::marker::PhantomData;
 use float::FloatConv;
-use frac::Unsigned;
+use frac::{IsLessOrEqual, True, U128, U16, U32, U64, U8, Unsigned};
 use helper::FixedHelper;
 
 macro_rules! pass_method {
@@ -208,7 +208,7 @@ macro_rules! doc_comment_signed_unsigned {
 }
 
 macro_rules! from_float {
-    ($Signedness:tt, fn $method:ident($Float:ident) -> $Fixed:ident < $Frac:ident >) => {
+    ($Signedness:tt,fn $method:ident($Float:ident) -> $Fixed:ident < $Frac:ident >) => {
         doc_comment_signed_unsigned! {
             $Signedness,
             concat!(
@@ -299,7 +299,7 @@ macro_rules! from_float {
 }
 
 macro_rules! to_float {
-    ($Signedness:tt, fn $method:ident($Fixed:ident < $Frac:ident >) -> $Float:ident) => {
+    ($Signedness:tt,fn $method:ident($Fixed:ident < $Frac:ident >) -> $Float:ident) => {
         doc_comment_signed_unsigned! {
             $Signedness,
             concat!(
@@ -355,7 +355,7 @@ macro_rules! to_float {
 }
 
 macro_rules! fixed {
-    ($description:expr, $Fixed:ident($Inner:ty, $bits_count:expr), $Signedness:tt) => {
+    ($description:expr, $Fixed:ident($Inner:ty, $Len:ty, $bits_count:expr), $Signedness:tt) => {
         doc_comment! {
             concat!(
                 $description,
@@ -382,26 +382,40 @@ macro_rules! fixed {
                 "[typenum crate]: https://crates.io/crates/typenum\n"
             ),
             #[repr(transparent)]
-            pub struct $Fixed<Frac: Unsigned>(($Inner, PhantomData<Frac>));
+            pub struct $Fixed<Frac>(($Inner, PhantomData<Frac>))
+            where
+                Frac: Unsigned + IsLessOrEqual<$Len, Output = True>;
         }
 
-        impl<Frac: Unsigned> Clone for $Fixed<Frac> {
+        impl<Frac> Clone for $Fixed<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+        {
             #[inline]
             fn clone(&self) -> $Fixed<Frac> {
                 $Fixed::from_bits(self.to_bits())
             }
         }
 
-        impl<Frac: Unsigned> Copy for $Fixed<Frac> {}
+        impl<Frac> Copy for $Fixed<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+        {}
 
-        impl<Frac: Unsigned> Default for $Fixed<Frac> {
+        impl<Frac> Default for $Fixed<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+        {
             #[inline]
             fn default() -> $Fixed<Frac> {
                 $Fixed::from_bits(<$Inner as Default>::default())
             }
         }
 
-        impl<Frac: Unsigned> Hash for $Fixed<Frac> {
+        impl<Frac> Hash for $Fixed<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+        {
             #[inline]
             fn hash<H>(&self, state: &mut H)
             where
@@ -411,7 +425,10 @@ macro_rules! fixed {
             }
         }
 
-        impl<Frac: Unsigned> $Fixed<Frac> {
+        impl<Frac> $Fixed<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+        {
             pass_method_signed_unsigned! {
                 $Signedness,
                 concat!(
@@ -514,8 +531,6 @@ macro_rules! fixed {
                 ),
                 #[inline]
                 pub fn from_bits(v: $Inner) -> $Fixed<Frac> {
-                    let int_frac_bits = <$Fixed<Frac> as FixedHelper<Frac>>::int_frac_bits();
-                    assert!(Frac::to_u32() <= int_frac_bits, "`Frac` too large");
                     $Fixed((v, PhantomData))
                 }
             }
@@ -1448,16 +1463,16 @@ macro_rules! fixed {
     };
 }
 
-fixed! { "An eight-bit fixed-point unsigned integer", FixedU8(u8, 8), Unsigned }
-fixed! { "A 16-bit fixed-point unsigned integer", FixedU16(u16, 16), Unsigned }
-fixed! { "A 32-bit fixed-point unsigned integer", FixedU32(u32, 32), Unsigned }
-fixed! { "A 64-bit fixed-point unsigned integer", FixedU64(u64, 64), Unsigned }
-fixed! { "A 128-bit fixed-point unsigned integer", FixedU128(u128, 128), Unsigned }
-fixed! { "An eight-bit fixed-point signed integer", FixedI8(i8, 8), Signed }
-fixed! { "A 16-bit fixed-point signed integer", FixedI16(i16, 16), Signed }
-fixed! { "A 32-bit fixed-point signed integer", FixedI32(i32, 32), Signed }
-fixed! { "A 64-bit fixed-point signed integer", FixedI64(i64, 64), Signed }
-fixed! { "A 128-bit fixed-point signed integer", FixedI128(i128, 128), Signed }
+fixed! { "An eight-bit fixed-point unsigned integer", FixedU8(u8, U8, 8), Unsigned }
+fixed! { "A 16-bit fixed-point unsigned integer", FixedU16(u16, U16, 16), Unsigned }
+fixed! { "A 32-bit fixed-point unsigned integer", FixedU32(u32, U32, 32), Unsigned }
+fixed! { "A 64-bit fixed-point unsigned integer", FixedU64(u64, U64, 64), Unsigned }
+fixed! { "A 128-bit fixed-point unsigned integer", FixedU128(u128, U128, 128), Unsigned }
+fixed! { "An eight-bit fixed-point signed integer", FixedI8(i8, U8, 8), Signed }
+fixed! { "A 16-bit fixed-point signed integer", FixedI16(i16, U16, 16), Signed }
+fixed! { "A 32-bit fixed-point signed integer", FixedI32(i32, U32, 32), Signed }
+fixed! { "A 64-bit fixed-point signed integer", FixedI64(i64, U64, 64), Signed }
+fixed! { "A 128-bit fixed-point signed integer", FixedI128(i128, U128, 128), Signed }
 
 #[cfg(test)]
 mod tests {

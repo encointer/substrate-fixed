@@ -14,7 +14,7 @@
 // <https://opensource.org/licenses/MIT>.
 
 use core::mem;
-use frac::Unsigned;
+use frac::{IsLessOrEqual, True, U16, U32, U8, Unsigned};
 use helper::FloatHelper;
 use {FixedI16, FixedI32, FixedI8, FixedU16, FixedU32, FixedU8};
 
@@ -168,8 +168,11 @@ macro_rules! float_conv {
 float_conv! { u8 u16 u32 u64 u128 }
 
 macro_rules! lossless_from_fixed {
-    ($Fixed:ident:: $method:ident -> $Float:ident) => {
-        impl<Frac: Unsigned> From<$Fixed<Frac>> for $Float {
+    ($Fixed:ident($Len:ty):: $method:ident -> $Float:ident) => {
+        impl<Frac> From<$Fixed<Frac>> for $Float
+        where
+            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+        {
             #[inline]
             fn from(src: $Fixed<Frac>) -> $Float {
                 src.$method()
@@ -178,16 +181,16 @@ macro_rules! lossless_from_fixed {
     };
 }
 
-lossless_from_fixed! { FixedI8::to_f32 -> f32 }
-lossless_from_fixed! { FixedI16::to_f32 -> f32 }
-lossless_from_fixed! { FixedU8::to_f32 -> f32 }
-lossless_from_fixed! { FixedU16::to_f32 -> f32 }
-lossless_from_fixed! { FixedI8::to_f64 -> f64 }
-lossless_from_fixed! { FixedI16::to_f64 -> f64 }
-lossless_from_fixed! { FixedI32::to_f64 -> f64 }
-lossless_from_fixed! { FixedU8::to_f64 -> f64 }
-lossless_from_fixed! { FixedU16::to_f64 -> f64 }
-lossless_from_fixed! { FixedU32::to_f64 -> f64 }
+lossless_from_fixed! { FixedI8(U8)::to_f32 -> f32 }
+lossless_from_fixed! { FixedI16(U16)::to_f32 -> f32 }
+lossless_from_fixed! { FixedU8(U8)::to_f32 -> f32 }
+lossless_from_fixed! { FixedU16(U16)::to_f32 -> f32 }
+lossless_from_fixed! { FixedI8(U8)::to_f64 -> f64 }
+lossless_from_fixed! { FixedI16(U16)::to_f64 -> f64 }
+lossless_from_fixed! { FixedI32(U32)::to_f64 -> f64 }
+lossless_from_fixed! { FixedU8(U8)::to_f64 -> f64 }
+lossless_from_fixed! { FixedU16(U16)::to_f64 -> f64 }
+lossless_from_fixed! { FixedU32(U32)::to_f64 -> f64 }
 
 #[cfg(test)]
 mod tests {

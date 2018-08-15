@@ -14,17 +14,21 @@
 // <https://opensource.org/licenses/MIT>.
 
 use core::cmp::Ordering;
-use frac::{self, Unsigned};
+use frac::{self, IsLessOrEqual, True, U128, U16, U32, U64, U8, Unsigned};
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
 
 macro_rules! fixed_cmp {
-    ($Fixed:ident($Inner:ty, $bits_count:expr)) => {
-        impl<Frac: Unsigned> Eq for $Fixed<Frac> {}
+    ($Fixed:ident($Inner:ty, $Len:ty, $bits_count:expr)) => {
+        impl<Frac> Eq for $Fixed<Frac> where Frac: Unsigned + IsLessOrEqual<$Len, Output = True> {}
 
-        impl<Frac: Unsigned, FracRhs: Unsigned> PartialEq<$Fixed<FracRhs>> for $Fixed<Frac> {
+        impl<Frac, FracRhs> PartialEq<$Fixed<FracRhs>> for $Fixed<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+            FracRhs: Unsigned + IsLessOrEqual<$Len, Output = True>,
+        {
             #[inline]
             fn eq(&self, rhs: &$Fixed<FracRhs>) -> bool {
                 let (fl, fr) = (Frac::to_u32(), FracRhs::to_u32());
@@ -46,28 +50,41 @@ macro_rules! fixed_cmp {
             }
         }
 
-        impl<Frac: Unsigned> PartialEq<$Inner> for $Fixed<Frac> {
+        impl<Frac> PartialEq<$Inner> for $Fixed<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+        {
             #[inline]
             fn eq(&self, rhs: &$Inner) -> bool {
                 <$Fixed<Frac> as PartialEq<$Fixed<frac::U0>>>::eq(self, &$Fixed::from_bits(*rhs))
             }
         }
 
-        impl<Frac: Unsigned> PartialEq<$Fixed<Frac>> for $Inner {
+        impl<Frac> PartialEq<$Fixed<Frac>> for $Inner
+        where
+            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+        {
             #[inline]
             fn eq(&self, rhs: &$Fixed<Frac>) -> bool {
                 <$Fixed<frac::U0> as PartialEq<$Fixed<Frac>>>::eq(&$Fixed::from_bits(*self), rhs)
             }
         }
 
-        impl<Frac: Unsigned> Ord for $Fixed<Frac> {
+        impl<Frac> Ord for $Fixed<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+        {
             #[inline]
             fn cmp(&self, rhs: &$Fixed<Frac>) -> Ordering {
                 self.to_bits().cmp(&rhs.to_bits())
             }
         }
 
-        impl<Frac: Unsigned, FracRhs: Unsigned> PartialOrd<$Fixed<FracRhs>> for $Fixed<Frac> {
+        impl<Frac, FracRhs> PartialOrd<$Fixed<FracRhs>> for $Fixed<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+            FracRhs: Unsigned + IsLessOrEqual<$Len, Output = True>,
+        {
             #[inline]
             fn partial_cmp(&self, rhs: &$Fixed<FracRhs>) -> Option<Ordering> {
                 let (fl, fr) = (Frac::to_u32(), FracRhs::to_u32());
@@ -147,7 +164,10 @@ macro_rules! fixed_cmp {
             }
         }
 
-        impl<Frac: Unsigned> PartialOrd<$Inner> for $Fixed<Frac> {
+        impl<Frac> PartialOrd<$Inner> for $Fixed<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+        {
             #[inline]
             fn partial_cmp(&self, rhs: &$Inner) -> Option<Ordering> {
                 self.partial_cmp(&$Fixed::<frac::U0>::from_bits(*rhs))
@@ -174,7 +194,10 @@ macro_rules! fixed_cmp {
             }
         }
 
-        impl<Frac: Unsigned> PartialOrd<$Fixed<Frac>> for $Inner {
+        impl<Frac> PartialOrd<$Fixed<Frac>> for $Inner
+        where
+            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+        {
             #[inline]
             fn partial_cmp(&self, rhs: &$Fixed<Frac>) -> Option<Ordering> {
                 $Fixed::<frac::U0>::from_bits(*self).partial_cmp(rhs)
@@ -203,16 +226,16 @@ macro_rules! fixed_cmp {
     };
 }
 
-fixed_cmp! { FixedU8(u8, 8) }
-fixed_cmp! { FixedU16(u16, 16) }
-fixed_cmp! { FixedU32(u32, 32) }
-fixed_cmp! { FixedU64(u64, 64) }
-fixed_cmp! { FixedU128(u128, 128) }
-fixed_cmp! { FixedI8(i8, 8) }
-fixed_cmp! { FixedI16(i16, 16) }
-fixed_cmp! { FixedI32(i32, 32) }
-fixed_cmp! { FixedI64(i64, 64) }
-fixed_cmp! { FixedI128(i128, 128) }
+fixed_cmp! { FixedU8(u8, U8, 8) }
+fixed_cmp! { FixedU16(u16, U16, 16) }
+fixed_cmp! { FixedU32(u32, U32, 32) }
+fixed_cmp! { FixedU64(u64, U64, 64) }
+fixed_cmp! { FixedU128(u128, U128, 128) }
+fixed_cmp! { FixedI8(i8, U8, 8) }
+fixed_cmp! { FixedI16(i16, U16, 16) }
+fixed_cmp! { FixedI32(i32, U32, 32) }
+fixed_cmp! { FixedI64(i64, U64, 64) }
+fixed_cmp! { FixedI128(i128, U128, 128) }
 
 #[cfg(test)]
 mod tests {

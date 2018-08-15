@@ -14,7 +14,7 @@
 // <https://opensource.org/licenses/MIT>.
 
 use core::mem;
-use frac::{IsLessOrEqual, True, U16, U32, U8, Unsigned};
+use frac::{IsLessOrEqual, True, Unsigned, U16, U32, U8};
 use helper::FloatHelper;
 use {FixedI16, FixedI32, FixedI8, FixedU16, FixedU32, FixedU8};
 

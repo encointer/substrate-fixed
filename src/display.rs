@@ -19,7 +19,7 @@ use core::fmt::{
 };
 use core::mem;
 use core::str;
-use frac::{IsLessOrEqual, True, U128, U16, U32, U64, U8, Unsigned};
+use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
 use FixedHelper;
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,

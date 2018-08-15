@@ -14,7 +14,7 @@
 // <https://opensource.org/licenses/MIT>.
 
 use core::cmp::Ordering;
-use frac::{self, IsLessOrEqual, True, U128, U16, U32, U64, U8, Unsigned};
+use frac::{self, IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,

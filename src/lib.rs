@@ -149,7 +149,7 @@ use core::f64;
 use core::hash::{Hash, Hasher};
 use core::marker::PhantomData;
 use float::FloatConv;
-use frac::{IsLessOrEqual, True, U128, U16, U32, U64, U8, Unsigned};
+use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
 use helper::FixedHelper;
 
 macro_rules! pass_method {
@@ -208,7 +208,7 @@ macro_rules! doc_comment_signed_unsigned {
 }
 
 macro_rules! from_float {
-    ($Signedness:tt,fn $method:ident($Float:ident) -> $Fixed:ident < $Frac:ident >) => {
+    ($Signedness:tt, fn $method:ident($Float:ident) -> $Fixed:ident < $Frac:ident >) => {
         doc_comment_signed_unsigned! {
             $Signedness,
             concat!(
@@ -299,7 +299,7 @@ macro_rules! from_float {
 }
 
 macro_rules! to_float {
-    ($Signedness:tt,fn $method:ident($Fixed:ident < $Frac:ident >) -> $Float:ident) => {
+    ($Signedness:tt, fn $method:ident($Fixed:ident < $Frac:ident >) -> $Float:ident) => {
         doc_comment_signed_unsigned! {
             $Signedness,
             concat!(

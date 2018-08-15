@@ -20,7 +20,7 @@ use core::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign,
     Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
-use frac::{IsLessOrEqual, True, U128, U16, U32, U64, U8, Unsigned};
+use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
 use {
     FixedHelper, FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32,
     FixedU64, FixedU8,

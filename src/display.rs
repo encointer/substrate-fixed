@@ -403,6 +403,7 @@ where
 #[cfg(test)]
 mod tests {
     use core::fmt::{Debug, Error as FmtError, Formatter, Result as FmtResult, Write};
+    use core::mem;
     use *;
 
     struct Buf([u8; 256]);
@@ -411,21 +412,21 @@ mod tests {
             Buf([0u8; 256])
         }
         fn target(&mut self) -> BufSlice {
-            BufSlice(self, 0)
+            BufSlice(&mut self.0)
         }
     }
 
-    struct BufSlice<'a>(&'a mut Buf, usize);
+    struct BufSlice<'a>(&'a mut [u8]);
 
     impl<'a> Write for BufSlice<'a> {
         fn write_str(&mut self, s: &str) -> FmtResult {
-            let start = self.1;
             let s_len = s.len();
-            if s_len > (self.0).0.len() - start {
+            if s_len > self.0.len() {
                 Err(FmtError)
             } else {
-                (self.0).0[start..s_len + start].copy_from_slice(s.as_bytes());
-                self.1 += s_len;
+                self.0[..s_len].copy_from_slice(s.as_bytes());
+                let rem = mem::replace(&mut self.0, &mut []);
+                self.0 = &mut rem[s_len..];
                 Ok(())
             }
         }

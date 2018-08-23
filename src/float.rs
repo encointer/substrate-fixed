@@ -15,6 +15,8 @@
 
 use core::mem;
 use frac::{IsLessOrEqual, True, Unsigned, U16, U32, U8};
+#[cfg(feature = "f16")]
+use half::f16;
 use helper::FloatHelper;
 use {FixedI16, FixedI32, FixedI8, FixedU16, FixedU32, FixedU8};
 
@@ -149,8 +151,12 @@ macro_rules! to_float {
 }
 
 pub(crate) trait FloatConv: Sized {
+    #[cfg(feature = "f16")]
+    fn from_f16(val: f16, frac_bits: u32) -> Option<(Self, bool)>;
     fn from_f32(val: f32, frac_bits: u32) -> Option<(Self, bool)>;
     fn from_f64(val: f64, frac_bits: u32) -> Option<(Self, bool)>;
+    #[cfg(feature = "f16")]
+    fn to_f16(self, neg: bool, frac_bits: u32) -> f16;
     fn to_f32(self, neg: bool, frac_bits: u32) -> f32;
     fn to_f64(self, neg: bool, frac_bits: u32) -> f64;
 }
@@ -158,8 +164,12 @@ pub(crate) trait FloatConv: Sized {
 macro_rules! float_conv {
     ($($Uns:ty)*) => { $(
         impl FloatConv for $Uns {
+            #[cfg(feature = "f16")]
+            from_float! { fn from_f16(f16) -> $Uns }
             from_float! { fn from_f32(f32) -> $Uns }
             from_float! { fn from_f64(f64) -> $Uns }
+            #[cfg(feature = "f16")]
+            to_float! { fn to_f16($Uns) -> f16 }
             to_float! { fn to_f32($Uns) -> f32 }
             to_float! { fn to_f64($Uns) -> f64 }
         }
@@ -181,6 +191,10 @@ macro_rules! lossless_from_fixed {
     };
 }
 
+#[cfg(feature = "f16")]
+lossless_from_fixed! { FixedI8(U8)::to_f16 -> f16 }
+#[cfg(feature = "f16")]
+lossless_from_fixed! { FixedU8(U8)::to_f16 -> f16 }
 lossless_from_fixed! { FixedI8(U8)::to_f32 -> f32 }
 lossless_from_fixed! { FixedI16(U16)::to_f32 -> f32 }
 lossless_from_fixed! { FixedU8(U8)::to_f32 -> f32 }
@@ -276,6 +290,53 @@ mod tests {
         assert_eq!(Fix::from_f32(255.0 / 16.0).unwrap(), Fix::from_bits(255));
         // 1111.11111 -> too large (tie to even)
         assert!(Fix::from_f32(511.0 / 32.0).is_none());
+    }
+
+    #[cfg(feature = "f16")]
+    #[test]
+    fn to_f16() {
+        use half::f16;
+        for u in 0x00..=0xff {
+            let fu = FixedU8::<frac::U7>::from_bits(u);
+            assert_eq!(fu.to_f16(), f16::from_f32(u as f32 / 128.0));
+            let i = u as i8;
+            let fi = FixedI8::<frac::U7>::from_bits(i);
+            assert_eq!(fi.to_f16(), f16::from_f32(i as f32 / 128.0));
+
+            for hi in &[
+                0u32,
+                0x0000_0100,
+                0x7fff_ff00,
+                0x8000_0000,
+                0x8100_0000,
+                0xffff_fe00,
+                0xffff_ff00,
+            ] {
+                let uu = *hi | u as u32;
+                let fuu = FixedU32::<frac::U7>::from_bits(uu);
+                assert_eq!(fuu.to_f16(), f16::from_f32(uu as f32 / 128.0));
+                let ii = uu as i32;
+                let fii = FixedI32::<frac::U7>::from_bits(ii);
+                assert_eq!(fii.to_f16(), f16::from_f32(ii as f32 / 128.0));
+            }
+
+            for hi in &[
+                0u128,
+                0x0000_0000_0000_0000_0000_0000_0000_0100,
+                0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
+                0x8000_0000_0000_0000_0000_0000_0000_0000,
+                0x8100_0000_0000_0000_0000_0000_0000_0000,
+                0xffff_ffff_ffff_ffff_ffff_ffff_ffff_fe00,
+                0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
+            ] {
+                let uu = *hi | u as u128;
+                let fuu = FixedU128::<frac::U7>::from_bits(uu);
+                assert_eq!(fuu.to_f16(), f16::from_f64(uu as f64 / 128.0));
+                let ii = uu as i128;
+                let fii = FixedI128::<frac::U7>::from_bits(ii);
+                assert_eq!(fii.to_f16(), f16::from_f64(ii as f64 / 128.0));
+            }
+        }
     }
 
     #[test]

@@ -35,6 +35,14 @@ fixed-point numbers.
 
 ## What’s new
 
+### Version 0.1.3 news (unreleased)
+
+  * The `f16` feature was added with its methods [`from_f16`] and
+    [`to_f16`].
+
+[`from_f16`]: https://docs.rs/fixed/0.1.3/fixed/struct.FixedI32.html#method.from_f16
+[`to_f16`]: https://docs.rs/fixed/0.1.3/fixed/struct.FixedI32.html#method.to_f16
+
 ### Version 0.1.2 news (2018-08-15)
 
   * The crate can now be used without the standard library `std`.
@@ -108,6 +116,22 @@ extern crate fixed;
 
 The *fixed* crate requires rustc version 1.28.0 or later.
 
+## Optional features
+
+The *fixed* crate has one optional feature:
+
+ 1. `f16`, disabled by default. This provides conversion to/from
+    [`f16`]. This features requires the [*half* crate].
+
+To enable the feature, you can add the dependency like this to
+[*Cargo.toml*]:
+
+```toml
+[dependencies.fixed]
+version = "0.1.2"
+features = ["f16"]
+```
+
 ## License
 
 This crate is free software: you can redistribute it and/or modify it
@@ -127,6 +151,7 @@ additional terms or conditions.
 
 [*Cargo.toml*]: https://doc.rust-lang.org/cargo/guide/dependencies.html
 [*fixed* crate]: https://crates.io/crates/fixed
+[*half* crate]: https://crates.io/crates/half
 [*typenum* crate]: https://crates.io/crates/typenum
 [LICENSE-APACHE]: https://www.apache.org/licenses/LICENSE-2.0
 [LICENSE-MIT]: https://opensource.org/licenses/MIT
@@ -140,5 +165,6 @@ additional terms or conditions.
 [`FixedU32`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedU32.html
 [`FixedU64`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedU64.html
 [`FixedU8`]: https://docs.rs/fixed/0.1.2/fixed/struct.FixedU8.html
+[`f16`]: https://docs.rs/half/^1/half/struct.f16.html
 [channels]: https://doc.rust-lang.org/book/second-edition/appendix-07-nightly-rust.html
 [const generics]: https://github.com/rust-lang/rust/issues/44580

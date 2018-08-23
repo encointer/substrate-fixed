@@ -5,6 +5,12 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.1.3 news (unreleased)
+==========================
+
+  * The `f16` feature was added with its methods `from_f16` and
+    `to_f16`.
+
 Version 0.1.2 (2018-08-15)
 ==========================
 

@@ -103,7 +103,12 @@ macro_rules! float_helper {
                 let bits = self.$to_bits();
                 let neg = bits & neg_mask != 0;
                 let biased_exp = (bits & exp_mask) >> ($prec - 1);
-                let exp = (biased_exp as i32) - <$Float as FloatHelper>::exp_bias();
+                let exp = ({
+                    #[cfg_attr(feature = "cargo-clippy", allow(cast_lossless))]
+                    {
+                        biased_exp as i32
+                    }
+                }) - <$Float as FloatHelper>::exp_bias();
                 let mant = bits & mant_mask;
 
                 (neg, exp, mant)

@@ -65,7 +65,7 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 
 ```toml
 [dependencies]
-fixed = "0.1.2"
+fixed = "0.1.3"
 ```
 
 You also need to declare it by adding this to your crate root (usually
@@ -89,7 +89,7 @@ To enable the feature, you can add the dependency like this to
 
 ```toml
 [dependencies.fixed]
-version = "0.1.2"
+version = "0.1.3"
 features = ["f16"]
 ```
 
@@ -132,7 +132,7 @@ additional terms or conditions.
 */
 #![no_std]
 #![warn(missing_docs)]
-#![doc(html_root_url = "https://docs.rs/fixed/0.1.2")]
+#![doc(html_root_url = "https://docs.rs/fixed/0.1.3")]
 #![doc(test(attr(deny(warnings))))]
 #![cfg_attr(nightly_repr_transparent, feature(repr_transparent))]
 

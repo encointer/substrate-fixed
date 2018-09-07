@@ -679,14 +679,14 @@ impl FallbackHelper for u128 {
     #[inline]
     fn combine_lo_then_shl(self, lo: u128, shift: u32) -> (u128, Ordering) {
         if shift == 128 {
-            return (self, Ordering::Equal);
+            (self, Ordering::Equal)
+        } else if shift == 0 {
+            (lo, 0.cmp(&self))
+        } else {
+            let lo = lo >> shift;
+            let hi = self << (128 - shift);
+            (lo | hi, 0.cmp(&(self >> shift)))
         }
-        if shift == 0 {
-            return (lo, 0.cmp(&self));
-        }
-        let lo = lo >> shift;
-        let hi = self << (128 - shift);
-        (lo | hi, 0.cmp(&(self >> shift)))
     }
 
     #[inline]
@@ -719,16 +719,16 @@ impl FallbackHelper for i128 {
     #[inline]
     fn combine_lo_then_shl(self, lo: u128, shift: u32) -> (i128, Ordering) {
         if shift == 128 {
-            return (self, Ordering::Equal);
-        }
-        if shift == 0 {
+            (self, Ordering::Equal)
+        } else if shift == 0 {
             let ans = lo as i128;
-            return (ans, (ans >> 64 >> 64).cmp(&self));
+            (ans, (ans >> 64 >> 64).cmp(&self))
+        } else {
+            let lo = (lo >> shift) as i128;
+            let hi = self << (128 - shift);
+            let ans = lo | hi;
+            (ans, (ans >> 64 >> 64).cmp(&(self >> shift)))
         }
-        let lo = (lo >> shift) as i128;
-        let hi = self << (128 - shift);
-        let ans = lo | hi;
-        (ans, (ans >> 64 >> 64).cmp(&(self >> shift)))
     }
 
     #[inline]

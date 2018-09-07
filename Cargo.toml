@@ -24,7 +24,7 @@ f16 = ["half"]
 typenum = "1.8"
 
 [dependencies.half]
-version = "1"
+version = "1.2"
 optional = true
 
 [package.metadata.docs.rs]

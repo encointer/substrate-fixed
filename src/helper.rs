@@ -37,7 +37,7 @@ pub(crate) trait FloatHelper {
 }
 
 macro_rules! float_helper {
-    ($Float:ident($Bits:ty, $prec:expr, $to_bits:ident)) => {
+    ($Float:ident($Bits:ty, $prec:expr)) => {
         impl FloatHelper for $Float {
             type Bits = $Bits;
 
@@ -100,7 +100,7 @@ macro_rules! float_helper {
                 let mant_mask = !(!0 << ($prec - 1));
                 let exp_mask = !(neg_mask | mant_mask);
 
-                let bits = self.$to_bits();
+                let bits = self.to_bits();
                 let neg = bits & neg_mask != 0;
                 let biased_exp = (bits & exp_mask) >> ($prec - 1);
                 let exp = ({
@@ -118,9 +118,9 @@ macro_rules! float_helper {
 }
 
 #[cfg(feature = "f16")]
-float_helper! { f16(u16, 11, as_bits) }
-float_helper! { f32(u32, 24, to_bits) }
-float_helper! { f64(u64, 53, to_bits) }
+float_helper! { f16(u16, 11) }
+float_helper! { f32(u32, 24) }
+float_helper! { f64(u64, 53) }
 
 pub(crate) trait FixedHelper<Frac>: Sized
 where

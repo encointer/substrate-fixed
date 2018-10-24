@@ -778,15 +778,14 @@ macro_rules! mul_div_fallback {
                     let lh_rl = lh.wrapping_mul(rl);
                     let ll_rh = ll.wrapping_mul(rh);
                     let lh_rh = lh.wrapping_mul(rh);
-                    let col01 = ll_rl as <$Single as FallbackHelper>::Unsigned;
-                    let (col12, carry_col3) = lh_rl.carrying_add(ll_rh);
-                    let col23 = lh_rh;
-                    let (col12_hi, col12_lo) = col12.hi_lo();
-                    let col12_lo_up = col12_lo.shift_lo_up_unsigned();
-                    let (ans01, carry_col2) = col01.carrying_add(col12_lo_up);
-                    let carries = carry_col2 as $Single + carry_col3.shift_lo_up();
-                    let ans23 = col23.wrapping_add(carries).wrapping_add(col12_hi);
 
+                    let col01 = ll_rl as <$Single as FallbackHelper>::Unsigned;
+                    let (col01_hi, col01_lo) = col01.hi_lo();
+                    let partial_col12 = lh_rl + col01_hi as $Single;
+                    let (col12, carry_col3) = partial_col12.carrying_add(ll_rh);
+                    let (col12_hi, col12_lo) = col12.hi_lo();
+                    let ans01 = col12_lo.shift_lo_up_unsigned() + col01_lo;
+                    let ans23 = lh_rh + col12_hi + carry_col3.shift_lo_up();
                     ans23.combine_lo_then_shl(ans01, frac_bits)
                 }
             }
@@ -885,16 +884,20 @@ mod tests {
         let frac = Frac::to_u32();
         let a = 0x0003456789abcdef_0123456789abcdef_u128;
         let b = 5;
-        let af = FixedU128::<Frac>::from_bits(a << frac);
-        let bf = FixedU128::<Frac>::from_bits(b << frac);
-        assert_eq!((af + bf).to_bits(), (a << frac) + (b << frac));
-        assert_eq!((af - bf).to_bits(), (a << frac) - (b << frac));
-        assert_eq!((af * bf).to_bits(), (a << frac) * b);
-        // assert_eq!((af / bf).to_bits(), (a << frac) / b);
-        assert_eq!((af & bf).to_bits(), (a << frac) & (b << frac));
-        assert_eq!((af | bf).to_bits(), (a << frac) | (b << frac));
-        assert_eq!((af ^ bf).to_bits(), (a << frac) ^ (b << frac));
-        assert_eq!((!af).to_bits(), !(a << frac));
+        for &(a, b) in &[(a, b), (b, a)] {
+            let af = FixedU128::<Frac>::from_bits(a << frac);
+            let bf = FixedU128::<Frac>::from_bits(b << frac);
+            assert_eq!((af + bf).to_bits(), (a << frac) + (b << frac));
+            if a > b {
+                assert_eq!((af - bf).to_bits(), (a << frac) - (b << frac));
+            }
+            assert_eq!((af * bf).to_bits(), (a << frac) * b);
+            // assert_eq!((af / bf).to_bits(), (a << frac) / b);
+            assert_eq!((af & bf).to_bits(), (a << frac) & (b << frac));
+            assert_eq!((af | bf).to_bits(), (a << frac) | (b << frac));
+            assert_eq!((af ^ bf).to_bits(), (a << frac) ^ (b << frac));
+            assert_eq!((!af).to_bits(), !(a << frac));
+        }
     }
 
     #[test]
@@ -903,8 +906,16 @@ mod tests {
         let frac = Frac::to_u32();
         let a = 0x0003456789abcdef_0123456789abcdef_i128;
         let b = 5;
-        for &pair in &[(a, b), (a, -b), (-a, b), (-a, -b)] {
-            let (a, b) = pair;
+        for &(a, b) in &[
+            (a, b),
+            (a, -b),
+            (-a, b),
+            (-a, -b),
+            (b, a),
+            (b, -a),
+            (-b, a),
+            (-b, -a),
+        ] {
             let af = FixedI128::<Frac>::from_bits(a << frac);
             let bf = FixedI128::<Frac>::from_bits(b << frac);
             assert_eq!((af + bf).to_bits(), (a << frac) + (b << frac));

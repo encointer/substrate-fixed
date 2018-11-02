@@ -161,6 +161,7 @@ mod display;
 mod float;
 pub mod frac;
 mod helper;
+mod wide_div;
 
 use arith::MulDivDir;
 use core::cmp::Ordering;

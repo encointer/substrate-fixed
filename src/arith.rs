@@ -21,6 +21,7 @@ use core::ops::{
     Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
+use wide_div::WideDivRem;
 use {
     FixedHelper, FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32,
     FixedU64, FixedU8,
@@ -748,7 +749,7 @@ impl FallbackHelper for i128 {
 }
 
 macro_rules! mul_div_fallback {
-    ($Single:ty, $Signedness:tt) => {
+    ($Single:ty, $Uns:ty, $Signedness:tt) => {
         impl MulDivDir for $Single {
             fn mul_dir(self, rhs: $Single, frac_bits: u32) -> ($Single, Ordering) {
                 if frac_bits == 0 {
@@ -812,7 +813,15 @@ macro_rules! mul_div_fallback {
                     } }
                     (ans, dir)
                 } else {
-                    unimplemented!()
+                    const BITS: u32 = mem::size_of::<$Single>() as u32 * 8;
+                    let lhs2 = (self >> (BITS - frac_bits), (self << frac_bits) as $Uns);
+                    let (quot2, _) = rhs.div_rem_from(lhs2);
+                    let quot = quot2.1 as $Single;
+                    let quot2_ret = (quot >> (BITS / 2) >> (BITS / 2), quot2.1);
+                    let dir = (quot2_ret.0)
+                        .cmp(&quot2.0)
+                        .then((quot2_ret.1).cmp(&quot2.1));
+                    (quot, dir)
                 }
             }
         }
@@ -823,12 +832,12 @@ mul_div_widen! { u8, u16, Unsigned }
 mul_div_widen! { u16, u32, Unsigned }
 mul_div_widen! { u32, u64, Unsigned }
 mul_div_widen! { u64, u128, Unsigned }
-mul_div_fallback! { u128, Unsigned }
+mul_div_fallback! { u128, u128, Unsigned }
 mul_div_widen! { i8, i16, Signed }
 mul_div_widen! { i16, i32, Signed }
 mul_div_widen! { i32, i64, Signed }
 mul_div_widen! { i64, i128, Signed }
-mul_div_fallback! { i128, Signed }
+mul_div_fallback! { i128, u128, Signed }
 
 #[cfg(test)]
 mod tests {
@@ -892,7 +901,7 @@ mod tests {
                 assert_eq!((af - bf).to_bits(), (a << frac) - (b << frac));
             }
             assert_eq!((af * bf).to_bits(), (a << frac) * b);
-            // assert_eq!((af / bf).to_bits(), (a << frac) / b);
+            assert_eq!((af / bf).to_bits(), (a << frac) / b);
             assert_eq!((af & bf).to_bits(), (a << frac) & (b << frac));
             assert_eq!((af | bf).to_bits(), (a << frac) | (b << frac));
             assert_eq!((af ^ bf).to_bits(), (a << frac) ^ (b << frac));
@@ -921,7 +930,7 @@ mod tests {
             assert_eq!((af + bf).to_bits(), (a << frac) + (b << frac));
             assert_eq!((af - bf).to_bits(), (a << frac) - (b << frac));
             assert_eq!((af * bf).to_bits(), (a << frac) * b);
-            // assert_eq!((af / bf).to_bits(), (a << frac) / b);
+            assert_eq!((af / bf).to_bits(), (a << frac) / b);
             assert_eq!((af & bf).to_bits(), (a << frac) & (b << frac));
             assert_eq!((af | bf).to_bits(), (a << frac) | (b << frac));
             assert_eq!((af ^ bf).to_bits(), (a << frac) ^ (b << frac));

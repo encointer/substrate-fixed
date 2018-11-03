@@ -35,6 +35,10 @@ fixed-point numbers.
 
 ## What’s new
 
+### Version 0.1.4 news (unreleased)
+
+  * Division is now implemented for [`FixedI128`] and [`FixedU128`].
+
 ### Version 0.1.3 news (2018-08-23)
 
   * The `f16` feature was added, and new methods [`from_f16`] and

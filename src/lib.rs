@@ -65,7 +65,7 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 
 ```toml
 [dependencies]
-fixed = "0.1.3"
+fixed = "0.1.4"
 ```
 
 You also need to declare it by adding this to your crate root (usually
@@ -89,7 +89,7 @@ To enable the feature, you can add the dependency like this to
 
 ```toml
 [dependencies.fixed]
-version = "0.1.3"
+version = "0.1.4"
 features = ["f16"]
 ```
 
@@ -127,12 +127,11 @@ additional terms or conditions.
 [`FixedU64`]: struct.FixedU64.html
 [`FixedU8`]: struct.FixedU8.html
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html
-[channels]: https://doc.rust-lang.org/book/second-edition/appendix-07-nightly-rust.html
 [const generics]: https://github.com/rust-lang/rust/issues/44580
 */
 #![no_std]
 #![warn(missing_docs)]
-#![doc(html_root_url = "https://docs.rs/fixed/0.1.3")]
+#![doc(html_root_url = "https://docs.rs/fixed/0.1.4")]
 #![doc(test(attr(deny(warnings))))]
 #![cfg_attr(nightly_repr_transparent, feature(repr_transparent))]
 

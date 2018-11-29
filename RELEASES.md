@@ -5,7 +5,7 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
-Version 0.1.4 (unreleased)
+Version 0.1.4 (2018-11-29)
 ==========================
 
   * Division is now implemented for `FixedI128` and `FixedU128`.

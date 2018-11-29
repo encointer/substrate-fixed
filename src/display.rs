@@ -227,8 +227,8 @@ macro_rules! impl_fmt {
     )* };
 }
 
-impl_fmt!{ FixedU8(U8) FixedU16(U16) FixedU32(U32) FixedU64(U64) FixedU128(U128) }
-impl_fmt!{ FixedI8(U8) FixedI16(U16) FixedI32(U32) FixedI64(U64) FixedI128(U128) }
+impl_fmt! { FixedU8(U8) FixedU16(U16) FixedU32(U32) FixedU64(U64) FixedU128(U128) }
+impl_fmt! { FixedI8(U8) FixedI16(U16) FixedI32(U32) FixedI64(U64) FixedI128(U128) }
 
 fn dec_int_digits(int_bits: u32) -> u32 {
     assert!(int_bits < 299);

@@ -83,7 +83,7 @@ macro_rules! div_half {
     )* };
 }
 
-div_half!{ u8: 8, u16: 16, u32: 32, u64: 64, u128: 128 }
+div_half! { u8: 8, u16: 16, u32: 32, u64: 64, u128: 128 }
 
 trait NegAbs {
     type Abs;
@@ -145,7 +145,7 @@ macro_rules! neg_abs {
     )* };
 }
 
-neg_abs!{ i8: u8, i16: u16, i32: u32, i64: u64, i128: u128 }
+neg_abs! { i8: u8, i16: u16, i32: u32, i64: u64, i128: u128 }
 
 pub trait WideDivRem<U>: Sized {
     fn div_rem_from(self, dividend: (Self, U)) -> ((Self, U), Self);

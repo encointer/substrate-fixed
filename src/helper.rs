@@ -104,7 +104,7 @@ macro_rules! float_helper {
                 let neg = bits & neg_mask != 0;
                 let biased_exp = (bits & exp_mask) >> ($prec - 1);
                 let exp = ({
-                    #[cfg_attr(feature = "cargo-clippy", allow(cast_lossless))]
+                    #[cfg_attr(feature = "cargo-clippy", allow(clippy::cast_lossless))]
                     {
                         biased_exp as i32
                     }

@@ -65,7 +65,7 @@ macro_rules! from_float {
             if float_bits - need_to_shr > fix_bits {
                 return None;
             }
-            #[cfg_attr(feature = "cargo-clippy", allow(cast_lossless))]
+            #[cfg_attr(feature = "cargo-clippy", allow(clippy::cast_lossless))]
             {
                 if need_to_shr == 0 {
                     Some(((mantissa as $Uns), neg))
@@ -131,12 +131,12 @@ macro_rules! to_float {
             let bits_sign = if neg { !(!0 >> 1) } else { 0 };
             let bits_exp = biased_exponent << (prec - 1);
             let bits_mantissa = (if int_bits + frac_bits >= prec - 1 {
-                #[cfg_attr(feature = "cargo-clippy", allow(cast_lossless))]
+                #[cfg_attr(feature = "cargo-clippy", allow(clippy::cast_lossless))]
                 {
                     (mantissa >> (int_bits + frac_bits - (prec - 1))) as FloatBits
                 }
             } else {
-                #[cfg_attr(feature = "cargo-clippy", allow(cast_lossless))]
+                #[cfg_attr(feature = "cargo-clippy", allow(clippy::cast_lossless))]
                 {
                     (mantissa as FloatBits) << (prec - 1 - (int_bits + frac_bits))
                 }

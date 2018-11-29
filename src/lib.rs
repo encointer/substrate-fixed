@@ -160,6 +160,7 @@ mod display;
 mod float;
 pub mod frac;
 mod helper;
+pub mod types;
 mod wide_div;
 
 use arith::MulDivDir;

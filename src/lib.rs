@@ -134,6 +134,7 @@ additional terms or conditions.
 #![doc(html_root_url = "https://docs.rs/fixed/0.1.4")]
 #![doc(test(attr(deny(warnings))))]
 #![cfg_attr(nightly_repr_transparent, feature(repr_transparent))]
+#![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
 
 #[cfg(feature = "f16")]
 extern crate half;

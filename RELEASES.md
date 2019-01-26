@@ -5,6 +5,12 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.1.5 (unreleased)
+==========================
+
+  * Lossless infallible conversions between fixed-point numbers and
+    integer primitives are now supported using `From` and `Into`.
+
 Version 0.1.4 (2018-11-29)
 ==========================
 

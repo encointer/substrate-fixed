@@ -33,7 +33,16 @@ fixed-point number lies in the range −0.5 ≤ *x* < 0.5 for signed
 fixed-point numbers, and in the range 0 ≤ *x* < 1 for unsigned
 fixed-point numbers.
 
+All lossless infallible conversions between fixed-point numbers and
+integer primitives are implemented. That is, you can use [`From`] or
+[`Into`] for the conversions that always work without losing any bits.
+
 ## What’s new
+
+### Version 0.1.5 (unreleased)
+
+  * Lossless infallible conversions between fixed-point numbers and
+    integer primitives are now supported using [`From`] and [`Into`].
 
 ### Version 0.1.4 news (2018-11-29)
 
@@ -129,5 +138,7 @@ additional terms or conditions.
 [`FixedU32`]: https://docs.rs/fixed/0.1.4/fixed/struct.FixedU32.html
 [`FixedU64`]: https://docs.rs/fixed/0.1.4/fixed/struct.FixedU64.html
 [`FixedU8`]: https://docs.rs/fixed/0.1.4/fixed/struct.FixedU8.html
+[`From`]: https://doc.rust-lang.org/nightly/std/convert/trait.From.html
+[`Into`]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html
 [const generics]: https://github.com/rust-lang/rust/issues/44580

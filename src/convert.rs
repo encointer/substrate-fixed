@@ -101,7 +101,7 @@ convert! { (FixedU32, FixedI32, U32) -> (FixedU128, FixedI128, U128) }
 
 convert! { (FixedU64, FixedI64, U64) -> (FixedU128, FixedI128, U128) }
 
-macro_rules! prim_convert {
+macro_rules! prim_to_fixed {
     (($SrcU:ident, $SrcI:ident, $SrcBits:ident) -> ($DstU:ident, $DstI:ident, $DstBits:ident)) => {
         // Condition: FracDst <= $DstBits - $SrcBits
         impl<FracDst> From<$SrcU> for $DstU<FracDst>
@@ -169,25 +169,85 @@ macro_rules! prim_convert {
     };
 }
 
-prim_convert! { (u8, i8) -> (FixedU8, FixedI8) }
-prim_convert! { (u8, i8, U8) -> (FixedU16, FixedI16, U16) }
-prim_convert! { (u8, i8, U8) -> (FixedU32, FixedI32, U32) }
-prim_convert! { (u8, i8, U8) -> (FixedU64, FixedI64, U64) }
-prim_convert! { (u8, i8, U8) -> (FixedU128, FixedI128, U128) }
+prim_to_fixed! { (u8, i8) -> (FixedU8, FixedI8) }
+prim_to_fixed! { (u8, i8, U8) -> (FixedU16, FixedI16, U16) }
+prim_to_fixed! { (u8, i8, U8) -> (FixedU32, FixedI32, U32) }
+prim_to_fixed! { (u8, i8, U8) -> (FixedU64, FixedI64, U64) }
+prim_to_fixed! { (u8, i8, U8) -> (FixedU128, FixedI128, U128) }
 
-prim_convert! { (u16, i16) -> (FixedU16, FixedI16) }
-prim_convert! { (u16, i16, U16) -> (FixedU32, FixedI32, U32) }
-prim_convert! { (u16, i16, U16) -> (FixedU64, FixedI64, U64) }
-prim_convert! { (u16, i16, U16) -> (FixedU128, FixedI128, U128) }
+prim_to_fixed! { (u16, i16) -> (FixedU16, FixedI16) }
+prim_to_fixed! { (u16, i16, U16) -> (FixedU32, FixedI32, U32) }
+prim_to_fixed! { (u16, i16, U16) -> (FixedU64, FixedI64, U64) }
+prim_to_fixed! { (u16, i16, U16) -> (FixedU128, FixedI128, U128) }
 
-prim_convert! { (u32, i32) -> (FixedU32, FixedI32) }
-prim_convert! { (u32, i32, U32) -> (FixedU64, FixedI64, U64) }
-prim_convert! { (u32, i32, U32) -> (FixedU128, FixedI128, U128) }
+prim_to_fixed! { (u32, i32) -> (FixedU32, FixedI32) }
+prim_to_fixed! { (u32, i32, U32) -> (FixedU64, FixedI64, U64) }
+prim_to_fixed! { (u32, i32, U32) -> (FixedU128, FixedI128, U128) }
 
-prim_convert! { (u64, i64) -> (FixedU64, FixedI64) }
-prim_convert! { (u64, i64, U64) -> (FixedU128, FixedI128, U128) }
+prim_to_fixed! { (u64, i64) -> (FixedU64, FixedI64) }
+prim_to_fixed! { (u64, i64, U64) -> (FixedU128, FixedI128, U128) }
 
-prim_convert! { (u128, i128) -> (FixedU128, FixedI128) }
+prim_to_fixed! { (u128, i128) -> (FixedU128, FixedI128) }
+
+macro_rules! fixed_to_prim {
+    (($SrcU:ident, $SrcI:ident) -> ($DstU:ident, $DstI:ident)) => {
+        impl From<$SrcU<U0>> for $DstU {
+            #[inline]
+            fn from(src: $SrcU<U0>) -> $DstU {
+                src.to_bits()
+            }
+        }
+
+        impl From<$SrcI<U0>> for $DstI {
+            #[inline]
+            fn from(src: $SrcI<U0>) -> $DstI {
+                src.to_bits()
+            }
+        }
+    };
+    (($SrcU:ident, $SrcI:ident) -> wider ($DstU:ident, $DstI:ident)) => {
+        impl From<$SrcU<U0>> for $DstU {
+            #[inline]
+            fn from(src: $SrcU<U0>) -> $DstU {
+                src.to_bits().into()
+            }
+        }
+
+        impl From<$SrcI<U0>> for $DstI {
+            #[inline]
+            fn from(src: $SrcI<U0>) -> $DstI {
+                src.to_bits().into()
+            }
+        }
+
+        impl From<$SrcU<U0>> for $DstI {
+            #[inline]
+            fn from(src: $SrcU<U0>) -> $DstI {
+                src.to_bits().into()
+            }
+        }
+    };
+}
+
+fixed_to_prim! { (FixedU8, FixedI8) -> (u8, i8) }
+fixed_to_prim! { (FixedU8, FixedI8) -> wider (u16, i16) }
+fixed_to_prim! { (FixedU8, FixedI8) -> wider (u32, i32) }
+fixed_to_prim! { (FixedU8, FixedI8) -> wider (u64, i64) }
+fixed_to_prim! { (FixedU8, FixedI8) -> wider (u128, i128) }
+
+fixed_to_prim! { (FixedU16, FixedI16) -> (u16, i16) }
+fixed_to_prim! { (FixedU16, FixedI16) -> wider (u32, i32) }
+fixed_to_prim! { (FixedU16, FixedI16) -> wider (u64, i64) }
+fixed_to_prim! { (FixedU16, FixedI16) -> wider (u128, i128) }
+
+fixed_to_prim! { (FixedU32, FixedI32) -> (u32, i32) }
+fixed_to_prim! { (FixedU32, FixedI32) -> wider (u64, i64) }
+fixed_to_prim! { (FixedU32, FixedI32) -> wider (u128, i128) }
+
+fixed_to_prim! { (FixedU64, FixedI64) -> (u64, i64) }
+fixed_to_prim! { (FixedU64, FixedI64) -> wider (u128, i128) }
+
+fixed_to_prim! { (FixedU128, FixedI128) -> (u128, i128) }
 
 #[cfg(test)]
 mod tests {
@@ -214,6 +274,7 @@ mod tests {
 
             let l = L8::from_bits(val);
             assert_eq!(l, L8::from(val));
+            assert_eq!(val, u8::from(l));
             assert_eq!(LL16::from(l), LL16::from_bits(val16));
             assert_eq!(LH16::from(l), LH16::from_bits(val16 << 8));
             assert_eq!(LL128::from(l), LL128::from_bits(val128));
@@ -248,6 +309,7 @@ mod tests {
 
             let l = L8::from_bits(val);
             assert_eq!(l, L8::from(val));
+            assert_eq!(val, i8::from(l));
             assert_eq!(LL16::from(l), LL16::from_bits(val16));
             assert_eq!(LH16::from(l), LH16::from_bits(val16 << 8));
             assert_eq!(LL128::from(l), LL128::from_bits(val128));
@@ -282,6 +344,7 @@ mod tests {
 
             let l = L8::from_bits(val);
             assert_eq!(l, L8::from(val));
+            assert_eq!(val, u8::from(l));
             assert_eq!(LL16::from(l), LL16::from_bits(val16));
             assert_eq!(LH16::from(l), LH16::from_bits(val16 << 7));
             assert_eq!(LL128::from(l), LL128::from_bits(val128));

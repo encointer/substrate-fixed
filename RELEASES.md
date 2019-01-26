@@ -10,6 +10,8 @@ Version 0.1.5 (2019-01-26)
 
   * Lossless infallible conversions between fixed-point numbers and
     numeric primitives are now supported using `From` and `Into`.
+  * A new module `types` is available with aliases for all supported
+    fixed-point numbers.
 
 Version 0.1.4 (2018-11-29)
 ==========================

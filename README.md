@@ -41,8 +41,12 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
 ### Version 0.1.5 (2019-01-26)
 
+  * A new module [`types`] is available with aliases for all supported
+    fixed-point numbers.
   * Lossless infallible conversions between fixed-point numbers and
     numeric primitives are now supported using [`From`] and [`Into`].
+
+[`types`]: https://docs.rs/fixed/0.1.5/fixed/types/index.html
 
 ### Version 0.1.4 news (2018-11-29)
 
@@ -57,11 +61,9 @@ Details on other releases can be found in [*RELEASES.md*].
 ## Quick example
 
 ```rust
-use fixed::frac;
-use fixed::FixedI32;
-
 // 20 integer bits, 12 fractional bits
-type I20F12 = FixedI32<frac::U12>;
+use fixed::types::I20F12;
+
 // 19/3 = 6 1/3
 let six_and_third = I20F12::from_int(19).unwrap() / 3;
 // four decimal digits for 12 binary digits
@@ -69,6 +71,12 @@ assert_eq!(six_and_third.to_string(), "6.3333");
 // convert to i32, taking the ceil
 assert_eq!(six_and_third.to_int_ceil(), 7);
 ```
+
+The type [`I20F12`] is a 32-bit fixed-point signed number with 20
+integer bits and 12 fractional bits. It is an alias to
+[`FixedI32<frac::U12>`][`FixedI32`]. The unsigned counterpart would be
+[`U20F12`]. Aliases are provided for all combinations of integer and
+fractional bits adding up to a total of eight, 16, 32, 64 or 128 bits.
 
 ## Using the *fixed* crate
 
@@ -139,6 +147,8 @@ additional terms or conditions.
 [`FixedU64`]: https://docs.rs/fixed/0.1.5/fixed/struct.FixedU64.html
 [`FixedU8`]: https://docs.rs/fixed/0.1.5/fixed/struct.FixedU8.html
 [`From`]: https://doc.rust-lang.org/nightly/std/convert/trait.From.html
+[`I20F12`]: https://docs.rs/fixed/0.1.5/fixed/types/type.I20F12.html
 [`Into`]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
+[`U20F12`]: https://docs.rs/fixed/0.1.5/fixed/types/type.U20F12.html
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html
 [const generics]: https://github.com/rust-lang/rust/issues/44580

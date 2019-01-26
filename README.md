@@ -34,7 +34,7 @@ fixed-point numbers, and in the range 0 ≤ *x* < 1 for unsigned
 fixed-point numbers.
 
 All lossless infallible conversions between fixed-point numbers and
-integer primitives are implemented. That is, you can use [`From`] or
+numeric primitives are implemented. That is, you can use [`From`] or
 [`Into`] for the conversions that always work without losing any bits.
 
 ## What’s new
@@ -42,7 +42,7 @@ integer primitives are implemented. That is, you can use [`From`] or
 ### Version 0.1.5 (unreleased)
 
   * Lossless infallible conversions between fixed-point numbers and
-    integer primitives are now supported using [`From`] and [`Into`].
+    numeric primitives are now supported using [`From`] and [`Into`].
 
 ### Version 0.1.4 news (2018-11-29)
 

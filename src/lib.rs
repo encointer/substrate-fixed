@@ -43,7 +43,7 @@ fixed-point numbers, and in the range 0 ≤ *x* < 1 for unsigned
 fixed-point numbers.
 
 All lossless infallible conversions between fixed-point numbers and
-integer primitives are implemented. That is, you can use [`From`] or
+numeric primitives are implemented. That is, you can use [`From`] or
 [`Into`] for the conversions that always work without losing any bits.
 
 ## Quick example

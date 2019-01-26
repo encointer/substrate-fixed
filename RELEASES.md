@@ -9,7 +9,7 @@ Version 0.1.5 (unreleased)
 ==========================
 
   * Lossless infallible conversions between fixed-point numbers and
-    integer primitives are now supported using `From` and `Into`.
+    numeric primitives are now supported using `From` and `Into`.
 
 Version 0.1.4 (2018-11-29)
 ==========================

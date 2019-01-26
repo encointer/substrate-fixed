@@ -1,4 +1,4 @@
-# Copyright © 2018 Trevor Spiteri
+# Copyright © 2018–2019 Trevor Spiteri
 
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -7,7 +7,7 @@
 
 [package]
 name = "fixed"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Trevor Spiteri <tspiteri@ieee.org>"]
 description = "Fixed-point numbers"
 documentation = "https://docs.rs/fixed"

@@ -1,4 +1,4 @@
-// Copyright © 2018 Trevor Spiteri
+// Copyright © 2018–2019 Trevor Spiteri
 
 // This library is free software: you can redistribute it and/or
 // modify it under the terms of either

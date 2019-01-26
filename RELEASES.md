@@ -1,11 +1,11 @@
-<!-- Copyright © 2018 Trevor Spiteri -->
+<!-- Copyright © 2018–2019 Trevor Spiteri -->
 
 <!-- Copying and distribution of this file, with or without
 modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
-Version 0.1.5 (unreleased)
+Version 0.1.5 (2019-01-26)
 ==========================
 
   * Lossless infallible conversions between fixed-point numbers and

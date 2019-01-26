@@ -1,4 +1,4 @@
-// Copyright © 2018 Trevor Spiteri
+// Copyright © 2018–2019 Trevor Spiteri
 
 // This library is free software: you can redistribute it and/or
 // modify it under the terms of either
@@ -69,11 +69,11 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 
 ```toml
 [dependencies]
-fixed = "0.1.4"
+fixed = "0.1.5"
 ```
 
-You also need to declare it by adding this to your crate root (usually
-*lib.rs* or *main.rs*):
+If you are using the 2015 Rust edition, you also need to declare it by
+adding this to your crate root (usually *lib.rs* or *main.rs*):
 
 ```rust
 extern crate fixed;
@@ -93,7 +93,7 @@ To enable the feature, you can add the dependency like this to
 
 ```toml
 [dependencies.fixed]
-version = "0.1.4"
+version = "0.1.5"
 features = ["f16"]
 ```
 
@@ -138,7 +138,7 @@ additional terms or conditions.
 */
 #![no_std]
 #![warn(missing_docs)]
-#![doc(html_root_url = "https://docs.rs/fixed/0.1.4")]
+#![doc(html_root_url = "https://docs.rs/fixed/0.1.5")]
 #![doc(test(attr(deny(warnings))))]
 #![cfg_attr(nightly_repr_transparent, feature(repr_transparent))]
 #![cfg_attr(feature = "fail-on-warnings", deny(warnings))]

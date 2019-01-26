@@ -891,7 +891,7 @@ mod tests {
     fn fixed_u128() {
         use frac::U7 as Frac;
         let frac = Frac::to_u32();
-        let a = 0x0003456789abcdef_0123456789abcdef_u128;
+        let a = 0x0003_4567_89ab_cdef_0123_4567_89ab_cdef_u128;
         let b = 5;
         for &(a, b) in &[(a, b), (b, a)] {
             let af = FixedU128::<Frac>::from_bits(a << frac);
@@ -913,7 +913,7 @@ mod tests {
     fn fixed_i128() {
         use frac::U7 as Frac;
         let frac = Frac::to_u32();
-        let a = 0x0003456789abcdef_0123456789abcdef_i128;
+        let a = 0x0003_4567_89ab_cdef_0123_4567_89ab_cdef_i128;
         let b = 5;
         for &(a, b) in &[
             (a, b),

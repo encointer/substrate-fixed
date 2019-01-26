@@ -206,6 +206,7 @@ lossless_from_fixed! { FixedU8(U8)::to_f64 -> f64 }
 lossless_from_fixed! { FixedU16(U16)::to_f64 -> f64 }
 lossless_from_fixed! { FixedU32(U32)::to_f64 -> f64 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::float_cmp))]
 #[cfg(test)]
 mod tests {
     use *;
@@ -343,10 +344,10 @@ mod tests {
     fn to_f32() {
         for u in 0x00..=0xff {
             let fu = FixedU8::<frac::U7>::from_bits(u);
-            assert_eq!(fu.to_f32(), u as f32 / 128.0);
+            assert_eq!(fu.to_f32(), f32::from(u) / 128.0);
             let i = u as i8;
             let fi = FixedI8::<frac::U7>::from_bits(i);
-            assert_eq!(fi.to_f32(), i as f32 / 128.0);
+            assert_eq!(fi.to_f32(), f32::from(i) / 128.0);
 
             for hi in &[
                 0u32,
@@ -357,7 +358,7 @@ mod tests {
                 0xffff_fe00,
                 0xffff_ff00,
             ] {
-                let uu = *hi | u as u32;
+                let uu = *hi | u32::from(u);
                 let fuu = FixedU32::<frac::U7>::from_bits(uu);
                 assert_eq!(fuu.to_f32(), uu as f32 / 128.0);
                 let ii = uu as i32;
@@ -374,7 +375,7 @@ mod tests {
                 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_fe00,
                 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
             ] {
-                let uu = *hi | u as u128;
+                let uu = *hi | u128::from(u);
                 let fuu = FixedU128::<frac::U7>::from_bits(uu);
                 assert_eq!(fuu.to_f32(), (uu as f64 / 128.0) as f32);
                 let ii = uu as i128;
@@ -409,17 +410,17 @@ mod tests {
         // min_128 is -1.0 << 127.
         let min_i128 = FixedI128::<frac::U0>::min_value();
         assert_eq!(min_i128.count_ones(), 1);
-        assert_eq!(min_i128.to_f32(), -127f32.exp2());
+        assert_eq!(min_i128.to_f32(), -(127f32.exp2()));
     }
 
     #[test]
     fn to_f64() {
         for u in 0x00..=0xff {
             let fu = FixedU8::<frac::U7>::from_bits(u);
-            assert_eq!(fu.to_f32(), u as f32 / 128.0);
+            assert_eq!(fu.to_f32(), f32::from(u) / 128.0);
             let i = u as i8;
             let fi = FixedI8::<frac::U7>::from_bits(i);
-            assert_eq!(fi.to_f32(), i as f32 / 128.0);
+            assert_eq!(fi.to_f32(), f32::from(i) / 128.0);
 
             for hi in &[
                 0u64,
@@ -430,7 +431,7 @@ mod tests {
                 0xffff_ffff_ffff_fe00,
                 0xffff_ffff_ffff_ff00,
             ] {
-                let uu = *hi | u as u64;
+                let uu = *hi | u64::from(u);
                 let fuu = FixedU64::<frac::U7>::from_bits(uu);
                 assert_eq!(fuu.to_f64(), uu as f64 / 128.0);
                 let ii = uu as i64;
@@ -447,7 +448,7 @@ mod tests {
                 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_fe00,
                 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
             ] {
-                let uu = *hi | u as u128;
+                let uu = *hi | u128::from(u);
                 let fuu = FixedU128::<frac::U7>::from_bits(uu);
                 assert_eq!(fuu.to_f64(), uu as f64 / 128.0);
                 let ii = uu as i128;

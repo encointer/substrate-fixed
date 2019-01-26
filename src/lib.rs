@@ -1684,6 +1684,7 @@ fixed! { "A 128-bit fixed-point signed integer", FixedI128(i128, U128, 128), Sig
 mod tests {
     use *;
 
+    #[cfg_attr(feature = "cargo-clippy", allow(clippy::cyclomatic_complexity))]
     #[test]
     fn rounding() {
         use frac::{U16, U32};

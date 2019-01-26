@@ -472,7 +472,7 @@ mod tests {
         let frac = Frac::to_u32();
         for i in 0..(1 << frac) {
             let p = 0x1234_5678_9abc_def0u64 ^ i as u64;
-            let n = -0x1234_5678_9abc_def0i64 ^ i as i64;
+            let n = -0x1234_5678_9abc_def0i64 ^ i64::from(i);
             let f_p = FixedU64::<Frac>::from_bits(p);
             let f_n = FixedI64::<Frac>::from_bits(n);
             assert_eq_fmt!(("{:x}", f_p), ("{:x}.{:02x}", p >> frac, (p & 0x7f) << 1));
@@ -489,7 +489,7 @@ mod tests {
         let frac = Frac::to_u32();
         for i in 0..(1 << frac) {
             let bits = !0u32 ^ i;
-            let flt = bits as f64 / (frac as f64).exp2();
+            let flt = f64::from(bits) / f64::from(frac).exp2();
             let fix = FixedU32::<Frac>::from_bits(bits);
             assert_eq_fmt!(("{}", fix), ("{:.2}", flt));
         }

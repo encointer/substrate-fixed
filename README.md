@@ -39,6 +39,10 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
 ## What’s new
 
+### Version 0.1.6 (2019-01-27)
+
+  * Optional [serde][*serde* crate] support was added.
+
 ### Version 0.1.5 (2019-01-26)
 
   * A new module [`types`] is available with aliases for all supported
@@ -46,7 +50,7 @@ numeric primitives are implemented. That is, you can use [`From`] or
   * Lossless infallible conversions between fixed-point numbers and
     numeric primitives are now supported using [`From`] and [`Into`].
 
-[`types`]: https://docs.rs/fixed/0.1.5/fixed/types/index.html
+[`types`]: https://docs.rs/fixed/0.1.6/fixed/types/index.html
 
 ### Version 0.1.4 news (2018-11-29)
 
@@ -85,7 +89,7 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 
 ```toml
 [dependencies]
-fixed = "0.1.5"
+fixed = "0.1.6"
 ```
 
 If you are using the 2015 Rust edition, you also need to declare it by
@@ -99,18 +103,21 @@ The *fixed* crate requires rustc version 1.28.0 or later.
 
 ## Optional features
 
-The *fixed* crate has one optional feature:
+The *fixed* crate has two optional feature:
 
  1. `f16`, disabled by default. This provides conversion to/from
     [`f16`]. This features requires the [*half* crate].
+ 2. `serde`, disabled by default. This provides serialization support
+    for the fixed-point types. This feature requires the
+	[*serde* crate].
 
-To enable the feature, you can add the dependency like this to
+To enable features, you can add the dependency like this to
 [*Cargo.toml*]:
 
 ```toml
 [dependencies.fixed]
-version = "0.1.5"
-features = ["f16"]
+version = "0.1.6"
+features = ["f16", "serde"]
 ```
 
 ## License
@@ -133,22 +140,23 @@ additional terms or conditions.
 [*Cargo.toml*]: https://doc.rust-lang.org/cargo/guide/dependencies.html
 [*fixed* crate]: https://crates.io/crates/fixed
 [*half* crate]: https://crates.io/crates/half
+[*serde* crate]: https://crates.io/crates/serde
 [*typenum* crate]: https://crates.io/crates/typenum
 [LICENSE-APACHE]: https://www.apache.org/licenses/LICENSE-2.0
 [LICENSE-MIT]: https://opensource.org/licenses/MIT
-[`FixedI128`]: https://docs.rs/fixed/0.1.5/fixed/struct.FixedI128.html
-[`FixedI16`]: https://docs.rs/fixed/0.1.5/fixed/struct.FixedI16.html
-[`FixedI32`]: https://docs.rs/fixed/0.1.5/fixed/struct.FixedI32.html
-[`FixedI64`]: https://docs.rs/fixed/0.1.5/fixed/struct.FixedI64.html
-[`FixedI8`]: https://docs.rs/fixed/0.1.5/fixed/struct.FixedI8.html
-[`FixedU128`]: https://docs.rs/fixed/0.1.5/fixed/struct.FixedU128.html
-[`FixedU16`]: https://docs.rs/fixed/0.1.5/fixed/struct.FixedU16.html
-[`FixedU32`]: https://docs.rs/fixed/0.1.5/fixed/struct.FixedU32.html
-[`FixedU64`]: https://docs.rs/fixed/0.1.5/fixed/struct.FixedU64.html
-[`FixedU8`]: https://docs.rs/fixed/0.1.5/fixed/struct.FixedU8.html
+[`FixedI128`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedI128.html
+[`FixedI16`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedI16.html
+[`FixedI32`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedI32.html
+[`FixedI64`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedI64.html
+[`FixedI8`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedI8.html
+[`FixedU128`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedU128.html
+[`FixedU16`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedU16.html
+[`FixedU32`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedU32.html
+[`FixedU64`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedU64.html
+[`FixedU8`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedU8.html
 [`From`]: https://doc.rust-lang.org/nightly/std/convert/trait.From.html
-[`I20F12`]: https://docs.rs/fixed/0.1.5/fixed/types/type.I20F12.html
+[`I20F12`]: https://docs.rs/fixed/0.1.6/fixed/types/type.I20F12.html
 [`Into`]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
-[`U20F12`]: https://docs.rs/fixed/0.1.5/fixed/types/type.U20F12.html
+[`U20F12`]: https://docs.rs/fixed/0.1.6/fixed/types/type.U20F12.html
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html
 [const generics]: https://github.com/rust-lang/rust/issues/44580

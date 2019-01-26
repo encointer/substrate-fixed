@@ -5,6 +5,11 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.1.6 (2019-01-27)
+==========================
+
+  * Optional serde support was added.
+
 Version 0.1.5 (2019-01-26)
 ==========================
 

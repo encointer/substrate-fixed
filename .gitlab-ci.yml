@@ -29,13 +29,13 @@ x86_64-gnulinux:
     - cargo/
   script:
   - cargo +beta-$TARGET check --all-targets --features fail-on-warnings
-  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings f16"
-  - cargo +beta-$TARGET test --features fail-on-warnings
-  - cargo +beta-$TARGET test --release --features fail-on-warnings
+  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings f16 serde"
+  - cargo +beta-$TARGET test --features "fail-on-warnings f16 serde"
+  - cargo +beta-$TARGET test --release --features "fail-on-warnings f16 serde"
   - cargo +beta-$TARGET fmt -- --check
-  - cargo +beta-$TARGET clippy --all-targets --features fail-on-warnings
-  - cargo +1.28.0-$TARGET test --features fail-on-warnings
-  - cargo +1.28.0-$TARGET test --release --features fail-on-warnings
+  - cargo +beta-$TARGET clippy --all-targets --features "fail-on-warnings f16 serde"
+  - cargo +1.28.0-$TARGET test --features "fail-on-warnings f16 serde"
+  - cargo +1.28.0-$TARGET test --release --features "fail-on-warnings f16 serde"
 
 i686-gnulinux:
   image: i386/rust:1
@@ -47,10 +47,10 @@ i686-gnulinux:
     - cargo/
   script:
   - cargo +beta-$TARGET check --all-targets --features fail-on-warnings
-  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings f16"
-  - cargo +beta-$TARGET test --features "fail-on-warnings f16"
-  - cargo +beta-$TARGET test --release --features "fail-on-warnings f16"
+  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings f16 serde"
+  - cargo +beta-$TARGET test --features "fail-on-warnings f16 serde"
+  - cargo +beta-$TARGET test --release --features "fail-on-warnings f16 serde"
   - cargo +beta-$TARGET fmt -- --check
-  - cargo +beta-$TARGET clippy --all-targets --features "fail-on-warnings f16"
-  - cargo +1.28.0-$TARGET test --features "fail-on-warnings f16"
-  - cargo +1.28.0-$TARGET test --release --features "fail-on-warnings f16"
+  - cargo +beta-$TARGET clippy --all-targets --features "fail-on-warnings f16 serde"
+  - cargo +1.28.0-$TARGET test --features "fail-on-warnings f16 serde"
+  - cargo +1.28.0-$TARGET test --release --features "fail-on-warnings f16 serde"

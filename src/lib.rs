@@ -73,7 +73,7 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 
 ```toml
 [dependencies]
-fixed = "0.1.5"
+fixed = "0.1.6"
 ```
 
 If you are using the 2015 Rust edition, you also need to declare it by
@@ -87,18 +87,21 @@ The *fixed* crate requires rustc version 1.28.0 or later.
 
 ## Optional features
 
-The *fixed* crate has one optional feature:
+The *fixed* crate has two optional feature:
 
  1. `f16`, disabled by default. This provides conversion to/from
     [`f16`]. This features requires the [*half* crate].
+ 2. `serde`, disabled by default. This provides serialization support
+    for the fixed-point types. This feature requires the
+	[*serde* crate].
 
-To enable the feature, you can add the dependency like this to
+To enable features, you can add the dependency like this to
 [*Cargo.toml*]:
 
 ```toml
 [dependencies.fixed]
-version = "0.1.5"
-features = ["f16"]
+version = "0.1.6"
+features = ["f16", "serde"]
 ```
 
 ## License
@@ -121,6 +124,7 @@ additional terms or conditions.
 [*Cargo.toml*]: https://doc.rust-lang.org/cargo/guide/dependencies.html
 [*fixed* crate]: https://crates.io/crates/fixed
 [*half* crate]: https://crates.io/crates/half
+[*serde* crate]: https://crates.io/crates/serde
 [*typenum* crate]: https://crates.io/crates/typenum
 [LICENSE-APACHE]: https://www.apache.org/licenses/LICENSE-2.0
 [LICENSE-MIT]: https://opensource.org/licenses/MIT
@@ -144,13 +148,15 @@ additional terms or conditions.
 */
 #![no_std]
 #![warn(missing_docs)]
-#![doc(html_root_url = "https://docs.rs/fixed/0.1.5")]
+#![doc(html_root_url = "https://docs.rs/fixed/0.1.6")]
 #![doc(test(attr(deny(warnings))))]
 #![cfg_attr(nightly_repr_transparent, feature(repr_transparent))]
 #![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
 
 #[cfg(feature = "f16")]
 extern crate half;
+#[cfg(feature = "serde")]
+extern crate serde;
 extern crate typenum;
 
 macro_rules! if_signed {
@@ -177,6 +183,8 @@ pub mod frac;
 mod helper;
 pub mod types;
 mod wide_div;
+#[cfg(feature = "serde")]
+mod serdeize;
 
 use arith::MulDivDir;
 use core::cmp::Ordering;

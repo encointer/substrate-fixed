@@ -157,6 +157,7 @@ macro_rules! if_unsigned {
 
 mod arith;
 mod cmp;
+mod convert;
 mod display;
 mod float;
 pub mod frac;

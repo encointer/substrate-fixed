@@ -1,0 +1,52 @@
+# Copyright © 2018–2019 Trevor Spiteri
+
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved. This file is offered as-is,
+# without any warranty.
+
+before_script:
+  - getconf LONG_BIT
+  - rustup --version
+  - rustup install beta-$TARGET 1.28.0-$TARGET
+  - rustup component add --toolchain beta-$TARGET rustfmt clippy
+  - if [ -d cargo/registry/cache ]; then rm -rf $CARGO_HOME/registry/cache; mkdir -p $CARGO_HOME/registry; cp -R cargo/registry/cache $CARGO_HOME/registry/; echo Copied registry/cache; fi
+  - if [ -d $CARGO_HOME/registry/cache ]; then (cd $CARGO_HOME/registry; find cache -name \*.crate) fi
+
+after_script:
+  - if [ -d $CARGO_HOME/registry/cache ]; then (cd $CARGO_HOME/registry; find cache -name \*.crate) fi
+  - rm -rf cargo
+  - mkdir -p cargo/registry
+  - if [ -d $CARGO_HOME/registry/cache ]; then cp -R $CARGO_HOME/registry/cache cargo/registry/; echo Updated registry/cache; fi
+
+x86_64-gnulinux:
+  image: amd64/rust:1
+  variables:
+    TARGET: x86_64
+  cache:
+    key: $CI_JOB_NAME
+    paths:
+    - cargo/
+  script:
+  - cargo +beta-$TARGET test --features fail-on-warnings
+  - cargo +beta-$TARGET test --release --features fail-on-warnings
+  - cargo +beta-$TARGET fmt -- --check
+  - cargo +beta-$TARGET clippy --all-targets --features fail-on-warnings
+  - cargo +1.28.0-$TARGET test --features fail-on-warnings
+  - cargo +1.28.0-$TARGET test --release --features fail-on-warnings
+
+i686-gnulinux:
+  image: i386/rust:1
+  variables:
+    TARGET: i686
+  cache:
+    key: $CI_JOB_NAME
+    paths:
+    - cargo/
+  script:
+  - cargo +beta-$TARGET test --features fail-on-warnings
+  - cargo +beta-$TARGET test --release --features fail-on-warnings
+  - cargo +beta-$TARGET fmt -- --check
+  - cargo +beta-$TARGET clippy --all-targets --features fail-on-warnings
+  - cargo +1.28.0-$TARGET test --features fail-on-warnings
+  - cargo +1.28.0-$TARGET test --release --features fail-on-warnings

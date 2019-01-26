@@ -28,6 +28,8 @@ x86_64-gnulinux:
     paths:
     - cargo/
   script:
+  - cargo +beta-$TARGET check --all-targets --features fail-on-warnings
+  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings f16"
   - cargo +beta-$TARGET test --features fail-on-warnings
   - cargo +beta-$TARGET test --release --features fail-on-warnings
   - cargo +beta-$TARGET fmt -- --check
@@ -44,9 +46,11 @@ i686-gnulinux:
     paths:
     - cargo/
   script:
-  - cargo +beta-$TARGET test --features fail-on-warnings
-  - cargo +beta-$TARGET test --release --features fail-on-warnings
+  - cargo +beta-$TARGET check --all-targets --features fail-on-warnings
+  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings f16"
+  - cargo +beta-$TARGET test --features "fail-on-warnings f16"
+  - cargo +beta-$TARGET test --release --features "fail-on-warnings f16"
   - cargo +beta-$TARGET fmt -- --check
-  - cargo +beta-$TARGET clippy --all-targets --features fail-on-warnings
-  - cargo +1.28.0-$TARGET test --features fail-on-warnings
-  - cargo +1.28.0-$TARGET test --release --features fail-on-warnings
+  - cargo +beta-$TARGET clippy --all-targets --features "fail-on-warnings f16"
+  - cargo +1.28.0-$TARGET test --features "fail-on-warnings f16"
+  - cargo +1.28.0-$TARGET test --release --features "fail-on-warnings f16"

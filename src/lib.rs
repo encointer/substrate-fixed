@@ -93,7 +93,7 @@ The *fixed* crate has two optional feature:
     [`f16`]. This features requires the [*half* crate].
  2. `serde`, disabled by default. This provides serialization support
     for the fixed-point types. This feature requires the
-	[*serde* crate].
+    [*serde* crate].
 
 To enable features, you can add the dependency like this to
 [*Cargo.toml*]:
@@ -181,10 +181,10 @@ mod display;
 mod float;
 pub mod frac;
 mod helper;
-pub mod types;
-mod wide_div;
 #[cfg(feature = "serde")]
 mod serdeize;
+pub mod types;
+mod wide_div;
 
 use arith::MulDivDir;
 use core::cmp::Ordering;

@@ -94,16 +94,16 @@ macro_rules! serde_fixed {
     };
 }
 
-serde_fixed! { FixedI8(U8) is i8 name "FixedI8<_>" }
-serde_fixed! { FixedI16(U16) is i16 name "FixedI16<_>" }
-serde_fixed! { FixedI32(U32) is i32 name "FixedI32<_>" }
-serde_fixed! { FixedI64(U64) is i64 name "FixedI64<_>" }
-serde_fixed! { FixedI128(U128) is i128 name "FixedI128<_>" }
-serde_fixed! { FixedU8(U8) is u8 name "FixedU8<_>" }
-serde_fixed! { FixedU16(U16) is u16 name "FixedU16<_>" }
-serde_fixed! { FixedU32(U32) is u32 name "FixedU32<_>" }
-serde_fixed! { FixedU64(U64) is u64 name "FixedU64<_>" }
-serde_fixed! { FixedU128(U128) is u128 name "FixedU128<_>" }
+serde_fixed! { FixedI8(U8) is i8 name "FixedI8" }
+serde_fixed! { FixedI16(U16) is i16 name "FixedI16" }
+serde_fixed! { FixedI32(U32) is i32 name "FixedI32" }
+serde_fixed! { FixedI64(U64) is i64 name "FixedI64" }
+serde_fixed! { FixedI128(U128) is i128 name "FixedI128" }
+serde_fixed! { FixedU8(U8) is u8 name "FixedU8" }
+serde_fixed! { FixedU16(U16) is u16 name "FixedU16" }
+serde_fixed! { FixedU32(U32) is u32 name "FixedU32" }
+serde_fixed! { FixedU64(U64) is u64 name "FixedU64" }
+serde_fixed! { FixedU128(U128) is u128 name "FixedU128" }
 
 const FIELDS: &'static [&'static str] = &["bits"];
 

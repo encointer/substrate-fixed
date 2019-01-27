@@ -180,7 +180,10 @@ mod convert;
 mod display;
 mod float;
 pub mod frac;
-mod helper;
+pub mod sealed;
+mod sealed_fixed;
+mod sealed_float;
+mod sealed_int;
 #[cfg(feature = "serde")]
 mod serdeize;
 pub mod types;
@@ -194,7 +197,7 @@ use float::FloatConv;
 use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
 #[cfg(feature = "f16")]
 use half::f16;
-use helper::FixedHelper;
+use sealed::{SealedFixed, SealedInt};
 
 macro_rules! pass_method {
     ($comment:expr, $Fixed:ident($Inner:ty) => fn $method:ident()) => {
@@ -251,9 +254,54 @@ macro_rules! doc_comment_signed_unsigned {
     };
 }
 
-macro_rules! from_float {
-    ($Signedness:tt,fn $method:ident($Float:ident) -> $Fixed:ident < $Frac:ident >) => {
+macro_rules! doc_comment_signed_unsigned_from_float {
+    (
+        $Signedness:tt, $signed:expr, $unsigned:expr,
+        fn $method:ident($Float:ident) -> $Fixed:ident<$Frac:ident>
+    ) => {
         doc_comment_signed_unsigned! {
+            $Signedness,
+            $signed,
+            $unsigned,
+            #[inline]
+            pub fn $method(val: $Float) -> Option<$Fixed<$Frac>> {
+                let int_bits = Self::int_bits();
+                let frac_bits = Self::frac_bits();
+
+                let (int_frac, neg) = FloatConv::$method(val, frac_bits)?;
+
+                if <<$Fixed<$Frac> as SealedFixed>::Bits as SealedInt>::is_signed() {
+                    // most significant bit (msb) can be one only for min value,
+                    // that is for a negative value with only the msb true.
+                    let msb = 1 << (int_bits + frac_bits - 1);
+                    if int_frac & msb != 0 {
+                        if !neg || (int_frac & !msb) != 0 {
+                            return None;
+                        }
+                    }
+                } else if neg {
+                    if int_frac != 0 {
+                        return None;
+                    }
+                    return Some($Fixed::from_bits(0));
+                }
+
+                let (int, frac) = if frac_bits == 0 {
+                    (int_frac, 0)
+                } else if int_bits == 0 {
+                    (0, int_frac)
+                } else {
+                    ((int_frac >> frac_bits), (int_frac << int_bits))
+                };
+
+                Some(SealedFixed::from_parts(neg, int, frac))
+            }
+        }
+    };
+}
+macro_rules! from_float {
+    ($Signedness:tt, fn $method:ident($Float:ident) -> $Fixed:ident<$Frac:ident>) => {
+        doc_comment_signed_unsigned_from_float! {
             $Signedness,
             concat!(
                 "Creates a fixed-point number from `", stringify!($Float), "`.\n",
@@ -305,46 +353,40 @@ macro_rules! from_float {
                 "(2e38).is_none());\n",
                 "```\n"
             ),
-            #[inline]
-            pub fn $method(val: $Float) -> Option<$Fixed<$Frac>> {
-                let int_bits = Self::int_bits();
-                let frac_bits = Self::frac_bits();
-
-                let (int_frac, neg) = FloatConv::$method(val, frac_bits)?;
-
-                if <$Fixed<$Frac> as FixedHelper<$Frac>>::is_signed() {
-                    // most significant bit (msb) can be one only for min value,
-                    // that is for a negative value with only the msb true.
-                    let msb = 1 << (int_bits + frac_bits - 1);
-                    if int_frac & msb != 0 {
-                        if !neg || (int_frac & !msb) != 0 {
-                            return None;
-                        }
-                    }
-                } else if neg {
-                    if int_frac != 0 {
-                        return None;
-                    }
-                    return Some($Fixed::from_bits(0));
-                }
-
-                let (int, frac) = if frac_bits == 0 {
-                    (int_frac, 0)
-                } else if int_bits == 0 {
-                    (0, int_frac)
-                } else {
-                    ((int_frac >> frac_bits), (int_frac << int_bits))
-                };
-
-                Some(FixedHelper::from_parts(neg, int, frac))
-            }
+            fn $method($Float) -> $Fixed<$Frac>
         }
     };
 }
 
-macro_rules! to_float {
-    ($Signedness:tt,fn $method:ident($Fixed:ident < $Frac:ident >) -> $Float:ident) => {
+macro_rules! doc_comment_signed_unsigned_to_float {
+    (
+        $Signedness:tt, $signed:expr, $unsigned:expr,
+        fn $method:ident($Fixed:ident<$Frac:ident>) -> $Float:ident
+    ) => {
         doc_comment_signed_unsigned! {
+            $Signedness,
+            $signed,
+            $unsigned,
+            #[inline]
+            pub fn $method(self) -> $Float {
+                let int_bits = Self::int_bits();
+                let frac_bits = Self::frac_bits();
+                let (neg, int, frac) = self.parts();
+                let int_frac = if frac_bits == 0 {
+                    int
+                } else if int_bits == 0 {
+                    frac
+                } else {
+                    (int << frac_bits) | (frac >> int_bits)
+                };
+                FloatConv::$method(int_frac, neg, frac_bits)
+            }
+        }
+    };
+}
+macro_rules! to_float {
+    ($Signedness:tt, fn $method:ident($Fixed:ident<$Frac:ident>) -> $Float:ident) => {
+        doc_comment_signed_unsigned_to_float! {
             $Signedness,
             concat!(
                 "Converts the fixed-point number to `", stringify!($Float), "`.\n",
@@ -380,20 +422,7 @@ macro_rules! to_float {
                 "(), 1.75);\n",
                 "```\n"
             ),
-            #[inline]
-            pub fn $method(self) -> $Float {
-                let int_bits = Self::int_bits();
-                let frac_bits = Self::frac_bits();
-                let (neg, int, frac) = self.parts();
-                let int_frac = if frac_bits == 0 {
-                    int
-                } else if int_bits == 0 {
-                    frac
-                } else {
-                    (int << frac_bits) | (frac >> int_bits)
-                };
-                FloatConv::$method(int_frac, neg, frac_bits)
-            }
+            fn $method($Fixed<$Frac>) -> $Float
         }
     };
 }
@@ -547,7 +576,7 @@ macro_rules! fixed {
                 ),
                 #[inline]
                 pub fn int_bits() -> u32 {
-                    <Self as FixedHelper<Frac>>::int_frac_bits() - Self::frac_bits()
+                    <Self as SealedFixed>::int_bits()
                 }
             }
 
@@ -566,7 +595,7 @@ macro_rules! fixed {
                 ),
                 #[inline]
                 pub fn frac_bits() -> u32 {
-                    Frac::to_u32()
+                    <Self as SealedFixed>::frac_bits()
                 }
             }
 
@@ -867,7 +896,7 @@ macro_rules! fixed {
             }
 
             #[cfg(feature = "f16")]
-            doc_comment_signed_unsigned! {
+            doc_comment_signed_unsigned_from_float! {
                 $Signedness,
                 concat!(
                     "Creates a fixed-point number from `f16`.\n",
@@ -879,8 +908,8 @@ macro_rules! fixed {
                     "# Examples\n",
                     "\n",
                     "```rust\n",
-                    "extern crate fixed;\n",
-                    "extern crate half;\n",
+                    "# extern crate fixed;\n",
+                    "# extern crate half;\n",
                     "use fixed::frac;\n",
                     "use fixed::", stringify!($Fixed), ";\n",
                     "use half::f16;\n",
@@ -917,8 +946,8 @@ macro_rules! fixed {
                     "# Examples\n",
                     "\n",
                     "```rust\n",
-                    "extern crate fixed;\n",
-                    "extern crate half;\n",
+                    "# extern crate fixed;\n",
+                    "# extern crate half;\n",
                     "use fixed::frac;\n",
                     "use fixed::", stringify!($Fixed), ";\n",
                     "use half::f16;\n",
@@ -938,47 +967,15 @@ macro_rules! fixed {
                         )
                     ),
                     "```\n"
-            ),
-            #[inline]
-                pub fn from_f16(val: f16) -> Option<$Fixed<Frac>> {
-                    let int_bits = Self::int_bits();
-                    let frac_bits = Self::frac_bits();
-
-                    let (int_frac, neg) = FloatConv::from_f16(val, frac_bits)?;
-
-                    if <$Fixed<Frac> as FixedHelper<Frac>>::is_signed() {
-                        // most significant bit (msb) can be one only for min value,
-                        // that is for a negative value with only the msb true.
-                        let msb = 1 << (int_bits + frac_bits - 1);
-                        if int_frac & msb != 0 {
-                            if !neg || (int_frac & !msb) != 0 {
-                                return None;
-                            }
-                        }
-                    } else if neg {
-                        if int_frac != 0 {
-                            return None;
-                        }
-                        return Some($Fixed::from_bits(0));
-                    }
-
-                    let (int, frac) = if frac_bits == 0 {
-                        (int_frac, 0)
-                    } else if int_bits == 0 {
-                        (0, int_frac)
-                    } else {
-                        ((int_frac >> frac_bits), (int_frac << int_bits))
-                    };
-
-                    Some(FixedHelper::from_parts(neg, int, frac))
-                }
+                ),
+                fn from_f16(f16) -> $Fixed<Frac>
             }
 
             from_float! { $Signedness, fn from_f32(f32) -> $Fixed<Frac> }
             from_float! { $Signedness, fn from_f64(f64) -> $Fixed<Frac> }
 
             #[cfg(feature = "f16")]
-            doc_comment_signed_unsigned! {
+            doc_comment_signed_unsigned_to_float! {
                 $Signedness,
                 concat!(
                     "Converts the fixed-point number to `f16`.\n",
@@ -990,8 +987,8 @@ macro_rules! fixed {
                     "# Examples\n",
                     "\n",
                     "```rust\n",
-                    "extern crate fixed;\n",
-                    "extern crate half;\n",
+                    "# extern crate fixed;\n",
+                    "# extern crate half;\n",
                     "use fixed::frac;\n",
                     "use fixed::", stringify!($Fixed), ";\n",
                     "use half::f16;\n",
@@ -1013,8 +1010,8 @@ macro_rules! fixed {
                     "# Examples\n",
                     "\n",
                     "```rust\n",
-                    "extern crate fixed;\n",
-                    "extern crate half;\n",
+                    "# extern crate fixed;\n",
+                    "# extern crate half;\n",
                     "use fixed::frac;\n",
                     "use fixed::", stringify!($Fixed), ";\n",
                     "use half::f16;\n",
@@ -1024,20 +1021,7 @@ macro_rules! fixed {
                     "assert_eq!(Fix::from_bits(28).to_f16(), val);\n",
                     "```\n"
                 ),
-                #[inline]
-                pub fn to_f16(self) -> f16 {
-                    let int_bits = Self::int_bits();
-                    let frac_bits = Self::frac_bits();
-                    let (neg, int, frac) = self.parts();
-                    let int_frac = if frac_bits == 0 {
-                        int
-                    } else if int_bits == 0 {
-                        frac
-                    } else {
-                        (int << frac_bits) | (frac >> int_bits)
-                    };
-                    FloatConv::to_f16(int_frac, neg, frac_bits)
-                }
+                fn to_f16($Fixed<Frac>) -> f16
             }
 
             to_float! { $Signedness, fn to_f32($Fixed<Frac>) -> f32 }
@@ -1639,10 +1623,10 @@ macro_rules! fixed {
                         match self.to_bits().cmp(&0) {
                             Ordering::Equal => $Fixed::from_bits(0),
                             Ordering::Greater => {
-                                <$Fixed<Frac> as FixedHelper<Frac>>::one().expect("overflow")
+                                <$Fixed<Frac> as SealedFixed>::one().expect("overflow")
                             }
                             Ordering::Less => {
-                                <$Fixed<Frac> as FixedHelper<Frac>>::minus_one().expect("overflow")
+                                <$Fixed<Frac> as SealedFixed>::minus_one().expect("overflow")
                             }
                         }
                     }

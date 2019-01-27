@@ -21,10 +21,11 @@ use core::ops::{
     Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
+use sealed::SealedFixed;
 use wide_div::WideDivRem;
 use {
-    FixedHelper, FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32,
-    FixedU64, FixedU8,
+    FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
+    FixedU8,
 };
 
 macro_rules! refs {
@@ -570,7 +571,7 @@ macro_rules! fixed_arith {
         {
             fn product<I: Iterator<Item = $Fixed<Frac>>>(mut iter: I) -> $Fixed<Frac> {
                 match iter.next() {
-                    None => <$Fixed<Frac> as FixedHelper<Frac>>::one().expect("overflow"),
+                    None => <$Fixed<Frac> as SealedFixed>::one().expect("overflow"),
                     Some(first) => iter.fold(first, Mul::mul),
                 }
             }
@@ -582,7 +583,7 @@ macro_rules! fixed_arith {
         {
             fn product<I: Iterator<Item = &'a $Fixed<Frac>>>(mut iter: I) -> $Fixed<Frac> {
                 match iter.next() {
-                    None => <$Fixed<Frac> as FixedHelper<Frac>>::one().expect("overflow"),
+                    None => <$Fixed<Frac> as SealedFixed>::one().expect("overflow"),
                     Some(first) => iter.fold(*first, Mul::mul),
                 }
             }

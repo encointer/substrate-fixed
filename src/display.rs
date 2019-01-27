@@ -17,10 +17,9 @@ use core::cmp::Ordering;
 use core::fmt::{
     Binary, Debug, Display, Formatter, LowerHex, Octal, Result as FmtResult, UpperHex,
 };
-use core::mem;
 use core::str;
 use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
-use FixedHelper;
+use sealed::{SealedFixed, SealedInt};
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
@@ -65,9 +64,7 @@ radix2! { Oct(3, "0o"), 0..=7 => b'0' }
 radix2! { LowHex(4, "0x"), 0..=9 => b'0', 10..=15 => b'a' - 10 }
 radix2! { UpHex(4, "0x"), 0..=9 => b'0', 10..=15 => b'A' - 10 }
 
-trait FmtRadix2Helper {
-    fn int_frac_bits() -> u32;
-    fn is_zero(&self) -> bool;
+trait FmtRadix2Helper: SealedInt {
     fn take_int_digit(&mut self, digit_bits: u32) -> u8;
     fn take_frac_digit(&mut self, digit_bits: u32) -> u8;
 }
@@ -75,16 +72,6 @@ trait FmtRadix2Helper {
 macro_rules! fmt_radix2_helper {
     ($($UInner:ty)*) => { $(
         impl FmtRadix2Helper for $UInner {
-            #[inline]
-            fn int_frac_bits() -> u32 {
-                mem::size_of::<$UInner>() as u32 * 8
-            }
-
-            #[inline]
-            fn is_zero(&self) -> bool {
-                *self == 0
-            }
-
             #[inline]
             fn take_int_digit(&mut self, digit_bits: u32) -> u8 {
                 let mask = (1 << digit_bits) - 1;
@@ -95,8 +82,8 @@ macro_rules! fmt_radix2_helper {
 
             #[inline]
             fn take_frac_digit(&mut self, digit_bits: u32) -> u8 {
-                let int_frac_bits = <$UInner as FmtRadix2Helper>::int_frac_bits();
-                let rem_bits = int_frac_bits - digit_bits;
+                let nbits = <$UInner as SealedInt>::nbits();
+                let rem_bits = nbits - digit_bits;
                 let mask = !0 << rem_bits;
                 let ret = ((*self & mask) >> rem_bits) as u8;
                 *self <<= digit_bits;
@@ -117,7 +104,7 @@ fn fmt_radix2_helper<F>(
 where
     F: FmtRadix2Helper,
 {
-    let int_bits = F::int_frac_bits() - frac_bits;
+    let int_bits = F::nbits() - frac_bits;
     let digit_bits: u32 = radix.digit_bits();
     // 128 binary digits, one radix point, one leading zero
     let mut buf: [u8; 130] = [0; 130];
@@ -157,16 +144,13 @@ where
 }
 
 #[inline]
-fn fmt_radix2<Frac: Unsigned, F, UInner>(
-    num: F,
-    radix: &dyn Radix2,
-    fmt: &mut Formatter,
-) -> FmtResult
+fn fmt_radix2<F, Bits>(num: F, radix: &dyn Radix2, fmt: &mut Formatter) -> FmtResult
 where
-    F: FixedHelper<Frac, UInner = UInner>,
-    UInner: FmtRadix2Helper,
+    F: SealedFixed<Bits = Bits>,
+    Bits: SealedInt,
+    Bits::Unsigned: FmtRadix2Helper,
 {
-    fmt_radix2_helper(Frac::to_u32(), num.parts(), radix, fmt)
+    fmt_radix2_helper(F::frac_bits(), num.parts(), radix, fmt)
 }
 
 macro_rules! impl_fmt {
@@ -257,9 +241,7 @@ fn dec_frac_digits(frac_bits: u32) -> u32 {
     (frac_bits * 3 + i) / 10
 }
 
-trait FmtDecHelper {
-    fn int_frac_bits() -> u32;
-    fn is_zero(&self) -> bool;
+trait FmtDecHelper: SealedInt {
     fn cmp_half(&self) -> Ordering;
     fn take_int_digit(&mut self) -> u8;
     fn take_frac_digit(&mut self) -> u8;
@@ -269,18 +251,8 @@ macro_rules! fmt_dec_helper {
     ($($UInner:ty)*) => { $(
         impl FmtDecHelper for $UInner {
             #[inline]
-            fn int_frac_bits() -> u32 {
-                mem::size_of::<$UInner>() as u32 * 8
-            }
-
-            #[inline]
-            fn is_zero(&self) -> bool {
-                *self == 0
-            }
-
-            #[inline]
             fn cmp_half(&self) -> Ordering {
-                self.cmp(&!(!0 >> 1))
+                self.cmp(&<$UInner as SealedInt>::msb())
             }
 
             #[inline]
@@ -311,7 +283,7 @@ fn fmt_dec_helper<F>(
 where
     F: FmtDecHelper,
 {
-    let int_bits = F::int_frac_bits() - frac_bits;
+    let int_bits = F::nbits() - frac_bits;
     // 40 int digits
     // + 128 frac digits
     // + 1 dec point,
@@ -360,7 +332,7 @@ where
             *r = b'0' + frac.take_frac_digit();
         }
         // check for rounding up
-        let round_up = match frac.cmp_half() {
+        let round_up = match frac.cmp(&F::msb()) {
             Ordering::Less => false,
             Ordering::Greater => true,
             Ordering::Equal => {
@@ -392,12 +364,13 @@ where
 }
 
 #[inline]
-fn fmt_dec<Frac: Unsigned, F, UInner>(num: F, fmt: &mut Formatter) -> FmtResult
+fn fmt_dec<F, Bits>(num: F, fmt: &mut Formatter) -> FmtResult
 where
-    F: FixedHelper<Frac, UInner = UInner>,
-    UInner: FmtDecHelper,
+    F: SealedFixed<Bits = Bits>,
+    Bits: SealedInt,
+    Bits::Unsigned: FmtDecHelper,
 {
-    fmt_dec_helper(Frac::to_u32(), num.parts(), fmt)
+    fmt_dec_helper(F::frac_bits(), num.parts(), fmt)
 }
 
 #[cfg(test)]

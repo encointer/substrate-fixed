@@ -16,18 +16,18 @@
 use core::mem;
 #[cfg(feature = "f16")]
 use half::f16;
-use helper::FloatHelper;
+use sealed::SealedFloat;
 
 macro_rules! from_float {
     (fn $method:ident($Float:ty) -> $Uns:ty) => {
         fn $method(val: $Float, frac_bits: u32) -> Option<($Uns, bool)> {
             let float_bits = mem::size_of::<$Float>() as i32 * 8;
-            let prec = <$Float as FloatHelper>::prec() as i32;
-            let exp_min = <$Float as FloatHelper>::exp_min();
-            let exp_max = <$Float as FloatHelper>::exp_max();
+            let prec = <$Float as SealedFloat>::prec() as i32;
+            let exp_min = <$Float as SealedFloat>::exp_min();
+            let exp_max = <$Float as SealedFloat>::exp_max();
             let fix_bits = mem::size_of::<$Uns>() as i32 * 8;
 
-            let (neg, exp, mut mantissa) = <$Float as FloatHelper>::parts(val);
+            let (neg, exp, mut mantissa) = <$Float as SealedFloat>::parts(val);
             if exp > exp_max {
                 return None;
             }
@@ -82,23 +82,23 @@ macro_rules! from_float {
 macro_rules! to_float {
     (fn $method:ident($Uns:ty) -> $Float:ty) => {
         fn $method(self, neg: bool, frac_bits: u32) -> $Float {
-            type FloatBits = <$Float as FloatHelper>::Bits;
-            let prec = <$Float as FloatHelper>::prec();
-            let exp_min = <$Float as FloatHelper>::exp_min();
-            let exp_max = <$Float as FloatHelper>::exp_max();
+            type FloatBits = <$Float as SealedFloat>::Bits;
+            let prec = <$Float as SealedFloat>::prec();
+            let exp_min = <$Float as SealedFloat>::exp_min();
+            let exp_max = <$Float as SealedFloat>::exp_max();
             let fix_bits = mem::size_of::<$Uns>() as u32 * 8;
             let int_bits = fix_bits - frac_bits;
 
             let leading_zeros = self.leading_zeros();
             let signif_bits = int_bits + frac_bits - leading_zeros;
             if signif_bits == 0 {
-                return <$Float as FloatHelper>::zero(neg);
+                return <$Float as SealedFloat>::zero(neg);
             }
             // remove leading zeros and implicit one
             let mut mantissa = self << leading_zeros << 1;
             let exponent = int_bits as i32 - 1 - leading_zeros as i32;
             let biased_exponent = if exponent > exp_max {
-                return <$Float as FloatHelper>::infinity(neg);
+                return <$Float as SealedFloat>::infinity(neg);
             } else if exponent < exp_min {
                 let lost_prec = exp_min - exponent;
                 if lost_prec as u32 >= (int_bits + frac_bits) {

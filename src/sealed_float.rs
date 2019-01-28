@@ -48,7 +48,7 @@ pub trait SealedFloat: Copy + Display + Debug {
     fn parts(self) -> (bool, i32, Self::Bits);
 
     fn from_neg_abs(neg: bool, abs: u128, frac_bits: u32, int_bits: u32) -> Self;
-    // self must not be finite, otherwise meaningless results are returned
+    // self must be finite, otherwise meaningless results are returned
     fn to_neg_abs_overflow(self, frac_bits: u32, int_bits: u32) -> (bool, u128, bool);
 }
 

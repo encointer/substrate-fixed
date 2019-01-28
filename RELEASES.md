@@ -9,7 +9,10 @@ Version 0.1.7 (unreleased)
 ==========================
 
   * The new method `checked_from_int` was added.
-  * The new methods `from_float` and `to_float` were added.
+  * The new methods `from_float`, `checked_from_float`,
+    `saturating_from_float`, `wrapping_from_float` and
+    `overflowing_from_float` were added.
+  * The new method `to_float` was added.
   * The methods `from_int`, `from_f16`, `from_f32`, `from_f64`,
     `to_f16`, `to_f32` and `to_f64` were deprecated.
 

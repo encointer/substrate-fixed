@@ -13,11 +13,12 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
+use core::fmt::{Debug, Display};
 #[cfg(feature = "f16")]
 use half::f16;
 use sealed::SealedInt;
 
-pub trait SealedFloat: Copy {
+pub trait SealedFloat: Copy + Display + Debug {
     type Bits: SealedInt;
 
     fn prec() -> u32;
@@ -41,11 +42,15 @@ pub trait SealedFloat: Copy {
 
     fn zero(neg: bool) -> Self;
     fn infinity(neg: bool) -> Self;
+    fn is_finite(self) -> bool;
+    fn is_sign_positive(self) -> bool;
+
     fn from_parts(neg: bool, exp: i32, mant: Self::Bits) -> Self;
     fn parts(self) -> (bool, i32, Self::Bits);
 
     fn from_neg_abs(neg: bool, abs: u128, frac_bits: u32, int_bits: u32) -> Self;
-    fn to_neg_abs(self, frac_bits: u32, int_bits: u32) -> Option<(bool, u128)>;
+    // self must not be finite, otherwise meaningless results are returned
+    fn to_neg_abs_overflow(self, frac_bits: u32, int_bits: u32) -> (bool, u128, bool);
 }
 
 macro_rules! sealed_float {
@@ -75,6 +80,16 @@ macro_rules! sealed_float {
 
                 let neg_bits = if neg { neg_mask } else { 0 };
                 <$Float>::from_bits(neg_bits | exp_mask)
+            }
+
+            #[inline]
+            fn is_finite(self) -> bool {
+                self.is_finite()
+            }
+
+            #[inline]
+            fn is_sign_positive(self) -> bool {
+                self.is_sign_positive()
             }
 
             #[inline]
@@ -167,23 +182,19 @@ macro_rules! sealed_float {
                 Self::from_bits(bits_sign | bits_exp_mantissa)
             }
 
-            fn to_neg_abs(self, frac_bits: u32, int_bits: u32) -> Option<(bool, u128)> {
+            fn to_neg_abs_overflow(self, frac_bits: u32, int_bits: u32) -> (bool, u128, bool) {
                 let float_bits = Self::Bits::nbits() as i32;
                 let prec = Self::prec() as i32;
-                let exp_min = Self::exp_min();
-                let exp_max = Self::exp_max();
                 let fix_bits = (frac_bits + int_bits) as i32;
 
                 let (neg, exp, mut mantissa) = self.parts();
-                if exp > exp_max {
-                    return None;
-                }
+                debug_assert!(exp <= Self::exp_max(), "not finite");
                 // if not subnormal, add implicit bit
-                if exp >= exp_min {
+                if exp >= Self::exp_min() {
                     mantissa |= 1 << (prec - 1);
                 }
                 if mantissa == 0 {
-                    return Some((neg, 0));
+                    return (neg, 0, false);
                 }
                 let leading_zeros = mantissa.leading_zeros();
                 mantissa <<= leading_zeros;
@@ -210,19 +221,17 @@ macro_rules! sealed_float {
                     }
                 }
                 // now rounding is done, we can truncate extra right bits
-                if float_bits - need_to_shr > fix_bits {
-                    return None;
-                }
+                let overflow = float_bits - need_to_shr > fix_bits;
                 let abs = if need_to_shr == 0 {
                     u128::from(mantissa)
-                } else if need_to_shr < 0 {
+                } else if need_to_shr < 0 && -need_to_shr < 128 {
                     u128::from(mantissa) << -need_to_shr
-                } else if need_to_shr < float_bits {
-                    u128::from(mantissa >> need_to_shr)
+                } else if need_to_shr > 0 && need_to_shr < 128 {
+                    u128::from(mantissa) >> need_to_shr
                 } else {
                     0
                 };
-                Some((neg, abs))
+                (neg, abs, overflow)
             }
         }
     };

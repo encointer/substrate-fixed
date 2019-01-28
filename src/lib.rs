@@ -260,7 +260,7 @@ macro_rules! deprecated_from_float {
                 "\n",
                 "This method has been replaced by [`from_float`].\n",
                 "\n",
-                "[`from_float`]: #method.from_float\n"
+                "[`from_float`]: #method.from_float\n",
             ),
             #[deprecated(since = "0.1.7", note = "replaced by from_float")]
             #[inline]
@@ -279,7 +279,7 @@ macro_rules! deprecated_to_float {
                 "\n",
                 "This method has been replaced by [`to_float`].\n",
                 "\n",
-                "[`to_float`]: #method.to_float\n"
+                "[`to_float`]: #method.to_float\n",
             ),
             #[deprecated(since = "0.1.7", note = "replaced by to_float")]
             #[inline]
@@ -315,7 +315,7 @@ macro_rules! fixed {
                 "\n",
                 "[`Unsigned`]: https://docs.rs/typenum/^1.3/typenum/marker_traits/trait.Unsigned.html\n",
                 "[const generics]: https://github.com/rust-lang/rust/issues/44580\n",
-                "[typenum crate]: https://crates.io/crates/typenum\n"
+                "[typenum crate]: https://crates.io/crates/typenum\n",
             ),
             #[repr(transparent)]
             pub struct $Fixed<Frac>(($Inner, PhantomData<Frac>))
@@ -378,7 +378,7 @@ macro_rules! fixed {
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "assert_eq!(Fix::min_value(), Fix::from_bits(",
                     stringify!($Inner), "::min_value()));\n",
-                    "```\n"
+                    "```\n",
                 ),
                 concat!(
                     "Returns the smallest value that can be represented.\n",
@@ -390,7 +390,7 @@ macro_rules! fixed {
                     "use fixed::", stringify!($Fixed), ";\n",
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "assert_eq!(Fix::min_value(), Fix::from_bits(0));\n",
-                    "```\n"
+                    "```\n",
                 ),
                 $Fixed($Inner) => fn min_value()
             }
@@ -406,7 +406,7 @@ macro_rules! fixed {
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "assert_eq!(Fix::max_value(), Fix::from_bits(",
                     stringify!($Inner), "::max_value()));\n",
-                    "```\n"
+                    "```\n",
                 ),
                 $Fixed($Inner) => fn max_value()
             }
@@ -422,7 +422,7 @@ macro_rules! fixed {
                     "use fixed::", stringify!($Fixed), ";\n",
                     "type Fix = ", stringify!($Fixed), "<frac::U6>;\n",
                     "assert_eq!(Fix::int_bits(), ", stringify!($bits_count), " - 6);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 #[inline]
                 pub fn int_bits() -> u32 {
@@ -441,7 +441,7 @@ macro_rules! fixed {
                     "use fixed::", stringify!($Fixed), ";\n",
                     "type Fix = ", stringify!($Fixed), "<frac::U6>;\n",
                     "assert_eq!(Fix::frac_bits(), 6);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 #[inline]
                 pub fn frac_bits() -> u32 {
@@ -463,7 +463,7 @@ macro_rules! fixed {
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "// 0010.0000 == 2\n",
                     "assert_eq!(Fix::from_bits(0b10_0000), 2);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 #[inline]
                 pub fn from_bits(v: $Inner) -> $Fixed<Frac> {
@@ -486,7 +486,7 @@ macro_rules! fixed {
                     "let two = Fix::from_int(2).unwrap();\n",
                     "// two is 0010.0000\n",
                     "assert_eq!(two.to_bits(), 0b10_0000);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 #[inline]
                 pub fn to_bits(self) -> $Inner {
@@ -510,7 +510,7 @@ macro_rules! fixed {
                     "assert_eq!(Fix::from_int(1), Some(fix_one));\n",
                     "let too_large = 1 << (", stringify!($bits_count), " - 2);\n",
                     "assert_eq!(Fix::from_int(too_large), None);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 #[inline]
                 pub fn from_int(v: $Inner) -> Option<$Fixed<Frac>> {
@@ -546,7 +546,7 @@ macro_rules! fixed {
                     "assert_eq!(two_half.to_int(), 2);\n",
                     "let neg_two_half = -two_half;\n",
                     "assert_eq!(neg_two_half.to_int(), -2);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 concat!(
                     "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
@@ -561,7 +561,7 @@ macro_rules! fixed {
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "let two_half = Fix::from_int(5).unwrap() / 2;\n",
                     "assert_eq!(two_half.to_int(), 2);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 #[inline]
                 pub fn to_int(self) -> $Inner {
@@ -597,7 +597,7 @@ macro_rules! fixed {
                     "assert_eq!(two_half.to_int_ceil(), 3);\n",
                     "let neg_two_half = -two_half;\n",
                     "assert_eq!(neg_two_half.to_int_ceil(), -2);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 concat!(
                     "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
@@ -612,7 +612,7 @@ macro_rules! fixed {
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "let two_half = Fix::from_int(5).unwrap() / 2;\n",
                     "assert_eq!(two_half.to_int_ceil(), 3);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 #[inline]
                 pub fn to_int_ceil(self) -> $Inner {
@@ -643,7 +643,7 @@ macro_rules! fixed {
                     "assert_eq!(two_half.to_int_floor(), 2);\n",
                     "let neg_two_half = -two_half;\n",
                     "assert_eq!(neg_two_half.to_int_floor(), -3);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 concat!(
                     "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
@@ -658,7 +658,7 @@ macro_rules! fixed {
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "let two_half = Fix::from_int(5).unwrap() / 2;\n",
                     "assert_eq!(two_half.to_int_floor(), 2);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 #[inline]
                 pub fn to_int_floor(self) -> $Inner {
@@ -692,7 +692,7 @@ macro_rules! fixed {
                     "assert_eq!(neg_two_half.to_int_round(), -3);\n",
                     "let one_quarter = two_half / 2;\n",
                     "assert_eq!(one_quarter.to_int_round(), 1);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 concat!(
                     "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
@@ -709,7 +709,7 @@ macro_rules! fixed {
                     "assert_eq!(two_half.to_int_round(), 3);\n",
                     "let one_quarter = two_half / 2;\n",
                     "assert_eq!(one_quarter.to_int_round(), 1);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 #[inline]
                 pub fn to_int_round(self) -> $Inner {
@@ -775,7 +775,7 @@ macro_rules! fixed {
                     "[`f16` feature]: index.html#optional-features\n",
                     "[`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html\n",
                      "[`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html\n",
-                     "[`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html\n"
+                     "[`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html\n",
                 ),
                 concat!(
                     "Creates a fixed-point number from a floating-point number.\n",
@@ -802,7 +802,7 @@ macro_rules! fixed {
                     "[`f16` feature]: index.html#optional-features\n",
                     "[`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html\n",
                     "[`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html\n",
-                    "[`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html\n"
+                    "[`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html\n",
                 ),
                 #[inline]
                 pub fn from_float<F>(val: F) -> Option<$Fixed<Frac>>
@@ -869,7 +869,12 @@ macro_rules! fixed {
                     "// 1.75 is 0001.1100, that is from_bits(28)\n",
                     "assert_eq!(Fix::from_bits(28).to_float::<f32>(), 1.75f32);\n",
                     "assert_eq!(Fix::from_bits(-28).to_float::<f64>(), -1.75f64);\n",
-                    "```\n"
+                    "```\n",
+                    "\n",
+                    "[`f16` feature]: index.html#optional-features\n",
+                    "[`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html\n",
+                    "[`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html\n",
+                    "[`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html\n",
                 ),
                 concat!(
                     "Converts the fixed-point number to a floating-point number.\n",
@@ -888,7 +893,12 @@ macro_rules! fixed {
                     "// 1.75 is 0001.1100, that is from_bits(28)\n",
                     "assert_eq!(Fix::from_bits(28).to_float::<f32>(), 1.75f32);\n",
                     "assert_eq!(Fix::from_bits(28).to_float::<f64>(), 1.75f64);\n",
-                    "```\n"
+                    "```\n",
+                    "\n",
+                    "[`f16` feature]: index.html#optional-features\n",
+                    "[`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html\n",
+                    "[`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html\n",
+                    "[`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html\n",
                 ),
                 pub fn to_float<F>(self) -> F
                 where
@@ -941,7 +951,7 @@ macro_rules! fixed {
                     "// 1101.1100\n",
                     "let neg_two_and_quarter = -two_and_quarter;\n",
                     "assert_eq!(neg_two_and_quarter.int(), neg_three);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 concat!(
                     "Returns the integer part.\n",
@@ -957,7 +967,7 @@ macro_rules! fixed {
                     "// 0010.0100\n",
                     "let two_and_quarter = two + two / 8;\n",
                     "assert_eq!(two_and_quarter.int(), two);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 #[inline]
                 pub fn int(self) -> $Fixed<Frac> {
@@ -995,7 +1005,7 @@ macro_rules! fixed {
                     "// 1101.1100\n",
                     "let neg_two_and_quarter = -two_and_quarter;\n",
                     "assert_eq!(neg_two_and_quarter.frac(), three_quarters);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 concat!(
                     "Returns the fractional part.\n",
@@ -1011,7 +1021,7 @@ macro_rules! fixed {
                     "// 0010.0100\n",
                     "let two_and_quarter = quarter * 9;\n",
                     "assert_eq!(two_and_quarter.frac(), quarter);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 #[inline]
                 pub fn frac(self) -> $Fixed<Frac> {
@@ -1033,7 +1043,7 @@ macro_rules! fixed {
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "let f = Fix::from_bits(0b11_0010);\n",
                     "assert_eq!(f.count_ones(), 3);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 $Fixed($Inner) => fn count_ones(self) -> u32
             }
@@ -1049,7 +1059,7 @@ macro_rules! fixed {
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "let f = Fix::from_bits(!0b11_0010);\n",
                     "assert_eq!(f.count_zeros(), 3);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 $Fixed($Inner) => fn count_zeros(self) -> u32
             }
@@ -1065,7 +1075,7 @@ macro_rules! fixed {
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "let f = Fix::from_bits(0b10_0000);\n",
                     "assert_eq!(f.leading_zeros(), ", stringify!($bits_count), " - 6);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 $Fixed($Inner) => fn leading_zeros(self) -> u32
             }
@@ -1081,7 +1091,7 @@ macro_rules! fixed {
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "let f = Fix::from_bits(0b10_0000);\n",
                     "assert_eq!(f.trailing_zeros(), 5);\n",
-                    "```\n"
+                    "```\n",
                 ),
                 $Fixed($Inner) => fn trailing_zeros(self) -> u32
             }
@@ -1100,7 +1110,7 @@ macro_rules! fixed {
                     "let rot = 0b1010111;\n",
                     "assert_eq!(bits.rotate_left(3), rot);\n",
                     "assert_eq!(Fix::from_bits(bits).rotate_left(3), Fix::from_bits(rot));\n",
-                    "```\n"
+                    "```\n",
                 ),
                 $Fixed($Inner) => fn rotate_left(self, n: u32)
             }
@@ -1119,7 +1129,7 @@ macro_rules! fixed {
                     stringify!($bits_count), " - 3)) | 0b1010;\n",
                     "assert_eq!(bits.rotate_right(3), rot);\n",
                     "assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));\n",
-                    "```\n"
+                    "```\n",
                 ),
                 $Fixed($Inner) => fn rotate_right(self, n: u32)
             }
@@ -1413,7 +1423,7 @@ macro_rules! fixed {
                         "let half = Fix::from_bits(0b1000);\n",
                         "assert!(!three_eights.is_power_of_two());\n",
                         "assert!(half.is_power_of_two());\n",
-                        "```\n"
+                        "```\n",
                     ),
                     $Fixed($Inner) => fn is_power_of_two(self) -> bool
                 }
@@ -1436,7 +1446,7 @@ macro_rules! fixed {
                         "let half = Fix::from_bits(0b1000);\n",
                         "assert_eq!(three_eights.next_power_of_two(), half);\n",
                         "assert_eq!(half.next_power_of_two(), half);\n",
-                        "```\n"
+                        "```\n",
                     ),
                     $Fixed($Inner) => fn next_power_of_two(self)
                 }
@@ -1460,7 +1470,7 @@ macro_rules! fixed {
                         "let half = Fix::from_bits(0b1000);\n",
                         "assert_eq!(three_eights.checked_next_power_of_two(), Some(half));\n",
                         "assert!(Fix::max_value().checked_next_power_of_two().is_none());\n",
-                        "```\n"
+                        "```\n",
                     ),
                     #[inline]
                     pub fn checked_next_power_of_two(self) -> Option<$Fixed<Frac>> {
@@ -1482,7 +1492,7 @@ macro_rules! fixed {
                         "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                         "assert_eq!(Fix::from_int(5).unwrap().abs(), Fix::from_int(5).unwrap());\n",
                         "assert_eq!(Fix::from_int(-5).unwrap().abs(), Fix::from_int(5).unwrap());\n",
-                        "```\n"
+                        "```\n",
                     ),
                     $Fixed($Inner) => fn abs(self)
                 }
@@ -1502,7 +1512,7 @@ macro_rules! fixed {
                         "assert_eq!(Fix::from_int(5).unwrap().signum(), Fix::from_int(1).unwrap());\n",
                         "assert_eq!(Fix::from_int(0).unwrap().signum(), Fix::from_int(0).unwrap());\n",
                         "assert_eq!(Fix::from_int(-5).unwrap().signum(), Fix::from_int(-1).unwrap());\n",
-                        "```\n"
+                        "```\n",
                     ),
                     #[inline]
                     pub fn signum(self) -> $Fixed<Frac> {
@@ -1533,7 +1543,7 @@ macro_rules! fixed {
                         "assert!(Fix::from_int(5).unwrap().is_positive());\n",
                         "assert!(!Fix::from_int(0).unwrap().is_positive());\n",
                         "assert!(!Fix::from_int(-5).unwrap().is_positive());\n",
-                        "```\n"
+                        "```\n",
                     ),
                     $Fixed($Inner) => fn is_positive(self) -> bool
                 }
@@ -1553,7 +1563,7 @@ macro_rules! fixed {
                         "assert!(!Fix::from_int(5).unwrap().is_negative());\n",
                         "assert!(!Fix::from_int(0).unwrap().is_negative());\n",
                         "assert!(Fix::from_int(-5).unwrap().is_negative());\n",
-                        "```\n"
+                        "```\n",
                     ),
                     $Fixed($Inner) => fn is_negative(self) -> bool
                 }

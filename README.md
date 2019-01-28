@@ -88,7 +88,7 @@ Details on other releases can be found in [*RELEASES.md*].
 use fixed::types::I20F12;
 
 // 19/3 = 6 1/3
-let six_and_third = I20F12::from_int(19).unwrap() / 3;
+let six_and_third = I20F12::checked_from_int(19).unwrap() / 3;
 // four decimal digits for 12 binary digits
 assert_eq!(six_and_third.to_string(), "6.3333");
 // convert to i32, taking the ceil

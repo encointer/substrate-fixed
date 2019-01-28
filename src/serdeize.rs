@@ -105,7 +105,7 @@ serde_fixed! { FixedU32(U32) is u32 name "FixedU32" }
 serde_fixed! { FixedU64(U64) is u64 name "FixedU64" }
 serde_fixed! { FixedU128(U128) is u128 name "FixedU128" }
 
-const FIELDS: &'static [&'static str] = &["bits"];
+const FIELDS: &[&str] = &["bits"];
 
 enum Field {
     Bits,

@@ -5,6 +5,13 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.1.7 (unreleased)
+==========================
+
+  * The new methods `from_float` and `to_float` were added.
+  * The methods `from_f16`, `from_f32`, `from_f64`, `to_f16`, `to_f32`
+    and `to_f64` were deprecated.
+
 Version 0.1.6 (2019-01-27)
 ==========================
 

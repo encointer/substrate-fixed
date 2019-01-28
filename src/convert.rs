@@ -292,33 +292,33 @@ fixed_to_prim! { (FixedU64, FixedI64) -> wider (u128, i128) }
 fixed_to_prim! { (FixedU128, FixedI128) -> (u128, i128) }
 
 macro_rules! fixed_to_float {
-    ($Fixed:ident($Len:ty):: $method:ident -> $Float:ident) => {
+    ($Fixed:ident($Len:ty) -> $Float:ident) => {
         impl<Frac> From<$Fixed<Frac>> for $Float
         where
             Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
         {
             #[inline]
             fn from(src: $Fixed<Frac>) -> $Float {
-                src.$method()
+                src.to_float()
             }
         }
     };
 }
 
 #[cfg(feature = "f16")]
-fixed_to_float! { FixedI8(U8)::to_f16 -> f16 }
+fixed_to_float! { FixedI8(U8) -> f16 }
 #[cfg(feature = "f16")]
-fixed_to_float! { FixedU8(U8)::to_f16 -> f16 }
-fixed_to_float! { FixedI8(U8)::to_f32 -> f32 }
-fixed_to_float! { FixedI16(U16)::to_f32 -> f32 }
-fixed_to_float! { FixedU8(U8)::to_f32 -> f32 }
-fixed_to_float! { FixedU16(U16)::to_f32 -> f32 }
-fixed_to_float! { FixedI8(U8)::to_f64 -> f64 }
-fixed_to_float! { FixedI16(U16)::to_f64 -> f64 }
-fixed_to_float! { FixedI32(U32)::to_f64 -> f64 }
-fixed_to_float! { FixedU8(U8)::to_f64 -> f64 }
-fixed_to_float! { FixedU16(U16)::to_f64 -> f64 }
-fixed_to_float! { FixedU32(U32)::to_f64 -> f64 }
+fixed_to_float! { FixedU8(U8) -> f16 }
+fixed_to_float! { FixedI8(U8) -> f32 }
+fixed_to_float! { FixedI16(U16) -> f32 }
+fixed_to_float! { FixedU8(U8) -> f32 }
+fixed_to_float! { FixedU16(U16) -> f32 }
+fixed_to_float! { FixedI8(U8) -> f64 }
+fixed_to_float! { FixedI16(U16) -> f64 }
+fixed_to_float! { FixedI32(U32) -> f64 }
+fixed_to_float! { FixedU8(U8) -> f64 }
+fixed_to_float! { FixedU16(U16) -> f64 }
+fixed_to_float! { FixedU32(U32) -> f64 }
 
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::float_cmp))]
 #[cfg(test)]
@@ -439,85 +439,94 @@ mod tests {
     }
 
     #[test]
-    fn signed_from_f32() {
+    fn signed_from_float() {
         type Fix = FixedI8<frac::U4>;
         // 1.1 -> 0001.1000
-        assert_eq!(Fix::from_f32(3.0 / 2.0).unwrap(), Fix::from_bits(24));
+        assert_eq!(Fix::from_float(3.0 / 2.0).unwrap(), Fix::from_bits(24));
         // 0.11 -> 0000.1100
-        assert_eq!(Fix::from_f32(3.0 / 4.0).unwrap(), Fix::from_bits(12));
+        assert_eq!(Fix::from_float(3.0 / 4.0).unwrap(), Fix::from_bits(12));
         // 0.011 -> 0000.0110
-        assert_eq!(Fix::from_f32(3.0 / 8.0).unwrap(), Fix::from_bits(6));
+        assert_eq!(Fix::from_float(3.0 / 8.0).unwrap(), Fix::from_bits(6));
         // 0.0011 -> 0000.0011
-        assert_eq!(Fix::from_f32(3.0 / 16.0).unwrap(), Fix::from_bits(3));
+        assert_eq!(Fix::from_float(3.0 / 16.0).unwrap(), Fix::from_bits(3));
         // 0.00011 -> 0000.0010 (tie to even)
-        assert_eq!(Fix::from_f32(3.0 / 32.0).unwrap(), Fix::from_bits(2));
+        assert_eq!(Fix::from_float(3.0 / 32.0).unwrap(), Fix::from_bits(2));
         // 0.00101 -> 0000.0010 (tie to even)
-        assert_eq!(Fix::from_f32(5.0 / 32.0).unwrap(), Fix::from_bits(2));
+        assert_eq!(Fix::from_float(5.0 / 32.0).unwrap(), Fix::from_bits(2));
         // 0.000011 -> 0000.0001 (nearest)
-        assert_eq!(Fix::from_f32(3.0 / 64.0).unwrap(), Fix::from_bits(1));
+        assert_eq!(Fix::from_float(3.0 / 64.0).unwrap(), Fix::from_bits(1));
         // 0.00001 -> 0000.0000 (tie to even)
-        assert_eq!(Fix::from_f32(1.0 / 32.0).unwrap(), Fix::from_bits(0));
+        assert_eq!(Fix::from_float(1.0 / 32.0).unwrap(), Fix::from_bits(0));
 
         // -1.1 -> -0001.1000
-        assert_eq!(Fix::from_f32(-3.0 / 2.0).unwrap(), Fix::from_bits(-24));
+        assert_eq!(Fix::from_float(-3.0 / 2.0).unwrap(), Fix::from_bits(-24));
         // -0.11 -> -0000.1100
-        assert_eq!(Fix::from_f32(-3.0 / 4.0).unwrap(), Fix::from_bits(-12));
+        assert_eq!(Fix::from_float(-3.0 / 4.0).unwrap(), Fix::from_bits(-12));
         // -0.011 -> -0000.0110
-        assert_eq!(Fix::from_f32(-3.0 / 8.0).unwrap(), Fix::from_bits(-6));
+        assert_eq!(Fix::from_float(-3.0 / 8.0).unwrap(), Fix::from_bits(-6));
         // -0.0011 -> -0000.0011
-        assert_eq!(Fix::from_f32(-3.0 / 16.0).unwrap(), Fix::from_bits(-3));
+        assert_eq!(Fix::from_float(-3.0 / 16.0).unwrap(), Fix::from_bits(-3));
         // -0.00011 -> -0000.0010 (tie to even)
-        assert_eq!(Fix::from_f32(-3.0 / 32.0).unwrap(), Fix::from_bits(-2));
+        assert_eq!(Fix::from_float(-3.0 / 32.0).unwrap(), Fix::from_bits(-2));
         // -0.00101 -> -0000.0010 (tie to even)
-        assert_eq!(Fix::from_f32(-5.0 / 32.0).unwrap(), Fix::from_bits(-2));
+        assert_eq!(Fix::from_float(-5.0 / 32.0).unwrap(), Fix::from_bits(-2));
         // -0.000011 -> -0000.0001 (nearest)
-        assert_eq!(Fix::from_f32(-3.0 / 64.0).unwrap(), Fix::from_bits(-1));
+        assert_eq!(Fix::from_float(-3.0 / 64.0).unwrap(), Fix::from_bits(-1));
         // -0.00001 -> 0000.0000 (tie to even)
-        assert_eq!(Fix::from_f32(-1.0 / 32.0).unwrap(), Fix::from_bits(0));
+        assert_eq!(Fix::from_float(-1.0 / 32.0).unwrap(), Fix::from_bits(0));
 
         // 111.1111 -> 111.1111
-        assert_eq!(Fix::from_f32(127.0 / 16.0).unwrap(), Fix::from_bits(127));
+        assert_eq!(Fix::from_float(127.0 / 16.0).unwrap(), Fix::from_bits(127));
         // 111.11111 -> too large (tie to even)
-        assert!(Fix::from_f32(255.0 / 32.0).is_none());
+        assert!(Fix::from_float(255.0 / 32.0).is_none());
 
         // -111.1111 -> -111.1111
-        assert_eq!(Fix::from_f32(-127.0 / 16.0).unwrap(), Fix::from_bits(-127));
+        assert_eq!(
+            Fix::from_float(-127.0 / 16.0).unwrap(),
+            Fix::from_bits(-127)
+        );
         // -111.11111 -> -1000.0000 (tie to even)
-        assert_eq!(Fix::from_f32(-255.0 / 32.0).unwrap(), Fix::from_bits(-128));
+        assert_eq!(
+            Fix::from_float(-255.0 / 32.0).unwrap(),
+            Fix::from_bits(-128)
+        );
         // -1000.00001 -> -1000.0000 (tie to even)
-        assert_eq!(Fix::from_f32(-257.0 / 32.0).unwrap(), Fix::from_bits(-128));
+        assert_eq!(
+            Fix::from_float(-257.0 / 32.0).unwrap(),
+            Fix::from_bits(-128)
+        );
         // -1000.0001 -> too small
-        assert!(Fix::from_f32(-129.0 / 16.0).is_none());
+        assert!(Fix::from_float(-129.0 / 16.0).is_none());
     }
 
     #[test]
-    fn unsigned_from_f32() {
+    fn unsigned_from_float() {
         type Fix = FixedU8<frac::U4>;
         // 1.1 -> 0001.1000
-        assert_eq!(Fix::from_f32(3.0 / 2.0).unwrap(), Fix::from_bits(24));
+        assert_eq!(Fix::from_float(3.0 / 2.0).unwrap(), Fix::from_bits(24));
         // 0.11 -> 0000.1100
-        assert_eq!(Fix::from_f32(3.0 / 4.0).unwrap(), Fix::from_bits(12));
+        assert_eq!(Fix::from_float(3.0 / 4.0).unwrap(), Fix::from_bits(12));
         // 0.011 -> 0000.0110
-        assert_eq!(Fix::from_f32(3.0 / 8.0).unwrap(), Fix::from_bits(6));
+        assert_eq!(Fix::from_float(3.0 / 8.0).unwrap(), Fix::from_bits(6));
         // 0.0011 -> 0000.0011
-        assert_eq!(Fix::from_f32(3.0 / 16.0).unwrap(), Fix::from_bits(3));
+        assert_eq!(Fix::from_float(3.0 / 16.0).unwrap(), Fix::from_bits(3));
         // 0.00011 -> 0000.0010 (tie to even)
-        assert_eq!(Fix::from_f32(3.0 / 32.0).unwrap(), Fix::from_bits(2));
+        assert_eq!(Fix::from_float(3.0 / 32.0).unwrap(), Fix::from_bits(2));
         // 0.00101 -> 0000.0010 (tie to even)
-        assert_eq!(Fix::from_f32(5.0 / 32.0).unwrap(), Fix::from_bits(2));
+        assert_eq!(Fix::from_float(5.0 / 32.0).unwrap(), Fix::from_bits(2));
         // 0.000011 -> 0000.0001 (nearest)
-        assert_eq!(Fix::from_f32(3.0 / 64.0).unwrap(), Fix::from_bits(1));
+        assert_eq!(Fix::from_float(3.0 / 64.0).unwrap(), Fix::from_bits(1));
         // 0.00001 -> 0000.0000 (tie to even)
-        assert_eq!(Fix::from_f32(1.0 / 32.0).unwrap(), Fix::from_bits(0));
+        assert_eq!(Fix::from_float(1.0 / 32.0).unwrap(), Fix::from_bits(0));
         // -0.00001 -> 0000.0000 (tie to even)
-        assert_eq!(Fix::from_f32(-1.0 / 32.0).unwrap(), Fix::from_bits(0));
+        assert_eq!(Fix::from_float(-1.0 / 32.0).unwrap(), Fix::from_bits(0));
         // -0.0001 -> too small
-        assert!(Fix::from_f32(-1.0 / 16.0).is_none());
+        assert!(Fix::from_float(-1.0 / 16.0).is_none());
 
         // 1111.1111 -> 1111.1111
-        assert_eq!(Fix::from_f32(255.0 / 16.0).unwrap(), Fix::from_bits(255));
+        assert_eq!(Fix::from_float(255.0 / 16.0).unwrap(), Fix::from_bits(255));
         // 1111.11111 -> too large (tie to even)
-        assert!(Fix::from_f32(511.0 / 32.0).is_none());
+        assert!(Fix::from_float(511.0 / 32.0).is_none());
     }
 
     #[cfg(feature = "f16")]
@@ -526,55 +535,10 @@ mod tests {
         use half::f16;
         for u in 0x00..=0xff {
             let fu = FixedU8::<frac::U7>::from_bits(u);
-            assert_eq!(fu.to_f16(), f16::from_f32(u as f32 / 128.0));
+            assert_eq!(fu.to_float::<f16>(), f16::from_f32(f32::from(u) / 128.0));
             let i = u as i8;
             let fi = FixedI8::<frac::U7>::from_bits(i);
-            assert_eq!(fi.to_f16(), f16::from_f32(i as f32 / 128.0));
-
-            for hi in &[
-                0u32,
-                0x0000_0100,
-                0x7fff_ff00,
-                0x8000_0000,
-                0x8100_0000,
-                0xffff_fe00,
-                0xffff_ff00,
-            ] {
-                let uu = *hi | u as u32;
-                let fuu = FixedU32::<frac::U7>::from_bits(uu);
-                assert_eq!(fuu.to_f16(), f16::from_f32(uu as f32 / 128.0));
-                let ii = uu as i32;
-                let fii = FixedI32::<frac::U7>::from_bits(ii);
-                assert_eq!(fii.to_f16(), f16::from_f32(ii as f32 / 128.0));
-            }
-
-            for hi in &[
-                0u128,
-                0x0000_0000_0000_0000_0000_0000_0000_0100,
-                0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
-                0x8000_0000_0000_0000_0000_0000_0000_0000,
-                0x8100_0000_0000_0000_0000_0000_0000_0000,
-                0xffff_ffff_ffff_ffff_ffff_ffff_ffff_fe00,
-                0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
-            ] {
-                let uu = *hi | u as u128;
-                let fuu = FixedU128::<frac::U7>::from_bits(uu);
-                assert_eq!(fuu.to_f16(), f16::from_f64(uu as f64 / 128.0));
-                let ii = uu as i128;
-                let fii = FixedI128::<frac::U7>::from_bits(ii);
-                assert_eq!(fii.to_f16(), f16::from_f64(ii as f64 / 128.0));
-            }
-        }
-    }
-
-    #[test]
-    fn to_f32() {
-        for u in 0x00..=0xff {
-            let fu = FixedU8::<frac::U7>::from_bits(u);
-            assert_eq!(fu.to_f32(), f32::from(u) / 128.0);
-            let i = u as i8;
-            let fi = FixedI8::<frac::U7>::from_bits(i);
-            assert_eq!(fi.to_f32(), f32::from(i) / 128.0);
+            assert_eq!(fi.to_float::<f16>(), f16::from_f32(f32::from(i) / 128.0));
 
             for hi in &[
                 0u32,
@@ -587,10 +551,10 @@ mod tests {
             ] {
                 let uu = *hi | u32::from(u);
                 let fuu = FixedU32::<frac::U7>::from_bits(uu);
-                assert_eq!(fuu.to_f32(), uu as f32 / 128.0);
+                assert_eq!(fuu.to_float::<f16>(), f16::from_f32(uu as f32 / 128.0));
                 let ii = uu as i32;
                 let fii = FixedI32::<frac::U7>::from_bits(ii);
-                assert_eq!(fii.to_f32(), ii as f32 / 128.0);
+                assert_eq!(fii.to_float::<f16>(), f16::from_f32(ii as f32 / 128.0));
             }
 
             for hi in &[
@@ -604,10 +568,55 @@ mod tests {
             ] {
                 let uu = *hi | u128::from(u);
                 let fuu = FixedU128::<frac::U7>::from_bits(uu);
-                assert_eq!(fuu.to_f32(), (uu as f64 / 128.0) as f32);
+                assert_eq!(fuu.to_float::<f16>(), f16::from_f64(uu as f64 / 128.0));
                 let ii = uu as i128;
                 let fii = FixedI128::<frac::U7>::from_bits(ii);
-                assert_eq!(fii.to_f32(), (ii as f64 / 128.0) as f32);
+                assert_eq!(fii.to_float::<f16>(), f16::from_f64(ii as f64 / 128.0));
+            }
+        }
+    }
+
+    #[test]
+    fn to_f32() {
+        for u in 0x00..=0xff {
+            let fu = FixedU8::<frac::U7>::from_bits(u);
+            assert_eq!(fu.to_float::<f32>(), f32::from(u) / 128.0);
+            let i = u as i8;
+            let fi = FixedI8::<frac::U7>::from_bits(i);
+            assert_eq!(fi.to_float::<f32>(), f32::from(i) / 128.0);
+
+            for hi in &[
+                0u32,
+                0x0000_0100,
+                0x7fff_ff00,
+                0x8000_0000,
+                0x8100_0000,
+                0xffff_fe00,
+                0xffff_ff00,
+            ] {
+                let uu = *hi | u32::from(u);
+                let fuu = FixedU32::<frac::U7>::from_bits(uu);
+                assert_eq!(fuu.to_float::<f32>(), uu as f32 / 128.0);
+                let ii = uu as i32;
+                let fii = FixedI32::<frac::U7>::from_bits(ii);
+                assert_eq!(fii.to_float::<f32>(), ii as f32 / 128.0);
+            }
+
+            for hi in &[
+                0u128,
+                0x0000_0000_0000_0000_0000_0000_0000_0100,
+                0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
+                0x8000_0000_0000_0000_0000_0000_0000_0000,
+                0x8100_0000_0000_0000_0000_0000_0000_0000,
+                0xffff_ffff_ffff_ffff_ffff_ffff_ffff_fe00,
+                0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
+            ] {
+                let uu = *hi | u128::from(u);
+                let fuu = FixedU128::<frac::U7>::from_bits(uu);
+                assert_eq!(fuu.to_float::<f32>(), (uu as f64 / 128.0) as f32);
+                let ii = uu as i128;
+                let fii = FixedI128::<frac::U7>::from_bits(ii);
+                assert_eq!(fii.to_float::<f32>(), (ii as f64 / 128.0) as f32);
             }
         }
     }
@@ -618,7 +627,7 @@ mod tests {
         // which will be rounded to 1.0 << 128.
         let too_large = FixedU128::<frac::U0>::max_value();
         assert_eq!(too_large.count_ones(), 128);
-        assert!(too_large.to_f32().is_infinite());
+        assert!(too_large.to_float::<f32>().is_infinite());
 
         // still_too_large is 1.ffff_ff << 127,
         // which is exactly midway between 1.0 << 128 (even)
@@ -626,28 +635,28 @@ mod tests {
         // The tie will be rounded to even, which is to 1.0 << 128.
         let still_too_large = too_large << 103u32;
         assert_eq!(still_too_large.count_ones(), 25);
-        assert!(still_too_large.to_f32().is_infinite());
+        assert!(still_too_large.to_float::<f32>().is_infinite());
 
         // not_too_large is 1.ffff_feff_ffff... << 127,
         // which will be rounded to 1.ffff_fe << 127.
         let not_too_large = still_too_large - FixedU128::from_bits(1);
         assert_eq!(not_too_large.count_ones(), 127);
-        assert!(!not_too_large.to_f32().is_infinite());
+        assert!(!not_too_large.to_float::<f32>().is_infinite());
 
         // min_128 is -1.0 << 127.
         let min_i128 = FixedI128::<frac::U0>::min_value();
         assert_eq!(min_i128.count_ones(), 1);
-        assert_eq!(min_i128.to_f32(), -(127f32.exp2()));
+        assert_eq!(min_i128.to_float::<f32>(), -(127f32.exp2()));
     }
 
     #[test]
     fn to_f64() {
         for u in 0x00..=0xff {
             let fu = FixedU8::<frac::U7>::from_bits(u);
-            assert_eq!(fu.to_f32(), f32::from(u) / 128.0);
+            assert_eq!(fu.to_float::<f64>(), f64::from(u) / 128.0);
             let i = u as i8;
             let fi = FixedI8::<frac::U7>::from_bits(i);
-            assert_eq!(fi.to_f32(), f32::from(i) / 128.0);
+            assert_eq!(fi.to_float::<f64>(), f64::from(i) / 128.0);
 
             for hi in &[
                 0u64,
@@ -660,10 +669,10 @@ mod tests {
             ] {
                 let uu = *hi | u64::from(u);
                 let fuu = FixedU64::<frac::U7>::from_bits(uu);
-                assert_eq!(fuu.to_f64(), uu as f64 / 128.0);
+                assert_eq!(fuu.to_float::<f64>(), uu as f64 / 128.0);
                 let ii = uu as i64;
                 let fii = FixedI64::<frac::U7>::from_bits(ii);
-                assert_eq!(fii.to_f64(), ii as f64 / 128.0);
+                assert_eq!(fii.to_float::<f64>(), ii as f64 / 128.0);
             }
 
             for hi in &[
@@ -677,10 +686,10 @@ mod tests {
             ] {
                 let uu = *hi | u128::from(u);
                 let fuu = FixedU128::<frac::U7>::from_bits(uu);
-                assert_eq!(fuu.to_f64(), uu as f64 / 128.0);
+                assert_eq!(fuu.to_float::<f64>(), uu as f64 / 128.0);
                 let ii = uu as i128;
                 let fii = FixedI128::<frac::U7>::from_bits(ii);
-                assert_eq!(fii.to_f64(), ii as f64 / 128.0);
+                assert_eq!(fii.to_float::<f64>(), ii as f64 / 128.0);
             }
         }
     }

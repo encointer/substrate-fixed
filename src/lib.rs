@@ -178,7 +178,6 @@ mod arith;
 mod cmp;
 mod convert;
 mod display;
-mod float;
 pub mod frac;
 pub mod sealed;
 mod sealed_fixed;
@@ -193,11 +192,10 @@ use arith::MulDivDir;
 use core::cmp::Ordering;
 use core::hash::{Hash, Hasher};
 use core::marker::PhantomData;
-use float::FloatConv;
 use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
 #[cfg(feature = "f16")]
 use half::f16;
-use sealed::{SealedFixed, SealedInt};
+use sealed::{Float, SealedFixed, SealedFloat, SealedInt};
 
 macro_rules! pass_method {
     ($comment:expr, $Fixed:ident($Inner:ty) => fn $method:ident()) => {
@@ -254,189 +252,41 @@ macro_rules! doc_comment_signed_unsigned {
     };
 }
 
-macro_rules! doc_comment_signed_unsigned_from_float {
-    (
-        $Signedness:tt, $signed:expr, $unsigned:expr,
-        fn $method:ident($Float:ident) -> $Fixed:ident<$Frac:ident>
-    ) => {
-        doc_comment_signed_unsigned! {
-            $Signedness,
-            $signed,
-            $unsigned,
+macro_rules! deprecated_from_float {
+    (fn $method:ident($Float:ident) -> $Fixed:ident<$Frac:ident>) => {
+        doc_comment! {
+            concat!(
+                "Creates a fixed-point number from `", stringify!($Float), "`.\n",
+                "\n",
+                "This method has been replaced by [`from_float`].\n",
+                "\n",
+                "[`from_float`]: #method.from_float\n"
+            ),
+            #[deprecated(since = "0.1.7", note = "replaced by from_float")]
             #[inline]
             pub fn $method(val: $Float) -> Option<$Fixed<$Frac>> {
-                let int_bits = Self::int_bits();
-                let frac_bits = Self::frac_bits();
-
-                let (int_frac, neg) = FloatConv::$method(val, frac_bits)?;
-
-                if <<$Fixed<$Frac> as SealedFixed>::Bits as SealedInt>::is_signed() {
-                    // most significant bit (msb) can be one only for min value,
-                    // that is for a negative value with only the msb true.
-                    let msb = 1 << (int_bits + frac_bits - 1);
-                    if int_frac & msb != 0 {
-                        if !neg || (int_frac & !msb) != 0 {
-                            return None;
-                        }
-                    }
-                } else if neg {
-                    if int_frac != 0 {
-                        return None;
-                    }
-                    return Some($Fixed::from_bits(0));
-                }
-
-                let (int, frac) = if frac_bits == 0 {
-                    (int_frac, 0)
-                } else if int_bits == 0 {
-                    (0, int_frac)
-                } else {
-                    ((int_frac >> frac_bits), (int_frac << int_bits))
-                };
-
-                Some(SealedFixed::from_parts(neg, int, frac))
+                <$Fixed<$Frac>>::from_float(val)
             }
         }
     };
 }
-macro_rules! from_float {
-    ($Signedness:tt, fn $method:ident($Float:ident) -> $Fixed:ident<$Frac:ident>) => {
-        doc_comment_signed_unsigned_from_float! {
-            $Signedness,
-            concat!(
-                "Creates a fixed-point number from `", stringify!($Float), "`.\n",
-                "\n",
-                "This method rounds to the nearest, with ties rounding to even.\n",
-                "\n",
-                "# Examples\n",
-                "\n",
-                "```rust\n",
-                "use fixed::frac;\n",
-                "use fixed::", stringify!($Fixed), ";\n",
-                "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
-                "// 1.75 is 0001.1100, that is from_bits(28)\n",
-                "assert_eq!(Fix::from_", stringify!($Float),
-                "(1.75), Some(Fix::from_bits(28)));\n",
-                "assert_eq!(Fix::from_", stringify!($Float),
-                "(-1.75), Some(Fix::from_bits(-28)));\n",
-                "// 1e-10 is too small for four fractional bits\n",
-                "assert_eq!(Fix::from_", stringify!($Float),
-                "(1e-10), Some(Fix::from_bits(0)));\n",
-                "assert_eq!(Fix::from_", stringify!($Float),
-                "(-1e-10), Some(Fix::from_bits(0)));\n",
-                "// 2e38 is too large for ", stringify!($Fixed), "<frac::U4>\n",
-                "assert!(Fix::from_", stringify!($Float),
-                "(2e38).is_none());\n",
-                "assert!(Fix::from_", stringify!($Float),
-                "(-2e38).is_none());\n",
-                "```\n"
-            ),
-            concat!(
-                "Creates a fixed-point number from `", stringify!($Float), "`.\n",
-                "\n",
-                "This method rounds to the nearest, with ties rounding to even.\n",
-                "\n",
-                "# Examples\n",
-                "\n",
-                "```rust\n",
-                "use fixed::frac;\n",
-                "use fixed::", stringify!($Fixed), ";\n",
-                "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
-                "// 1.75 is 0001.1100, that is from_bits(28)\n",
-                "assert_eq!(Fix::from_", stringify!($Float),
-                "(1.75), Some(Fix::from_bits(28)));\n",
-                "// 1e-10 is too small for four fractional bits\n",
-                "assert_eq!(Fix::from_", stringify!($Float),
-                "(1e-10), Some(Fix::from_bits(0)));\n",
-                "// 2e38 is too large for ", stringify!($Fixed), "<frac::U4>\n",
-                "assert!(Fix::from_", stringify!($Float),
-                "(2e38).is_none());\n",
-                "```\n"
-            ),
-            fn $method($Float) -> $Fixed<$Frac>
-        }
-    };
-}
 
-macro_rules! doc_comment_signed_unsigned_to_float {
-    (
-        $Signedness:tt, $signed:expr, $unsigned:expr,
-        fn $method:ident($Fixed:ident<$Frac:ident>) -> $Float:ident
-    ) => {
-        doc_comment_signed_unsigned! {
-            $Signedness,
-            $signed,
-            $unsigned,
+macro_rules! deprecated_to_float {
+    (fn $method:ident($Fixed:ident<$Frac:ident>) -> $Float:ident) => {
+        doc_comment! {
+            concat!(
+                "Converts the fixed-point number to `", stringify!($Float), "`.\n",
+                "\n",
+                "This method has been replaced by [`to_float`].\n",
+                "\n",
+                "[`to_float`]: #method.to_float\n"
+            ),
+            #[deprecated(since = "0.1.7", note = "replaced by to_float")]
             #[inline]
             pub fn $method(self) -> $Float {
-                let int_bits = Self::int_bits();
-                let frac_bits = Self::frac_bits();
-                let (neg, int, frac) = self.parts();
-                let int_frac = if frac_bits == 0 {
-                    int
-                } else if int_bits == 0 {
-                    frac
-                } else {
-                    (int << frac_bits) | (frac >> int_bits)
-                };
-                FloatConv::$method(int_frac, neg, frac_bits)
+                self.to_float()
             }
         }
-    };
-}
-macro_rules! to_float {
-    ($Signedness:tt, fn $method:ident($Fixed:ident<$Frac:ident>) -> $Float:ident) => {
-        doc_comment_signed_unsigned_to_float! {
-            $Signedness,
-            concat!(
-                "Converts the fixed-point number to `", stringify!($Float), "`.\n",
-                "\n",
-                "This method rounds to the nearest, with ties rounding to even.\n",
-                "\n",
-                "# Examples\n",
-                "\n",
-                "```rust\n",
-                "use fixed::frac;\n",
-                "use fixed::", stringify!($Fixed), ";\n",
-                "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
-                "// 1.75 is 0001.1100, that is from_bits(28)\n",
-                "assert_eq!(Fix::from_bits(28).to_", stringify!($Float),
-                "(), 1.75);\n",
-                "assert_eq!(Fix::from_bits(-28).to_", stringify!($Float),
-                "(), -1.75);\n",
-                "```\n"
-            ),
-            concat!(
-                "Converts the fixed-point number to `", stringify!($Float), "`.\n",
-                "\n",
-                "This method rounds to the nearest, with ties rounding to even.\n",
-                "\n",
-                "# Examples\n",
-                "\n",
-                "```rust\n",
-                "use fixed::frac;\n",
-                "use fixed::", stringify!($Fixed), ";\n",
-                "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
-                "// 1.75 is 0001.1100, that is from_bits(28)\n",
-                "assert_eq!(Fix::from_bits(28).to_", stringify!($Float),
-                "(), 1.75);\n",
-                "```\n"
-            ),
-            fn $method($Fixed<$Frac>) -> $Float
-        }
-    };
-}
-
-#[cfg(feature = "f16")]
-macro_rules! string_up_to_16 {
-    (U8, $s:expr) => {
-        $s
-    };
-    (U16, $s:expr) => {
-        $s
-    };
-    ($other:tt, $s:expr) => {
-        ""
     };
 }
 
@@ -895,137 +745,173 @@ macro_rules! fixed {
                 }
             }
 
-            #[cfg(feature = "f16")]
-            doc_comment_signed_unsigned_from_float! {
+            doc_comment_signed_unsigned! {
                 $Signedness,
                 concat!(
-                    "Creates a fixed-point number from `f16`.\n",
+                    "Creates a fixed-point number from a floating-point number.\n",
+                    "\n",
+                    "The floating-point value can be of type [`f32`] or [`f64`].\n",
+                    "If the [`f16` feature] is enabled, it can also be of type [`f16`].\n",
                     "\n",
                     "This method rounds to the nearest, with ties rounding to even.\n",
-                    "\n",
-                    "This method is only available when the `f16` feature is enabled.\n",
                     "\n",
                     "# Examples\n",
                     "\n",
                     "```rust\n",
-                    "# extern crate fixed;\n",
-                    "# extern crate half;\n",
                     "use fixed::frac;\n",
                     "use fixed::", stringify!($Fixed), ";\n",
-                    "use half::f16;\n",
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "// 1.75 is 0001.1100, that is from_bits(28)\n",
-                    "let val = f16::from_f32(1.75);\n",
-                    "let neg_val = f16::from_f32(-1.75);\n",
-                    "assert_eq!(Fix::from_f16(val), Some(Fix::from_bits(28)));\n",
-                    "assert_eq!(Fix::from_f16(neg_val), Some(Fix::from_bits(-28)));\n",
-                    "// 1e-2 is too small for four fractional bits\n",
-                    "let small = f16::from_f32(1e-2);\n",
-                    "let neg_small = f16::from_f32(-1e-2);\n",
-                    "assert_eq!(Fix::from_f16(small), Some(Fix::from_bits(0)));\n",
-                    "assert_eq!(Fix::from_f16(neg_small), Some(Fix::from_bits(0)));\n",
-                    string_up_to_16!(
-                        $Len,
-                        concat!(
-                            "// 50000 is too large for ", stringify!($Fixed), "<frac::U4>\n",
-                            "let large = f16::from_f32(50000.0);\n",
-                            "let neg_large = f16::from_f32(-50000.0);\n",
-                            "assert!(Fix::from_f16(large).is_none());\n",
-                            "assert!(Fix::from_f16(neg_large).is_none());\n"
-                        )
-                    ),
-                    "```\n"
+                    "assert_eq!(Fix::from_float(1.75f32), Some(Fix::from_bits(28)));\n",
+                    "assert_eq!(Fix::from_float(-1.75f64), Some(Fix::from_bits(-28)));\n",
+                    "// 1e-10 is too small for four fractional bits\n",
+                    "assert_eq!(Fix::from_float(1e-10), Some(Fix::from_bits(0)));\n",
+                    "assert_eq!(Fix::from_float(-1e-10), Some(Fix::from_bits(0)));\n",
+                    "// 2e38 is too large for ", stringify!($Fixed), "<frac::U4>\n",
+                    "assert!(Fix::from_float(2e38).is_none());\n",
+                    "assert!(Fix::from_float(-2e38).is_none());\n",
+                    "```\n",
+                    "\n",
+                    "[`f16` feature]: index.html#optional-features\n",
+                    "[`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html\n",
+                     "[`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html\n",
+                     "[`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html\n"
                 ),
                 concat!(
-                    "Creates a fixed-point number from `", stringify!($Float), "`.\n",
+                    "Creates a fixed-point number from a floating-point number.\n",
+                    "\n",
+                    "The floating-point value can be of type [`f32`] or [`f64`].\n",
+                    "If the [`f16` feature] is enabled, it can also be of type [`f16`].\n",
                     "\n",
                     "This method rounds to the nearest, with ties rounding to even.\n",
-                    "\n",
-                    "This method is only available when the `f16` feature is enabled.\n",
                     "\n",
                     "# Examples\n",
                     "\n",
                     "```rust\n",
-                    "# extern crate fixed;\n",
-                    "# extern crate half;\n",
                     "use fixed::frac;\n",
                     "use fixed::", stringify!($Fixed), ";\n",
-                    "use half::f16;\n",
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "// 1.75 is 0001.1100, that is from_bits(28)\n",
-                    "let val = f16::from_f32(1.75);\n",
-                    "assert_eq!(Fix::from_f16(val), Some(Fix::from_bits(28)));\n",
-                    "// 1e-2 is too small for four fractional bits\n",
-                    "let small = f16::from_f32(1e-2);\n",
-                    "assert_eq!(Fix::from_f16(small), Some(Fix::from_bits(0)));\n",
-                    string_up_to_16!(
-                        $Len,
-                        concat!(
-                            "// 50000 is too large for ", stringify!($Fixed), "<frac::U4>\n",
-                            "let large = f16::from_f32(50000.0);\n",
-                            "assert!(Fix::from_f16(large).is_none());\n",
-                        )
-                    ),
-                    "```\n"
+                    "assert_eq!(Fix::from_float(1.75), Some(Fix::from_bits(28)));\n",
+                    "// 1e-10 is too small for four fractional bits\n",
+                    "assert_eq!(Fix::from_float(1e-10), Some(Fix::from_bits(0)));\n",
+                    "// 2e38 is too large for ", stringify!($Fixed), "<frac::U4>\n",
+                    "assert!(Fix::from_float(2e38).is_none());\n",
+                    "```\n",
+                    "\n",
+                    "[`f16` feature]: index.html#optional-features\n",
+                    "[`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html\n",
+                    "[`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html\n",
+                    "[`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html\n"
                 ),
-                fn from_f16(f16) -> $Fixed<Frac>
-            }
+                #[inline]
+                pub fn from_float<F>(val: F) -> Option<$Fixed<Frac>>
+                where
+                    F: Float,
+                {
+                    let frac_bits = Self::frac_bits();
+                    let int_bits = Self::int_bits();
 
-            from_float! { $Signedness, fn from_f32(f32) -> $Fixed<Frac> }
-            from_float! { $Signedness, fn from_f64(f64) -> $Fixed<Frac> }
+                    let (neg, abs_128) = <F as SealedFloat>::to_neg_abs(val, frac_bits, int_bits)?;
+                    let abs =
+                        abs_128 as <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::Unsigned;
+
+                    if <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::is_signed() {
+                        // most significant bit (msb) can be one only for min value,
+                        // that is for a negative value with only the msb true.
+                        let msb =
+                            <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::Unsigned::msb();
+                        if abs & msb != 0 {
+                            if !neg || abs != msb {
+                                return None;
+                            }
+                        }
+                    } else if neg {
+                        if abs != 0 {
+                            return None;
+                        }
+                        return Some($Fixed::from_bits(0));
+                    }
+
+                    let (int, frac) = if frac_bits == 0 {
+                        (abs, 0)
+                    } else if int_bits == 0 {
+                        (0, abs)
+                    } else {
+                        ((abs >> frac_bits), (abs << int_bits))
+                    };
+
+                    Some(SealedFixed::from_parts(neg, int, frac))
+                }
+            }
 
             #[cfg(feature = "f16")]
-            doc_comment_signed_unsigned_to_float! {
+            deprecated_from_float! { fn from_f16(f16) -> $Fixed<Frac> }
+            deprecated_from_float! { fn from_f32(f32) -> $Fixed<Frac> }
+            deprecated_from_float! { fn from_f64(f64) -> $Fixed<Frac> }
+
+            doc_comment_signed_unsigned! {
                 $Signedness,
                 concat!(
-                    "Converts the fixed-point number to `f16`.\n",
+                    "Converts the fixed-point number to a floating-point number.\n",
+                    "\n",
+                    "The floating-point value can be of type [`f32`] or [`f64`].\n",
+                    "If the [`f16` feature] is enabled, it can also be of type [`f16`].\n",
                     "\n",
                     "This method rounds to the nearest, with ties rounding to even.\n",
-                    "\n",
-                    "This method is only available when the `f16` feature is enabled.\n",
                     "\n",
                     "# Examples\n",
                     "\n",
                     "```rust\n",
-                    "# extern crate fixed;\n",
-                    "# extern crate half;\n",
                     "use fixed::frac;\n",
                     "use fixed::", stringify!($Fixed), ";\n",
-                    "use half::f16;\n",
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "// 1.75 is 0001.1100, that is from_bits(28)\n",
-                    "let val = f16::from_f32(1.75);\n",
-                    "let neg_val = f16::from_f32(-1.75);\n",
-                    "assert_eq!(Fix::from_bits(28).to_f16(), val);\n",
-                    "assert_eq!(Fix::from_bits(-28).to_f16(), neg_val);\n",
+                    "assert_eq!(Fix::from_bits(28).to_float::<f32>(), 1.75f32);\n",
+                    "assert_eq!(Fix::from_bits(-28).to_float::<f64>(), -1.75f64);\n",
                     "```\n"
                 ),
                 concat!(
-                    "Converts the fixed-point number to `f16`.\n",
+                    "Converts the fixed-point number to a floating-point number.\n",
+                    "\n",
+                    "The floating-point value can be of type [`f32`] or [`f64`].\n",
+                    "If the [`f16` feature] is enabled, it can also be of type [`f16`].\n",
                     "\n",
                     "This method rounds to the nearest, with ties rounding to even.\n",
-                    "\n",
-                    "This method is only available when the `f16` feature is enabled.\n",
                     "\n",
                     "# Examples\n",
                     "\n",
                     "```rust\n",
-                    "# extern crate fixed;\n",
-                    "# extern crate half;\n",
                     "use fixed::frac;\n",
                     "use fixed::", stringify!($Fixed), ";\n",
-                    "use half::f16;\n",
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "// 1.75 is 0001.1100, that is from_bits(28)\n",
-                    "let val = f16::from_f32(1.75);\n",
-                    "assert_eq!(Fix::from_bits(28).to_f16(), val);\n",
+                    "assert_eq!(Fix::from_bits(28).to_float::<f32>(), 1.75f32);\n",
+                    "assert_eq!(Fix::from_bits(28).to_float::<f64>(), 1.75f64);\n",
                     "```\n"
                 ),
-                fn to_f16($Fixed<Frac>) -> f16
+                pub fn to_float<F>(self) -> F
+                where
+                    F: Float,
+                {
+                    let frac_bits = Self::frac_bits();
+                    let int_bits = Self::int_bits();
+                    let (neg, int, frac) = self.parts();
+                    let abs = if frac_bits == 0 {
+                        int
+                    } else if int_bits == 0 {
+                        frac
+                    } else {
+                        (int << frac_bits) | (frac >> int_bits)
+                    };
+                    SealedFloat::from_neg_abs(neg, u128::from(abs), frac_bits, int_bits)
+                }
             }
 
-            to_float! { $Signedness, fn to_f32($Fixed<Frac>) -> f32 }
-            to_float! { $Signedness, fn to_f64($Fixed<Frac>) -> f64 }
+            #[cfg(feature = "f16")]
+            deprecated_to_float! { fn to_f16($Fixed<Frac>) -> f16 }
+            deprecated_to_float! { fn to_f32($Fixed<Frac>) -> f32 }
+            deprecated_to_float! { fn to_f64($Fixed<Frac>) -> f64 }
 
             doc_comment_signed_unsigned! {
                 $Signedness,

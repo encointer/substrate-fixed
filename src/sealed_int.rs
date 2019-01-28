@@ -14,7 +14,7 @@
 // <https://opensource.org/licenses/MIT>.
 
 pub trait SealedInt: Copy + Ord {
-    type Unsigned;
+    type Unsigned: SealedInt;
 
     fn is_signed() -> bool;
     fn nbits() -> u32;
@@ -22,6 +22,7 @@ pub trait SealedInt: Copy + Ord {
     fn all_ones_shl(shift: u32) -> Self;
     fn is_zero(self) -> bool;
     fn neg_abs(self) -> (bool, Self::Unsigned);
+    fn from_neg_abs(neg: bool, abs: Self::Unsigned) -> Self;
 
     #[inline]
     fn msb() -> Self {
@@ -70,6 +71,13 @@ macro_rules! sealed_int {
             fn neg_abs(self) -> (bool, Self::Unsigned) {
                 (false, self)
             }
+
+            #[inline]
+            fn from_neg_abs(neg: bool, abs: Self::Unsigned) -> Self {
+                debug_assert!(!neg || abs == 0);
+                let _ = neg;
+                abs
+            }
         }
     };
     ($Int:ident($Unsigned:ty, true, $nbits:expr)) => {
@@ -82,6 +90,16 @@ macro_rules! sealed_int {
                     (true, self.wrapping_neg() as $Unsigned)
                 } else {
                     (false, self as $Unsigned)
+                }
+            }
+
+            #[inline]
+            fn from_neg_abs(neg: bool, abs: Self::Unsigned) -> Self {
+                debug_assert!(abs <= Self::Unsigned::msb());
+                if neg {
+                    abs.wrapping_neg() as Self
+                } else {
+                    abs as Self
                 }
             }
         }
@@ -123,6 +141,13 @@ impl SealedInt for bool {
     #[inline]
     fn neg_abs(self) -> (bool, bool) {
         (false, self)
+    }
+
+    #[inline]
+    fn from_neg_abs(neg: bool, abs: bool) -> bool {
+        debug_assert!(!neg || !abs);
+        let _ = neg;
+        abs
     }
 }
 

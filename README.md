@@ -39,11 +39,26 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
 ## What’s new
 
-### Version 0.1.6 (2019-01-27)
+### Version 0.1.7 news (unreleased)
+
+  * The new methods [`from_float`] and [`to_float`] were added.
+  * The methods [`from_f16`], [`from_f32`], [`from_f64`], [`to_f16`],
+    [`to_f32`] and [`to_f64`] were deprecated.
+
+[`from_f16`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI8.html#method.from_f16
+[`from_f32`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI8.html#method.from_f32
+[`from_f64`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI8.html#method.from_f64
+[`from_float`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI8.html#method.from_float
+[`to_f16`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI8.html#method.to_f16
+[`to_f32`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI8.html#method.to_f32
+[`to_f64`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI8.html#method.to_f64
+[`to_float`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI8.html#method.to_float
+
+### Version 0.1.6 news (2019-01-27)
 
   * Optional [serde][*serde* crate] support was added.
 
-### Version 0.1.5 (2019-01-26)
+### Version 0.1.5 news (2019-01-26)
 
   * A new module [`types`] is available with aliases for all supported
     fixed-point numbers.

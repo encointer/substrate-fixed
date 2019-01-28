@@ -49,15 +49,16 @@ use {
 pub trait Int: SealedInt {}
 
 /// This trait is implemented for the primitive floating-point types,
-/// and for [`f16`] if the `f16` feature is enabled.
+/// and for [`f16`] if the [`f16` feature] is enabled.
 ///
 /// This trait is sealed and cannot be implemented for more types; it
 /// is implemented for [`f32`] and [`f64`], and for [`f16`] if the
-/// `f16` feature is enabled.
+/// [`f16` feature] is enabled.
 ///
 /// [`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
 /// [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
 /// [`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html
+/// [`f16` feature]: ../index.html#optional-features
 pub trait Float: SealedFloat {}
 
 /// This trait is implemented for all the fixed-point types.

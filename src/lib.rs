@@ -1032,7 +1032,7 @@ macro_rules! fixed {
                 concat!(
                     "Creates a fixed-point number from a floating-point number.\n",
                     "\n",
-                    "Returns a tuple of the fixed-point number and a boolean indicating whether\n",
+                    "Returns a tuple of the fixed-point number and a [`bool`] indicating whether\n",
                     "an overflow has occurred. On overflow, the wrapped value is returned.\n",
                     "\n",
                     "The floating-point value can be of type [`f32`] or [`f64`].\n",
@@ -1066,6 +1066,7 @@ macro_rules! fixed {
                     "assert_eq!(Fix::overflowing_from_float(large), (wrapped, true));\n",
                     "```\n",
                     "\n",
+                    "[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html\n",
                     "[`f16` feature]: index.html#optional-features\n",
                     "[`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html\n",
                     "[`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html\n",

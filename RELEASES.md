@@ -5,16 +5,22 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
-Version 0.1.7 (unreleased)
+Version 0.2.0 (unreleased)
 ==========================
 
-  * The new method `checked_from_int` was added.
+  * The new methods `from_fixed`, `checked_from_fixed`,
+    `saturating_from_fixed`, `wrapping_from_fixed` and
+    `overflowing_from_fixed` were added.
+  * The old method `from_int` was removed to be replaced.
+  * The new methods `from_int`, `checked_from_int`,
+    `saturating_from_int`, `wrapping_from_int` and
+    `overflowing_from_int` were added.
   * The new methods `from_float`, `checked_from_float`,
     `saturating_from_float`, `wrapping_from_float` and
     `overflowing_from_float` were added.
+  * The methods `from_f16`, `from_f32`, `from_f64`, `to_f16`, `to_f32`
+    and `to_f64` were deprecated.
   * The new method `to_float` was added.
-  * The methods `from_int`, `from_f16`, `from_f32`, `from_f64`,
-    `to_f16`, `to_f32` and `to_f64` were deprecated.
 
 Version 0.1.6 (2019-01-27)
 ==========================

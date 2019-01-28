@@ -39,31 +39,45 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
 ## What’s new
 
-### Version 0.1.7 news (unreleased)
+### Version 0.2.0 news (unreleased)
 
-  * The new method [`checked_from_int`] was added.
+  * The new methods [`from_fixed`], [`checked_from_fixed`],
+    [`saturating_from_fixed`], [`wrapping_from_fixed`] and
+    [`overflowing_from_fixed`] were added.
+  * The old method [`from_int`] was removed to be replaced.
+  * The new methods [`from_int`], [`checked_from_int`],
+    [`saturating_from_int`], [`wrapping_from_int`] and
+    [`overflowing_from_int`] were added.
   * The new methods [`from_float`], [`checked_from_float`],
     [`saturating_from_float`], [`wrapping_from_float`] and
     [`overflowing_from_float`] were added.
+  * The methods [`from_f16`], [`from_f32`], [`from_f64`], [`to_f16`],
+    [`to_f32`] and [`to_f64`] were deprecated.
   * The new method [`to_float`] was added.
-  * The methods [`from_int`], [`from_f16`], [`from_f32`],
-    [`from_f64`], [`to_f16`], [`to_f32`] and [`to_f64`] were
-    deprecated.
 
+[`checked_from_fixed`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.checked_from_fixed
 [`checked_from_float`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.checked_from_float
 [`checked_from_int`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.checked_from_int
 [`from_f16`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.from_f16
 [`from_f32`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.from_f32
 [`from_f64`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.from_f64
+[`from_fixed`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.from_fixed
 [`from_float`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.from_float
 [`from_int`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.from_int
+[`from_int`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.from_int
+[`overflowing_from_fixed`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.overflowing_from_fixed
 [`overflowing_from_float`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.overflowing_from_float
+[`overflowing_from_int`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.overflowing_from_int
+[`saturating_from_fixed`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.saturating_from_fixed
 [`saturating_from_float`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.saturating_from_float
+[`saturating_from_int`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.saturating_from_int
 [`to_f16`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.to_f16
 [`to_f32`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.to_f32
 [`to_f64`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.to_f64
 [`to_float`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.to_float
+[`wrapping_from_fixed`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.wrapping_from_fixed
 [`wrapping_from_float`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.wrapping_from_float
+[`wrapping_from_int`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.wrapping_from_int
 
 ### Version 0.1.6 news (2019-01-27)
 

@@ -49,7 +49,7 @@ pub trait SealedFloat: Copy + Display + Debug {
 
     fn from_neg_abs(neg: bool, abs: u128, frac_bits: u32, int_bits: u32) -> Self;
     // self must be finite, otherwise meaningless results are returned
-    fn to_neg_abs_overflow(self, frac_bits: u32, int_bits: u32) -> (bool, u128, bool);
+    fn to_fixed_neg_abs_overflow(self, frac_bits: u32, int_bits: u32) -> (bool, u128, bool);
 }
 
 macro_rules! sealed_float {
@@ -170,7 +170,11 @@ macro_rules! sealed_float {
                 Self::from_bits(bits_sign | bits_exp_mantissa)
             }
 
-            fn to_neg_abs_overflow(self, frac_bits: u32, int_bits: u32) -> (bool, u128, bool) {
+            fn to_fixed_neg_abs_overflow(
+                self,
+                frac_bits: u32,
+                int_bits: u32,
+            ) -> (bool, u128, bool) {
                 let float_bits = Self::Bits::nbits() as i32;
                 let prec = Self::prec() as i32;
                 let fix_bits = (frac_bits + int_bits) as i32;

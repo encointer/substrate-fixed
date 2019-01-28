@@ -947,7 +947,7 @@ macro_rules! fixed {
                         return saturated;
                     }
                     let (neg, abs_128, overflow) =
-                        <F as SealedFloat>::to_neg_abs_overflow(val, frac_bits, int_bits);
+                        <F as SealedFloat>::to_fixed_neg_abs_overflow(val, frac_bits, int_bits);
                     if overflow {
                         return saturated;
                     }
@@ -1085,7 +1085,7 @@ macro_rules! fixed {
                         panic!("{} is not finite", val);
                     }
                     let (neg, abs_128, mut overflow) =
-                        <F as SealedFloat>::to_neg_abs_overflow(val, frac_bits, int_bits);
+                        <F as SealedFloat>::to_fixed_neg_abs_overflow(val, frac_bits, int_bits);
                     let abs_bits =
                         abs_128 as <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::Unsigned;
 
@@ -1173,14 +1173,7 @@ macro_rules! fixed {
                 {
                     let frac_bits = Self::frac_bits();
                     let int_bits = Self::int_bits();
-                    let (neg, int, frac) = self.parts();
-                    let abs = if frac_bits == 0 {
-                        int
-                    } else if int_bits == 0 {
-                        frac
-                    } else {
-                        (int << frac_bits) | (frac >> int_bits)
-                    };
+                    let (neg, abs) = self.to_bits().neg_abs();
                     SealedFloat::from_neg_abs(neg, u128::from(abs), frac_bits, int_bits)
                 }
             }

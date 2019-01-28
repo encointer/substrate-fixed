@@ -21,6 +21,9 @@ pub trait SealedInt: Copy + Ord {
     fn one_shl(shift: u32) -> Self;
     fn all_ones_shl(shift: u32) -> Self;
     fn is_zero(self) -> bool;
+
+    fn to_fixed_neg_abs_overflow(self, frac_bits: u32, int_bits: u32) -> (bool, u128, bool);
+
     fn neg_abs(self) -> (bool, Self::Unsigned);
     fn from_neg_abs(neg: bool, abs: Self::Unsigned) -> Self;
 
@@ -58,6 +61,33 @@ macro_rules! sealed_int {
             #[inline]
             fn is_zero(self) -> bool {
                 self == 0
+            }
+
+            #[inline]
+            fn to_fixed_neg_abs_overflow(
+                self,
+                frac_bits: u32,
+                int_bits: u32,
+            ) -> (bool, u128, bool) {
+                let src_bits = <Self as SealedInt>::nbits() as i32;
+                let dst_bits = (frac_bits + int_bits) as i32;
+
+                let (neg, mut abs) = SealedInt::neg_abs(self);
+                let leading_zeros = abs.leading_zeros();
+                abs <<= leading_zeros;
+                let need_to_shr =
+                    leading_zeros as i32 - frac_bits as i32;
+                let overflow = src_bits - need_to_shr > dst_bits;
+                let abs = if need_to_shr == 0 {
+                    u128::from(abs)
+                } else if need_to_shr < 0 && -need_to_shr < 128 {
+                    u128::from(abs) << -need_to_shr
+                } else if need_to_shr > 0 && need_to_shr < 128 {
+                    u128::from(abs) >> need_to_shr
+                } else {
+                    0
+                };
+                (neg, abs, overflow)
             }
 
             $($rest)*
@@ -136,6 +166,22 @@ impl SealedInt for bool {
     #[inline]
     fn is_zero(self) -> bool {
         !self
+    }
+
+    #[inline]
+    fn to_fixed_neg_abs_overflow(self, frac_bits: u32, int_bits: u32) -> (bool, u128, bool) {
+        if !self {
+            return (false, 0, false);
+        }
+        let overflow = int_bits == 0;
+        let abs = if frac_bits == 0 {
+            1u128
+        } else if frac_bits < 128 {
+            1u128 << frac_bits
+        } else {
+            0
+        };
+        (false, abs, overflow)
     }
 
     #[inline]

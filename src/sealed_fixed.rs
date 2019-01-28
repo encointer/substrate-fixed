@@ -56,6 +56,8 @@ pub trait SealedFixed: Copy {
         <Self::Bits as SealedInt>::Unsigned,
         <Self::Bits as SealedInt>::Unsigned,
     );
+
+    fn to_neg_abs_overflow(self, frac_bits: u32, int_bits: u32) -> (bool, u128, bool);
 }
 
 macro_rules! sealed_fixed {
@@ -97,6 +99,38 @@ macro_rules! sealed_fixed {
                     ((abs >> frac_bits), (abs << int_bits))
                 };
                 (neg, int_abs, frac_abs)
+            }
+
+            #[inline]
+            fn to_neg_abs_overflow(
+                self,
+                dst_frac_bits: u32,
+                dst_int_bits: u32,
+            ) -> (bool, u128, bool) {
+                let src_frac_bits = <Self as SealedFixed>::frac_bits();
+                let src_bits = Self::Bits::nbits() as i32;
+                let dst_bits = (dst_frac_bits + dst_int_bits) as i32;
+
+                if SealedInt::is_zero(self.to_bits()) {
+                    return (false, 0, false);
+                }
+
+                let (neg, mut abs) = SealedInt::neg_abs(self.to_bits());
+                let leading_zeros = abs.leading_zeros();
+                abs <<= leading_zeros;
+                let need_to_shr =
+                    leading_zeros as i32 + src_frac_bits as i32 - dst_frac_bits as i32;
+                let overflow = src_bits - need_to_shr > dst_bits;
+                let abs = if need_to_shr == 0 {
+                    u128::from(abs)
+                } else if need_to_shr < 0 && -need_to_shr < 128 {
+                    u128::from(abs) << -need_to_shr
+                } else if need_to_shr > 0 && need_to_shr < 128 {
+                    u128::from(abs) >> need_to_shr
+                } else {
+                    0
+                };
+                (neg, abs, overflow)
             }
         }
     };

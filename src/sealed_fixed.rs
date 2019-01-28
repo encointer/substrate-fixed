@@ -49,11 +49,6 @@ pub trait SealedFixed: Copy {
     }
 
     fn from_bits(bits: Self::Bits) -> Self;
-    fn from_parts(
-        neg: bool,
-        int_abs: <Self::Bits as SealedInt>::Unsigned,
-        frac_abs: <Self::Bits as SealedInt>::Unsigned,
-    ) -> Self;
     fn parts(
         self,
     ) -> (
@@ -80,31 +75,6 @@ macro_rules! sealed_fixed {
             #[inline]
             fn from_bits(bits: Self::Bits) -> Self {
                 $Fixed::from_bits(bits)
-            }
-
-            #[inline]
-            fn from_parts(
-                neg: bool,
-                int_abs: <Self::Bits as SealedInt>::Unsigned,
-                frac_abs: <Self::Bits as SealedInt>::Unsigned,
-            ) -> Self {
-                let frac_bits = <Self as SealedFixed>::frac_bits();
-                let int_bits = <Self as SealedFixed>::int_bits();
-
-                let int_frac_abs = if int_bits == 0 {
-                    frac_abs
-                } else if frac_bits == 0 {
-                    int_abs
-                } else {
-                    (int_abs << frac_bits) | (frac_abs >> int_bits)
-                };
-                debug_assert!(!neg || <Self::Bits as SealedInt>::is_signed());
-                let int_frac = if <Self::Bits as SealedInt>::is_signed() && neg {
-                    int_frac_abs.wrapping_neg()
-                } else {
-                    int_frac_abs
-                };
-                $Fixed::from_bits(int_frac as _)
             }
 
             #[inline]

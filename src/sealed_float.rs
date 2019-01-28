@@ -45,7 +45,6 @@ pub trait SealedFloat: Copy + Display + Debug {
     fn is_finite(self) -> bool;
     fn is_sign_positive(self) -> bool;
 
-    fn from_parts(neg: bool, exp: i32, mant: Self::Bits) -> Self;
     fn parts(self) -> (bool, i32, Self::Bits);
 
     fn from_neg_abs(neg: bool, abs: u128, frac_bits: u32, int_bits: u32) -> Self;
@@ -90,17 +89,6 @@ macro_rules! sealed_float {
             #[inline]
             fn is_sign_positive(self) -> bool {
                 self.is_sign_positive()
-            }
-
-            #[inline]
-            fn from_parts(neg: bool, exp: i32, mant: Self::Bits) -> $Float {
-                let nbits = <Self::Bits as SealedInt>::nbits();
-                let neg_mask = !0 << (nbits - 1);
-
-                let neg_bits = if neg { neg_mask } else { 0 };
-                let biased_exp = (exp + <$Float as SealedFloat>::exp_bias()) as Self::Bits;
-                let exp_bits = biased_exp << ($prec - 1);
-                <$Float>::from_bits(neg_bits | exp_bits | mant)
             }
 
             #[inline]

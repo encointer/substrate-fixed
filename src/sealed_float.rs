@@ -18,7 +18,7 @@ use core::fmt::{Debug, Display};
 use half::f16;
 use sealed::SealedInt;
 
-pub trait SealedFloat: Copy + Display + Debug {
+pub trait SealedFloat: Copy + Debug + Display {
     type Bits: SealedInt;
 
     fn prec() -> u32;

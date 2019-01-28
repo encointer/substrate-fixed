@@ -13,7 +13,9 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-pub trait SealedInt: Copy + Ord {
+use core::fmt::{Debug, Display};
+
+pub trait SealedInt: Copy + Ord + Debug + Display {
     type Unsigned: SealedInt;
 
     fn is_signed() -> bool;
@@ -71,6 +73,10 @@ macro_rules! sealed_int {
             ) -> (bool, u128, bool) {
                 let src_bits = <Self as SealedInt>::nbits() as i32;
                 let dst_bits = (frac_bits + int_bits) as i32;
+
+                if SealedInt::is_zero(self) {
+                    return (false, 0, false);
+                }
 
                 let (neg, mut abs) = SealedInt::neg_abs(self);
                 let leading_zeros = abs.leading_zeros();

@@ -13,6 +13,7 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
+use core::fmt::{Debug, Display};
 use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
 use sealed::SealedInt;
 use {
@@ -20,7 +21,7 @@ use {
     FixedU8,
 };
 
-pub trait SealedFixed: Copy {
+pub trait SealedFixed: Copy + Debug + Display {
     type Bits: SealedInt;
     type Frac: Unsigned;
 
@@ -49,6 +50,7 @@ pub trait SealedFixed: Copy {
     }
 
     fn from_bits(bits: Self::Bits) -> Self;
+    fn to_bits(self) -> Self::Bits;
     fn parts(
         self,
     ) -> (
@@ -77,6 +79,11 @@ macro_rules! sealed_fixed {
             #[inline]
             fn from_bits(bits: Self::Bits) -> Self {
                 $Fixed::from_bits(bits)
+            }
+
+            #[inline]
+            fn to_bits(self) -> Self::Bits {
+                $Fixed::to_bits(self)
             }
 
             #[inline]

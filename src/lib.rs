@@ -494,9 +494,8 @@ macro_rules! fixed {
                     "use fixed::frac;\n",
                     "use fixed::", stringify!($Fixed), ";\n",
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
-                    "let two = Fix::checked_from_int(2).unwrap();\n",
-                    "// two is 0010.0000\n",
-                    "assert_eq!(two.to_bits(), 0b10_0000);\n",
+                    "// 2 is 0010.0000\n",
+                    "assert_eq!(Fix::from_int(2).to_bits(), 0b10_0000);\n",
                     "```\n",
                 ),
                 #[inline]
@@ -1143,7 +1142,8 @@ macro_rules! fixed {
                 concat!(r#"
 
 Converts the fixed-point number of type `"#, stringify!($Fixed), r#"`
-to an integer of type `"#, stringify!($Inner), r#"` truncating the fractional bits.
+to an integer of type [`"#, stringify!($Inner), r#"`] truncating the
+fractional bits.
 
 # Examples
 
@@ -1151,12 +1151,14 @@ to an integer of type `"#, stringify!($Inner), r#"` truncating the fractional bi
 use fixed::frac;
 use fixed::"#, stringify!($Fixed), r#";
 type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
-let two_half = Fix::checked_from_int(5).unwrap() / 2;
+let two_half = Fix::from_int(5) / 2;
 assert_eq!(two_half.to_int(), 2);"#,
 if_signed_unsigned!($Signedness, r#"
 assert_eq!((-two_half).to_int(), -3);"#, ""
 ), r#"
 ```
+
+[`"#, stringify!($Inner), r#"`]: https://doc.rust-lang.org/nightly/std/primitive."#, stringify!($Inner), r#".html
 "#,
                 ),
                 #[inline]
@@ -1657,12 +1659,12 @@ assert_eq!((-two_half).to_int(), -3);"#, ""
                     "use fixed::", stringify!($Fixed), ";\n",
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "// 0010.0000\n",
-                    "let two = Fix::checked_from_int(2).unwrap();\n",
+                    "let two = Fix::from_int(2);\n",
                     "// 0010.0100\n",
                     "let two_and_quarter = two + two / 8;\n",
                     "assert_eq!(two_and_quarter.int(), two);\n",
                     "// 1101.0000\n",
-                    "let neg_three = Fix::checked_from_int(-3).unwrap();\n",
+                    "let neg_three = Fix::from_int(-3);\n",
                     "// 1101.1100\n",
                     "let neg_two_and_quarter = -two_and_quarter;\n",
                     "assert_eq!(neg_two_and_quarter.int(), neg_three);\n",
@@ -1678,7 +1680,7 @@ assert_eq!((-two_half).to_int(), -3);"#, ""
                     "use fixed::", stringify!($Fixed), ";\n",
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "// 0010.0000\n",
-                    "let two = Fix::checked_from_int(2).unwrap();\n",
+                    "let two = Fix::from_int(2);\n",
                     "// 0010.0100\n",
                     "let two_and_quarter = two + two / 8;\n",
                     "assert_eq!(two_and_quarter.int(), two);\n",
@@ -1709,7 +1711,7 @@ assert_eq!((-two_half).to_int(), -3);"#, ""
                     "use fixed::", stringify!($Fixed), ";\n",
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "// 0000.0100\n",
-                    "let quarter = Fix::checked_from_int(1).unwrap() / 4;\n",
+                    "let quarter = Fix::from_int(1) / 4;\n",
                     "// 0010.0100\n",
                     "let two_and_quarter = quarter * 9;\n",
                     "assert_eq!(two_and_quarter.frac(), quarter);\n",
@@ -1730,7 +1732,7 @@ assert_eq!((-two_half).to_int(), -3);"#, ""
                     "use fixed::", stringify!($Fixed), ";\n",
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "// 0000.0100\n",
-                    "let quarter = Fix::checked_from_int(1).unwrap() / 4;\n",
+                    "let quarter = Fix::from_int(1) / 4;\n",
                     "// 0010.0100\n",
                     "let two_and_quarter = quarter * 9;\n",
                     "assert_eq!(two_and_quarter.frac(), quarter);\n",
@@ -2755,8 +2757,8 @@ assert_eq!(Fix::max_value().overflowing_round(), (Fix::min_value(), true));
                         "use fixed::frac;\n",
                         "use fixed::", stringify!($Fixed), ";\n",
                         "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
-                        "let five = Fix::checked_from_int(5).unwrap();\n",
-                        "let minus_five = Fix::checked_from_int(-5).unwrap();\n",
+                        "let five = Fix::from_int(5);\n",
+                        "let minus_five = Fix::from_int(-5);\n",
                         "assert_eq!(five.abs(), five);\n",
                         "assert_eq!(minus_five.abs(), five);\n",
                         "```\n",
@@ -2785,12 +2787,9 @@ assert_eq!(Fix::max_value().overflowing_round(), (Fix::min_value(), true));
                         "use fixed::frac;\n",
                         "use fixed::", stringify!($Fixed), ";\n",
                         "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
-                        "let five = Fix::checked_from_int(5).unwrap();\n",
-                        "let zero = Fix::checked_from_int(0).unwrap();\n",
-                        "let minus_five = Fix::checked_from_int(-5).unwrap();\n",
-                        "assert_eq!(five.signum(), 1);\n",
-                        "assert_eq!(zero.signum(), 0);\n",
-                        "assert_eq!(minus_five.signum(), -1);\n",
+                        "assert_eq!(Fix::from_int(5).signum(), 1);\n",
+                        "assert_eq!(Fix::from_int(0).signum(), 0);\n",
+                        "assert_eq!(Fix::from_int(-5).signum(), -1);\n",
                         "```\n",
                     ),
                     #[inline]
@@ -2820,12 +2819,9 @@ assert_eq!(Fix::max_value().overflowing_round(), (Fix::min_value(), true));
                         "use fixed::frac;\n",
                         "use fixed::", stringify!($Fixed), ";\n",
                         "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
-                        "let five = Fix::checked_from_int(5).unwrap();\n",
-                        "let zero = Fix::checked_from_int(0).unwrap();\n",
-                        "let minus_five = Fix::checked_from_int(-5).unwrap();\n",
-                        "assert!(five.is_positive());\n",
-                        "assert!(!zero.is_positive());\n",
-                        "assert!(!minus_five.is_positive());\n",
+                        "assert!(Fix::from_int(5).is_positive());\n",
+                        "assert!(!Fix::from_int(0).is_positive());\n",
+                        "assert!(!Fix::from_int(-5).is_positive());\n",
                         "```\n",
                     ),
                     $Fixed($Inner) => fn is_positive(self) -> bool
@@ -2844,12 +2840,9 @@ assert_eq!(Fix::max_value().overflowing_round(), (Fix::min_value(), true));
                         "use fixed::frac;\n",
                         "use fixed::", stringify!($Fixed), ";\n",
                         "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
-                        "let five = Fix::checked_from_int(5).unwrap();\n",
-                        "let zero = Fix::checked_from_int(0).unwrap();\n",
-                        "let minus_five = Fix::checked_from_int(-5).unwrap();\n",
-                        "assert!(!five.is_negative());\n",
-                        "assert!(!zero.is_negative());\n",
-                        "assert!(minus_five.is_negative());\n",
+                        "assert!(!Fix::from_int(5).is_negative());\n",
+                        "assert!(!Fix::from_int(0).is_negative());\n",
+                        "assert!(Fix::from_int(-5).is_negative());\n",
                         "```\n",
                     ),
                     $Fixed($Inner) => fn is_negative(self) -> bool

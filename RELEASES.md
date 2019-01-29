@@ -21,6 +21,11 @@ Version 0.2.0 (unreleased)
   * The methods `from_f16`, `from_f32`, `from_f64`, `to_f16`, `to_f32`
     and `to_f64` were deprecated.
   * The new method `to_float` was added.
+  * The new methods `ceil`, `floor`, `round`, `checked_ceil`,
+    `checked_floor`, `checked_round`, `saturating_ceil`,
+    `saturating_floor`, `saturating_round`, `wrapping_ceil`,
+    `wrapping_floor`, `wrapping_round`, `overflowing_ceil`,
+    `overflowing_floor` and `overflowing_round`.
 
 Version 0.1.6 (2019-01-27)
 ==========================

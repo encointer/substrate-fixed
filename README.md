@@ -54,30 +54,50 @@ numeric primitives are implemented. That is, you can use [`From`] or
   * The methods [`from_f16`], [`from_f32`], [`from_f64`], [`to_f16`],
     [`to_f32`] and [`to_f64`] were deprecated.
   * The new method [`to_float`] was added.
+  * The new methods [`ceil`], [`floor`], [`round`], [`checked_ceil`],
+    [`checked_floor`], [`checked_round`], [`saturating_ceil`],
+    [`saturating_floor`], [`saturating_round`], [`wrapping_ceil`],
+    [`wrapping_floor`], [`wrapping_round`], [`overflowing_ceil`],
+    [`overflowing_floor`] and [`overflowing_round`].
 
-[`checked_from_fixed`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.checked_from_fixed
-[`checked_from_float`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.checked_from_float
-[`checked_from_int`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.checked_from_int
-[`from_f16`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.from_f16
-[`from_f32`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.from_f32
-[`from_f64`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.from_f64
-[`from_fixed`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.from_fixed
-[`from_float`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.from_float
-[`from_int`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.from_int
-[`from_int`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.from_int
-[`overflowing_from_fixed`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.overflowing_from_fixed
-[`overflowing_from_float`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.overflowing_from_float
-[`overflowing_from_int`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.overflowing_from_int
-[`saturating_from_fixed`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.saturating_from_fixed
-[`saturating_from_float`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.saturating_from_float
-[`saturating_from_int`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.saturating_from_int
-[`to_f16`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.to_f16
-[`to_f32`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.to_f32
-[`to_f64`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.to_f64
-[`to_float`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.to_float
-[`wrapping_from_fixed`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.wrapping_from_fixed
-[`wrapping_from_float`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.wrapping_from_float
-[`wrapping_from_int`]: https://docs.rs/fixed/0.1.7/fixed/struct.FixedI32.html#method.wrapping_from_int
+[`ceil`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.ceil
+[`checked_ceil`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.checked_ceil
+[`checked_floor`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.checked_floor
+[`checked_from_fixed`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.checked_from_fixed
+[`checked_from_float`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.checked_from_float
+[`checked_from_int`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.checked_from_int
+[`checked_round`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.checked_round
+[`floor`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.floor
+[`from_f16`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.from_f16
+[`from_f32`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.from_f32
+[`from_f64`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.from_f64
+[`from_fixed`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.from_fixed
+[`from_float`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.from_float
+[`from_int`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.from_int
+[`from_int`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.from_int
+[`overflowing_ceil`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.overflowing_ceil
+[`overflowing_floor`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.overflowing_floor
+[`overflowing_from_fixed`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.overflowing_from_fixed
+[`overflowing_from_float`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.overflowing_from_float
+[`overflowing_from_int`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.overflowing_from_int
+[`overflowing_round`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.overflowing_round
+[`round`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.round
+[`saturating_ceil`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.saturating_ceil
+[`saturating_floor`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.saturating_floor
+[`saturating_from_fixed`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.saturating_from_fixed
+[`saturating_from_float`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.saturating_from_float
+[`saturating_from_int`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.saturating_from_int
+[`saturating_round`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.saturating_round
+[`to_f16`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.to_f16
+[`to_f32`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.to_f32
+[`to_f64`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.to_f64
+[`to_float`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.to_float
+[`wrapping_ceil`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.wrapping_ceil
+[`wrapping_floor`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.wrapping_floor
+[`wrapping_from_fixed`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.wrapping_from_fixed
+[`wrapping_from_float`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.wrapping_from_float
+[`wrapping_from_int`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.wrapping_from_int
+[`wrapping_round`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.wrapping_round
 
 ### Version 0.1.6 news (2019-01-27)
 

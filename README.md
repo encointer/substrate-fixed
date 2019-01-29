@@ -39,6 +39,12 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
 ## What’s new
 
+### Version 0.2.1 (unreleased)
+
+  * Bug fix: the [`from_fixed`] and [`from_int`] methods (and their
+    checked counterparts) could return wrong values for negative
+    values.
+
 ### Version 0.2.0 news (2019-01-29)
 
   * The new methods [`from_fixed`], [`checked_from_fixed`],

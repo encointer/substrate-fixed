@@ -5,6 +5,13 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.2.1 (unreleased)
+==========================
+
+  * Bug fix: the `from_fixed` and `from_int` methods (and their
+    checked counterparts) could return wrong values for negative
+    values.
+
 Version 0.2.0 (2019-01-29)
 ==========================
 

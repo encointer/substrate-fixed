@@ -239,14 +239,12 @@ fn dec_frac_digits(rounding: bool, frac_bits: u32) -> u32 {
         } else {
             7
         }
+    } else if frac_bits >= 196 {
+        12
+    } else if frac_bits >= 103 {
+        11
     } else {
-        if frac_bits >= 196 {
-            12
-        } else if frac_bits >= 103 {
-            11
-        } else {
-            10
-        }
+        10
     };
     (frac_bits * 3 + i) / 10
 }

@@ -5,7 +5,7 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
-Version 0.2.0 (unreleased)
+Version 0.2.0 (2019-01-29)
 ==========================
 
   * The new methods `from_fixed`, `checked_from_fixed`,
@@ -18,16 +18,16 @@ Version 0.2.0 (unreleased)
   * The new methods `from_float`, `checked_from_float`,
     `saturating_from_float`, `wrapping_from_float` and
     `overflowing_from_float` were added.
+  * The new method `to_float` was added.
   * The methods `from_f16`, `from_f32`, `from_f64`, `to_f16`, `to_f32`
     and `to_f64` were deprecated.
-  * The new method `to_float` was added.
   * The `to_int` method was fixed to truncate fractional bits as
     documented for negative values.
   * The new methods `ceil`, `floor`, `round`, `checked_ceil`,
     `checked_floor`, `checked_round`, `saturating_ceil`,
     `saturating_floor`, `saturating_round`, `wrapping_ceil`,
     `wrapping_floor`, `wrapping_round`, `overflowing_ceil`,
-    `overflowing_floor` and `overflowing_round`.
+    `overflowing_floor` and `overflowing_round` were added.
   * The methods `to_int_ceil`, `to_int_floor` and `to_int_round` were
     deprecated.
 

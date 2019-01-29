@@ -39,7 +39,7 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
 ## What’s new
 
-### Version 0.2.0 news (unreleased)
+### Version 0.2.0 news (2019-01-29)
 
   * The new methods [`from_fixed`], [`checked_from_fixed`],
     [`saturating_from_fixed`], [`wrapping_from_fixed`] and
@@ -51,16 +51,16 @@ numeric primitives are implemented. That is, you can use [`From`] or
   * The new methods [`from_float`], [`checked_from_float`],
     [`saturating_from_float`], [`wrapping_from_float`] and
     [`overflowing_from_float`] were added.
+  * The new method [`to_float`] was added.
   * The methods [`from_f16`], [`from_f32`], [`from_f64`], [`to_f16`],
     [`to_f32`] and [`to_f64`] were deprecated.
-  * The new method [`to_float`] was added.
   * The [`to_int`] method was fixed to truncate fractional bits as
     documented for negative values.
   * The new methods [`ceil`], [`floor`], [`round`], [`checked_ceil`],
     [`checked_floor`], [`checked_round`], [`saturating_ceil`],
     [`saturating_floor`], [`saturating_round`], [`wrapping_ceil`],
     [`wrapping_floor`], [`wrapping_round`], [`overflowing_ceil`],
-    [`overflowing_floor`] and [`overflowing_round`].
+    [`overflowing_floor`] and [`overflowing_round`] were added.
   * The methods [`to_int_ceil`], [`to_int_floor`] and [`to_int_round`]
     were deprecated.
 
@@ -118,11 +118,7 @@ numeric primitives are implemented. That is, you can use [`From`] or
   * Lossless infallible conversions between fixed-point numbers and
     numeric primitives are now supported using [`From`] and [`Into`].
 
-[`types`]: https://docs.rs/fixed/0.1.6/fixed/types/index.html
-
-### Version 0.1.4 news (2018-11-29)
-
-  * Division is now implemented for [`FixedI128`] and [`FixedU128`].
+[`types`]: https://docs.rs/fixed/0.2.0/fixed/types/index.html
 
 ### Other releases
 
@@ -157,7 +153,7 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 
 ```toml
 [dependencies]
-fixed = "0.1.6"
+fixed = "0.2.0"
 ```
 
 If you are using the 2015 Rust edition, you also need to declare it by
@@ -184,7 +180,7 @@ To enable features, you can add the dependency like this to
 
 ```toml
 [dependencies.fixed]
-version = "0.1.6"
+version = "0.2.0"
 features = ["f16", "serde"]
 ```
 
@@ -212,19 +208,19 @@ additional terms or conditions.
 [*typenum* crate]: https://crates.io/crates/typenum
 [LICENSE-APACHE]: https://www.apache.org/licenses/LICENSE-2.0
 [LICENSE-MIT]: https://opensource.org/licenses/MIT
-[`FixedI128`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedI128.html
-[`FixedI16`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedI16.html
-[`FixedI32`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedI32.html
-[`FixedI64`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedI64.html
-[`FixedI8`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedI8.html
-[`FixedU128`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedU128.html
-[`FixedU16`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedU16.html
-[`FixedU32`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedU32.html
-[`FixedU64`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedU64.html
-[`FixedU8`]: https://docs.rs/fixed/0.1.6/fixed/struct.FixedU8.html
+[`FixedI128`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI128.html
+[`FixedI16`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI16.html
+[`FixedI32`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html
+[`FixedI64`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI64.html
+[`FixedI8`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI8.html
+[`FixedU128`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedU128.html
+[`FixedU16`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedU16.html
+[`FixedU32`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedU32.html
+[`FixedU64`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedU64.html
+[`FixedU8`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedU8.html
 [`From`]: https://doc.rust-lang.org/nightly/std/convert/trait.From.html
-[`I20F12`]: https://docs.rs/fixed/0.1.6/fixed/types/type.I20F12.html
+[`I20F12`]: https://docs.rs/fixed/0.2.0/fixed/types/type.I20F12.html
 [`Into`]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
-[`U20F12`]: https://docs.rs/fixed/0.1.6/fixed/types/type.U20F12.html
+[`U20F12`]: https://docs.rs/fixed/0.2.0/fixed/types/type.U20F12.html
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html
 [const generics]: https://github.com/rust-lang/rust/issues/44580

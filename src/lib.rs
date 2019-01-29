@@ -73,7 +73,7 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 
 ```toml
 [dependencies]
-fixed = "0.1.6"
+fixed = "0.2.0"
 ```
 
 If you are using the 2015 Rust edition, you also need to declare it by
@@ -100,7 +100,7 @@ To enable features, you can add the dependency like this to
 
 ```toml
 [dependencies.fixed]
-version = "0.1.6"
+version = "0.2.0"
 features = ["f16", "serde"]
 ```
 
@@ -148,7 +148,7 @@ additional terms or conditions.
 */
 #![no_std]
 #![warn(missing_docs)]
-#![doc(html_root_url = "https://docs.rs/fixed/0.1.6")]
+#![doc(html_root_url = "https://docs.rs/fixed/0.2.0")]
 #![doc(test(attr(deny(warnings))))]
 #![cfg_attr(nightly_repr_transparent, feature(repr_transparent))]
 #![cfg_attr(feature = "fail-on-warnings", deny(warnings))]

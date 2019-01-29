@@ -1423,7 +1423,7 @@ macro_rules! fixed {
             doc_comment! {
                 concat!(
                     "Creates a fixed-point number from a floating-point number,\n",
-                    "or returns `None` if the value is not finite or does not fit.\n",
+                    "or returns [`None`] if the value is not finite or does not fit.\n",
                     "\n",
                     "The floating-point value can be of type [`f32`] or [`f64`].\n",
                     "If the [`f16` feature] is enabled, it can also be of type [`f16`].\n",
@@ -1452,6 +1452,7 @@ macro_rules! fixed {
                     "assert!(Fix::checked_from_float(f64::NAN).is_none());\n",
                     "```\n",
                     "\n",
+                    "[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None\n",
                     "[`f16` feature]: index.html#optional-features\n",
                     "[`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html\n",
                     "[`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html\n",
@@ -1871,6 +1872,556 @@ macro_rules! fixed {
                 }
             }
 
+            doc_comment! {
+                concat!(r#"
+Rounds to the next integer towards +∞.
+
+# Panics
+
+If the result is too large to fit, the method panics in debug mode. In
+release mode, the method may either panic or wrap the value, with the
+current implementation wrapping the value. It is not considered a
+breaking change if in the future the method panics even in release
+mode; if wrapping is the required behavior use [`wrapping_ceil`]
+instead.
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.ceil(), Fix::from_int(3));"#,
+if_signed_unsigned!($Signedness, r#"
+assert_eq!((-two_half).ceil(), Fix::from_int(-2));"#, ""
+), r#"
+```
+
+[`wrapping_ceil`]: #method.wrapping_ceil
+"#,
+                ),
+                #[inline]
+                pub fn ceil(self) -> $Fixed<Frac> {
+                    let (ceil, overflow) = self.overflowing_ceil();
+                    #[cfg(debug_assertions)]
+                    {
+                        if overflow {
+                            panic!("overflow");
+                        }
+                    }
+                    let _ = overflow;
+                    ceil
+                }
+            }
+
+            doc_comment! {
+                concat!(r#"
+Rounds to the next integer towards −∞."#,
+if_signed_unsigned!($Signedness, r#"
+
+# Panics
+
+If the result is too large to fit, the method panics in debug mode. In
+release mode, the method may either panic or wrap the value, with the
+current implementation wrapping the value. It is not considered a
+breaking change if in the future the method panics even in release
+mode; if wrapping is the required behavior use [`wrapping_floor`]
+instead.
+
+Overflow can only occur when there are zero integer bits."#, ""
+), r#"
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.floor(), Fix::from_int(2));"#,
+if_signed_unsigned!($Signedness, concat!(r#"
+assert_eq!((-two_half).floor(), Fix::from_int(-3));"#), ""
+), r#"
+```
+
+[`wrapping_floor`]: #method.wrapping_floor
+"#,
+                ),
+                #[inline]
+                pub fn floor(self) -> $Fixed<Frac> {
+                    let (floor, overflow) = self.overflowing_floor();
+                    #[cfg(debug_assertions)]
+                    {
+                        if overflow {
+                            panic!("overflow");
+                        }
+                    }
+                    let _ = overflow;
+                    floor
+                }
+            }
+
+            doc_comment! {
+                concat!(r#"
+Rounds to the nearest integer, with ties rounded away from zero.
+
+# Panics
+
+If the result is too large to fit, the method panics in debug mode. In
+release mode, the method may either panic or wrap the value, with the
+current implementation wrapping the value. It is not considered a
+breaking change if in the future the method panics even in release
+mode; if wrapping is the required behavior use [`wrapping_round`]
+instead.
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.round(), Fix::from_int(3));"#,
+if_signed_unsigned!($Signedness, r#"
+assert_eq!((-two_half).round(), Fix::from_int(-3));"#, ""
+), r#"
+```
+
+[`wrapping_round`]: #method.wrapping_round
+"#,
+                ),
+                #[inline]
+                pub fn round(self) -> $Fixed<Frac> {
+                    let (round, overflow) = self.overflowing_round();
+                    #[cfg(debug_assertions)]
+                    {
+                        if overflow {
+                            panic!("overflow");
+                        }
+                    }
+                    let _ = overflow;
+                    round
+                }
+            }
+
+            doc_comment! {
+                concat!(r#"
+Checked ceil. Rounds to the next integer towards +∞, returning [`None`] on overflow.
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.checked_ceil(), Some(Fix::from_int(3)));"#,
+if_signed_unsigned!($Signedness, r#"
+assert_eq!((-two_half).checked_ceil(), Some(Fix::from_int(-2)));"#, ""
+), r#"
+assert!(Fix::max_value().checked_ceil().is_none());
+```
+
+[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+"#,
+                ),
+                #[inline]
+                pub fn checked_ceil(self) -> Option<$Fixed<Frac>> {
+                    let (ceil, overflow) = self.overflowing_ceil();
+                    if overflow { None } else { Some(ceil) }
+                }
+            }
+
+            doc_comment! {
+                concat!(if_signed_unsigned!($Signedness, r#"
+Checked floor. Rounds to the next integer towards −∞, returning [`None`] on overflow.
+
+Overflow can only occur when there are zero integer bits.
+"#, r#"
+Checked floor. Rounds to the next integer towards −∞.
+Always returns [`Some`] for unsigned values.
+"#), r#"
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.checked_floor(), Some(Fix::from_int(2)));"#,
+if_signed_unsigned!($Signedness, concat!(r#"
+assert_eq!((-two_half).checked_floor(), Some(Fix::from_int(-3)));
+type AllFrac = "#, stringify!($Fixed), "<frac::", stringify!($Len), r#">;
+assert!(AllFrac::min_value().checked_floor().is_none());"#), ""
+), r#"
+```
+
+[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`Some`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.Some
+"#,
+                ),
+                #[inline]
+                pub fn checked_floor(self) -> Option<$Fixed<Frac>> {
+                    let (floor, overflow) = self.overflowing_floor();
+                    if overflow { None } else { Some(floor) }
+                }
+            }
+
+            doc_comment! {
+                concat!(r#"
+Checked round. Rounds to the nearest integer, with ties rounded away from
+zero, returning [`None`] on overflow.
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.checked_round(), Some(Fix::from_int(3)));"#,
+if_signed_unsigned!($Signedness, r#"
+assert_eq!((-two_half).checked_round(), Some(Fix::from_int(-3)));"#, ""
+), r#"
+assert!(Fix::max_value().checked_round().is_none());
+```
+
+[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`Some`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.Some
+"#,
+                ),
+                #[inline]
+                pub fn checked_round(self) -> Option<$Fixed<Frac>> {
+                    let (round, overflow) = self.overflowing_round();
+                    if overflow { None } else { Some(round) }
+                }
+            }
+
+            doc_comment! {
+                concat!(r#"
+Saturating ceil. Rounds to the next integer towards +∞, saturating on overflow.
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.saturating_ceil(), Fix::from_int(3));"#,
+if_signed_unsigned!($Signedness, r#"
+assert_eq!((-two_half).saturating_ceil(), Fix::from_int(-2));"#, ""
+), r#"
+assert_eq!(Fix::max_value().saturating_ceil(), Fix::max_value());
+```
+"#,
+                ),
+                #[inline]
+                pub fn saturating_ceil(self) -> $Fixed<Frac> {
+                    let saturated = $Fixed::max_value();
+                    let (ceil, overflow) = self.overflowing_ceil();
+                    if overflow { saturated } else { ceil }
+                }
+            }
+
+            doc_comment! {
+                concat!(if_signed_unsigned!($Signedness, r#"
+Saturating floor. Rounds to the next integer towards −∞, saturating on overflow.
+
+Overflow can only occur when there are zero integer bits.
+"#, r#"
+Saturating floor. Rounds to the next integer towards −∞.
+Cannot overflow for unsigned values.
+"#), r#"
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.saturating_floor(), Fix::from_int(2));"#,
+if_signed_unsigned!($Signedness, concat!(r#"
+assert_eq!((-two_half).saturating_floor(), Fix::from_int(-3));
+type AllFrac = "#, stringify!($Fixed), "<frac::", stringify!($Len), r#">;
+assert_eq!(AllFrac::min_value().saturating_floor(), AllFrac::min_value());"#), ""
+), r#"
+```
+"#,
+                ),
+                #[inline]
+                pub fn saturating_floor(self) -> $Fixed<Frac> {
+                    let saturated = $Fixed::min_value();
+                    let (floor, overflow) = self.overflowing_floor();
+                    if overflow { saturated } else { floor }
+                }
+            }
+
+            doc_comment! {
+                concat!(r#"
+Saturating round. Rounds to the nearest integer, with ties rounded away from
+zero, and saturating on overflow.
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.saturating_round(), Fix::from_int(3));"#,
+if_signed_unsigned!($Signedness, r#"
+assert_eq!((-two_half).saturating_round(), Fix::from_int(-3));"#, ""
+), r#"
+assert_eq!(Fix::max_value().saturating_round(), Fix::max_value());
+```
+"#,
+                ),
+                #[inline]
+                pub fn saturating_round(self) -> $Fixed<Frac> {
+                    let saturated = if self.to_bits() > 0 {
+                        $Fixed::max_value()
+                    } else {
+                        $Fixed::min_value()
+                    };
+                    let (round, overflow) = self.overflowing_round();
+                    if overflow { saturated } else { round }
+                }
+            }
+
+            doc_comment! {
+                concat!(r#"
+Wrapping ceil. Rounds to the next integer towards +∞, wrapping on overflow.
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.wrapping_ceil(), Fix::from_int(3));"#,
+if_signed_unsigned!($Signedness, r#"
+assert_eq!((-two_half).wrapping_ceil(), Fix::from_int(-2));"#, ""
+), r#"
+assert_eq!(Fix::max_value().wrapping_ceil(), Fix::min_value());
+```
+"#,
+                ),
+                #[inline]
+                pub fn wrapping_ceil(self) -> $Fixed<Frac> {
+                    self.overflowing_ceil().0
+                }
+            }
+
+            doc_comment! {
+                concat!(if_signed_unsigned!($Signedness, r#"
+Wrapping floor. Rounds to the next integer towards −∞, wrapping on overflow.
+
+Overflow can only occur when there are zero integer bits.
+"#, r#"
+Wrapping floor. Rounds to the next integer towards −∞.
+Cannot overflow for unsigned values.
+"#), r#"
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.wrapping_floor(), Fix::from_int(2));"#,
+if_signed_unsigned!($Signedness, concat!(r#"
+assert_eq!((-two_half).wrapping_floor(), Fix::from_int(-3));
+type AllFrac = "#, stringify!($Fixed), "<frac::", stringify!($Len), r#">;
+assert_eq!(AllFrac::min_value().wrapping_floor(), AllFrac::from_int(0));"#), ""
+), r#"
+```
+"#,
+                ),
+                #[inline]
+                pub fn wrapping_floor(self) -> $Fixed<Frac> {
+                    self.overflowing_floor().0
+                }
+            }
+
+            doc_comment! {
+                concat!(r#"
+
+Wrapping round. Rounds to the next integer to the nearest, with ties
+rounded away from zero, and wrapping on overflow.
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.wrapping_round(), Fix::from_int(3));"#,
+if_signed_unsigned!($Signedness, r#"
+assert_eq!((-two_half).wrapping_round(), Fix::from_int(-3));"#, ""
+), r#"
+assert_eq!(Fix::max_value().wrapping_round(), Fix::min_value());
+```
+"#,
+                ),
+                #[inline]
+                pub fn wrapping_round(self) -> $Fixed<Frac> {
+                    self.overflowing_round().0
+                }
+            }
+
+            doc_comment! {
+                concat!(r#"
+Overflowing ceil. Rounds to the next integer towards +∞.
+
+Returns a tuple of the fixed-point number and a [`bool`], indicating
+whether an overflow has occurred. On overflow, the wrapped value is
+returned.
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.overflowing_ceil(), (Fix::from_int(3), false));"#,
+if_signed_unsigned!($Signedness, r#"
+assert_eq!((-two_half).overflowing_ceil(), (Fix::from_int(-2), false));"#, ""
+), r#"
+assert_eq!(Fix::max_value().overflowing_ceil(), (Fix::min_value(), true));
+```
+"#,
+                ),
+                #[inline]
+                pub fn overflowing_ceil(self) -> ($Fixed<Frac>, bool) {
+                    let int = self.int();
+                    if self.frac() == 0 {
+                        return (int, false);
+                    }
+                    if Self::int_bits() == 0 {
+                        return (int, self.to_bits() > 0);
+                    }
+                    let increment = Self::from_bits(<Self as SealedFixed>::lowest_int_bit());
+                        if_signed! {
+                            $Signedness;
+                            if Self::int_bits() == 1 {
+                                return int.overflowing_sub(increment);
+                            }
+                        }
+                        int.overflowing_add(increment)
+                    }
+            }
+
+            doc_comment! {
+                concat!(r#"
+Overflowing floor. Rounds to the next integer towards −∞.
+
+"#, if_signed_unsigned!($Signedness, r#"
+Returns a tuple of the fixed-point number and a [`bool`], indicating
+whether an overflow has occurred. On overflow, the wrapped value is
+returned. Overflow can only occur when there are zero integer bits.
+"#, r#"
+Returns a tuple of the fixed-point number and [`false`][`bool`].
+"#), r#"
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.overflowing_floor(), (Fix::from_int(2), false));"#,
+if_signed_unsigned!($Signedness, concat!(r#"
+assert_eq!((-two_half).overflowing_floor(), (Fix::from_int(-3), false));
+type AllFrac = "#, stringify!($Fixed), "<frac::", stringify!($Len), r#">;
+assert_eq!(AllFrac::min_value().overflowing_floor(), (AllFrac::from_int(0), true));"#), ""
+), r#"
+```
+"#,
+                ),
+                #[inline]
+                pub fn overflowing_floor(self) -> ($Fixed<Frac>, bool) {
+                    let int = self.int();
+                    if_signed! {
+                        $Signedness;
+                        if Self::int_bits() == 0 {
+                            return (int, self.to_bits() < 0);
+                        }
+                    }
+                    (int, false)
+                }
+            }
+
+            doc_comment! {
+                concat!(r#"
+Overflowing round. Rounds to the next integer to the nearest,
+with ties rounded away from zero.
+
+Returns a tuple of the fixed-point number and a [`bool`] indicating
+whether an overflow has occurred. On overflow, the wrapped value is
+returned.
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.overflowing_round(), (Fix::from_int(3), false));"#,
+if_signed_unsigned!($Signedness, r#"
+assert_eq!((-two_half).overflowing_round(), (Fix::from_int(-3), false));"#, ""
+), r#"
+assert_eq!(Fix::max_value().overflowing_round(), (Fix::min_value(), true));
+```
+"#,
+                ),
+                #[inline]
+                pub fn overflowing_round(self) -> ($Fixed<Frac>, bool) {
+                    let int = self.int();
+                    let highest_frac_bit = <Self as SealedFixed>::highest_frac_bit();
+                    if (self.to_bits() & highest_frac_bit) == 0 {
+                        return (int, false);
+                    }
+                    let increment = Self::from_bits(<Self as SealedFixed>::lowest_int_bit());
+                    if_signed! {
+                        $Signedness;
+                        let tie = self.frac().to_bits() == highest_frac_bit;
+                        if Self::int_bits() == 0 {
+                            // if num is .100...00 = -0.5, we have overflow
+                            // otherwise .100...01, 0 < x < -0.5,  no overflow
+                            return (int, tie);
+                        }
+                        // If num is −int.100...00 = (-int) + 0.5, we simply truncate to move to −∞.
+                        // If num is −int.100...01 = (-int) + 0.6, we add 1 to −int.
+                        // If num is +int.100...00 = (+int) + 0.5, we add 1 to +int.
+                        // If num is +int.100...01 = (+int) + 0.6, we add 1 to +int.
+                        if tie && self.to_bits() < 0 {
+                            return (int, false);
+                        }
+                        if Self::int_bits() == 1 {
+                            return int.overflowing_sub(increment);
+                        }
+                        int.overflowing_add(increment)
+                    }
+                    if_unsigned! {
+                        $Signedness;
+                        if Self::int_bits() == 0 {
+                            return (int, true);
+                        }
+                        int.overflowing_add(increment)
+                    }
+                }
+            }
+
             pass_method! {
                 concat!(
                     "Returns the number of ones in the binary representation.\n",
@@ -2243,326 +2794,6 @@ macro_rules! fixed {
                 }
             }
 
-            doc_comment! {
-                concat!(r#"
-Saturating ceil. Rounds towards +∞, saturating on overflow.
-
-# Examples
-
-```rust
-use fixed::frac;
-use fixed::"#, stringify!($Fixed), r#";
-type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.saturating_ceil(), Fix::from_int(3));"#,
-if_signed_unsigned!($Signedness, r#"
-assert_eq!((-two_half).saturating_ceil(), Fix::from_int(-2));"#, ""
-), r#"
-assert_eq!(Fix::max_value().saturating_ceil(), Fix::max_value());
-```
-"#,
-                ),
-                #[inline]
-                pub fn saturating_ceil(self) -> $Fixed<Frac> {
-                    let saturated = $Fixed::max_value();
-                    let (ceil, overflow) = self.overflowing_ceil();
-                    if overflow { saturated } else { ceil }
-                }
-            }
-
-            doc_comment! {
-                concat!(if_signed_unsigned!($Signedness, r#"
-Saturating floor. Rounds towards −∞, saturating on overflow.
-
-Overflow can only occur when there are zero integer bits.
-"#, r#"
-Saturating floor. Rounds towards −∞. Cannot overflow for unsigned values.
-"#), r#"
-
-# Examples
-
-```rust
-use fixed::frac;
-use fixed::"#, stringify!($Fixed), r#";
-type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.saturating_floor(), Fix::from_int(2));"#,
-if_signed_unsigned!($Signedness, concat!(r#"
-assert_eq!((-two_half).saturating_floor(), Fix::from_int(-3));
-type AllFrac = "#, stringify!($Fixed), "<frac::", stringify!($Len), r#">;
-assert_eq!(AllFrac::min_value().saturating_floor(), AllFrac::min_value());"#), ""
-), r#"
-```
-"#,
-                ),
-                #[inline]
-                pub fn saturating_floor(self) -> $Fixed<Frac> {
-                    let saturated = $Fixed::min_value();
-                    let (floor, overflow) = self.overflowing_floor();
-                    if overflow { saturated } else { floor }
-                }
-            }
-
-            doc_comment! {
-                concat!(r#"
-Saturating round. Rounds to the nearest, with ties rounded away from
-zero, and saturating on overflow.
-
-# Examples
-
-```rust
-use fixed::frac;
-use fixed::"#, stringify!($Fixed), r#";
-type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.saturating_round(), Fix::from_int(3));"#,
-if_signed_unsigned!($Signedness, r#"
-assert_eq!((-two_half).saturating_round(), Fix::from_int(-3));"#, ""
-), r#"
-assert_eq!(Fix::max_value().saturating_round(), Fix::max_value());
-```
-"#,
-                ),
-                #[inline]
-                pub fn saturating_round(self) -> $Fixed<Frac> {
-                    let saturated = if self.to_bits() > 0 {
-                        $Fixed::max_value()
-                    } else {
-                        $Fixed::min_value()
-                    };
-                    let (round, overflow) = self.overflowing_round();
-                    if overflow { saturated } else { round }
-                }
-            }
-
-            doc_comment! {
-                concat!(r#"
-Wrapping ceil. Rounds towards +∞, wrapping on overflow.
-
-# Examples
-
-```rust
-use fixed::frac;
-use fixed::"#, stringify!($Fixed), r#";
-type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.wrapping_ceil(), Fix::from_int(3));"#,
-if_signed_unsigned!($Signedness, r#"
-assert_eq!((-two_half).wrapping_ceil(), Fix::from_int(-2));"#, ""
-), r#"
-assert_eq!(Fix::max_value().wrapping_ceil(), Fix::min_value());
-```
-"#,
-                ),
-                #[inline]
-                pub fn wrapping_ceil(self) -> $Fixed<Frac> {
-                    self.overflowing_ceil().0
-                }
-            }
-
-            doc_comment! {
-                concat!(if_signed_unsigned!($Signedness, r#"
-Wrapping floor. Rounds towards −∞, wrapping on overflow.
-
-Overflow can only occur when there are zero integer bits.
-"#, r#"
-Wrapping floor. Rounds towards −∞. Cannot overflow for unsigned values.
-"#), r#"
-
-# Examples
-
-```rust
-use fixed::frac;
-use fixed::"#, stringify!($Fixed), r#";
-type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.wrapping_floor(), Fix::from_int(2));"#,
-if_signed_unsigned!($Signedness, concat!(r#"
-assert_eq!((-two_half).wrapping_floor(), Fix::from_int(-3));
-type AllFrac = "#, stringify!($Fixed), "<frac::", stringify!($Len), r#">;
-assert_eq!(AllFrac::min_value().wrapping_floor(), AllFrac::from_int(0));"#), ""
-), r#"
-```
-"#,
-                ),
-                #[inline]
-                pub fn wrapping_floor(self) -> $Fixed<Frac> {
-                    self.overflowing_floor().0
-                }
-            }
-
-            doc_comment! {
-                concat!(r#"
-Wrapping round. Rounds to the nearest, with ties rounded away from
-zero, and wrapping on overflow.
-
-# Examples
-
-```rust
-use fixed::frac;
-use fixed::"#, stringify!($Fixed), r#";
-type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.wrapping_round(), Fix::from_int(3));"#,
-if_signed_unsigned!($Signedness, r#"
-assert_eq!((-two_half).wrapping_round(), Fix::from_int(-3));"#, ""
-), r#"
-assert_eq!(Fix::max_value().wrapping_round(), Fix::min_value());
-```
-"#,
-                ),
-                #[inline]
-                pub fn wrapping_round(self) -> $Fixed<Frac> {
-                    self.overflowing_round().0
-                }
-            }
-
-            doc_comment! {
-                concat!(r#"
-Overflowing ceil. Rounds towards +∞.
-
-Returns a tuple of the fixed-point number and a [`bool`], indicating 
-whether an overflow has occurred. On overflow, the wrapped value is 
-returned.
-
-# Examples
-
-```rust
-use fixed::frac;
-use fixed::"#, stringify!($Fixed), r#";
-type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.overflowing_ceil(), (Fix::from_int(3), false));"#,
-if_signed_unsigned!($Signedness, r#"
-assert_eq!((-two_half).overflowing_ceil(), (Fix::from_int(-2), false));"#, ""
-), r#"
-assert_eq!(Fix::max_value().overflowing_ceil(), (Fix::min_value(), true));
-```
-"#,
-                ),
-                #[inline]
-                pub fn overflowing_ceil(self) -> ($Fixed<Frac>, bool) {
-                    let int = self.int();
-                    if self.frac() == 0 {
-                        return (int, false);
-                    }
-                    if Self::int_bits() == 0 {
-                        return (int, self.to_bits() > 0);
-                    }
-                    let increment = Self::from_bits(<Self as SealedFixed>::lowest_int_bit());
-                        if_signed! {
-                            $Signedness;
-                            if Self::int_bits() == 1 {
-                                return int.overflowing_sub(increment);
-                            }
-                        }
-                        int.overflowing_add(increment)
-                    }
-            }
-
-            doc_comment! {
-                concat!(r#"
-Overflowing floor. Rounds towards −∞.
-
-"#, if_signed_unsigned!($Signedness, r#"
-Returns a tuple of the fixed-point number and a [`bool`], indicating 
-whether an overflow has occurred. On overflow, the wrapped value is 
-returned. Overflow can only occur when there are zero integer bits.
-"#, r#"
-Returns a tuple of the fixed-point number and [`false`][`bool`].
-"#), r#"
-
-# Examples
-
-```rust
-use fixed::frac;
-use fixed::"#, stringify!($Fixed), r#";
-type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.overflowing_floor(), (Fix::from_int(2), false));"#,
-if_signed_unsigned!($Signedness, concat!(r#"
-assert_eq!((-two_half).overflowing_floor(), (Fix::from_int(-3), false));
-type AllFrac = "#, stringify!($Fixed), "<frac::", stringify!($Len), r#">;
-assert_eq!(AllFrac::min_value().overflowing_floor(), (AllFrac::from_int(0), true));"#), ""
-), r#"
-```
-"#,
-                ),
-                #[inline]
-                pub fn overflowing_floor(self) -> ($Fixed<Frac>, bool) {
-                    let int = self.int();
-                    if_signed! {
-                        $Signedness;
-                        if Self::int_bits() == 0 {
-                            return (int, self.to_bits() < 0);
-                        }
-                    }
-                    (int, false)
-                }
-            }
-
-            doc_comment! {
-                concat!(r#"
-Overflowing round. Rounds to the nearest, with ties rounded away from
-zero.
-
-Returns a tuple of the fixed-point number and a [`bool`] indicating
-whether an overflow has occurred. On overflow, the wrapped value is
-returned.
-
-# Examples
-
-```rust
-use fixed::frac;
-use fixed::"#, stringify!($Fixed), r#";
-type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.overflowing_round(), (Fix::from_int(3), false));"#,
-if_signed_unsigned!($Signedness, r#"
-assert_eq!((-two_half).overflowing_round(), (Fix::from_int(-3), false));"#, ""
-), r#"
-assert_eq!(Fix::max_value().overflowing_round(), (Fix::min_value(), true));
-```
-"#,
-                ),
-                #[inline]
-                pub fn overflowing_round(self) -> ($Fixed<Frac>, bool) {
-                    let int = self.int();
-                    let highest_frac_bit = <Self as SealedFixed>::highest_frac_bit();
-                    if (self.to_bits() & highest_frac_bit) == 0 {
-                        return (int, false);
-                    }
-                    let increment = Self::from_bits(<Self as SealedFixed>::lowest_int_bit());
-                    if_signed! {
-                        $Signedness;
-                        let tie = self.frac().to_bits() == highest_frac_bit;
-                        if Self::int_bits() == 0 {
-                            // if num is .100...00 = -0.5, we have overflow
-                            // otherwise .100...01, 0 < x < -0.5,  no overflow
-                            return (int, tie);
-                        }
-                        // If num is −int.100...00 = (-int) + 0.5, we simply truncate to move to −∞.
-                        // If num is −int.100...01 = (-int) + 0.6, we add 1 to −int.
-                        // If num is +int.100...00 = (+int) + 0.5, we add 1 to +int.
-                        // If num is +int.100...01 = (+int) + 0.6, we add 1 to +int.
-                        if tie && self.to_bits() < 0 {
-                            return (int, false);
-                        }
-                        if Self::int_bits() == 1 {
-                            return int.overflowing_sub(increment);
-                        }
-                        int.overflowing_add(increment)
-                    }
-                    if_unsigned! {
-                        $Signedness;
-                        if Self::int_bits() == 0 {
-                            return (int, true);
-                        }
-                        int.overflowing_add(increment)
-                    }
-                }
-            }
-
             if_unsigned! {
                 $Signedness;
                 pass_method! {
@@ -2616,7 +2847,7 @@ assert_eq!(Fix::max_value().overflowing_round(), (Fix::min_value(), true));
                 $Signedness;
                 doc_comment! {
                     concat!(
-                        "Returns the smallest power of two ≥ `self`, or `None`\n",
+                        "Returns the smallest power of two ≥ `self`, or [`None`]\n",
                         "if the next power of two is too large to represent.\n",
                         "\n",
                         "# Examples\n",
@@ -2632,6 +2863,8 @@ assert_eq!(Fix::max_value().overflowing_round(), (Fix::min_value(), true));
                         "assert_eq!(three_eights.checked_next_power_of_two(), Some(half));\n",
                         "assert!(Fix::max_value().checked_next_power_of_two().is_none());\n",
                         "```\n",
+                        "\n",
+                        "[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None\n",
                     ),
                     #[inline]
                     pub fn checked_next_power_of_two(self) -> Option<$Fixed<Frac>> {

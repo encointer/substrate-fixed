@@ -160,16 +160,16 @@ extern crate serde;
 extern crate typenum;
 
 macro_rules! if_signed {
-    (Signed => $($rem:tt)+) => {
+    (Signed; $($rem:tt)+) => {
         $($rem)+
     };
-    (Unsigned => $($rem:tt)+) => {
+    (Unsigned; $($rem:tt)+) => {
     };
 }
 macro_rules! if_unsigned {
-    (Signed => $($rem:tt)+) => {
+    (Signed; $($rem:tt)+) => {
     };
-    (Unsigned => $($rem:tt)+) => {
+    (Unsigned; $($rem:tt)+) => {
         $($rem)+
     };
 }
@@ -181,7 +181,7 @@ macro_rules! if_signed_unsigned {
         $unsigned
     };
     ($Signedness:tt, $signed:expr, $unsigned:expr,) => {
-        if_signed_unsigned! { $Signedness, $signed, $unsigned }
+        if_signed_unsigned!($Signedness, $signed, $unsigned)
     };
 }
 
@@ -244,8 +244,8 @@ macro_rules! pass_method {
 
 macro_rules! pass_method_signed_unsigned {
     ($Signedness:tt, $signed:expr, $unsigned:expr, $($tt:tt)*) => {
-        if_signed! { $Signedness => pass_method! { $signed, $($tt)* } }
-        if_unsigned! { $Signedness => pass_method! { $unsigned, $($tt)* } }
+        if_signed! { $Signedness; pass_method! { $signed, $($tt)* } }
+        if_unsigned! { $Signedness; pass_method! { $unsigned, $($tt)* } }
     }
 }
 
@@ -258,8 +258,8 @@ macro_rules! doc_comment {
 
 macro_rules! doc_comment_signed_unsigned {
     ($Signedness:tt, $signed:expr, $unsigned:expr, $($tt:tt)*) => {
-        if_signed! { $Signedness => doc_comment! { $signed, $($tt)* } }
-        if_unsigned! { $Signedness => doc_comment! { $unsigned, $($tt)* } }
+        if_signed! { $Signedness; doc_comment! { $signed, $($tt)* } }
+        if_unsigned! { $Signedness; doc_comment! { $unsigned, $($tt)* } }
     };
 }
 
@@ -536,11 +536,11 @@ macro_rules! fixed {
                     "let src = Src::from_bits(0b111 << (16 - 2));\n",
                     "let expected = Fix::from_bits(0b111 << (4 - 2));\n",
                     "assert_eq!(Fix::from_fixed(src), expected);\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         "assert_eq!(Fix::from_fixed(-src), -expected);\n",
                         "",
-                    },
+                    ),
                     "// src >> 4 is 0.0001_1100, which for Fix is truncated to 0000.0001\n",
                     "assert_eq!(Fix::from_fixed(src >> 4), Fix::from_bits(1));\n",
                     "```\n",
@@ -586,21 +586,21 @@ macro_rules! fixed {
                     "let src = Src::from_bits(0b111 << (16 - 2));\n",
                     "let expected = Fix::from_bits(0b111 << (4 - 2));\n",
                     "assert_eq!(Fix::checked_from_fixed(src), Some(expected));\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         "assert_eq!(Fix::checked_from_fixed(-src), Some(-expected));\n",
                         "",
-                    },
+                    ),
                     "let too_large = ", stringify!($Fixed), "::<frac::U3>::max_value();\n",
                     "assert!(Fix::checked_from_fixed(too_large).is_none());\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         concat!(
                             "let too_small = ", stringify!($Fixed), "::<frac::U3>::min_value();\n",
                             "assert!(Fix::checked_from_fixed(too_small).is_none());\n",
                         ),
                         "",
-                    },
+                    ),
                     "```\n",
                 ),
                 #[inline]
@@ -637,20 +637,20 @@ macro_rules! fixed {
                     "let src = Src::from_bits(0b111 << (16 - 2));\n",
                     "let expected = Fix::from_bits(0b111 << (4 - 2));\n",
                     "assert_eq!(Fix::saturating_from_fixed(src), expected);\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         "assert_eq!(Fix::saturating_from_fixed(-src), -expected);\n",
                         "",
-                    },
+                    ),
                     "let too_large = ", stringify!($Fixed), "::<frac::U3>::max_value();\n",
                     "assert_eq!(Fix::saturating_from_fixed(too_large), Fix::max_value());\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         concat!(
                             "let too_small = ", stringify!($Fixed), "::<frac::U3>::min_value();\n",
                         ),
                         "let too_small = Src::from_bits(-1);\n",
-                    },
+                    ),
                     "assert_eq!(Fix::saturating_from_fixed(too_small), Fix::min_value());\n",
                     "```\n",
                 ),
@@ -721,11 +721,11 @@ macro_rules! fixed {
                     "let src = Src::from_bits(0b111 << (16 - 2));\n",
                     "let expected = Fix::from_bits(0b111 << (4 - 2));\n",
                     "assert_eq!(Fix::wrapping_from_fixed(src), expected);\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         "assert_eq!(Fix::wrapping_from_fixed(-src), -expected);\n",
                         "",
-                    },
+                    ),
                     "// integer 0b1101 << (", stringify!($nbits), " - 7) will wrap to fixed-point 1010...\n",
                     "let large = ", stringify!($Fixed), "::<frac::U0>::from_bits(0b1101 << (", stringify!($nbits), " - 7));\n",
                     "let wrapped = Fix::from_bits(0b1010 << (", stringify!($nbits), " - 4));\n",
@@ -760,11 +760,11 @@ macro_rules! fixed {
                     "let src = Src::from_bits(0b111 << (16 - 2));\n",
                     "let expected = Fix::from_bits(0b111 << (4 - 2));\n",
                     "assert_eq!(Fix::overflowing_from_fixed(src), (expected, false));\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         "assert_eq!(Fix::overflowing_from_fixed(-src), (-expected, false));\n",
                         "",
-                    },
+                    ),
                     "// integer 0b1101 << (", stringify!($nbits), " - 7) will wrap to fixed-point 1010...\n",
                     "let large = ", stringify!($Fixed), "::<frac::U0>::from_bits(0b1101 << (", stringify!($nbits), " - 7));\n",
                     "let wrapped = Fix::from_bits(0b1010 << (", stringify!($nbits), " - 4));\n",
@@ -833,11 +833,11 @@ macro_rules! fixed {
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "// 3 is 0011.0000, that is from_bits(3 << 4)\n",
                     "assert_eq!(Fix::from_int(3), Fix::from_bits(3 << 4));\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         "assert_eq!(Fix::from_int(-3), Fix::from_bits(-3 << 4));\n",
                         "",
-                    },
+                    ),
                     "```\n",
                     "\n",
                     "[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html\n",
@@ -886,21 +886,21 @@ macro_rules! fixed {
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "// 3 is 0011.0000, that is from_bits(3 << 4)\n",
                     "assert_eq!(Fix::checked_from_int(3), Some(Fix::from_bits(3 << 4)));\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         "assert_eq!(Fix::checked_from_int(-3), Some(Fix::from_bits(-3 << 4)));\n",
                         "",
-                    },
+                    ),
                     "let too_large = ", stringify!($Inner), "::max_value();\n",
                     "assert!(Fix::checked_from_int(too_large).is_none());\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         concat!(
                             "let too_small = ", stringify!($Inner), "::min_value();\n",
                             "assert!(Fix::checked_from_int(too_small).is_none());\n",
                         ),
                         "",
-                    },
+                    ),
                     "```\n",
                      "\n",
                     "[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html\n",
@@ -942,20 +942,20 @@ macro_rules! fixed {
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "// 3 is 0011.0000, that is from_bits(3 << 4)\n",
                     "assert_eq!(Fix::saturating_from_int(3), Fix::from_bits(3 << 4));\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         "assert_eq!(Fix::saturating_from_int(-3), Fix::from_bits(-3 << 4));\n",
                         "",
-                    },
+                    ),
                     "let too_large = ", stringify!($Inner), "::max_value();\n",
                     "assert_eq!(Fix::saturating_from_int(too_large), Fix::max_value());\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         concat!(
                             "let too_small = ", stringify!($Inner), "::min_value();\n",
                         ),
                         "let too_small = -1;\n",
-                    },
+                    ),
                     "assert_eq!(Fix::saturating_from_int(too_small), Fix::min_value());\n",
                     "```\n",
                     "\n",
@@ -1030,11 +1030,11 @@ macro_rules! fixed {
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "// 3 is 0011.0000, that is from_bits(3 << 4)\n",
                     "assert_eq!(Fix::wrapping_from_int(3), Fix::from_bits(3 << 4));\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         "assert_eq!(Fix::wrapping_from_int(-3), Fix::from_bits(-3 << 4));\n",
                         "",
-                    },
+                    ),
                     "// integer 0b1101 << (", stringify!($nbits), " - 7) will wrap to fixed-point 1010...\n",
                     "let large: ", stringify!($Inner), " = 0b1101 << (", stringify!($nbits), " - 7);\n",
                     "let wrapped = Fix::from_bits(0b1010 << (", stringify!($nbits), " - 4));\n",
@@ -1080,11 +1080,11 @@ macro_rules! fixed {
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "// 3 is 0011.0000, that is from_bits(3 << 4)\n",
                     "assert_eq!(Fix::overflowing_from_int(3), (Fix::from_bits(3 << 4), false));\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         "assert_eq!(Fix::overflowing_from_int(-3), (Fix::from_bits(-3 << 4), false));\n",
                         "",
-                    },
+                    ),
                     "// integer 0b1101 << (", stringify!($nbits), " - 7) will wrap to fixed-point 1010...\n",
                     "let large: ", stringify!($Inner), " = 0b1101 << (", stringify!($nbits), " - 7);\n",
                     "let wrapped = Fix::from_bits(0b1010 << (", stringify!($nbits), " - 4));\n",
@@ -1176,17 +1176,19 @@ macro_rules! fixed {
                 #[inline]
                 pub fn to_int(self) -> $Inner {
                     let floor = self.to_int_floor();
-                    if_signed! { $Signedness => {
+                    if_signed! {
+                        $Signedness;
                         let no_frac = self.frac().to_bits() == 0;
                         if no_frac || self.to_bits() >= 0 {
                             floor
                         } else {
                             floor + 1
                         }
-                    } }
-                    if_unsigned! { $Signedness => {
+                    }
+                    if_unsigned! {
+                        $Signedness;
                         floor
-                    } }
+                    }
                 }
             }
 
@@ -1274,8 +1276,8 @@ macro_rules! fixed {
                 pub fn to_int_floor(self) -> $Inner {
                     let bits = self.to_bits();
                     if Self::int_bits() == 0 {
-                        if_signed! { $Signedness => bits >> (Self::frac_bits() - 1) }
-                        if_unsigned! { $Signedness => 0 }
+                        if_signed! { $Signedness; bits >> (Self::frac_bits() - 1) }
+                        if_unsigned! { $Signedness; 0 }
                     } else {
                         bits >> Self::frac_bits()
                     }
@@ -1329,7 +1331,8 @@ macro_rules! fixed {
                         return floor;
                     }
                     let half_bit = 1 << (frac_bits - 1);
-                    if_signed! { $Signedness => {
+                    if_signed! {
+                        $Signedness;
                         if self.to_bits() >= 0 {
                             if (self.to_bits() & half_bit) != 0 {
                                 floor + 1
@@ -1344,14 +1347,15 @@ macro_rules! fixed {
                                 floor + 1
                             }
                         }
-                    } }
-                    if_unsigned! { $Signedness => {
+                    }
+                    if_unsigned! {
+                        $Signedness;
                         if (self.to_bits() & half_bit) != 0 {
                             floor + 1
                         } else {
                             floor
                         }
-                    } }
+                    }
                 }
             }
 
@@ -1383,11 +1387,11 @@ macro_rules! fixed {
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "// 1.75 is 0001.1100, that is from_bits(28)\n",
                     "assert_eq!(Fix::from_float(1.75f32), Fix::from_bits(28));\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         "assert_eq!(Fix::from_float(-1.75f64), Fix::from_bits(-28));\n",
                         "assert_eq!(Fix::from_float(1.75f64), Fix::from_bits(28));\n",
-                    },
+                    ),
                     "// 1e-10 is too small for four fractional bits\n",
                     "assert_eq!(Fix::from_float(1e-10), Fix::from_bits(0));\n",
                     "```\n",
@@ -1435,11 +1439,11 @@ macro_rules! fixed {
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "// 1.75 is 0001.1100, that is from_bits(28)\n",
                     "assert_eq!(Fix::checked_from_float(1.75f32), Some(Fix::from_bits(28)));\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         "assert_eq!(Fix::checked_from_float(-1.75f64), Some(Fix::from_bits(-28)));\n",
                         "assert_eq!(Fix::checked_from_float(1.75f64), Some(Fix::from_bits(28)));\n",
-                    },
+                    ),
                     "// 1e-10 is too small for four fractional bits\n",
                     "assert_eq!(Fix::checked_from_float(1e-10), Some(Fix::from_bits(0)));\n",
                     "// 2e38 is too large for ", stringify!($Fixed), "<frac::U4>\n",
@@ -1493,11 +1497,11 @@ macro_rules! fixed {
                     "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
                     "// 1.75 is 0001.1100, that is from_bits(28)\n",
                     "assert_eq!(Fix::saturating_from_float(1.75f32), Fix::from_bits(28));\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         "assert_eq!(Fix::saturating_from_float(-1.75f64), Fix::from_bits(-28));\n",
                         "assert_eq!(Fix::saturating_from_float(1.75f64), Fix::from_bits(28));\n",
-                    },
+                    ),
                     "// 1e-10 is too small for four fractional bits\n",
                     "assert_eq!(Fix::saturating_from_float(1e-10), Fix::from_bits(0));\n",
                     "// 2e38 is too large for ", stringify!($Fixed), "<frac::U4>\n",
@@ -1580,11 +1584,11 @@ macro_rules! fixed {
                     "// 1.75 is 0001.1100, that is from_bits(28)\n",
                     "let from_bits = Fix::from_bits(28);\n",
                     "assert_eq!(Fix::wrapping_from_float(1.75f32), from_bits);\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         "assert_eq!(Fix::wrapping_from_float(-1.75f64), -from_bits);\n",
                         "assert_eq!(Fix::wrapping_from_float(1.75f64), from_bits);\n",
-                    },
+                    ),
                     "// 1e-10 is too small for four fractional bits\n",
                     "assert_eq!(Fix::wrapping_from_float(1e-10), 0);\n",
                     "// 1.75 << (", stringify!($nbits), " - 4) wraps to binary 11000...\n",
@@ -1633,11 +1637,11 @@ macro_rules! fixed {
                     "// 1.75 is 0001.1100, that is from_bits(28)\n",
                     "let from_bits = Fix::from_bits(28);\n",
                     "assert_eq!(Fix::overflowing_from_float(1.75f32), (from_bits, false));\n",
-                    if_signed_unsigned! {
+                    if_signed_unsigned!(
                         $Signedness,
                         "assert_eq!(Fix::overflowing_from_float(-1.75f64), (-from_bits, false));\n",
                         "assert_eq!(Fix::overflowing_from_float(1.75f64), (from_bits, false));\n",
-                    },
+                    ),
                     "// 1e-10 is too small for four fractional bits\n",
                     "assert_eq!(Fix::overflowing_from_float(1e-10), (Fix::from_bits(0), false));\n",
                     "// 1.75 << (", stringify!($nbits), " - 4) overflows and wraps to binary 11000...\n",
@@ -1811,9 +1815,7 @@ macro_rules! fixed {
                 ),
                 #[inline]
                 pub fn int(self) -> $Fixed<Frac> {
-                    let frac_bits = <$Fixed<Frac>>::frac_bits();
-                    let mask = <$Inner>::checked_shl(!0, frac_bits).unwrap_or(0);
-                    $Fixed::from_bits(self.to_bits() & mask)
+                    $Fixed::from_bits(self.to_bits() & Self::int_mask())
                 }
             }
 
@@ -1865,9 +1867,7 @@ macro_rules! fixed {
                 ),
                 #[inline]
                 pub fn frac(self) -> $Fixed<Frac> {
-                    let frac_bits = <$Fixed<Frac>>::frac_bits();
-                    let inv_mask = <$Inner>::checked_shl(!0, frac_bits).unwrap_or(0);
-                    $Fixed::from_bits(self.to_bits() & !inv_mask)
+                    $Fixed::from_bits(self.to_bits() & Self::frac_mask())
                 }
             }
 
@@ -2044,7 +2044,7 @@ macro_rules! fixed {
             }
 
             if_signed! {
-                $Signedness =>
+                $Signedness;
                 /// Checked absolute value.
                 #[inline]
                 pub fn checked_abs(self) -> Option<$Fixed<Frac>> {
@@ -2155,7 +2155,7 @@ macro_rules! fixed {
             }
 
             if_signed! {
-                $Signedness =>
+                $Signedness;
                 /// Wrapping absolute value.
                 #[inline]
                 pub fn wrapping_abs(self) -> $Fixed<Frac> {
@@ -2234,7 +2234,7 @@ macro_rules! fixed {
             }
 
             if_signed! {
-                $Signedness =>
+                $Signedness;
                 /// Overflowing absolute value.
                 #[inline]
                 pub fn overflowing_abs(self) -> ($Fixed<Frac>, bool) {
@@ -2243,8 +2243,155 @@ macro_rules! fixed {
                 }
             }
 
+            doc_comment! {
+                concat!(r#"
+Overflowing ceil. Rounds towards +∞.
+
+Returns a tuple of the fixed-point number and a [`bool`], indicating 
+whether an overflow has occurred. On overflow, the wrapped value is 
+returned.
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.overflowing_ceil(), (Fix::from_int(3), false));"#,
+if_signed_unsigned!($Signedness, r#"
+assert_eq!((-two_half).overflowing_ceil(), (Fix::from_int(-2), false));"#, ""
+), r#"
+assert_eq!(Fix::max_value().overflowing_ceil(), (Fix::min_value(), true));
+```
+"#,
+                ),
+                #[inline]
+                pub fn overflowing_ceil(self) -> ($Fixed<Frac>, bool) {
+                    let int = self.int();
+                    if self.frac() == 0 {
+                        return (int, false);
+                    }
+                    if Self::int_bits() == 0 {
+                        return (int, self.to_bits() > 0);
+                    }
+                    let increment = Self::from_bits(<Self as SealedFixed>::lowest_int_bit());
+                        if_signed! {
+                            $Signedness;
+                            if Self::int_bits() == 1 {
+                                return int.overflowing_sub(increment);
+                            }
+                        }
+                        int.overflowing_add(increment)
+                    }
+            }
+
+            doc_comment! {
+                concat!(r#"
+Overflowing floor. Rounds towards −∞.
+
+"#, if_signed_unsigned!($Signedness, r#"
+Returns a tuple of the fixed-point number and a [`bool`], indicating 
+whether an overflow has occurred. On overflow, the wrapped value is 
+returned. Overflow can only occur when there are zero integer bits.
+"#, r#"
+Returns a tuple of the fixed-point number and [`false`][`bool`].
+"#), r#"
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.overflowing_floor(), (Fix::from_int(2), false));"#,
+if_signed_unsigned!($Signedness, concat!(r#"
+assert_eq!((-two_half).overflowing_floor(), (Fix::from_int(-3), false));
+type AllFrac = "#, stringify!($Fixed), "<frac::", stringify!($Len), r#">;
+assert_eq!(AllFrac::min_value().overflowing_floor(), (AllFrac::from_int(0), true));"#), ""
+), r#"
+```
+"#,
+                ),
+                #[inline]
+                pub fn overflowing_floor(self) -> ($Fixed<Frac>, bool) {
+                    let int = self.int();
+                    if_signed! {
+                        $Signedness;
+                        if Self::int_bits() == 0 {
+                            return (int, self.to_bits() < 0);
+                        }
+                    }
+                    return (int, false);
+                }
+            }
+
+            doc_comment! {
+                concat!(r#"
+Overflowing round. Rounds to the nearest, with ties rounded away from
+zero.
+
+Returns a tuple of the fixed-point number and a [`bool`] indicating
+whether an overflow has occurred. On overflow, the wrapped value is
+returned.
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.overflowing_round(), (Fix::from_int(3), false));"#,
+if_signed_unsigned!($Signedness, r#"
+assert_eq!((-two_half).overflowing_round(), (Fix::from_int(-3), false));"#, ""
+), r#"
+assert_eq!(Fix::max_value().overflowing_round(), (Fix::min_value(), true));
+```
+"#,
+                ),
+                #[inline]
+                pub fn overflowing_round(self) -> ($Fixed<Frac>, bool) {
+                    let int = self.int();
+                    let highest_frac_bit = <Self as SealedFixed>::highest_frac_bit();
+                    if (self.to_bits() & highest_frac_bit) == 0 {
+                        return (int, false);
+                    }
+                    let increment = Self::from_bits(<Self as SealedFixed>::lowest_int_bit());
+                    if_signed! {
+                        $Signedness;
+                        let tie = self.frac().to_bits() == highest_frac_bit;
+                        if Self::int_bits() == 0 {
+                            // if num is .100...00 = -0.5, we have overflow
+                            // otherwise .100...01, 0 < x < -0.5,  no overflow
+                            return (int, tie);
+                        }
+                        // If num is −int.100...00 = (-int) + 0.5, we simply truncate to move to −∞.
+                        // If num is −int.100...01 = (-int) + 0.6, we add 1 to −int.
+                        // If num is +int.100...00 = (+int) + 0.5, we add 1 to +int.
+                        // If num is +int.100...01 = (+int) + 0.6, we add 1 to +int.
+                        if tie && self.to_bits() < 0 {
+                            return (int, false);
+                        }
+                        if Self::int_bits() == 1 {
+                            return int.overflowing_sub(increment);
+                        }
+                        int.overflowing_add(increment)
+                    }
+                    if_unsigned! {
+                        $Signedness;
+                        if Self::int_bits() == 0 {
+                            return (int, true);
+                        }
+                        int.overflowing_add(increment)
+                    }
+                }
+            }
+
             if_unsigned! {
-                $Signedness => pass_method! {
+                $Signedness;
+                pass_method! {
                     concat!(
                         "Returns `true` if the fixed-point number is\n",
                         "2<sup><i>k</i></sup> for some <i>k</i>.\n",
@@ -2268,7 +2415,8 @@ macro_rules! fixed {
             }
 
             if_unsigned! {
-                $Signedness => pass_method! {
+                $Signedness;
+                pass_method! {
                     concat!(
                         "Returns the smallest power of two ≥ `self`.\n",
                         "\n",
@@ -2291,7 +2439,8 @@ macro_rules! fixed {
             }
 
             if_unsigned! {
-                $Signedness => doc_comment! {
+                $Signedness;
+                doc_comment! {
                     concat!(
                         "Returns the smallest power of two ≥ `self`, or `None`\n",
                         "if the next power of two is too large to represent.\n",
@@ -2318,7 +2467,8 @@ macro_rules! fixed {
             }
 
             if_signed! {
-                $Signedness => pass_method! {
+                $Signedness;
+                pass_method! {
                     concat!(
                         "Returns the absolute value.\n",
                         "\n",
@@ -2339,7 +2489,8 @@ macro_rules! fixed {
             }
 
             if_signed! {
-                $Signedness => doc_comment! {
+                $Signedness;
+                doc_comment! {
                     concat!(
                         "Returns a number representing the sign of `self`.\n",
                         "\n",
@@ -2381,7 +2532,8 @@ macro_rules! fixed {
             }
 
             if_signed! {
-                $Signedness => pass_method! {
+                $Signedness;
+                pass_method! {
                     concat!(
                         "Returns `true` if the number is > 0.\n",
                         "\n",
@@ -2404,7 +2556,8 @@ macro_rules! fixed {
             }
 
             if_signed! {
-                $Signedness => pass_method! {
+                $Signedness;
+                pass_method! {
                     concat!(
                         "Returns `true` if the number is < 0.\n",
                         "\n",

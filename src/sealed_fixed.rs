@@ -49,6 +49,13 @@ pub trait SealedFixed: Copy + Debug + Display {
         }
     }
 
+    fn frac_mask() -> Self::Bits;
+    fn int_mask() -> Self::Bits;
+    // 0 for no frac bits
+    fn highest_frac_bit() -> Self::Bits;
+    // 0 for no int bits
+    fn lowest_int_bit() -> Self::Bits;
+
     fn from_bits(bits: Self::Bits) -> Self;
     fn to_bits(self) -> Self::Bits;
     fn parts(
@@ -74,6 +81,38 @@ macro_rules! sealed_fixed {
             #[inline]
             fn frac_bits() -> u32 {
                 Frac::to_u32()
+            }
+
+            #[inline]
+            fn frac_mask() -> Self::Bits {
+                !Self::int_mask()
+            }
+
+            #[inline]
+            fn int_mask() -> Self::Bits {
+                if Self::int_bits() == 0 {
+                    0
+                } else {
+                    !0 << Self::frac_bits()
+                }
+            }
+
+            #[inline]
+            fn highest_frac_bit() -> Self::Bits {
+                if Self::frac_bits() == 0 {
+                    0
+                } else {
+                    1 << (Self::frac_bits() - 1)
+                }
+            }
+
+            #[inline]
+            fn lowest_int_bit() -> Self::Bits {
+                if Self::int_bits() == 0 {
+                    0
+                } else {
+                    1 << Self::frac_bits()
+                }
             }
 
             #[inline]

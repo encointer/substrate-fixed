@@ -227,7 +227,7 @@ macro_rules! shift_all {
 macro_rules! fixed_arith {
     ($Fixed:ident($Inner:ty, $Len:ty, $bits_count:expr), $Signedness:tt) => {
         if_signed! {
-            $Signedness => pass_one! { impl Neg for $Fixed($Inner, $Len) { neg } }
+            $Signedness; pass_one! { impl Neg for $Fixed($Inner, $Len) { neg } }
         }
 
         pass! { impl Add for $Fixed($Inner, $Len) { add } }
@@ -618,14 +618,16 @@ macro_rules! mul_div_widen {
                 let rhs2 = <$Double as From<$Single>>::from(rhs) << int_bits;
                 let (prod2, overflow) = lhs2.overflowing_mul(rhs2);
                 let dir;
-                if_unsigned! { $Signedness => {
+                if_unsigned! {
+                    $Signedness;
                     dir = if !overflow {
                         Ordering::Equal
                     } else {
                         Ordering::Less
                     };
-                } }
-                if_signed! { $Signedness => {
+                }
+                if_signed! {
+                    $Signedness;
                     dir = if !overflow {
                         Ordering::Equal
                     } else if (self < 0) == (rhs < 0) {
@@ -633,7 +635,7 @@ macro_rules! mul_div_widen {
                     } else {
                         Ordering::Greater
                     };
-                } }
+                }
                 ((prod2 >> BITS) as $Single, dir)
             }
 
@@ -756,14 +758,16 @@ macro_rules! mul_div_fallback {
                 if frac_bits == 0 {
                     let (ans, overflow) = self.overflowing_mul(rhs);
                     let dir;
-                    if_unsigned! { $Signedness => {
+                    if_unsigned! {
+                        $Signedness;
                         dir = if !overflow {
                             Ordering::Equal
                         } else {
                             Ordering::Less
                         };
-                    } }
-                    if_signed! { $Signedness => {
+                    }
+                    if_signed! {
+                        $Signedness;
                         dir = if !overflow {
                             Ordering::Equal
                         } else if (self < 0) == (rhs < 0) {
@@ -771,7 +775,7 @@ macro_rules! mul_div_fallback {
                         } else {
                             Ordering::Greater
                         };
-                    } }
+                    }
                     (ans, dir)
                 } else {
                     let (lh, ll) = self.hi_lo();
@@ -796,14 +800,16 @@ macro_rules! mul_div_fallback {
                 if frac_bits == 0 {
                     let (ans, overflow) = self.overflowing_div(rhs);
                     let dir;
-                    if_unsigned! { $Signedness => {
+                    if_unsigned! {
+                        $Signedness;
                         dir = if !overflow {
                             Ordering::Equal
                         } else {
                             Ordering::Less
                         };
-                    } }
-                    if_signed! { $Signedness => {
+                    }
+                    if_signed! {
+                        $Signedness;
                         dir = if !overflow {
                             Ordering::Equal
                         } else if (self < 0) == (rhs < 0) {
@@ -811,7 +817,7 @@ macro_rules! mul_div_fallback {
                         } else {
                             Ordering::Greater
                         };
-                    } }
+                    }
                     (ans, dir)
                 } else {
                     const BITS: u32 = mem::size_of::<$Single>() as u32 * 8;

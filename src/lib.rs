@@ -53,11 +53,11 @@ numeric primitives are implemented. That is, you can use [`From`] or
 use fixed::types::I20F12;
 
 // 19/3 = 6 1/3
-let six_and_third = I20F12::checked_from_int(19).unwrap() / 3;
+let six_and_third = I20F12::from_int(19) / 3;
 // four decimal digits for 12 binary digits
 assert_eq!(six_and_third.to_string(), "6.3333");
 // convert to i32, taking the ceil
-assert_eq!(six_and_third.to_int_ceil(), 7);
+assert_eq!(six_and_third.ceil().to_int(), 7);
 ```
 
 The type [`I20F12`] is a 32-bit fixed-point signed number with 20
@@ -273,7 +273,7 @@ macro_rules! deprecated_from_float {
                 "\n",
                 "[`checked_from_float`]: #method.checked_from_float\n",
             ),
-            #[deprecated(since = "0.1.7", note = "replaced by checked_from_float")]
+            #[deprecated(since = "0.2.0", note = "replaced by checked_from_float")]
             #[inline]
             pub fn $method(val: $Float) -> Option<$Fixed<$Frac>> {
                 <$Fixed<$Frac>>::checked_from_float(val)
@@ -292,7 +292,7 @@ macro_rules! deprecated_to_float {
                 "\n",
                 "[`to_float`]: #method.to_float\n",
             ),
-            #[deprecated(since = "0.1.7", note = "replaced by to_float")]
+            #[deprecated(since = "0.2.0", note = "replaced by to_float")]
             #[inline]
             pub fn $method(self) -> $Float {
                 self.to_float()
@@ -1139,222 +1139,92 @@ macro_rules! fixed {
                 }
             }
 
-            doc_comment_signed_unsigned! {
-                $Signedness,
-                concat!(
-                    "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
-                    "to an integer of type\n",
-                    "`", stringify!($Inner), "` truncating the fractional bits.\n",
-                    "\n",
-                    "# Examples\n",
-                    "\n",
-                    "```rust\n",
-                    "use fixed::frac;\n",
-                    "use fixed::", stringify!($Fixed), ";\n",
-                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
-                    "let two_half = Fix::checked_from_int(5).unwrap() / 2;\n",
-                    "assert_eq!(two_half.to_int(), 2);\n",
-                    "let neg_two_half = -two_half;\n",
-                    "assert_eq!(neg_two_half.to_int(), -2);\n",
-                    "```\n",
-                ),
-                concat!(
-                    "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
-                    "to an integer of type\n",
-                    "`", stringify!($Inner), "` truncating the fractional bits.\n",
-                    "\n",
-                    "# Examples\n",
-                    "\n",
-                    "```rust\n",
-                    "use fixed::frac;\n",
-                    "use fixed::", stringify!($Fixed), ";\n",
-                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
-                    "let two_half = Fix::checked_from_int(5).unwrap() / 2;\n",
-                    "assert_eq!(two_half.to_int(), 2);\n",
-                    "```\n",
+            doc_comment! {
+                concat!(r#"
+
+Converts the fixed-point number of type `"#, stringify!($Fixed), r#"`
+to an integer of type `"#, stringify!($Inner), r#"` truncating the fractional bits.
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::checked_from_int(5).unwrap() / 2;
+assert_eq!(two_half.to_int(), 2);"#,
+if_signed_unsigned!($Signedness, r#"
+assert_eq!((-two_half).to_int(), -3);"#, ""
+), r#"
+```
+"#,
                 ),
                 #[inline]
                 pub fn to_int(self) -> $Inner {
-                    let floor = self.to_int_floor();
-                    if_signed! {
-                        $Signedness;
-                        let no_frac = self.frac().to_bits() == 0;
-                        if no_frac || self.to_bits() >= 0 {
-                            floor
-                        } else {
-                            floor + 1
-                        }
-                    }
-                    if_unsigned! {
-                        $Signedness;
-                        floor
+                    let int = self.int().to_bits();
+                    if Self::frac_bits() < $nbits {
+                        int >> Self::frac_bits()
+                    } else {
+                        int
                     }
                 }
             }
 
-            doc_comment_signed_unsigned! {
-                $Signedness,
+            doc_comment! {
                 concat!(
-                    "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
-                    "to an integer of type\n",
-                    "`", stringify!($Inner), "` rounding towards +∞.\n",
-                    "\n",
-                    "# Examples\n",
-                    "\n",
-                    "```rust\n",
-                    "use fixed::frac;\n",
-                    "use fixed::", stringify!($Fixed), ";\n",
-                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
-                    "let two_half = Fix::checked_from_int(5).unwrap() / 2;\n",
-                    "assert_eq!(two_half.to_int_ceil(), 3);\n",
-                    "let neg_two_half = -two_half;\n",
-                    "assert_eq!(neg_two_half.to_int_ceil(), -2);\n",
-                    "```\n",
+                    "Converts the fixed-point number of type `",
+                    stringify!($Fixed),
+                    "` to an integer of type `",
+                    stringify!($Inner),
+                    "`, rounding towards +∞.\n",
                 ),
-                concat!(
-                    "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
-                    "to an integer of type\n",
-                    "`", stringify!($Inner), "` rounding towards +∞.\n",
-                    "\n",
-                    "# Examples\n",
-                    "\n",
-                    "```rust\n",
-                    "use fixed::frac;\n",
-                    "use fixed::", stringify!($Fixed), ";\n",
-                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
-                    "let two_half = Fix::checked_from_int(5).unwrap() / 2;\n",
-                    "assert_eq!(two_half.to_int_ceil(), 3);\n",
-                    "```\n",
-                ),
+                #[deprecated(since = "0.2.0", note = "use f.ceil().to_int() instead")]
                 #[inline]
                 pub fn to_int_ceil(self) -> $Inner {
-                    let floor = self.to_int_floor();
-                    let no_frac = self.frac().to_bits() == 0;
-                    if no_frac {
-                        floor
+                    if let Some(ceil) = self.checked_ceil() {
+                        ceil.to_int()
                     } else {
-                        floor + 1
+                        self.floor().to_int() + 1
                     }
                 }
             }
 
-            doc_comment_signed_unsigned! {
-                $Signedness,
+            doc_comment! {
                 concat!(
-                    "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
-                    "to an integer of type\n",
-                    "`", stringify!($Inner), "` rounding towards −∞.\n",
-                    "\n",
-                    "# Examples\n",
-                    "\n",
-                    "```rust\n",
-                    "use fixed::frac;\n",
-                    "use fixed::", stringify!($Fixed), ";\n",
-                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
-                    "let two_half = Fix::checked_from_int(5).unwrap() / 2;\n",
-                    "assert_eq!(two_half.to_int_floor(), 2);\n",
-                    "let neg_two_half = -two_half;\n",
-                    "assert_eq!(neg_two_half.to_int_floor(), -3);\n",
-                    "```\n",
+                    "Converts the fixed-point number of type `",
+                    stringify!($Fixed),
+                    "` to an integer of type `",
+                    stringify!($Inner),
+                    "` rounding towards −∞.\n",
                 ),
-                concat!(
-                    "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
-                    "to an integer of type\n",
-                    "`", stringify!($Inner), "` rounding towards −∞.\n",
-                    "\n",
-                    "# Examples\n",
-                    "\n",
-                    "```rust\n",
-                    "use fixed::frac;\n",
-                    "use fixed::", stringify!($Fixed), ";\n",
-                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
-                    "let two_half = Fix::checked_from_int(5).unwrap() / 2;\n",
-                    "assert_eq!(two_half.to_int_floor(), 2);\n",
-                    "```\n",
-                ),
+                #[deprecated(since = "0.2.0", note = "use f.floor().to_int() instead")]
                 #[inline]
                 pub fn to_int_floor(self) -> $Inner {
-                    let bits = self.to_bits();
-                    if Self::int_bits() == 0 {
-                        if_signed! { $Signedness; bits >> (Self::frac_bits() - 1) }
-                        if_unsigned! { $Signedness; 0 }
+                    if let Some(floor) = self.checked_floor() {
+                        floor.to_int()
                     } else {
-                        bits >> Self::frac_bits()
+                        self.ceil().to_int() - 1
                     }
                 }
             }
 
-            doc_comment_signed_unsigned! {
-                $Signedness,
+            doc_comment! {
                 concat!(
-                    "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
-                    "to an integer of type\n",
-                    "`", stringify!($Inner), "` rounding towards the nearest.\n",
-                    "Ties are rounded away from zero.\n",
-                    "\n",
-                    "# Examples\n",
-                    "\n",
-                    "```rust\n",
-                    "use fixed::frac;\n",
-                    "use fixed::", stringify!($Fixed), ";\n",
-                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
-                    "let two_half = Fix::checked_from_int(5).unwrap() / 2;\n",
-                    "assert_eq!(two_half.to_int_round(), 3);\n",
-                    "let neg_two_half = -two_half;\n",
-                    "assert_eq!(neg_two_half.to_int_round(), -3);\n",
-                    "let one_quarter = two_half / 2;\n",
-                    "assert_eq!(one_quarter.to_int_round(), 1);\n",
-                    "```\n",
+                    "Converts the fixed-point number of type `",
+                    stringify!($Fixed),
+                    "` to an integer of type `",
+                    stringify!($Inner),
+                    "` rounding towards the nearest. Ties are rounded away from zero.\n",
                 ),
-                concat!(
-                    "Converts the fixed-point number of type `", stringify!($Fixed), "`\n",
-                    "to an integer of type\n",
-                    "`", stringify!($Inner), "` rounding towards −∞.\n",
-                    "\n",
-                    "# Examples\n",
-                    "\n",
-                    "```rust\n",
-                    "use fixed::frac;\n",
-                    "use fixed::", stringify!($Fixed), ";\n",
-                    "type Fix = ", stringify!($Fixed), "<frac::U4>;\n",
-                    "let two_half = Fix::checked_from_int(5).unwrap() / 2;\n",
-                    "assert_eq!(two_half.to_int_round(), 3);\n",
-                    "let one_quarter = two_half / 2;\n",
-                    "assert_eq!(one_quarter.to_int_round(), 1);\n",
-                    "```\n",
-                ),
+                #[deprecated(since = "0.2.0", note = "use f.round().to_int() instead")]
                 #[inline]
                 pub fn to_int_round(self) -> $Inner {
-                    let frac_bits = <$Fixed<Frac>>::frac_bits();
-                    let floor = self.to_int_floor();
-                    if frac_bits == 0 {
-                        return floor;
-                    }
-                    let half_bit = 1 << (frac_bits - 1);
-                    if_signed! {
-                        $Signedness;
-                        if self.to_bits() >= 0 {
-                            if (self.to_bits() & half_bit) != 0 {
-                                floor + 1
-                            } else {
-                                floor
-                            }
-                        } else {
-                            let neg =  self.to_bits().wrapping_neg();
-                            if (neg & half_bit) != 0 {
-                                floor
-                            } else {
-                                floor + 1
-                            }
-                        }
-                    }
-                    if_unsigned! {
-                        $Signedness;
-                        if (self.to_bits() & half_bit) != 0 {
-                            floor + 1
-                        } else {
-                            floor
-                        }
+                    if let Some(round) = self.checked_round() {
+                        round.to_int()
+                    } else if let Some(floor) = self.checked_floor() {
+                        floor.to_int() + 1
+                    } else {
+                        self.ceil().to_int() - 1
                     }
                 }
             }
@@ -3005,6 +2875,7 @@ mod tests {
     use *;
 
     #[cfg_attr(feature = "cargo-clippy", allow(clippy::cyclomatic_complexity))]
+    #[allow(deprecated)]
     #[test]
     fn rounding() {
         use frac::{U16, U32};
@@ -3017,6 +2888,9 @@ mod tests {
         assert_eq!(f.to_int_ceil(), 0);
         assert_eq!(f.to_int_floor(), -1);
         assert_eq!(f.to_int_round(), -1);
+        assert_eq!(f.overflowing_ceil(), (I0F32::from_int(0), false));
+        assert_eq!(f.overflowing_floor(), (I0F32::from_int(0), true));
+        assert_eq!(f.overflowing_round(), (I0F32::from_int(0), true));
 
         // -0.5 + Δ
         let f = I0F32::from_bits((-1 << 31) + 1);
@@ -3024,6 +2898,9 @@ mod tests {
         assert_eq!(f.to_int_ceil(), 0);
         assert_eq!(f.to_int_floor(), -1);
         assert_eq!(f.to_int_round(), 0);
+        assert_eq!(f.overflowing_ceil(), (I0F32::from_int(0), false));
+        assert_eq!(f.overflowing_floor(), (I0F32::from_int(0), true));
+        assert_eq!(f.overflowing_round(), (I0F32::from_int(0), false));
 
         // 0.5 - Δ
         let f = I0F32::from_bits((1 << 30) - 1 + (1 << 30));
@@ -3031,6 +2908,9 @@ mod tests {
         assert_eq!(f.to_int_ceil(), 1);
         assert_eq!(f.to_int_floor(), 0);
         assert_eq!(f.to_int_round(), 0);
+        assert_eq!(f.overflowing_ceil(), (I0F32::from_int(0), true));
+        assert_eq!(f.overflowing_floor(), (I0F32::from_int(0), false));
+        assert_eq!(f.overflowing_round(), (I0F32::from_int(0), false));
 
         type U0F32 = FixedU32<U32>;
 
@@ -3040,6 +2920,9 @@ mod tests {
         assert_eq!(f.to_int_ceil(), 1);
         assert_eq!(f.to_int_floor(), 0);
         assert_eq!(f.to_int_round(), 0);
+        assert_eq!(f.overflowing_ceil(), (U0F32::from_int(0), true));
+        assert_eq!(f.overflowing_floor(), (U0F32::from_int(0), false));
+        assert_eq!(f.overflowing_round(), (U0F32::from_int(0), false));
 
         // 0.5
         let f = U0F32::from_bits(1 << 31);
@@ -3047,6 +2930,9 @@ mod tests {
         assert_eq!(f.to_int_ceil(), 1);
         assert_eq!(f.to_int_floor(), 0);
         assert_eq!(f.to_int_round(), 1);
+        assert_eq!(f.overflowing_ceil(), (U0F32::from_int(0), true));
+        assert_eq!(f.overflowing_floor(), (U0F32::from_int(0), false));
+        assert_eq!(f.overflowing_round(), (U0F32::from_int(0), true));
 
         // 0.5 + Δ
         let f = U0F32::from_bits((1 << 31) + 1);
@@ -3054,50 +2940,71 @@ mod tests {
         assert_eq!(f.to_int_ceil(), 1);
         assert_eq!(f.to_int_floor(), 0);
         assert_eq!(f.to_int_round(), 1);
+        assert_eq!(f.overflowing_ceil(), (U0F32::from_int(0), true));
+        assert_eq!(f.overflowing_floor(), (U0F32::from_int(0), false));
+        assert_eq!(f.overflowing_round(), (U0F32::from_int(0), true));
 
         type I16F16 = FixedI32<U16>;
 
         // -3.5 - Δ
         let f = I16F16::from_bits(((-7) << 15) - 1);
-        assert_eq!(f.to_int(), -3);
+        assert_eq!(f.to_int(), -4);
         assert_eq!(f.to_int_ceil(), -3);
         assert_eq!(f.to_int_floor(), -4);
         assert_eq!(f.to_int_round(), -4);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(-3), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_int(-4), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_int(-4), false));
 
         // -3.5
         let f = I16F16::from_bits((-7) << 15);
-        assert_eq!(f.to_int(), -3);
+        assert_eq!(f.to_int(), -4);
         assert_eq!(f.to_int_ceil(), -3);
         assert_eq!(f.to_int_floor(), -4);
         assert_eq!(f.to_int_round(), -4);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(-3), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_int(-4), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_int(-4), false));
 
         // -3.5 + Δ
         let f = I16F16::from_bits(((-7) << 15) + 1);
-        assert_eq!(f.to_int(), -3);
+        assert_eq!(f.to_int(), -4);
         assert_eq!(f.to_int_ceil(), -3);
         assert_eq!(f.to_int_floor(), -4);
         assert_eq!(f.to_int_round(), -3);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(-3), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_int(-4), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_int(-3), false));
 
         // -0.5 - Δ
         let f = I16F16::from_bits(((-1) << 15) - 1);
-        assert_eq!(f.to_int(), 0);
+        assert_eq!(f.to_int(), -1);
         assert_eq!(f.to_int_ceil(), 0);
         assert_eq!(f.to_int_floor(), -1);
         assert_eq!(f.to_int_round(), -1);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(0), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_int(-1), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_int(-1), false));
 
         // -0.5
         let f = I16F16::from_bits((-1) << 15);
-        assert_eq!(f.to_int(), 0);
+        assert_eq!(f.to_int(), -1);
         assert_eq!(f.to_int_ceil(), 0);
         assert_eq!(f.to_int_floor(), -1);
         assert_eq!(f.to_int_round(), -1);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(0), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_int(-1), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_int(-1), false));
 
         // -0.5 + Δ
         let f = I16F16::from_bits(((-1) << 15) + 1);
-        assert_eq!(f.to_int(), 0);
+        assert_eq!(f.to_int(), -1);
         assert_eq!(f.to_int_ceil(), 0);
         assert_eq!(f.to_int_floor(), -1);
         assert_eq!(f.to_int_round(), 0);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(0), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_int(-1), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_int(0), false));
 
         // 0.5 - Δ
         let f = I16F16::from_bits((1 << 15) - 1);
@@ -3105,6 +3012,9 @@ mod tests {
         assert_eq!(f.to_int_ceil(), 1);
         assert_eq!(f.to_int_floor(), 0);
         assert_eq!(f.to_int_round(), 0);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(1), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_int(0), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_int(0), false));
 
         // 0.5
         let f = I16F16::from_bits(1 << 15);
@@ -3112,6 +3022,9 @@ mod tests {
         assert_eq!(f.to_int_ceil(), 1);
         assert_eq!(f.to_int_floor(), 0);
         assert_eq!(f.to_int_round(), 1);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(1), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_int(0), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_int(1), false));
 
         // 0.5 + Δ
         let f = I16F16::from_bits((1 << 15) + 1);
@@ -3119,6 +3032,9 @@ mod tests {
         assert_eq!(f.to_int_ceil(), 1);
         assert_eq!(f.to_int_floor(), 0);
         assert_eq!(f.to_int_round(), 1);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(1), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_int(0), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_int(1), false));
 
         // 3.5 - Δ
         let f = I16F16::from_bits((7 << 15) - 1);
@@ -3126,6 +3042,9 @@ mod tests {
         assert_eq!(f.to_int_ceil(), 4);
         assert_eq!(f.to_int_floor(), 3);
         assert_eq!(f.to_int_round(), 3);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(4), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_int(3), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_int(3), false));
 
         // 3.5
         let f = I16F16::from_bits(7 << 15);
@@ -3133,6 +3052,9 @@ mod tests {
         assert_eq!(f.to_int_ceil(), 4);
         assert_eq!(f.to_int_floor(), 3);
         assert_eq!(f.to_int_round(), 4);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(4), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_int(3), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_int(4), false));
 
         // 3.5 + Δ
         let f = I16F16::from_bits((7 << 15) + 1);
@@ -3140,6 +3062,9 @@ mod tests {
         assert_eq!(f.to_int_ceil(), 4);
         assert_eq!(f.to_int_floor(), 3);
         assert_eq!(f.to_int_round(), 4);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(4), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_int(3), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_int(4), false));
 
         type U16F16 = FixedU32<U16>;
 
@@ -3149,6 +3074,9 @@ mod tests {
         assert_eq!(f.to_int_ceil(), 1);
         assert_eq!(f.to_int_floor(), 0);
         assert_eq!(f.to_int_round(), 0);
+        assert_eq!(f.overflowing_ceil(), (U16F16::from_int(1), false));
+        assert_eq!(f.overflowing_floor(), (U16F16::from_int(0), false));
+        assert_eq!(f.overflowing_round(), (U16F16::from_int(0), false));
 
         // 0.5
         let f = U16F16::from_bits(1 << 15);
@@ -3156,6 +3084,9 @@ mod tests {
         assert_eq!(f.to_int_ceil(), 1);
         assert_eq!(f.to_int_floor(), 0);
         assert_eq!(f.to_int_round(), 1);
+        assert_eq!(f.overflowing_ceil(), (U16F16::from_int(1), false));
+        assert_eq!(f.overflowing_floor(), (U16F16::from_int(0), false));
+        assert_eq!(f.overflowing_round(), (U16F16::from_int(1), false));
 
         // 0.5 + Δ
         let f = U16F16::from_bits((1 << 15) + 1);
@@ -3163,6 +3094,9 @@ mod tests {
         assert_eq!(f.to_int_ceil(), 1);
         assert_eq!(f.to_int_floor(), 0);
         assert_eq!(f.to_int_round(), 1);
+        assert_eq!(f.overflowing_ceil(), (U16F16::from_int(1), false));
+        assert_eq!(f.overflowing_floor(), (U16F16::from_int(0), false));
+        assert_eq!(f.overflowing_round(), (U16F16::from_int(1), false));
 
         // 3.5 - Δ
         let f = U16F16::from_bits((7 << 15) - 1);
@@ -3170,6 +3104,9 @@ mod tests {
         assert_eq!(f.to_int_ceil(), 4);
         assert_eq!(f.to_int_floor(), 3);
         assert_eq!(f.to_int_round(), 3);
+        assert_eq!(f.overflowing_ceil(), (U16F16::from_int(4), false));
+        assert_eq!(f.overflowing_floor(), (U16F16::from_int(3), false));
+        assert_eq!(f.overflowing_round(), (U16F16::from_int(3), false));
 
         // 3.5
         let f = U16F16::from_bits(7 << 15);
@@ -3177,6 +3114,9 @@ mod tests {
         assert_eq!(f.to_int_ceil(), 4);
         assert_eq!(f.to_int_floor(), 3);
         assert_eq!(f.to_int_round(), 4);
+        assert_eq!(f.overflowing_ceil(), (U16F16::from_int(4), false));
+        assert_eq!(f.overflowing_floor(), (U16F16::from_int(3), false));
+        assert_eq!(f.overflowing_round(), (U16F16::from_int(4), false));
 
         // 3.5 + Δ
         let f = U16F16::from_bits((7 << 15) + 1);
@@ -3184,5 +3124,8 @@ mod tests {
         assert_eq!(f.to_int_ceil(), 4);
         assert_eq!(f.to_int_floor(), 3);
         assert_eq!(f.to_int_round(), 4);
+        assert_eq!(f.overflowing_ceil(), (U16F16::from_int(4), false));
+        assert_eq!(f.overflowing_floor(), (U16F16::from_int(3), false));
+        assert_eq!(f.overflowing_round(), (U16F16::from_int(4), false));
     }
 }

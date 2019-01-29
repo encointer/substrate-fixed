@@ -54,11 +54,15 @@ numeric primitives are implemented. That is, you can use [`From`] or
   * The methods [`from_f16`], [`from_f32`], [`from_f64`], [`to_f16`],
     [`to_f32`] and [`to_f64`] were deprecated.
   * The new method [`to_float`] was added.
+  * The [`to_int`] method was fixed to truncate fractional bits as
+    documented for negative values.
   * The new methods [`ceil`], [`floor`], [`round`], [`checked_ceil`],
     [`checked_floor`], [`checked_round`], [`saturating_ceil`],
     [`saturating_floor`], [`saturating_round`], [`wrapping_ceil`],
     [`wrapping_floor`], [`wrapping_round`], [`overflowing_ceil`],
     [`overflowing_floor`] and [`overflowing_round`].
+  * The methods [`to_int_ceil`], [`to_int_floor`] and [`to_int_round`]
+    were deprecated.
 
 [`ceil`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.ceil
 [`checked_ceil`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.checked_ceil
@@ -92,6 +96,10 @@ numeric primitives are implemented. That is, you can use [`From`] or
 [`to_f32`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.to_f32
 [`to_f64`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.to_f64
 [`to_float`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.to_float
+[`to_int_ceil`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.to_int_ceil
+[`to_int_floor`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.to_int_floor
+[`to_int_round`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.to_int_round
+[`to_int`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.to_int
 [`wrapping_ceil`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.wrapping_ceil
 [`wrapping_floor`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.wrapping_floor
 [`wrapping_from_fixed`]: https://docs.rs/fixed/0.2.0/fixed/struct.FixedI32.html#method.wrapping_from_fixed
@@ -129,11 +137,11 @@ Details on other releases can be found in [*RELEASES.md*].
 use fixed::types::I20F12;
 
 // 19/3 = 6 1/3
-let six_and_third = I20F12::checked_from_int(19).unwrap() / 3;
+let six_and_third = I20F12::from_int(19) / 3;
 // four decimal digits for 12 binary digits
 assert_eq!(six_and_third.to_string(), "6.3333");
 // convert to i32, taking the ceil
-assert_eq!(six_and_third.to_int_ceil(), 7);
+assert_eq!(six_and_third.ceil().to_int(), 7);
 ```
 
 The type [`I20F12`] is a 32-bit fixed-point signed number with 20

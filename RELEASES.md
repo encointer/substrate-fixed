@@ -21,11 +21,15 @@ Version 0.2.0 (unreleased)
   * The methods `from_f16`, `from_f32`, `from_f64`, `to_f16`, `to_f32`
     and `to_f64` were deprecated.
   * The new method `to_float` was added.
+  * The `to_int` method was fixed to truncate fractional bits as
+    documented for negative values.
   * The new methods `ceil`, `floor`, `round`, `checked_ceil`,
     `checked_floor`, `checked_round`, `saturating_ceil`,
     `saturating_floor`, `saturating_round`, `wrapping_ceil`,
     `wrapping_floor`, `wrapping_round`, `overflowing_ceil`,
     `overflowing_floor` and `overflowing_round`.
+  * The methods `to_int_ceil`, `to_int_floor` and `to_int_round` were
+    deprecated.
 
 Version 0.1.6 (2019-01-27)
 ==========================

@@ -2245,6 +2245,88 @@ macro_rules! fixed {
 
             doc_comment! {
                 concat!(r#"
+Wrapping ceil. Rounds towards +∞, wrapping on overflow.
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.wrapping_ceil(), Fix::from_int(3));"#,
+if_signed_unsigned!($Signedness, r#"
+assert_eq!((-two_half).wrapping_ceil(), Fix::from_int(-2));"#, ""
+), r#"
+assert_eq!(Fix::max_value().wrapping_ceil(), Fix::min_value());
+```
+"#,
+                ),
+                #[inline]
+                pub fn wrapping_ceil(self) -> $Fixed<Frac> {
+                    self.overflowing_ceil().0
+                }
+            }
+
+            doc_comment! {
+                concat!(if_signed_unsigned!($Signedness, r#"
+Wrapping floor. Rounds towards −∞, wrapping on overflow.
+
+Overflow can only occur when there are zero integer bits.
+"#, r#"
+Wrapping floor. Rounds towards −∞. Cannot overflow for unsigned values.
+"#), r#"
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.wrapping_floor(), Fix::from_int(2));"#,
+if_signed_unsigned!($Signedness, concat!(r#"
+assert_eq!((-two_half).wrapping_floor(), Fix::from_int(-3));
+type AllFrac = "#, stringify!($Fixed), "<frac::", stringify!($Len), r#">;
+assert_eq!(AllFrac::min_value().wrapping_floor(), AllFrac::from_int(0));"#), ""
+), r#"
+```
+"#,
+                ),
+                #[inline]
+                pub fn wrapping_floor(self) -> $Fixed<Frac> {
+                    self.overflowing_floor().0
+                }
+            }
+
+            doc_comment! {
+                concat!(r#"
+Wrapping round. Rounds to the nearest, with ties rounded away from
+zero, and wrapping on overflow.
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.wrapping_round(), Fix::from_int(3));"#,
+if_signed_unsigned!($Signedness, r#"
+assert_eq!((-two_half).wrapping_round(), Fix::from_int(-3));"#, ""
+), r#"
+assert_eq!(Fix::max_value().wrapping_round(), Fix::min_value());
+```
+"#,
+                ),
+                #[inline]
+                pub fn wrapping_round(self) -> $Fixed<Frac> {
+                    self.overflowing_round().0
+                }
+            }
+
+            doc_comment! {
+                concat!(r#"
 Overflowing ceil. Rounds towards +∞.
 
 Returns a tuple of the fixed-point number and a [`bool`], indicating 
@@ -2323,7 +2405,7 @@ assert_eq!(AllFrac::min_value().overflowing_floor(), (AllFrac::from_int(0), true
                             return (int, self.to_bits() < 0);
                         }
                     }
-                    return (int, false);
+                    (int, false)
                 }
             }
 

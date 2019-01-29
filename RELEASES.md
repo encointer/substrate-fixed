@@ -5,7 +5,7 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
-Version 0.2.1 (unreleased)
+Version 0.2.1 (2019-01-29)
 ==========================
 
   * Bug fix: the `from_fixed` and `from_int` methods (and their

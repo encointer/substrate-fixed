@@ -46,7 +46,7 @@ All lossless infallible conversions between fixed-point numbers and
 numeric primitives are implemented. That is, you can use [`From`] or
 [`Into`] for the conversions that always work without losing any bits.
 
-## Quick example
+## Quick examples
 
 ```rust
 // 20 integer bits, 12 fractional bits
@@ -65,6 +65,39 @@ integer bits and 12 fractional bits. It is an alias to
 [`FixedI32<frac::U12>`][`FixedI32`]. The unsigned counterpart would be
 [`U20F12`]. Aliases are provided for all combinations of integer and
 fractional bits adding up to a total of eight, 16, 32, 64 or 128 bits.
+
+```rust
+// −8 ≤ I4F4 < 8 with steps of 1/16 (about 0.06)
+use fixed::types::I4F4;
+let a = I4F4::from_int(1);
+// multiplication and division by integers is possible
+let ans1 = a / 5 * 17;
+// 1 / 5 × 17 = 3 2/5 (3.4), but we get 3 3/16 (3.19)
+assert_eq!(ans1, I4F4::from_bits((3 << 4) + 3));
+assert_eq!(ans1.to_string(), "3.19");
+
+// −8 ≤ I4F12 < 8 with steps of 1/4096 (about 0.0002)
+use fixed::types::I4F12;
+let wider_a = I4F12::from(a);
+let wider_ans = wider_a / 5 * 17;
+let ans2 = I4F4::from_fixed(wider_ans);
+// now the answer is the much closer 3 6/16 (3.38)
+assert_eq!(ans2, I4F4::from_bits((3 << 4) + 6));
+assert_eq!(ans2.to_string(), "3.38");
+```
+
+The second example shows some precision and conversion issues. The low
+precision of `a` means that `a / 5` is 3⁄16 instead of 1⁄5, leading to
+an inaccurate result `ans1` = 3 3⁄16 (3.19). With a higher precision,
+we get `wider_a / 5` equal to 819⁄4096, leading to a more accurate
+intermediate result `wider_ans` = 3 1635⁄4096. When we convert back to
+four fractional bits, we get `ans2` = 3 6⁄16 (3.38).
+
+Note that we can convert from [`I4F4`] to [`I4F12`] using [`From`], as
+the target type has the same number of integer bits and a larger
+number of fractional bits. Converting from [`I4F12`] to [`I4F4`]
+cannot use [`From`] as we have less fractional bits, so we use
+[`from_fixed`] instead.
 
 ## Using the *fixed* crate
 
@@ -129,7 +162,6 @@ additional terms or conditions.
 [LICENSE-APACHE]: https://www.apache.org/licenses/LICENSE-2.0
 [LICENSE-MIT]: https://opensource.org/licenses/MIT
 [`FixedI128`]: struct.FixedI128.html
-[`FixedI128`]: struct.FixedI128.html
 [`FixedI16`]: struct.FixedI16.html
 [`FixedI32`]: struct.FixedI32.html
 [`FixedI64`]: struct.FixedI64.html
@@ -141,9 +173,12 @@ additional terms or conditions.
 [`FixedU8`]: struct.FixedU8.html
 [`From`]: https://doc.rust-lang.org/nightly/std/convert/trait.From.html
 [`I20F12`]: types/type.I20F12.html
+[`I4F12`]: types/type.I4F12.html
+[`I4F4`]: types/type.I4F4.html
 [`Into`]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
 [`U20F12`]: types/type.U20F12.html
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html
+[`from_fixed`]: struct.FixedI8.html#method.from_fixed
 [const generics]: https://github.com/rust-lang/rust/issues/44580
 */
 #![no_std]

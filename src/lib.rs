@@ -2245,6 +2245,98 @@ macro_rules! fixed {
 
             doc_comment! {
                 concat!(r#"
+Saturating ceil. Rounds towards +∞, saturating on overflow.
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.saturating_ceil(), Fix::from_int(3));"#,
+if_signed_unsigned!($Signedness, r#"
+assert_eq!((-two_half).saturating_ceil(), Fix::from_int(-2));"#, ""
+), r#"
+assert_eq!(Fix::max_value().saturating_ceil(), Fix::max_value());
+```
+"#,
+                ),
+                #[inline]
+                pub fn saturating_ceil(self) -> $Fixed<Frac> {
+                    let saturated = $Fixed::max_value();
+                    let (ceil, overflow) = self.overflowing_ceil();
+                    if overflow { saturated } else { ceil }
+                }
+            }
+
+            doc_comment! {
+                concat!(if_signed_unsigned!($Signedness, r#"
+Saturating floor. Rounds towards −∞, saturating on overflow.
+
+Overflow can only occur when there are zero integer bits.
+"#, r#"
+Saturating floor. Rounds towards −∞. Cannot overflow for unsigned values.
+"#), r#"
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.saturating_floor(), Fix::from_int(2));"#,
+if_signed_unsigned!($Signedness, concat!(r#"
+assert_eq!((-two_half).saturating_floor(), Fix::from_int(-3));
+type AllFrac = "#, stringify!($Fixed), "<frac::", stringify!($Len), r#">;
+assert_eq!(AllFrac::min_value().saturating_floor(), AllFrac::min_value());"#), ""
+), r#"
+```
+"#,
+                ),
+                #[inline]
+                pub fn saturating_floor(self) -> $Fixed<Frac> {
+                    let saturated = $Fixed::min_value();
+                    let (floor, overflow) = self.overflowing_floor();
+                    if overflow { saturated } else { floor }
+                }
+            }
+
+            doc_comment! {
+                concat!(r#"
+Saturating round. Rounds to the nearest, with ties rounded away from
+zero, and saturating on overflow.
+
+# Examples
+
+```rust
+use fixed::frac;
+use fixed::"#, stringify!($Fixed), r#";
+type Fix = "#, stringify!($Fixed), r#"<frac::U4>;
+let two_half = Fix::from_int(5) / 2;
+assert_eq!(two_half.saturating_round(), Fix::from_int(3));"#,
+if_signed_unsigned!($Signedness, r#"
+assert_eq!((-two_half).saturating_round(), Fix::from_int(-3));"#, ""
+), r#"
+assert_eq!(Fix::max_value().saturating_round(), Fix::max_value());
+```
+"#,
+                ),
+                #[inline]
+                pub fn saturating_round(self) -> $Fixed<Frac> {
+                    let saturated = if self.to_bits() > 0 {
+                        $Fixed::max_value()
+                    } else {
+                        $Fixed::min_value()
+                    };
+                    let (round, overflow) = self.overflowing_round();
+                    if overflow { saturated } else { round }
+                }
+            }
+
+            doc_comment! {
+                concat!(r#"
 Wrapping ceil. Rounds towards +∞, wrapping on overflow.
 
 # Examples

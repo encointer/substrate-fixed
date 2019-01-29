@@ -1275,65 +1275,6 @@ assert_eq!((-two_half).to_int(), -3);",
 
             doc_comment!(
                 concat!(
-                    "Converts the fixed-point number of type `",
-                    stringify!($Fixed),
-                    "` to an integer of type `",
-                    stringify!($Inner),
-                    "`, rounding towards +∞.\n",
-                ),
-                #[deprecated(since = "0.2.0", note = "use f.ceil().to_int() instead")]
-                #[inline]
-                pub fn to_int_ceil(self) -> $Inner {
-                    if let Some(ceil) = self.checked_ceil() {
-                        ceil.to_int()
-                    } else {
-                        self.floor().to_int() + 1
-                    }
-                }
-            );
-
-            doc_comment!(
-                concat!(
-                    "Converts the fixed-point number of type `",
-                    stringify!($Fixed),
-                    "` to an integer of type `",
-                    stringify!($Inner),
-                    "` rounding towards −∞.\n",
-                ),
-                #[deprecated(since = "0.2.0", note = "use f.floor().to_int() instead")]
-                #[inline]
-                pub fn to_int_floor(self) -> $Inner {
-                    if let Some(floor) = self.checked_floor() {
-                        floor.to_int()
-                    } else {
-                        self.ceil().to_int() - 1
-                    }
-                }
-            );
-
-            doc_comment!(
-                concat!(
-                    "Converts the fixed-point number of type `",
-                    stringify!($Fixed),
-                    "` to an integer of type `",
-                    stringify!($Inner),
-                    "` rounding towards the nearest. Ties are rounded away from zero.\n",
-                ),
-                #[deprecated(since = "0.2.0", note = "use f.round().to_int() instead")]
-                #[inline]
-                pub fn to_int_round(self) -> $Inner {
-                    if let Some(round) = self.checked_round() {
-                        round.to_int()
-                    } else if let Some(floor) = self.checked_floor() {
-                        floor.to_int() + 1
-                    } else {
-                        self.ceil().to_int() - 1
-                    }
-                }
-            );
-
-            doc_comment!(
-                concat!(
                     "
 Creates a fixed-point number from a floating-point number.
 
@@ -1709,11 +1650,6 @@ assert_eq!(Fix::overflowing_from_float(large), (wrapped, true));
                 }
             );
 
-            #[cfg(feature = "f16")]
-            deprecated_from_float! { fn from_f16(f16) -> $Fixed<Frac> }
-            deprecated_from_float! { fn from_f32(f32) -> $Fixed<Frac> }
-            deprecated_from_float! { fn from_f64(f64) -> $Fixed<Frac> }
-
             doc_comment!(
                 concat!(
                     "
@@ -1758,11 +1694,6 @@ assert_eq!(Fix::from_bits(",
                     SealedFloat::from_neg_abs(neg, u128::from(abs), frac_bits, int_bits)
                 }
             );
-
-            #[cfg(feature = "f16")]
-            deprecated_to_float! { fn to_f16($Fixed) -> f16 }
-            deprecated_to_float! { fn to_f32($Fixed) -> f32 }
-            deprecated_to_float! { fn to_f64($Fixed) -> f64 }
 
             doc_comment!(
                 concat!(
@@ -3130,6 +3061,76 @@ assert!(Fix::from_int(-5).is_negative());
                     $Fixed($Inner) => fn is_negative(self) -> bool
                 }
             }
+
+            doc_comment!(
+                concat!(
+                    "Converts the fixed-point number of type `",
+                    stringify!($Fixed),
+                    "` to an integer of type `",
+                    stringify!($Inner),
+                    "`, rounding towards +∞.\n",
+                ),
+                #[deprecated(since = "0.2.0", note = "use f.ceil().to_int() instead")]
+                #[inline]
+                pub fn to_int_ceil(self) -> $Inner {
+                    if let Some(ceil) = self.checked_ceil() {
+                        ceil.to_int()
+                    } else {
+                        self.floor().to_int() + 1
+                    }
+                }
+            );
+
+            doc_comment!(
+                concat!(
+                    "Converts the fixed-point number of type `",
+                    stringify!($Fixed),
+                    "` to an integer of type `",
+                    stringify!($Inner),
+                    "` rounding towards −∞.\n",
+                ),
+                #[deprecated(since = "0.2.0", note = "use f.floor().to_int() instead")]
+                #[inline]
+                pub fn to_int_floor(self) -> $Inner {
+                    if let Some(floor) = self.checked_floor() {
+                        floor.to_int()
+                    } else {
+                        self.ceil().to_int() - 1
+                    }
+                }
+            );
+
+            doc_comment!(
+                concat!(
+                    "Converts the fixed-point number of type `",
+                    stringify!($Fixed),
+                    "` to an integer of type `",
+                    stringify!($Inner),
+                    "` rounding towards the nearest. Ties are rounded away from zero.\n",
+                ),
+                #[deprecated(since = "0.2.0", note = "use f.round().to_int() instead")]
+                #[inline]
+                pub fn to_int_round(self) -> $Inner {
+                    if let Some(round) = self.checked_round() {
+                        round.to_int()
+                    } else if let Some(floor) = self.checked_floor() {
+                        floor.to_int() + 1
+                    } else {
+                        self.ceil().to_int() - 1
+                    }
+                }
+            );
+
+
+            #[cfg(feature = "f16")]
+            deprecated_from_float! { fn from_f16(f16) -> $Fixed<Frac> }
+            deprecated_from_float! { fn from_f32(f32) -> $Fixed<Frac> }
+            deprecated_from_float! { fn from_f64(f64) -> $Fixed<Frac> }
+
+            #[cfg(feature = "f16")]
+            deprecated_to_float! { fn to_f16($Fixed) -> f16 }
+            deprecated_to_float! { fn to_f32($Fixed) -> f32 }
+            deprecated_to_float! { fn to_f64($Fixed) -> f64 }
         }
     };
 }

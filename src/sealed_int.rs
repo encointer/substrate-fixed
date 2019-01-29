@@ -14,6 +14,7 @@
 // <https://opensource.org/licenses/MIT>.
 
 use core::fmt::{Debug, Display};
+use sealed_fixed::Widest;
 
 pub trait SealedInt: Copy + Ord + Debug + Display {
     type Unsigned: SealedInt;
@@ -24,7 +25,12 @@ pub trait SealedInt: Copy + Ord + Debug + Display {
     fn all_ones_shl(shift: u32) -> Self;
     fn is_zero(self) -> bool;
 
-    fn to_fixed_neg_abs_overflow(self, frac_bits: u32, int_bits: u32) -> (bool, u128, bool);
+    fn to_fixed_overflow(
+        self,
+        src_frac_bits: u32,
+        dst_frac_bits: u32,
+        dst_int_bits: u32,
+    ) -> (Widest, bool);
 
     fn neg_abs(self) -> (bool, Self::Unsigned);
     fn from_neg_abs(neg: bool, abs: Self::Unsigned) -> Self;
@@ -65,37 +71,6 @@ macro_rules! sealed_int {
                 self == 0
             }
 
-            #[inline]
-            fn to_fixed_neg_abs_overflow(
-                self,
-                frac_bits: u32,
-                int_bits: u32,
-            ) -> (bool, u128, bool) {
-                let src_bits = <Self as SealedInt>::nbits() as i32;
-                let dst_bits = (frac_bits + int_bits) as i32;
-
-                if SealedInt::is_zero(self) {
-                    return (false, 0, false);
-                }
-
-                let (neg, mut abs) = SealedInt::neg_abs(self);
-                let leading_zeros = abs.leading_zeros();
-                abs <<= leading_zeros;
-                let need_to_shr =
-                    leading_zeros as i32 - frac_bits as i32;
-                let overflow = src_bits - need_to_shr > dst_bits;
-                let abs = if need_to_shr == 0 {
-                    u128::from(abs)
-                } else if need_to_shr < 0 && -need_to_shr < 128 {
-                    u128::from(abs) << -need_to_shr
-                } else if need_to_shr > 0 && need_to_shr < 128 {
-                    u128::from(abs) >> need_to_shr
-                } else {
-                    0
-                };
-                (neg, abs, overflow)
-            }
-
             $($rest)*
         }
     };
@@ -113,6 +88,37 @@ macro_rules! sealed_int {
                 debug_assert!(!neg || abs == 0);
                 let _ = neg;
                 abs
+            }
+
+            #[inline]
+            fn to_fixed_overflow(
+                self,
+                src_frac_bits: u32,
+                dst_frac_bits: u32,
+                dst_int_bits: u32,
+            ) -> (Widest, bool) {
+                let src_bits = <Self as SealedInt>::nbits() as i32;
+                let dst_bits = (dst_frac_bits + dst_int_bits) as i32;
+
+                if self == 0 {
+                    return (Widest::Unsigned(0), false);
+                }
+
+                let leading_zeros = self.leading_zeros();
+                let bits = self << leading_zeros;
+                let need_to_shr =
+                    leading_zeros as i32 + src_frac_bits as i32 - dst_frac_bits as i32;
+                let overflow = src_bits - need_to_shr > dst_bits;
+                let bits = if need_to_shr == 0 {
+                    u128::from(bits)
+                } else if need_to_shr < 0 && -need_to_shr < 128 {
+                    u128::from(bits) << -need_to_shr
+                } else if need_to_shr > 0 && need_to_shr < 128 {
+                    u128::from(bits) >> need_to_shr
+                } else {
+                    0
+                };
+                (Widest::Unsigned(bits), overflow)
             }
         }
     };
@@ -137,6 +143,42 @@ macro_rules! sealed_int {
                 } else {
                     abs as Self
                 }
+            }
+
+            #[inline]
+            fn to_fixed_overflow(
+                self,
+                src_frac_bits: u32,
+                dst_frac_bits: u32,
+                dst_int_bits: u32,
+            ) -> (Widest, bool) {
+                let src_bits = <Self as SealedInt>::nbits() as i32;
+                let dst_bits = (dst_frac_bits + dst_int_bits) as i32;
+
+                if self >= 0 {
+                    return SealedInt::to_fixed_overflow(
+                        self as $Unsigned,
+                        src_frac_bits,
+                        dst_frac_bits,
+                        dst_int_bits,
+                    );
+                }
+
+                let leading_ones = (!self).leading_zeros();
+                let bits = self << (leading_ones - 1);
+                let need_to_shr =
+                    leading_ones as i32 - 1 + src_frac_bits as i32 - dst_frac_bits as i32;
+                let overflow = src_bits - need_to_shr > dst_bits;
+                let bits = if need_to_shr == 0 {
+                    i128::from(bits)
+                } else if need_to_shr < 0 && -need_to_shr < 128 {
+                    i128::from(bits) << -need_to_shr
+                } else if need_to_shr > 0 && need_to_shr < 128 {
+                    i128::from(bits) >> need_to_shr
+                } else {
+                    0
+                };
+                (Widest::Negative(bits), overflow)
             }
         }
     };
@@ -175,19 +217,26 @@ impl SealedInt for bool {
     }
 
     #[inline]
-    fn to_fixed_neg_abs_overflow(self, frac_bits: u32, int_bits: u32) -> (bool, u128, bool) {
+    fn to_fixed_overflow(
+        self,
+        src_frac_bits: u32,
+        dst_frac_bits: u32,
+        dst_int_bits: u32,
+    ) -> (Widest, bool) {
+        debug_assert_eq!(src_frac_bits, 0);
+        let _ = src_frac_bits;
         if !self {
-            return (false, 0, false);
+            return (Widest::Unsigned(0), false);
         }
-        let overflow = int_bits == 0;
-        let abs = if frac_bits == 0 {
+        let overflow = dst_int_bits == 0;
+        let bits = if dst_frac_bits == 0 {
             1u128
-        } else if frac_bits < 128 {
-            1u128 << frac_bits
+        } else if dst_frac_bits < 128 {
+            1u128 << dst_frac_bits
         } else {
             0
         };
-        (false, abs, overflow)
+        (Widest::Unsigned(bits), overflow)
     }
 
     #[inline]

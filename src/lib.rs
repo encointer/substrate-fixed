@@ -223,6 +223,7 @@ use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
 #[cfg(feature = "f16")]
 use half::f16;
 use sealed::{Fixed, Float, Int, SealedFixed, SealedFloat, SealedInt};
+use sealed_fixed::Widest;
 
 macro_rules! pass_method {
     ($comment:expr, $Fixed:ident($Inner:ty) => fn $method:ident()) => {
@@ -696,38 +697,37 @@ assert_eq!(Fix::saturating_from_fixed(too_small), Fix::min_value());
                 {
                     let frac_bits = Self::frac_bits();
                     let int_bits = Self::int_bits();
-                    let saturated = if val.to_bits().neg_abs().0 {
-                        $Fixed::min_value()
-                    } else {
-                        $Fixed::max_value()
-                    };
-                    let (neg, abs_128, overflow) =
-                        <F as SealedFixed>::to_neg_abs_overflow(val, frac_bits, int_bits);
+
+                    let (value, overflow) =
+                        <<F as SealedFixed>::Bits as SealedInt>::to_fixed_overflow(
+                            val.to_bits(),
+                            <F as SealedFixed>::frac_bits(),
+                            frac_bits,
+                            int_bits,
+                        );
                     if overflow {
-                        return saturated;
+                        return if val.to_bits().neg_abs().0 {
+                            $Fixed::min_value()
+                        } else {
+                            $Fixed::max_value()
+                        };
                     }
-                    let abs_bits =
-                        abs_128 as <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::Unsigned;
-
-                    if <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::is_signed() {
-                        // most significant bit (msb) can be one only for min value,
-                        // that is for a negative value with only the msb true.
-                        let msb =
-                            <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::Unsigned::msb();
-                        if abs_bits & msb != 0 {
-                            if !neg || abs_bits != msb {
-                                return saturated;
+                    let bits = if_signed_unsigned!(
+                        $Signedness,
+                        match value {
+                            Widest::Unsigned(bits) => {
+                                if (bits as <$Fixed<Frac> as SealedFixed>::Bits) < 0 {
+                                    return $Fixed::max_value();
+                                }
+                                bits as _
                             }
-                        }
-                    } else if neg && abs_bits != 0 {
-                        return saturated;
-                    }
-                    let bits = if neg {
-                        abs_bits.wrapping_neg()
-                    } else {
-                        abs_bits
-                    } as <$Fixed<Frac> as SealedFixed>::Bits;
-
+                            Widest::Negative(bits) => bits as _,
+                        },
+                        match value {
+                            Widest::Unsigned(bits) => bits as _,
+                            Widest::Negative(_) => return $Fixed::min_value(),
+                        },
+                    );
                     SealedFixed::from_bits(bits)
                 }
             );
@@ -816,30 +816,32 @@ assert_eq!(Fix::saturating_from_fixed(too_small), Fix::min_value());
                     let frac_bits = Self::frac_bits();
                     let int_bits = Self::int_bits();
 
-                    let (neg, abs_128, mut overflow) =
-                        <F as SealedFixed>::to_neg_abs_overflow(val, frac_bits, int_bits);
-                    let abs_bits =
-                        abs_128 as <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::Unsigned;
-
-                    if <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::is_signed() {
-                        // most significant bit (msb) can be one only for min value,
-                        // that is for a negative value with only the msb true.
-                        let msb =
-                            <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::Unsigned::msb();
-                        if abs_bits & msb != 0 {
-                            if !neg || abs_bits != msb {
-                                overflow = true;
+                    let (value, mut overflow) =
+                        <<F as SealedFixed>::Bits as SealedInt>::to_fixed_overflow(
+                            val.to_bits(),
+                            <F as SealedFixed>::frac_bits(),
+                            frac_bits,
+                            int_bits,
+                        );
+                    let bits = if_signed_unsigned!(
+                        $Signedness,
+                        match value {
+                            Widest::Unsigned(bits) => {
+                                if (bits as <$Fixed<Frac> as SealedFixed>::Bits) < 0 {
+                                    overflow = true;
+                                }
+                                bits as _
                             }
-                        }
-                    } else if neg && abs_bits != 0 {
-                        overflow = true;
-                    }
-                    let bits = if neg {
-                        abs_bits.wrapping_neg()
-                    } else {
-                        abs_bits
-                    } as <$Fixed<Frac> as SealedFixed>::Bits;
-
+                            Widest::Negative(bits) => bits as _,
+                        },
+                        match value {
+                            Widest::Unsigned(bits) => bits as _,
+                            Widest::Negative(bits) => {
+                                overflow = true;
+                                bits as _
+                            }
+                        },
+                    );
                     (SealedFixed::from_bits(bits), overflow)
                 }
             );
@@ -1013,38 +1015,32 @@ assert_eq!(Fix::saturating_from_fixed(too_small), Fix::min_value());
                 {
                     let frac_bits = Self::frac_bits();
                     let int_bits = Self::int_bits();
-                    let saturated = if val.neg_abs().0 {
-                        $Fixed::min_value()
-                    } else {
-                        $Fixed::max_value()
-                    };
-                    let (neg, abs_128, overflow) =
-                        <I as SealedInt>::to_fixed_neg_abs_overflow(val, frac_bits, int_bits);
+
+                    let (value, overflow) =
+                        <I as SealedInt>::to_fixed_overflow(val, 0, frac_bits, int_bits);
                     if overflow {
-                        return saturated;
+                        return if val.neg_abs().0 {
+                            $Fixed::min_value()
+                        } else {
+                            $Fixed::max_value()
+                        };
                     }
-                    let abs_bits =
-                        abs_128 as <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::Unsigned;
-
-                    if <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::is_signed() {
-                        // most significant bit (msb) can be one only for min value,
-                        // that is for a negative value with only the msb true.
-                        let msb =
-                            <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::Unsigned::msb();
-                        if abs_bits & msb != 0 {
-                            if !neg || abs_bits != msb {
-                                return saturated;
+                    let bits = if_signed_unsigned!(
+                        $Signedness,
+                        match value {
+                            Widest::Unsigned(bits) => {
+                                if (bits as <$Fixed<Frac> as SealedFixed>::Bits) < 0 {
+                                    return $Fixed::max_value();
+                                }
+                                bits as _
                             }
-                        }
-                    } else if neg && abs_bits != 0 {
-                        return saturated;
-                    }
-                    let bits = if neg {
-                        abs_bits.wrapping_neg()
-                    } else {
-                        abs_bits
-                    } as <$Fixed<Frac> as SealedFixed>::Bits;
-
+                            Widest::Negative(bits) => bits as _,
+                        },
+                        match value {
+                            Widest::Unsigned(bits) => bits as _,
+                            Widest::Negative(_) => return $Fixed::min_value(),
+                        },
+                    );
                     SealedFixed::from_bits(bits)
                 }
             );
@@ -1146,30 +1142,27 @@ assert_eq!(Fix::saturating_from_fixed(too_small), Fix::min_value());
                     let frac_bits = Self::frac_bits();
                     let int_bits = Self::int_bits();
 
-                    let (neg, abs_128, mut overflow) =
-                        <I as SealedInt>::to_fixed_neg_abs_overflow(val, frac_bits, int_bits);
-                    let abs_bits =
-                        abs_128 as <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::Unsigned;
-
-                    if <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::is_signed() {
-                        // most significant bit (msb) can be one only for min value,
-                        // that is for a negative value with only the msb true.
-                        let msb =
-                            <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::Unsigned::msb();
-                        if abs_bits & msb != 0 {
-                            if !neg || abs_bits != msb {
-                                overflow = true;
+                    let (value, mut overflow) =
+                        <I as SealedInt>::to_fixed_overflow(val, 0, frac_bits, int_bits);
+                    let bits = if_signed_unsigned!(
+                        $Signedness,
+                        match value {
+                            Widest::Unsigned(bits) => {
+                                if (bits as <$Fixed<Frac> as SealedFixed>::Bits) < 0 {
+                                    overflow = true;
+                                }
+                                bits as _
                             }
-                        }
-                    } else if neg && abs_bits != 0 {
-                        overflow = true;
-                    }
-                    let bits = if neg {
-                        abs_bits.wrapping_neg()
-                    } else {
-                        abs_bits
-                    } as <$Fixed<Frac> as SealedFixed>::Bits;
-
+                            Widest::Negative(bits) => bits as _,
+                        },
+                        match value {
+                            Widest::Unsigned(bits) => bits as _,
+                            Widest::Negative(bits) => {
+                                overflow = true;
+                                bits as _
+                            }
+                        },
+                    );
                     (SealedFixed::from_bits(bits), overflow)
                 }
             );

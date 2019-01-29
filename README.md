@@ -39,6 +39,12 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
 ## What’s new
 
+### Version 0.2.2 news (unreleased)
+
+  * The new method [`to_fixed`] was added.
+
+[`to_fixed`]: https://docs.rs/fixed/0.2.2/fixed/struct.FixedI32.html#method.to_fixed
+
 ### Version 0.2.1 news (2019-01-29)
 
   * Bug fix: the [`from_fixed`] and [`from_int`] methods (and their

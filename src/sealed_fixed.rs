@@ -15,7 +15,7 @@
 
 use core::fmt::{Debug, Display};
 use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
-use sealed::SealedInt;
+use sealed::{Fixed, SealedInt};
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
@@ -36,6 +36,10 @@ pub trait SealedFixed: Copy + Debug + Display {
     fn int_bits() -> u32 {
         Self::Bits::nbits() - Self::frac_bits()
     }
+
+    fn from_fixed<F>(fixed: F) -> Self
+    where
+        F: Fixed;
 
     #[inline]
     fn one() -> Option<Self> {
@@ -86,6 +90,14 @@ macro_rules! sealed_fixed {
             #[inline]
             fn frac_bits() -> u32 {
                 Frac::to_u32()
+            }
+
+            #[inline]
+            fn from_fixed<F>(fixed: F) -> Self
+            where
+                F: Fixed,
+            {
+                $Fixed::from_fixed(fixed)
             }
 
             #[inline]

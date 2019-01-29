@@ -5,6 +5,11 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.2.2 (unreleased)
+==========================
+
+  * The new method `to_fixed` was added.
+
 Version 0.2.1 (2019-01-29)
 ==========================
 

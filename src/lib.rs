@@ -906,6 +906,65 @@ assert_eq!(Fix::overflowing_from_fixed(large), (wrapped, true));
             doc_comment!(
                 concat!(
                     "
+Converts this fixed-point number to another fixed-point number.
+
+This method behaves like [`from_fixed`], similar to how [`Into`]
+behaves like [`From`].
+
+The source value does not need to have the same fixed-point type as
+the destination value.
+
+This method truncates the extra fractional bits in the source value.
+For example, if the source type has 24 fractional bits and the
+destination type has 10 fractional bits, then 14 fractional bits will
+be truncated.
+
+# Panics
+
+If the value is too large to fit, the method panics in debug mode. In
+release mode, the method may either panic or wrap the value, with the
+current implementation wrapping the value. It is not considered a
+breaking change if in the future the method panics even in release
+mode; if wrapping is the required behavior use [`wrapping_from_fixed`]
+instead.
+
+# Examples
+
+```rust
+use fixed::frac;
+type Fix = fixed::",
+                    stringify!($Fixed),
+                    "<frac::U4>;
+type Dst = fixed::FixedI32<frac::U16>;
+// 1.75 is 1.1100, that is Fix::from_bits(0b111<< (4 - 2))
+// or Dst::from_bits(0b111 << (16 - 2))
+let src = Fix::from_bits(0b111 << (4 - 2));
+let expected = Dst::from_bits(0b111 << (16 - 2));
+let dst: Dst = src.to_fixed();
+assert_eq!(dst, expected);",
+                    if_signed_else_empty_str!(
+                        $Signedness,
+                        "
+assert_eq!((-src).to_fixed::<Dst>(), -expected);",
+                    ),
+                    "
+```
+
+[`From`]: https://doc.rust-lang.org/nightly/std/convert/trait.From.html
+[`Into`]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
+[`from_fixed`]: #method.from_fixed
+[`wrapping_from_fixed`]: #method.wrapping_from_fixed
+",
+                ),
+                #[inline]
+                pub fn to_fixed<F>(self) -> F where F: Fixed {
+                    F::from_fixed(self)
+                }
+            );
+
+            doc_comment!(
+                concat!(
+                    "
 Creates a fixed-point number from an integer.
 
 The integer value can be of type [`bool`], [`i8`], [`i16`], [`i32`],

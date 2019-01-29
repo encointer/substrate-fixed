@@ -11,6 +11,9 @@ Version 0.2.1 (unreleased)
   * Bug fix: the `from_fixed` and `from_int` methods (and their
     checked counterparts) could return wrong values for negative
     values.
+  * Bug fix: display was using one fractional digit less than
+    required, thus yielding the same output for diffent fixed-point
+    numbers.
 
 Version 0.2.0 (2019-01-29)
 ==========================

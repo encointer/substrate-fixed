@@ -44,6 +44,9 @@ numeric primitives are implemented. That is, you can use [`From`] or
   * Bug fix: the [`from_fixed`] and [`from_int`] methods (and their
     checked counterparts) could return wrong values for negative
     values.
+  * Bug fix: display was using one fractional digit less than
+    required, thus yielding the same output for diffent fixed-point
+    numbers.
 
 ### Version 0.2.0 news (2019-01-29)
 

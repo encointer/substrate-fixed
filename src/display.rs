@@ -229,17 +229,9 @@ fn dec_int_digits(int_bits: u32) -> u32 {
     (int_bits * 3 + i) / 10
 }
 
-fn dec_frac_digits(rounding: bool, frac_bits: u32) -> u32 {
+fn dec_frac_digits(frac_bits: u32) -> u32 {
     assert!(frac_bits < 299);
-    let i = if rounding {
-        if frac_bits >= 197 {
-            9
-        } else if frac_bits >= 104 {
-            8
-        } else {
-            7
-        }
-    } else if frac_bits >= 196 {
+    let i = if frac_bits >= 196 {
         12
     } else if frac_bits >= 103 {
         11
@@ -299,7 +291,7 @@ where
     // = 170
     let mut buf: [u8; 170] = [0; 170];
     let max_int_digits = dec_int_digits(int_bits);
-    let req_frac_digits = dec_frac_digits(false, frac_bits);
+    let req_frac_digits = dec_frac_digits(frac_bits);
     // precision is limited to frac bits, which would always print
     // exact non-rounded number anyway
     let frac_digits = if let Some(prec) = fmt.precision().map(|x| x as u32) {
@@ -504,34 +496,10 @@ mod tests {
     }
 
     #[test]
-    fn dec_frac_digits_rounding() {
-        use super::dec_frac_digits;
-        for frac_bits in 0..299 {
-            let error = 0.5 / pow(10, dec_frac_digits(true, frac_bits));
-            let error_with_one_less_dec_digit = error * 10.0;
-            let delta = 1.0 / pow(2, frac_bits);
-            assert!(
-                error < delta,
-                "frac_bits {}, error {:e}, delta {:e}",
-                frac_bits,
-                error,
-                delta
-            );
-            assert!(
-                error_with_one_less_dec_digit >= delta,
-                "frac_bits {}, error with one less digit {:e}, delta {:e}",
-                frac_bits,
-                error_with_one_less_dec_digit,
-                delta
-            );
-        }
-    }
-
-    #[test]
     fn dec_frac_digits() {
         use super::dec_frac_digits;
         for frac_bits in 0..299 {
-            let error = 1.0 / pow(10, dec_frac_digits(false, frac_bits));
+            let error = 1.0 / pow(10, dec_frac_digits(frac_bits));
             let error_with_one_less_dec_digit = error * 10.0;
             let delta = 1.0 / pow(2, frac_bits);
             assert!(

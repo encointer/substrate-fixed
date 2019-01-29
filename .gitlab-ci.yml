@@ -47,11 +47,12 @@ i686-gnulinux:
     paths:
     - cargo/
   script:
+  - cargo +beta-$TARGET clippy --all-targets --features "fail-on-warnings f16 serde"
+  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings serde"
+  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings f16"
   - cargo +beta-$TARGET check --all-targets --features fail-on-warnings
-  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings f16 serde"
   - cargo +beta-$TARGET test --features "fail-on-warnings f16 serde"
   - cargo +beta-$TARGET test --release --features "fail-on-warnings f16 serde"
   - cargo +beta-$TARGET fmt -- --check
-  - cargo +beta-$TARGET clippy --all-targets --features "fail-on-warnings f16 serde"
   - cargo +1.28.0-$TARGET test --features "fail-on-warnings f16 serde"
   - cargo +1.28.0-$TARGET test --release --features "fail-on-warnings f16 serde"

@@ -29,13 +29,18 @@ pub enum Widest {
 }
 
 pub trait SealedFixed: Copy + Debug + Display {
+    type FracNBits: Unsigned;
     type Bits: SealedInt;
-    type Frac: Unsigned;
 
-    fn frac_bits() -> u32;
-    fn int_bits() -> u32 {
-        Self::Bits::nbits() - Self::frac_bits()
-    }
+    const FRAC_NBITS: u32 = Self::FracNBits::U32;
+    const INT_NBITS: u32 = Self::Bits::NBITS - Self::FRAC_NBITS;
+
+    const FRAC_MASK: u128 = !Self::INT_MASK;
+    // split shift in two parts in case that FRAC_NBITS == 128
+    const INT_MASK: u128 =
+        !0 << (Self::FRAC_NBITS / 2) << (Self::FRAC_NBITS - Self::FRAC_NBITS / 2);
+    const FRAC_HI: u128 = Self::FRAC_MASK ^ (Self::FRAC_MASK >> 1);
+    const INT_LO: u128 = Self::INT_MASK ^ (Self::INT_MASK << 1);
 
     fn from_fixed<F>(fixed: F) -> Self
     where
@@ -43,20 +48,20 @@ pub trait SealedFixed: Copy + Debug + Display {
 
     #[inline]
     fn one() -> Option<Self> {
-        let min_int_bits = if Self::Bits::is_signed() { 2 } else { 1 };
-        if Self::int_bits() < min_int_bits {
+        let min_int_bits = if Self::Bits::IS_SIGNED { 2 } else { 1 };
+        if Self::INT_NBITS < min_int_bits {
             None
         } else {
-            Some(Self::from_bits(Self::Bits::one_shl(Self::frac_bits())))
+            Some(Self::from_bits(Self::Bits::one_shl(Self::FRAC_NBITS)))
         }
     }
 
     #[inline]
     fn minus_one() -> Option<Self> {
-        if !Self::Bits::is_signed() || Self::int_bits() < 1 {
+        if !Self::Bits::IS_SIGNED || Self::INT_NBITS < 1 {
             None
         } else {
-            Some(Self::from_bits(Self::Bits::all_ones_shl(Self::frac_bits())))
+            Some(Self::from_bits(Self::Bits::all_ones_shl(Self::FRAC_NBITS)))
         }
     }
 
@@ -84,13 +89,8 @@ macro_rules! sealed_fixed {
         where
             Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
         {
+            type FracNBits = Frac;
             type Bits = $Bits;
-            type Frac = Frac;
-
-            #[inline]
-            fn frac_bits() -> u32 {
-                Frac::to_u32()
-            }
 
             #[inline]
             fn from_fixed<F>(fixed: F) -> Self
@@ -102,34 +102,22 @@ macro_rules! sealed_fixed {
 
             #[inline]
             fn frac_mask() -> Self::Bits {
-                !Self::int_mask()
+                Self::FRAC_MASK as _
             }
 
             #[inline]
             fn int_mask() -> Self::Bits {
-                if Self::int_bits() == 0 {
-                    0
-                } else {
-                    !0 << Self::frac_bits()
-                }
+                Self::INT_MASK as _
             }
 
             #[inline]
             fn highest_frac_bit() -> Self::Bits {
-                if Self::frac_bits() == 0 {
-                    0
-                } else {
-                    1 << (Self::frac_bits() - 1)
-                }
+                Self::FRAC_HI as _
             }
 
             #[inline]
             fn lowest_int_bit() -> Self::Bits {
-                if Self::int_bits() == 0 {
-                    0
-                } else {
-                    1 << Self::frac_bits()
-                }
+                Self::INT_LO as _
             }
 
             #[inline]
@@ -150,8 +138,8 @@ macro_rules! sealed_fixed {
                 <Self::Bits as SealedInt>::Unsigned,
                 <Self::Bits as SealedInt>::Unsigned,
             ) {
-                let frac_bits = <Self as SealedFixed>::frac_bits();
-                let int_bits = <Self as SealedFixed>::int_bits();
+                let frac_bits = <Self as SealedFixed>::FRAC_NBITS;
+                let int_bits = <Self as SealedFixed>::INT_NBITS;
 
                 let (neg, abs) = SealedInt::neg_abs(self.to_bits());
                 let (int_abs, frac_abs) = if int_bits == 0 {

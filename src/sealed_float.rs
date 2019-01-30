@@ -25,7 +25,7 @@ pub trait SealedFloat: Copy + Debug + Display {
 
     #[inline]
     fn exp_bias() -> i32 {
-        let nbits = Self::Bits::nbits();
+        let nbits = Self::Bits::NBITS;
         let exp_bits = nbits - Self::prec();
         (1 << (exp_bits - 1)) - 1
     }
@@ -64,7 +64,7 @@ macro_rules! sealed_float {
 
             #[inline]
             fn zero(neg: bool) -> $Float {
-                let nbits = <Self::Bits as SealedInt>::nbits();
+                let nbits = <Self::Bits as SealedInt>::NBITS;
                 let neg_mask = !0 << (nbits - 1);
                 let neg_bits = if neg { neg_mask } else { 0 };
                 <$Float>::from_bits(neg_bits)
@@ -72,7 +72,7 @@ macro_rules! sealed_float {
 
             #[inline]
             fn infinity(neg: bool) -> $Float {
-                let nbits = <Self::Bits as SealedInt>::nbits();
+                let nbits = <Self::Bits as SealedInt>::NBITS;
                 let neg_mask = !0 << (nbits - 1);
                 let mant_mask = !(!0 << ($prec - 1));
                 let exp_mask = !(neg_mask | mant_mask);
@@ -93,7 +93,7 @@ macro_rules! sealed_float {
 
             #[inline]
             fn parts(self) -> (bool, i32, $Bits) {
-                let nbits = <Self::Bits as SealedInt>::nbits();
+                let nbits = <Self::Bits as SealedInt>::NBITS;
                 let neg_mask = !0 << (nbits - 1);
                 let mant_mask = !(!0 << ($prec - 1));
                 let exp_mask = !(neg_mask | mant_mask);
@@ -175,7 +175,7 @@ macro_rules! sealed_float {
                 frac_bits: u32,
                 int_bits: u32,
             ) -> (bool, u128, bool) {
-                let float_bits = Self::Bits::nbits() as i32;
+                let float_bits = Self::Bits::NBITS as i32;
                 let prec = Self::prec() as i32;
                 let fix_bits = (frac_bits + int_bits) as i32;
 

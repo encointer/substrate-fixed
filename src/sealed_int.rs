@@ -14,13 +14,18 @@
 // <https://opensource.org/licenses/MIT>.
 
 use core::fmt::{Debug, Display};
+use frac::{Bit, False, True, Unsigned, U1, U128, U16, U32, U64, U8};
 use sealed_fixed::Widest;
 
 pub trait SealedInt: Copy + Ord + Debug + Display {
+    type NBits: Unsigned;
+    type IsSigned: Bit;
     type Unsigned: SealedInt;
 
-    fn is_signed() -> bool;
-    fn nbits() -> u32;
+    const NBITS: u32 = Self::NBits::U32;
+    const IS_SIGNED: bool = Self::IsSigned::BOOL;
+    const MSB: Self;
+
     fn one_shl(shift: u32) -> Self;
     fn all_ones_shl(shift: u32) -> Self;
     fn is_zero(self) -> bool;
@@ -34,27 +39,16 @@ pub trait SealedInt: Copy + Ord + Debug + Display {
 
     fn neg_abs(self) -> (bool, Self::Unsigned);
     fn from_neg_abs(neg: bool, abs: Self::Unsigned) -> Self;
-
-    #[inline]
-    fn msb() -> Self {
-        Self::one_shl(Self::nbits() - 1)
-    }
 }
 
 macro_rules! sealed_int {
-    ($Int:ident($Unsigned:ty, $is_signed:ident, $nbits:expr); $($rest:tt)*) => {
+    ($Int:ident($NBits:ident, $IsSigned:ident, $Unsigned:ty); $($rest:tt)*) => {
         impl SealedInt for $Int {
+            type NBits = $NBits;
+            type IsSigned = $IsSigned;
             type Unsigned = $Unsigned;
 
-            #[inline]
-            fn is_signed() -> bool {
-                $is_signed
-            }
-
-            #[inline]
-            fn nbits() -> u32 {
-                $nbits
-            }
+            const MSB: $Int = 1 << (Self::NBITS - 1);
 
             #[inline]
             fn one_shl(shift: u32) -> $Int {
@@ -74,9 +68,9 @@ macro_rules! sealed_int {
             $($rest)*
         }
     };
-    ($Int:ident($Unsigned:ty, false, $nbits:expr)) => {
+    ($Unsigned:ident($NBits:ident)) => {
         sealed_int! {
-            $Int($Unsigned, false, $nbits);
+            $Unsigned($NBits, False, $Unsigned);
 
             #[inline]
             fn neg_abs(self) -> (bool, Self::Unsigned) {
@@ -97,7 +91,7 @@ macro_rules! sealed_int {
                 dst_frac_bits: u32,
                 dst_int_bits: u32,
             ) -> (Widest, bool) {
-                let src_bits = <Self as SealedInt>::nbits() as i32;
+                let src_bits = <Self as SealedInt>::NBITS as i32;
                 let dst_bits = (dst_frac_bits + dst_int_bits) as i32;
 
                 if self == 0 {
@@ -122,9 +116,9 @@ macro_rules! sealed_int {
             }
         }
     };
-    ($Int:ident($Unsigned:ty, true, $nbits:expr)) => {
+    ($Signed:ident($NBits:ident, $Unsigned:ty)) => {
         sealed_int! {
-            $Int($Unsigned, true, $nbits);
+            $Signed($NBits, True, $Unsigned);
 
             #[inline]
             fn neg_abs(self) -> (bool, Self::Unsigned) {
@@ -137,7 +131,7 @@ macro_rules! sealed_int {
 
             #[inline]
             fn from_neg_abs(neg: bool, abs: Self::Unsigned) -> Self {
-                debug_assert!(abs <= Self::Unsigned::msb());
+                debug_assert!(abs <= Self::Unsigned::MSB);
                 if neg {
                     abs.wrapping_neg() as Self
                 } else {
@@ -152,7 +146,7 @@ macro_rules! sealed_int {
                 dst_frac_bits: u32,
                 dst_int_bits: u32,
             ) -> (Widest, bool) {
-                let src_bits = <Self as SealedInt>::nbits() as i32;
+                let src_bits = <Self as SealedInt>::NBITS as i32;
                 let dst_bits = (dst_frac_bits + dst_int_bits) as i32;
 
                 if self >= 0 {
@@ -185,17 +179,11 @@ macro_rules! sealed_int {
 }
 
 impl SealedInt for bool {
+    type NBits = U1;
+    type IsSigned = False;
     type Unsigned = bool;
 
-    #[inline]
-    fn is_signed() -> bool {
-        false
-    }
-
-    #[inline]
-    fn nbits() -> u32 {
-        1
-    }
+    const MSB: bool = true;
 
     #[inline]
     fn one_shl(shift: u32) -> bool {
@@ -252,13 +240,13 @@ impl SealedInt for bool {
     }
 }
 
-sealed_int! { i8(u8, true, 8) }
-sealed_int! { i16(u16, true, 16) }
-sealed_int! { i32(u32, true, 32) }
-sealed_int! { i64(u64, true, 64) }
-sealed_int! { i128(u128, true, 128) }
-sealed_int! { u8(u8, false, 8) }
-sealed_int! { u16(u16, false, 16) }
-sealed_int! { u32(u32, false, 32) }
-sealed_int! { u64(u64, false, 64) }
-sealed_int! { u128(u128, false, 128) }
+sealed_int! { i8(U8, u8) }
+sealed_int! { i16(U16, u16) }
+sealed_int! { i32(U32, u32) }
+sealed_int! { i64(U64, u64) }
+sealed_int! { i128(U128, u128) }
+sealed_int! { u8(U8) }
+sealed_int! { u16(U16) }
+sealed_int! { u32(U32) }
+sealed_int! { u64(U64) }
+sealed_int! { u128(U128) }

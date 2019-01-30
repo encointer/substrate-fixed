@@ -82,7 +82,7 @@ macro_rules! fmt_radix2_helper {
 
             #[inline]
             fn take_frac_digit(&mut self, digit_bits: u32) -> u8 {
-                let nbits = <$UInner as SealedInt>::nbits();
+                let nbits = <$UInner as SealedInt>::NBITS;
                 let rem_bits = nbits - digit_bits;
                 let mask = !0 << rem_bits;
                 let ret = ((*self & mask) >> rem_bits) as u8;
@@ -104,7 +104,7 @@ fn fmt_radix2_helper<F>(
 where
     F: FmtRadix2Helper,
 {
-    let int_bits = F::nbits() - frac_bits;
+    let int_bits = F::NBITS - frac_bits;
     let digit_bits: u32 = radix.digit_bits();
     // 128 binary digits, one radix point, one leading zero
     let mut buf: [u8; 130] = [0; 130];
@@ -150,7 +150,7 @@ where
     Bits: SealedInt,
     Bits::Unsigned: FmtRadix2Helper,
 {
-    fmt_radix2_helper(F::frac_bits(), num.parts(), radix, fmt)
+    fmt_radix2_helper(F::FRAC_NBITS, num.parts(), radix, fmt)
 }
 
 macro_rules! impl_fmt {
@@ -252,7 +252,7 @@ macro_rules! fmt_dec_helper {
         impl FmtDecHelper for $UInner {
             #[inline]
             fn cmp_half(&self) -> Ordering {
-                self.cmp(&<$UInner as SealedInt>::msb())
+                self.cmp(&<$UInner as SealedInt>::MSB)
             }
 
             #[inline]
@@ -283,7 +283,7 @@ fn fmt_dec_helper<F>(
 where
     F: FmtDecHelper,
 {
-    let int_bits = F::nbits() - frac_bits;
+    let int_bits = F::NBITS - frac_bits;
     // 40 int digits
     // + 128 frac digits
     // + 1 dec point,
@@ -332,7 +332,7 @@ where
             *r = b'0' + frac.take_frac_digit();
         }
         // check for rounding up
-        let round_up = match frac.cmp(&F::msb()) {
+        let round_up = match frac.cmp(&F::MSB) {
             Ordering::Less => false,
             Ordering::Greater => true,
             Ordering::Equal => {
@@ -370,7 +370,7 @@ where
     Bits: SealedInt,
     Bits::Unsigned: FmtDecHelper,
 {
-    fmt_dec_helper(F::frac_bits(), num.parts(), fmt)
+    fmt_dec_helper(F::FRAC_NBITS, num.parts(), fmt)
 }
 
 #[cfg(test)]

@@ -134,7 +134,7 @@ macro_rules! sealed_int {
 
             #[inline]
             fn is_negative(self) -> bool {
-                false
+                self < 0
             }
 
             #[inline]

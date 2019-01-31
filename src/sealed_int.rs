@@ -29,7 +29,6 @@ pub trait SealedInt: Copy + Ord + Debug + Display {
     fn one_shl(shift: u32) -> Self;
     fn all_ones_shl(shift: u32) -> Self;
     fn is_zero(self) -> bool;
-    fn is_positive(self) -> bool;
     fn is_negative(self) -> bool;
 
     fn to_fixed_overflow(
@@ -65,11 +64,6 @@ macro_rules! sealed_int {
             #[inline]
             fn is_zero(self) -> bool {
                 self == 0
-            }
-
-            #[inline]
-            fn is_positive(self) -> bool {
-                self > 0
             }
 
             $($rest)*
@@ -219,11 +213,6 @@ impl SealedInt for bool {
     #[inline]
     fn is_zero(self) -> bool {
         !self
-    }
-
-    #[inline]
-    fn is_positive(self) -> bool {
-        self
     }
 
     #[inline]

@@ -1537,10 +1537,10 @@ assert_eq!(Fix::saturating_from_float(f64::NEG_INFINITY), Fix::min_value());
                     if val.is_nan() {
                         panic!("NaN");
                     }
-                    let saturated = if val.is_sign_positive() {
-                        Self::max_value()
-                    } else {
+                    let saturated = if val.is_sign_negative() {
                         Self::min_value()
+                    } else {
+                        Self::max_value()
                     };
                     if !val.is_finite() {
                         return saturated;

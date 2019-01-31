@@ -82,7 +82,7 @@ macro_rules! fmt_radix2_helper {
 
             #[inline]
             fn take_frac_digit(&mut self, digit_bits: u32) -> u8 {
-                let nbits = <$UInner as SealedInt>::NBITS;
+                let nbits = <$UInner>::NBITS;
                 let rem_bits = nbits - digit_bits;
                 let mask = !0 << rem_bits;
                 let ret = ((*self & mask) >> rem_bits) as u8;
@@ -252,7 +252,7 @@ macro_rules! fmt_dec_helper {
         impl FmtDecHelper for $UInner {
             #[inline]
             fn cmp_half(&self) -> Ordering {
-                self.cmp(&<$UInner as SealedInt>::MSB)
+                self.cmp(&<$UInner>::MSB)
             }
 
             #[inline]
@@ -442,7 +442,7 @@ mod tests {
     #[test]
     fn hex() {
         use frac::U7 as Frac;
-        let frac = Frac::to_u32();
+        let frac = Frac::U32;
         for i in 0..(1 << frac) {
             let p = 0x1234_5678_9abc_def0u64 ^ i as u64;
             let n = -0x1234_5678_9abc_def0i64 ^ i64::from(i);
@@ -459,7 +459,7 @@ mod tests {
     #[test]
     fn dec() {
         use frac::U7 as Frac;
-        let frac = Frac::to_u32();
+        let frac = Frac::U32;
         for i in 0..(1 << frac) {
             let bits = !0u32 ^ i;
             let flt = f64::from(bits) / f64::from(frac).exp2();

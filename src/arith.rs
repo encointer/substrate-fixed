@@ -15,13 +15,12 @@
 
 use core::cmp::Ordering;
 use core::iter::{Product, Sum};
-use core::mem;
 use core::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign,
     Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
-use sealed::SealedFixed;
+use sealed::{SealedFixed, SealedInt};
 use wide_div::WideDivRem;
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
@@ -37,7 +36,7 @@ macro_rules! refs {
             type Output = $Fixed<Frac>;
             #[inline]
             fn $method(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                <$Fixed<Frac> as $Imp<$Fixed<Frac>>>::$method(*self, rhs)
+                (*self).$method(rhs)
             }
         }
 
@@ -48,7 +47,7 @@ macro_rules! refs {
             type Output = $Fixed<Frac>;
             #[inline]
             fn $method(self, rhs: &$Fixed<Frac>) -> $Fixed<Frac> {
-                <$Fixed<Frac> as $Imp<$Fixed<Frac>>>::$method(self, *rhs)
+                self.$method(*rhs)
             }
         }
 
@@ -59,7 +58,7 @@ macro_rules! refs {
             type Output = $Fixed<Frac>;
             #[inline]
             fn $method(self, rhs: &$Fixed<Frac>) -> $Fixed<Frac> {
-                <$Fixed<Frac> as $Imp<$Fixed<Frac>>>::$method(*self, *rhs)
+                (*self).$method(*rhs)
             }
         }
     };
@@ -73,7 +72,7 @@ macro_rules! refs_assign {
         {
             #[inline]
             fn $method(&mut self, rhs: &$Fixed<Frac>) {
-                <$Fixed<Frac> as $Imp<$Fixed<Frac>>>::$method(self, *rhs);
+                self.$method(*rhs);
             }
         }
     };
@@ -88,10 +87,7 @@ macro_rules! pass {
             type Output = $Fixed<Frac>;
             #[inline]
             fn $method(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                $Fixed::from_bits(<$Inner as $Imp<$Inner>>::$method(
-                    self.to_bits(),
-                    rhs.to_bits(),
-                ))
+                Self::from_bits(self.to_bits().$method(rhs.to_bits()))
             }
         }
 
@@ -107,7 +103,7 @@ macro_rules! pass_assign {
         {
             #[inline]
             fn $method(&mut self, rhs: $Fixed<Frac>) {
-                <$Inner as $Imp<$Inner>>::$method(&mut (self.0).0, rhs.to_bits());
+                (&mut (self.0).0).$method(rhs.to_bits())
             }
         }
 
@@ -124,7 +120,7 @@ macro_rules! pass_one {
             type Output = $Fixed<Frac>;
             #[inline]
             fn $method(self) -> $Fixed<Frac> {
-                $Fixed::from_bits(<$Inner as $Imp>::$method(self.to_bits()))
+                Self::from_bits(self.to_bits().$method())
             }
         }
 
@@ -135,7 +131,7 @@ macro_rules! pass_one {
             type Output = $Fixed<Frac>;
             #[inline]
             fn $method(self) -> $Fixed<Frac> {
-                <$Fixed<Frac> as $Imp>::$method(*self)
+                (*self).$method()
             }
         }
     };
@@ -150,7 +146,7 @@ macro_rules! shift {
             type Output = $Fixed<Frac>;
             #[inline]
             fn $method(self, rhs: $Rhs) -> $Fixed<Frac> {
-                $Fixed::from_bits(<$Inner as $Imp<$Rhs>>::$method(self.to_bits(), rhs))
+                $Fixed::from_bits(self.to_bits().$method(rhs))
             }
         }
 
@@ -161,7 +157,7 @@ macro_rules! shift {
             type Output = $Fixed<Frac>;
             #[inline]
             fn $method(self, rhs: $Rhs) -> $Fixed<Frac> {
-                <$Fixed<Frac> as $Imp<$Rhs>>::$method(*self, rhs)
+                (*self).$method(rhs)
             }
         }
 
@@ -172,7 +168,7 @@ macro_rules! shift {
             type Output = $Fixed<Frac>;
             #[inline]
             fn $method(self, rhs: &$Rhs) -> $Fixed<Frac> {
-                <$Fixed<Frac> as $Imp<$Rhs>>::$method(self, *rhs)
+                self.$method(*rhs)
             }
         }
 
@@ -183,7 +179,7 @@ macro_rules! shift {
             type Output = $Fixed<Frac>;
             #[inline]
             fn $method(self, rhs: &$Rhs) -> $Fixed<Frac> {
-                <$Fixed<Frac> as $Imp<$Rhs>>::$method(*self, *rhs)
+                (*self).$method(*rhs)
             }
         }
     };
@@ -197,7 +193,7 @@ macro_rules! shift_assign {
         {
             #[inline]
             fn $method(&mut self, rhs: $Rhs) {
-                <$Inner as $Imp<$Rhs>>::$method(&mut (self.0).0, rhs);
+                (&mut (self.0).0).$method(rhs)
             }
         }
 
@@ -207,7 +203,7 @@ macro_rules! shift_assign {
         {
             #[inline]
             fn $method(&mut self, rhs: &$Rhs) {
-                <$Fixed<Frac> as $Imp<$Rhs>>::$method(self, *rhs);
+                self.$method(*rhs)
             }
         }
     };
@@ -242,9 +238,9 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn mul(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                let (ans, dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::to_u32());
+                let (ans, dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
                 debug_assert!(dir == Ordering::Equal, "overflow");
-                $Fixed::from_bits(ans)
+                Self::from_bits(ans)
             }
         }
 
@@ -256,7 +252,7 @@ macro_rules! fixed_arith {
         {
             #[inline]
             fn mul_assign(&mut self, rhs: $Fixed<Frac>) {
-                *self = <$Fixed<Frac> as Mul<$Fixed<Frac>>>::mul(*self, rhs)
+                *self = (*self).mul(rhs)
             }
         }
 
@@ -269,9 +265,9 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn div(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::to_u32());
+                let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
                 debug_assert!(dir == Ordering::Equal, "overflow");
-                $Fixed::from_bits(ans)
+                Self::from_bits(ans)
             }
         }
 
@@ -283,7 +279,7 @@ macro_rules! fixed_arith {
         {
             #[inline]
             fn div_assign(&mut self, rhs: $Fixed<Frac>) {
-                *self = <$Fixed<Frac> as Div<$Fixed<Frac>>>::div(*self, rhs)
+                *self = (*self).div(rhs)
             }
         }
 
@@ -304,7 +300,7 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn mul(self, rhs: $Inner) -> $Fixed<Frac> {
-                $Fixed::from_bits(self.to_bits() * rhs)
+                Self::from_bits(self.to_bits().mul(rhs))
             }
         }
 
@@ -315,7 +311,7 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn mul(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                <$Fixed<Frac> as Mul<$Inner>>::mul(rhs, self)
+                rhs.mul(self)
             }
         }
 
@@ -326,7 +322,7 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn mul(self, rhs: $Inner) -> $Fixed<Frac> {
-                <$Fixed<Frac> as Mul<$Inner>>::mul(*self, rhs)
+                (*self).mul(rhs)
             }
         }
 
@@ -337,7 +333,7 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn mul(self, rhs: &$Fixed<Frac>) -> $Fixed<Frac> {
-                <$Fixed<Frac> as Mul<$Inner>>::mul(*rhs, self)
+                (*rhs).mul(self)
             }
         }
 
@@ -348,7 +344,7 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn mul(self, rhs: &$Inner) -> $Fixed<Frac> {
-                <$Fixed<Frac> as Mul<$Inner>>::mul(self, *rhs)
+                self.mul(*rhs)
             }
         }
 
@@ -359,7 +355,7 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn mul(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                <$Fixed<Frac> as Mul<$Inner>>::mul(rhs, *self)
+                rhs.mul(*self)
             }
         }
 
@@ -370,7 +366,7 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn mul(self, rhs: &$Inner) -> $Fixed<Frac> {
-                <$Fixed<Frac> as Mul<$Inner>>::mul(*self, *rhs)
+                (*self).mul(*rhs)
             }
         }
 
@@ -381,7 +377,7 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn mul(self, rhs: &$Fixed<Frac>) -> $Fixed<Frac> {
-                <$Fixed<Frac> as Mul<$Inner>>::mul(*rhs, *self)
+                (*rhs).mul(*self)
             }
         }
 
@@ -391,7 +387,7 @@ macro_rules! fixed_arith {
         {
             #[inline]
             fn mul_assign(&mut self, rhs: $Inner) {
-                *self = <$Fixed<Frac> as Mul<$Inner>>::mul(*self, rhs)
+                *self = (*self).mul(rhs);
             }
         }
 
@@ -401,7 +397,7 @@ macro_rules! fixed_arith {
         {
             #[inline]
             fn mul_assign(&mut self, rhs: &$Inner) {
-                *self = <$Fixed<Frac> as Mul<$Inner>>::mul(*self, *rhs)
+                *self = (*self).mul(*rhs);
             }
         }
 
@@ -412,7 +408,7 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn div(self, rhs: $Inner) -> $Fixed<Frac> {
-                $Fixed::from_bits(self.to_bits() / rhs)
+                Self::from_bits(self.to_bits().div(rhs))
             }
         }
 
@@ -423,7 +419,7 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn div(self, rhs: $Inner) -> $Fixed<Frac> {
-                <$Fixed<Frac> as Div<$Inner>>::div(*self, rhs)
+                (*self).div(rhs)
             }
         }
 
@@ -434,7 +430,7 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn div(self, rhs: &$Inner) -> $Fixed<Frac> {
-                <$Fixed<Frac> as Div<$Inner>>::div(self, *rhs)
+                self.div(*rhs)
             }
         }
         impl<'a, 'b, Frac> Div<&'a $Inner> for &'b $Fixed<Frac>
@@ -444,7 +440,7 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn div(self, rhs: &$Inner) -> $Fixed<Frac> {
-                <$Fixed<Frac> as Div<$Inner>>::div(*self, *rhs)
+                (*self).div(*rhs)
             }
         }
 
@@ -454,7 +450,7 @@ macro_rules! fixed_arith {
         {
             #[inline]
             fn div_assign(&mut self, rhs: $Inner) {
-                *self = <$Fixed<Frac> as Div<$Inner>>::div(*self, rhs)
+                *self = (*self).div(rhs);
             }
         }
 
@@ -464,7 +460,7 @@ macro_rules! fixed_arith {
         {
             #[inline]
             fn div_assign(&mut self, rhs: &$Inner) {
-                *self = <$Fixed<Frac> as Div<$Inner>>::div(*self, *rhs)
+                *self = (*self).div(*rhs);
             }
         }
 
@@ -475,7 +471,7 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn rem(self, rhs: $Inner) -> $Fixed<Frac> {
-                $Fixed::from_bits(self.to_bits() % rhs)
+                Self::from_bits(self.to_bits().rem(rhs))
             }
         }
 
@@ -486,7 +482,7 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn rem(self, rhs: $Inner) -> $Fixed<Frac> {
-                <$Fixed<Frac> as Rem<$Inner>>::rem(*self, rhs)
+                (*self).rem(rhs)
             }
         }
 
@@ -497,7 +493,7 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn rem(self, rhs: &$Inner) -> $Fixed<Frac> {
-                <$Fixed<Frac> as Rem<$Inner>>::rem(self, *rhs)
+                self.rem(*rhs)
             }
         }
 
@@ -508,7 +504,7 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn rem(self, rhs: &$Inner) -> $Fixed<Frac> {
-                <$Fixed<Frac> as Rem<$Inner>>::rem(*self, *rhs)
+                (*self).rem(*rhs)
             }
         }
 
@@ -518,7 +514,7 @@ macro_rules! fixed_arith {
         {
             #[inline]
             fn rem_assign(&mut self, rhs: $Inner) {
-                *self = <$Fixed<Frac> as Rem<$Inner>>::rem(*self, rhs)
+                *self = (*self).rem(rhs);
             }
         }
 
@@ -528,7 +524,7 @@ macro_rules! fixed_arith {
         {
             #[inline]
             fn rem_assign(&mut self, rhs: &$Inner) {
-                *self = <$Fixed<Frac> as Rem<$Inner>>::rem(*self, *rhs)
+                *self = (*self).rem(*rhs);
             }
         }
 
@@ -552,7 +548,7 @@ macro_rules! fixed_arith {
             Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
         {
             fn sum<I: Iterator<Item = $Fixed<Frac>>>(iter: I) -> $Fixed<Frac> {
-                iter.fold($Fixed::from_bits(0), Add::add)
+                iter.fold(Self::from_bits(0), Add::add)
             }
         }
 
@@ -561,7 +557,7 @@ macro_rules! fixed_arith {
             Frac: 'a + Unsigned + IsLessOrEqual<$Len, Output = True>,
         {
             fn sum<I: Iterator<Item = &'a $Fixed<Frac>>>(iter: I) -> $Fixed<Frac> {
-                iter.fold($Fixed::from_bits(0), Add::add)
+                iter.fold(Self::from_bits(0), Add::add)
             }
         }
 
@@ -571,7 +567,7 @@ macro_rules! fixed_arith {
         {
             fn product<I: Iterator<Item = $Fixed<Frac>>>(mut iter: I) -> $Fixed<Frac> {
                 match iter.next() {
-                    None => <$Fixed<Frac> as SealedFixed>::one().expect("overflow"),
+                    None => Self::one().expect("overflow"),
                     Some(first) => iter.fold(first, Mul::mul),
                 }
             }
@@ -583,7 +579,7 @@ macro_rules! fixed_arith {
         {
             fn product<I: Iterator<Item = &'a $Fixed<Frac>>>(mut iter: I) -> $Fixed<Frac> {
                 match iter.next() {
-                    None => <$Fixed<Frac> as SealedFixed>::one().expect("overflow"),
+                    None => Self::one().expect("overflow"),
                     Some(first) => iter.fold(*first, Mul::mul),
                 }
             }
@@ -603,19 +599,19 @@ fixed_arith! { FixedI64(i64, U64, 64), Signed }
 fixed_arith! { FixedI128(i128, U128, 128), Signed }
 
 pub(crate) trait MulDivDir: Sized {
-    fn mul_dir(self, rhs: Self, frac_bits: u32) -> (Self, Ordering);
-    fn div_dir(self, rhs: Self, frac_bits: u32) -> (Self, Ordering);
+    fn mul_dir(self, rhs: Self, frac_nbits: u32) -> (Self, Ordering);
+    fn div_dir(self, rhs: Self, frac_nbits: u32) -> (Self, Ordering);
 }
 
 macro_rules! mul_div_widen {
     ($Single:ty, $Double:ty, $Signedness:tt) => {
         impl MulDivDir for $Single {
             #[inline]
-            fn mul_dir(self, rhs: $Single, frac_bits: u32) -> ($Single, Ordering) {
-                const BITS: u32 = mem::size_of::<$Single>() as u32 * 8;
-                let int_bits: u32 = BITS - frac_bits;
-                let lhs2 = <$Double as From<$Single>>::from(self);
-                let rhs2 = <$Double as From<$Single>>::from(rhs) << int_bits;
+            fn mul_dir(self, rhs: $Single, frac_nbits: u32) -> ($Single, Ordering) {
+                const NBITS: u32 = <$Single>::NBITS;
+                let int_nbits: u32 = NBITS - frac_nbits;
+                let lhs2 = <$Double>::from(self);
+                let rhs2 = <$Double>::from(rhs) << int_nbits;
                 let (prod2, overflow) = lhs2.overflowing_mul(rhs2);
                 let dir;
                 if_unsigned! {
@@ -636,16 +632,16 @@ macro_rules! mul_div_widen {
                         Ordering::Greater
                     };
                 }
-                ((prod2 >> BITS) as $Single, dir)
+                ((prod2 >> NBITS) as $Single, dir)
             }
 
             #[inline]
-            fn div_dir(self, rhs: $Single, frac_bits: u32) -> ($Single, Ordering) {
-                let lhs2 = <$Double as From<$Single>>::from(self) << frac_bits;
-                let rhs2 = <$Double as From<$Single>>::from(rhs);
+            fn div_dir(self, rhs: $Single, frac_nbits: u32) -> ($Single, Ordering) {
+                let lhs2 = <$Double>::from(self) << frac_nbits;
+                let rhs2 = <$Double>::from(rhs);
                 let quot2 = lhs2 / rhs2;
                 let quot = quot2 as $Single;
-                let dir = <$Double as From<$Single>>::from(quot).cmp(&quot2);
+                let dir = <$Double>::from(quot).cmp(&quot2);
                 (quot, dir)
             }
         }
@@ -754,28 +750,22 @@ impl FallbackHelper for i128 {
 macro_rules! mul_div_fallback {
     ($Single:ty, $Uns:ty, $Signedness:tt) => {
         impl MulDivDir for $Single {
-            fn mul_dir(self, rhs: $Single, frac_bits: u32) -> ($Single, Ordering) {
-                if frac_bits == 0 {
+            fn mul_dir(self, rhs: $Single, frac_nbits: u32) -> ($Single, Ordering) {
+                if frac_nbits == 0 {
                     let (ans, overflow) = self.overflowing_mul(rhs);
-                    let dir;
-                    if_unsigned! {
-                        $Signedness;
-                        dir = if !overflow {
-                            Ordering::Equal
-                        } else {
-                            Ordering::Less
-                        };
-                    }
-                    if_signed! {
-                        $Signedness;
-                        dir = if !overflow {
-                            Ordering::Equal
-                        } else if (self < 0) == (rhs < 0) {
-                            Ordering::Less
-                        } else {
-                            Ordering::Greater
-                        };
-                    }
+                    let dir = if !overflow {
+                        Ordering::Equal
+                    } else {
+                        if_signed_unsigned!(
+                            $Signedness,
+                            if (self < 0) == (rhs < 0) {
+                                Ordering::Less
+                            } else {
+                                Ordering::Greater
+                            },
+                            Ordering::Less,
+                        )
+                    };
                     (ans, dir)
                 } else {
                     let (lh, ll) = self.hi_lo();
@@ -792,39 +782,33 @@ macro_rules! mul_div_fallback {
                     let (col12_hi, col12_lo) = col12.hi_lo();
                     let ans01 = col12_lo.shift_lo_up_unsigned() + col01_lo;
                     let ans23 = lh_rh + col12_hi + carry_col3.shift_lo_up();
-                    ans23.combine_lo_then_shl(ans01, frac_bits)
+                    ans23.combine_lo_then_shl(ans01, frac_nbits)
                 }
             }
 
-            fn div_dir(self, rhs: $Single, frac_bits: u32) -> ($Single, Ordering) {
-                if frac_bits == 0 {
+            fn div_dir(self, rhs: $Single, frac_nbits: u32) -> ($Single, Ordering) {
+                if frac_nbits == 0 {
                     let (ans, overflow) = self.overflowing_div(rhs);
-                    let dir;
-                    if_unsigned! {
-                        $Signedness;
-                        dir = if !overflow {
-                            Ordering::Equal
-                        } else {
-                            Ordering::Less
-                        };
-                    }
-                    if_signed! {
-                        $Signedness;
-                        dir = if !overflow {
-                            Ordering::Equal
-                        } else if (self < 0) == (rhs < 0) {
-                            Ordering::Less
-                        } else {
-                            Ordering::Greater
-                        };
-                    }
+                    let dir = if !overflow {
+                        Ordering::Equal
+                    } else {
+                        if_signed_unsigned!(
+                            $Signedness,
+                            if (self < 0) == (rhs < 0) {
+                                Ordering::Less
+                            } else {
+                                Ordering::Greater
+                            },
+                            Ordering::Less,
+                        )
+                    };
                     (ans, dir)
                 } else {
-                    const BITS: u32 = mem::size_of::<$Single>() as u32 * 8;
-                    let lhs2 = (self >> (BITS - frac_bits), (self << frac_bits) as $Uns);
+                    const NBITS: u32 = <$Single>::NBITS;
+                    let lhs2 = (self >> (NBITS - frac_nbits), (self << frac_nbits) as $Uns);
                     let (quot2, _) = rhs.div_rem_from(lhs2);
                     let quot = quot2.1 as $Single;
-                    let quot2_ret = (quot >> (BITS / 2) >> (BITS / 2), quot2.1);
+                    let quot2_ret = (quot >> (NBITS / 2) >> (NBITS - NBITS / 2), quot2.1);
                     let dir = (quot2_ret.0)
                         .cmp(&quot2.0)
                         .then((quot2_ret.1).cmp(&quot2.1));
@@ -853,11 +837,11 @@ mod tests {
     #[test]
     fn fixed_u16() {
         use frac::U7 as Frac;
-        let frac = Frac::to_u32();
+        let frac = Frac::U32;
         let a = 12;
         let b = 4;
-        let af = FixedU16::<Frac>::from_bits(a << Frac::to_u32());
-        let bf = FixedU16::<Frac>::from_bits(b << Frac::to_u32());
+        let af = FixedU16::<Frac>::from_bits(a << Frac::U32);
+        let bf = FixedU16::<Frac>::from_bits(b << Frac::U32);
         assert_eq!((af + bf).to_bits(), (a << frac) + (b << frac));
         assert_eq!((af - bf).to_bits(), (a << frac) - (b << frac));
         assert_eq!((af * bf).to_bits(), (a << frac) * b);
@@ -873,7 +857,7 @@ mod tests {
     #[test]
     fn fixed_i16() {
         use frac::U7 as Frac;
-        let frac = Frac::to_u32();
+        let frac = Frac::U32;
         let a = 12;
         let b = 4;
         for &pair in &[(a, b), (a, -b), (-a, b), (-a, -b)] {
@@ -897,7 +881,7 @@ mod tests {
     #[test]
     fn fixed_u128() {
         use frac::U7 as Frac;
-        let frac = Frac::to_u32();
+        let frac = Frac::U32;
         let a = 0x0003_4567_89ab_cdef_0123_4567_89ab_cdef_u128;
         let b = 5;
         for &(a, b) in &[(a, b), (b, a)] {
@@ -919,7 +903,7 @@ mod tests {
     #[test]
     fn fixed_i128() {
         use frac::U7 as Frac;
-        let frac = Frac::to_u32();
+        let frac = Frac::U32;
         let a = 0x0003_4567_89ab_cdef_0123_4567_89ab_cdef_i128;
         let b = 5;
         for &(a, b) in &[

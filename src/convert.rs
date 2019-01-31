@@ -39,7 +39,7 @@ macro_rules! convert {
             #[inline]
             fn from(src: $SrcU<FracSrc>) -> $DstU<FracDst> {
                 let unshifted = $DstU::<FracDst>::from_bits(src.to_bits().into()).to_bits();
-                let shift = FracDst::to_u32() - FracSrc::to_u32();
+                let shift = FracDst::U32 - FracSrc::U32;
                 $DstU::<FracDst>::from_bits(unshifted << shift)
             }
         }
@@ -59,7 +59,7 @@ macro_rules! convert {
             #[inline]
             fn from(src: $SrcI<FracSrc>) -> $DstI<FracDst> {
                 let unshifted = $DstI::<FracDst>::from_bits(src.to_bits().into()).to_bits();
-                let shift = FracDst::to_u32() - FracSrc::to_u32();
+                let shift = FracDst::U32 - FracSrc::U32;
                 $DstI::<FracDst>::from_bits(unshifted << shift)
             }
         }
@@ -82,7 +82,7 @@ macro_rules! convert {
             #[inline]
             fn from(src: $SrcU<FracSrc>) -> $DstI<FracDst> {
                 let unshifted = $DstI::<FracDst>::from_bits(src.to_bits().into()).to_bits();
-                let shift = FracDst::to_u32() - FracSrc::to_u32();
+                let shift = FracDst::U32 - FracSrc::U32;
                 $DstI::<FracDst>::from_bits(unshifted << shift)
             }
         }
@@ -115,7 +115,7 @@ macro_rules! prim_to_fixed {
             #[inline]
             fn from(src: $SrcU) -> $DstU<FracDst> {
                 let unshifted = $DstU::<FracDst>::from_bits(src.into()).to_bits();
-                let shift = FracDst::to_u32();
+                let shift = FracDst::U32;
                 $DstU::<FracDst>::from_bits(unshifted << shift)
             }
         }
@@ -130,7 +130,7 @@ macro_rules! prim_to_fixed {
             #[inline]
             fn from(src: $SrcI) -> $DstI<FracDst> {
                 let unshifted = $DstI::<FracDst>::from_bits(src.into()).to_bits();
-                let shift = FracDst::to_u32();
+                let shift = FracDst::U32;
                 $DstI::<FracDst>::from_bits(unshifted << shift)
             }
         }
@@ -148,7 +148,7 @@ macro_rules! prim_to_fixed {
             #[inline]
             fn from(src: $SrcU) -> $DstI<FracDst> {
                 let unshifted = $DstI::<FracDst>::from_bits(src.into()).to_bits();
-                let shift = FracDst::to_u32();
+                let shift = FracDst::U32;
                 $DstI::<FracDst>::from_bits(unshifted << shift)
             }
         }
@@ -203,7 +203,7 @@ macro_rules! bool_to_fixed {
             #[inline]
             fn from(src: bool) -> $DstU<FracDst> {
                 let unshifted = $DstU::<FracDst>::from_bits(src.into()).to_bits();
-                let shift = FracDst::to_u32();
+                let shift = FracDst::U32;
                 $DstU::<FracDst>::from_bits(unshifted << shift)
             }
         }
@@ -218,7 +218,7 @@ macro_rules! bool_to_fixed {
             #[inline]
             fn from(src: bool) -> $DstI<FracDst> {
                 let unshifted = $DstI::<FracDst>::from_bits(src.into()).to_bits();
-                let shift = FracDst::to_u32();
+                let shift = FracDst::U32;
                 $DstI::<FracDst>::from_bits(unshifted << shift)
             }
         }

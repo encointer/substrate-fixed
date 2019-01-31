@@ -29,6 +29,8 @@ pub trait SealedInt: Copy + Ord + Debug + Display {
     fn one_shl(shift: u32) -> Self;
     fn all_ones_shl(shift: u32) -> Self;
     fn is_zero(self) -> bool;
+    fn is_positive(self) -> bool;
+    fn is_negative(self) -> bool;
 
     fn to_fixed_overflow(
         self,
@@ -65,12 +67,22 @@ macro_rules! sealed_int {
                 self == 0
             }
 
+            #[inline]
+            fn is_positive(self) -> bool {
+                self > 0
+            }
+
             $($rest)*
         }
     };
     ($Unsigned:ident($NBits:ident)) => {
         sealed_int! {
             $Unsigned($NBits, False, $Unsigned);
+
+            #[inline]
+            fn is_negative(self) -> bool {
+                false
+            }
 
             #[inline]
             fn neg_abs(self) -> (bool, Self::Unsigned) {
@@ -91,7 +103,7 @@ macro_rules! sealed_int {
                 dst_frac_bits: u32,
                 dst_int_bits: u32,
             ) -> (Widest, bool) {
-                let src_bits = <Self as SealedInt>::NBITS as i32;
+                let src_bits = Self::NBITS as i32;
                 let dst_bits = (dst_frac_bits + dst_int_bits) as i32;
 
                 if self == 0 {
@@ -121,6 +133,11 @@ macro_rules! sealed_int {
             $Signed($NBits, True, $Unsigned);
 
             #[inline]
+            fn is_negative(self) -> bool {
+                false
+            }
+
+            #[inline]
             fn neg_abs(self) -> (bool, Self::Unsigned) {
                 if self < 0 {
                     (true, self.wrapping_neg() as $Unsigned)
@@ -146,7 +163,7 @@ macro_rules! sealed_int {
                 dst_frac_bits: u32,
                 dst_int_bits: u32,
             ) -> (Widest, bool) {
-                let src_bits = <Self as SealedInt>::NBITS as i32;
+                let src_bits = Self::NBITS as i32;
                 let dst_bits = (dst_frac_bits + dst_int_bits) as i32;
 
                 if self >= 0 {
@@ -202,6 +219,16 @@ impl SealedInt for bool {
     #[inline]
     fn is_zero(self) -> bool {
         !self
+    }
+
+    #[inline]
+    fn is_positive(self) -> bool {
+        self
+    }
+
+    #[inline]
+    fn is_negative(self) -> bool {
+        false
     }
 
     #[inline]

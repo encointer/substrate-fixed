@@ -265,14 +265,14 @@ macro_rules! pass_method {
         #[doc = $comment]
         #[inline]
         pub fn $method() -> $Fixed<Frac> {
-            $Fixed::from_bits(<$Inner>::$method())
+            Self::from_bits(<$Inner>::$method())
         }
     };
     ($comment:expr, $Fixed:ident($Inner:ty) => fn $method:ident(self)) => {
         #[doc = $comment]
         #[inline]
         pub fn $method(self) -> $Fixed<Frac> {
-            $Fixed::from_bits(<$Inner>::$method(self.to_bits()))
+            Self::from_bits(<$Inner>::$method(self.to_bits()))
         }
     };
     ($comment:expr, $Fixed:ident($Inner:ty) => fn $method:ident(self) -> $ret_ty:ty) => {
@@ -289,7 +289,7 @@ macro_rules! pass_method {
         #[doc = $comment]
         #[inline]
         pub fn $method(self, $param: $param_ty) -> $Fixed<Frac> {
-            $Fixed::from_bits(<$Inner>::$method(self.to_bits(), $param))
+            Self::from_bits(<$Inner>::$method(self.to_bits(), $param))
         }
     };
 }
@@ -318,7 +318,7 @@ This method has been replaced by [`checked_from_float`].
             #[deprecated(since = "0.2.0", note = "replaced by checked_from_float")]
             #[inline]
             pub fn $method(val: $Float) -> Option<$Fixed<$Frac>> {
-                <$Fixed<$Frac>>::checked_from_float(val)
+                Self::checked_from_float(val)
             }
         );
     };
@@ -392,7 +392,7 @@ assert_eq!(five_half.to_string(), \"5.5\");
         {
             #[inline]
             fn clone(&self) -> $Fixed<Frac> {
-                $Fixed::from_bits(self.to_bits())
+                Self::from_bits(self.to_bits())
             }
         }
 
@@ -407,7 +407,7 @@ assert_eq!(five_half.to_string(), \"5.5\");
         {
             #[inline]
             fn default() -> $Fixed<Frac> {
-                $Fixed::from_bits(<$Inner as Default>::default())
+                Self::from_bits(<$Inner>::default())
             }
         }
 
@@ -487,7 +487,7 @@ assert_eq!(Fix::int_bits(), ",
                 ),
                 #[inline]
                 pub fn int_bits() -> u32 {
-                    <Self as SealedFixed>::INT_NBITS
+                    Self::INT_NBITS
                 }
             );
 
@@ -509,7 +509,7 @@ assert_eq!(Fix::frac_bits(), 6);
                 ),
                 #[inline]
                 pub fn frac_bits() -> u32 {
-                    <Self as SealedFixed>::FRAC_NBITS
+                    Self::FRAC_NBITS
                 }
             );
 
@@ -614,7 +614,7 @@ assert_eq!(Fix::from_fixed(src >> 4), Fix::from_bits(1));
                 where
                     F: Fixed,
                 {
-                    let (wrapped, overflow) = $Fixed::overflowing_from_fixed(val);
+                    let (wrapped, overflow) = Self::overflowing_from_fixed(val);
                     #[cfg(debug_assertions)]
                     {
                         if overflow {
@@ -675,7 +675,7 @@ assert!(Fix::checked_from_fixed(too_small).is_none());
                 where
                     F: Fixed,
                 {
-                    let (wrapped, overflow) = $Fixed::overflowing_from_fixed(val);
+                    let (wrapped, overflow) = Self::overflowing_from_fixed(val);
                     if overflow { None } else { Some(wrapped) }
                 }
             );
@@ -730,34 +730,33 @@ assert_eq!(Fix::saturating_from_fixed(too_small), Fix::min_value());
                 where
                     F: Fixed,
                 {
-                    let (value, overflow) =
-                        <<F as SealedFixed>::Bits as SealedInt>::to_fixed_overflow(
-                            val.to_bits(),
-                            F::FRAC_NBITS,
-                            <$Fixed<Frac>>::FRAC_NBITS,
-                            <$Fixed<Frac>>::FRAC_NBITS,
-                        );
+                    let (value, overflow) = F::Bits::to_fixed_overflow(
+                        val.to_bits(),
+                        F::FRAC_NBITS,
+                        Self::FRAC_NBITS,
+                        Self::FRAC_NBITS,
+                    );
                     if overflow {
-                        return if val.to_bits().neg_abs().0 {
-                            $Fixed::min_value()
+                        return if val.to_bits().is_negative() {
+                            Self::min_value()
                         } else {
-                            $Fixed::max_value()
+                            Self::max_value()
                         };
                     }
                     let bits = if_signed_unsigned!(
                         $Signedness,
                         match value {
                             Widest::Unsigned(bits) => {
-                                if (bits as <$Fixed<Frac> as SealedFixed>::Bits) < 0 {
-                                    return $Fixed::max_value();
+                                if (bits as <Self as SealedFixed>::Bits) < 0 {
+                                    return Self::max_value();
                                 }
-                                bits as _
+                                bits as <Self as SealedFixed>::Bits
                             }
-                            Widest::Negative(bits) => bits as _,
+                            Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
                         },
                         match value {
-                            Widest::Unsigned(bits) => bits as _,
-                            Widest::Negative(_) => return $Fixed::min_value(),
+                            Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
+                            Widest::Negative(_) => return Self::min_value(),
                         },
                     );
                     SealedFixed::from_bits(bits)
@@ -814,7 +813,7 @@ assert_eq!(Fix::wrapping_from_fixed(large), wrapped);
                 where
                     F: Fixed,
                 {
-                    $Fixed::overflowing_from_fixed(val).0
+                    Self::overflowing_from_fixed(val).0
                 }
             );
 
@@ -867,29 +866,28 @@ assert_eq!(Fix::overflowing_from_fixed(large), (wrapped, true));
                 where
                     F: Fixed,
                 {
-                    let (value, mut overflow) =
-                        <<F as SealedFixed>::Bits as SealedInt>::to_fixed_overflow(
-                            val.to_bits(),
-                            F::FRAC_NBITS,
-                            <$Fixed<Frac>>::FRAC_NBITS,
-                            <$Fixed<Frac>>::INT_NBITS,
-                        );
+                    let (value, mut overflow) = F::Bits::to_fixed_overflow(
+                        val.to_bits(),
+                        F::FRAC_NBITS,
+                        Self::FRAC_NBITS,
+                        Self::INT_NBITS,
+                    );
                     let bits = if_signed_unsigned!(
                         $Signedness,
                         match value {
                             Widest::Unsigned(bits) => {
-                                if (bits as <$Fixed<Frac> as SealedFixed>::Bits) < 0 {
+                                if (bits as <Self as SealedFixed>::Bits) < 0 {
                                     overflow = true;
                                 }
-                                bits as _
+                                bits as <Self as SealedFixed>::Bits
                             }
-                            Widest::Negative(bits) => bits as _,
+                            Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
                         },
                         match value {
-                            Widest::Unsigned(bits) => bits as _,
+                            Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
                             Widest::Negative(bits) => {
                                 overflow = true;
-                                bits as _
+                                bits as <Self as SealedFixed>::Bits
                             }
                         },
                     );
@@ -1009,7 +1007,7 @@ assert_eq!(Fix::from_int(-3), Fix::from_bits(-3 << 4));",
                 where
                     I: Int,
                 {
-                    let (wrapped, overflow) = $Fixed::overflowing_from_int(val);
+                    let (wrapped, overflow) = Self::overflowing_from_int(val);
                     #[cfg(debug_assertions)]
                     {
                         if overflow {
@@ -1079,7 +1077,7 @@ assert!(Fix::checked_from_int(too_small).is_none());
                 where
                     I: Int,
                 {
-                    let (wrapped, overflow) = $Fixed::overflowing_from_int(val);
+                    let (wrapped, overflow) = Self::overflowing_from_int(val);
                     if overflow { None } else { Some(wrapped) }
                 }
             );
@@ -1139,33 +1137,33 @@ assert_eq!(Fix::saturating_from_int(too_small), Fix::min_value());
                 where
                     I: Int,
                 {
-                    let (value, overflow) = <I as SealedInt>::to_fixed_overflow(
+                    let (value, overflow) = I::to_fixed_overflow(
                         val,
                         0,
-                        <$Fixed<Frac>>::FRAC_NBITS,
-                        <$Fixed<Frac>>::INT_NBITS,
+                        Self::FRAC_NBITS,
+                        Self::INT_NBITS,
                     );
                     if overflow {
-                        return if val.neg_abs().0 {
-                            $Fixed::min_value()
+                        return if val.is_negative() {
+                            Self::min_value()
                         } else {
-                            $Fixed::max_value()
+                            Self::max_value()
                         };
                     }
                     let bits = if_signed_unsigned!(
                         $Signedness,
                         match value {
                             Widest::Unsigned(bits) => {
-                                if (bits as <$Fixed<Frac> as SealedFixed>::Bits) < 0 {
-                                    return $Fixed::max_value();
+                                if (bits as <Self as SealedFixed>::Bits) < 0 {
+                                    return Self::max_value();
                                 }
-                                bits as _
+                                bits as <Self as SealedFixed>::Bits
                             }
-                            Widest::Negative(bits) => bits as _,
+                            Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
                         },
                         match value {
-                            Widest::Unsigned(bits) => bits as _,
-                            Widest::Negative(_) => return $Fixed::min_value(),
+                            Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
+                            Widest::Negative(_) => return Self::min_value(),
                         },
                     );
                     SealedFixed::from_bits(bits)
@@ -1226,7 +1224,7 @@ assert_eq!(Fix::wrapping_from_int(large), wrapped);
                 where
                     I: Int,
                 {
-                    $Fixed::overflowing_from_int(val).0
+                    Self::overflowing_from_int(val).0
                 }
             );
 
@@ -1288,28 +1286,28 @@ assert_eq!(Fix::overflowing_from_int(large), (wrapped, true));
                 where
                     I: Int,
                 {
-                    let (value, mut overflow) = <I as SealedInt>::to_fixed_overflow(
+                    let (value, mut overflow) = I::to_fixed_overflow(
                         val,
                         0,
-                        <$Fixed<Frac>>::FRAC_NBITS,
-                        <$Fixed<Frac>>::INT_NBITS,
+                        Self::FRAC_NBITS,
+                        Self::INT_NBITS,
                     );
                     let bits = if_signed_unsigned!(
                         $Signedness,
                         match value {
                             Widest::Unsigned(bits) => {
-                                if (bits as <$Fixed<Frac> as SealedFixed>::Bits) < 0 {
+                                if (bits as <Self as SealedFixed>::Bits) < 0 {
                                     overflow = true;
                                 }
-                                bits as _
+                                bits as <Self as SealedFixed>::Bits
                             }
-                            Widest::Negative(bits) => bits as _,
+                            Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
                         },
                         match value {
-                            Widest::Unsigned(bits) => bits as _,
+                            Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
                             Widest::Negative(bits) => {
                                 overflow = true;
-                                bits as _
+                                bits as <Self as SealedFixed>::Bits
                             }
                         },
                     );
@@ -1355,11 +1353,7 @@ assert_eq!((-two_half).to_int(), -3);",
                 #[inline]
                 pub fn to_int(self) -> $Inner {
                     let int = self.int().to_bits();
-                    if <$Fixed<Frac>>::FRAC_NBITS < $nbits {
-                        int >> <$Fixed<Frac>>::FRAC_NBITS
-                    } else {
-                        int
-                    }
+                    if Self::INT_NBITS > 0 { int >> Self::FRAC_NBITS } else { int }
                 }
             );
 
@@ -1417,7 +1411,7 @@ assert_eq!(Fix::from_float(1e-10), Fix::from_bits(0));
                 where
                     F: Float,
                 {
-                    let (wrapped, overflow) = $Fixed::overflowing_from_float(val);
+                    let (wrapped, overflow) = Self::overflowing_from_float(val);
                     #[cfg(debug_assertions)]
                     {
                         if overflow {
@@ -1482,12 +1476,8 @@ assert!(Fix::checked_from_float(f64::NAN).is_none());
                     if !val.is_finite() {
                         return None;
                     }
-                    let (wrapped, overflow) = $Fixed::overflowing_from_float(val);
-                    if overflow {
-                        None
-                    } else {
-                        Some(wrapped)
-                    }
+                    let (wrapped, overflow) = Self::overflowing_from_float(val);
+                    if overflow { None } else { Some(wrapped) }
                 }
             );
 
@@ -1544,30 +1534,31 @@ assert_eq!(Fix::saturating_from_float(f64::NEG_INFINITY), Fix::min_value());
                 where
                     F: Float,
                 {
+                    if val.is_nan() {
+                        panic!("NaN");
+                    }
                     let saturated = if val.is_sign_positive() {
-                        $Fixed::max_value()
+                        Self::max_value()
                     } else {
-                        $Fixed::min_value()
+                        Self::min_value()
                     };
                     if !val.is_finite() {
                         return saturated;
                     }
-                    let (neg, abs_128, overflow) = <F as SealedFloat>::to_fixed_neg_abs_overflow(
+                    let (neg, abs_128, overflow) = F::to_fixed_neg_abs_overflow(
                         val,
-                        <$Fixed<Frac>>::FRAC_NBITS,
-                        <$Fixed<Frac>>::INT_NBITS,
+                        Self::FRAC_NBITS,
+                        Self::INT_NBITS,
                     );
                     if overflow {
                         return saturated;
                     }
-                    let abs_bits =
-                        abs_128 as <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::Unsigned;
+                    let abs_bits = abs_128 as <<Self as SealedFixed>::Bits as SealedInt>::Unsigned;
 
-                    if <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::IS_SIGNED {
+                    if <Self as SealedFixed>::Bits::IS_SIGNED {
                         // most significant bit (msb) can be one only for min value,
                         // that is for a negative value with only the msb true.
-                        let msb =
-                            <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::Unsigned::MSB;
+                        let msb = <<Self as SealedFixed>::Bits as SealedInt>::Unsigned::MSB;
                         if abs_bits & msb != 0 {
                             if !neg || abs_bits != msb {
                                 return saturated;
@@ -1580,8 +1571,7 @@ assert_eq!(Fix::saturating_from_float(f64::NEG_INFINITY), Fix::min_value());
                         abs_bits.wrapping_neg()
                     } else {
                         abs_bits
-                    } as <$Fixed<Frac> as SealedFixed>::Bits;
-
+                    } as <Self as SealedFixed>::Bits;
                     SealedFixed::from_bits(bits)
                 }
             );
@@ -1642,7 +1632,7 @@ assert_eq!(Fix::wrapping_from_float(large), wrapped);
                 where
                     F: Float,
                 {
-                    $Fixed::overflowing_from_float(val).0
+                    Self::overflowing_from_float(val).0
                 }
             );
 
@@ -1710,20 +1700,17 @@ assert_eq!(Fix::overflowing_from_float(large), (wrapped, true));
                     if !val.is_finite() {
                         panic!("{} is not finite", val);
                     }
-                    let (neg, abs_128, mut overflow) =
-                        <F as SealedFloat>::to_fixed_neg_abs_overflow(
-                            val,
-                            <$Fixed<Frac>>::FRAC_NBITS,
-                            <$Fixed<Frac>>::INT_NBITS,
-                        );
-                    let abs_bits =
-                        abs_128 as <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::Unsigned;
+                    let (neg, abs_128, mut overflow) = F::to_fixed_neg_abs_overflow(
+                        val,
+                        Self::FRAC_NBITS,
+                        Self::INT_NBITS,
+                    );
+                    let abs_bits = abs_128 as <<Self as SealedFixed>::Bits as SealedInt>::Unsigned;
 
-                    if <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::IS_SIGNED {
+                    if <Self as SealedFixed>::Bits::IS_SIGNED {
                         // most significant bit (msb) can be one only for min value,
                         // that is for a negative value with only the msb true.
-                        let msb =
-                            <<$Fixed<Frac> as SealedFixed>::Bits as SealedInt>::Unsigned::MSB;
+                        let msb = <<Self as SealedFixed>::Bits as SealedInt>::Unsigned::MSB;
                         if abs_bits & msb != 0 {
                             if !neg || abs_bits != msb {
                                 overflow = true;
@@ -1736,7 +1723,7 @@ assert_eq!(Fix::overflowing_from_float(large), (wrapped, true));
                         abs_bits.wrapping_neg()
                     } else {
                         abs_bits
-                    } as <$Fixed<Frac> as SealedFixed>::Bits;
+                    } as <Self as SealedFixed>::Bits;
 
                     (SealedFixed::from_bits(bits), overflow)
                 }
@@ -1784,8 +1771,8 @@ assert_eq!(Fix::from_bits(",
                     SealedFloat::from_neg_abs(
                         neg,
                         u128::from(abs),
-                        <$Fixed<Frac>>::FRAC_NBITS,
-                        <$Fixed<Frac>>::INT_NBITS,
+                        Self::FRAC_NBITS,
+                        Self::INT_NBITS,
                     )
                 }
             );
@@ -1836,7 +1823,8 @@ assert_eq!((-two_and_quarter).int(), -three);",
                 ),
                 #[inline]
                 pub fn int(self) -> $Fixed<Frac> {
-                    $Fixed::from_bits(self.to_bits() & Self::int_mask())
+                    let mask = Self::INT_MASK as <Self as SealedFixed>::Bits;
+                    Self::from_bits(self.to_bits() & mask)
                 }
             );
 
@@ -1886,7 +1874,8 @@ assert_eq!((-two_and_quarter).frac(), three_quarters);",
                 ),
                 #[inline]
                 pub fn frac(self) -> $Fixed<Frac> {
-                    $Fixed::from_bits(self.to_bits() & Self::frac_mask())
+                    let mask = Self::FRAC_MASK as <Self as SealedFixed>::Bits;
+                    Self::from_bits(self.to_bits() & mask)
                 }
             );
 
@@ -2192,9 +2181,8 @@ assert_eq!(Fix::max_value().saturating_ceil(), Fix::max_value());
                 ),
                 #[inline]
                 pub fn saturating_ceil(self) -> $Fixed<Frac> {
-                    let saturated = $Fixed::max_value();
                     let (ceil, overflow) = self.overflowing_ceil();
-                    if overflow { saturated } else { ceil }
+                    if overflow { Self::max_value() } else { ceil }
                 }
             );
 
@@ -2239,9 +2227,8 @@ assert_eq!(AllFrac::min_value().saturating_floor(), AllFrac::min_value());",
                 ),
                 #[inline]
                 pub fn saturating_floor(self) -> $Fixed<Frac> {
-                    let saturated = $Fixed::min_value();
                     let (floor, overflow) = self.overflowing_floor();
-                    if overflow { saturated } else { floor }
+                    if overflow { Self::min_value() } else { floor }
                 }
             );
 
@@ -2424,7 +2411,8 @@ assert_eq!(Fix::max_value().overflowing_ceil(), (Fix::min_value(), true));
                     if Self::int_bits() == 0 {
                         return (int, self.to_bits() > 0);
                     }
-                    let increment = Self::from_bits(<Self as SealedFixed>::lowest_int_bit());
+                    let int_lsb = Self::INT_LSB as <Self as SealedFixed>::Bits;
+                    let increment = Self::from_bits(int_lsb);
                         if_signed! {
                             $Signedness;
                             if Self::int_bits() == 1 {
@@ -2520,14 +2508,15 @@ assert_eq!(Fix::max_value().overflowing_round(), (Fix::min_value(), true));
                 #[inline]
                 pub fn overflowing_round(self) -> ($Fixed<Frac>, bool) {
                     let int = self.int();
-                    let highest_frac_bit = <Self as SealedFixed>::highest_frac_bit();
-                    if (self.to_bits() & highest_frac_bit) == 0 {
+                    let frac_msb = Self::FRAC_MSB as <Self as SealedFixed>::Bits;
+                    if (self.to_bits() & frac_msb) == 0 {
                         return (int, false);
                     }
-                    let increment = Self::from_bits(<Self as SealedFixed>::lowest_int_bit());
+                    let int_lsb = Self::INT_LSB as <Self as SealedFixed>::Bits;
+                    let increment = Self::from_bits(int_lsb);
                     if_signed! {
                         $Signedness;
-                        let tie = self.frac().to_bits() == highest_frac_bit;
+                        let tie = self.frac().to_bits() == frac_msb;
                         if Self::int_bits() == 0 {
                             // if num is .100...00 = -0.5, we have overflow
                             // otherwise .100...01, 0 < x < -0.5,  no overflow
@@ -2685,27 +2674,27 @@ assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
             /// Checked negation.
             #[inline]
             pub fn checked_neg(self) -> Option<$Fixed<Frac>> {
-                <$Inner>::checked_neg(self.to_bits()).map($Fixed::from_bits)
+                <$Inner>::checked_neg(self.to_bits()).map(Self::from_bits)
             }
 
             /// Checked fixed-point addition.
             #[inline]
             pub fn checked_add(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
-                <$Inner>::checked_add(self.to_bits(), rhs.to_bits()).map($Fixed::from_bits)
+                <$Inner>::checked_add(self.to_bits(), rhs.to_bits()).map(Self::from_bits)
             }
 
             /// Checked fixed-point subtraction.
             #[inline]
             pub fn checked_sub(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
-                <$Inner>::checked_sub(self.to_bits(), rhs.to_bits()).map($Fixed::from_bits)
+                <$Inner>::checked_sub(self.to_bits(), rhs.to_bits()).map(Self::from_bits)
             }
 
             /// Checked fixed-point multiplication.
             #[inline]
             pub fn checked_mul(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
-                let (ans, dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::to_u32());
+                let (ans, dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
                 match dir {
-                    Ordering::Equal => Some($Fixed::from_bits(ans)),
+                    Ordering::Equal => Some(Self::from_bits(ans)),
                     _ => None,
                 }
             }
@@ -2716,9 +2705,9 @@ assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
                 if rhs.to_bits() == 0 {
                     return None;
                 }
-                let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::to_u32());
+                let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
                 match dir {
-                    Ordering::Equal => Some($Fixed::from_bits(ans)),
+                    Ordering::Equal => Some(Self::from_bits(ans)),
                     _ => None,
                 }
             }
@@ -2726,31 +2715,31 @@ assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
             /// Checked fixed-point multiplication by integer.
             #[inline]
             pub fn checked_mul_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
-                <$Inner>::checked_mul(self.to_bits(), rhs).map($Fixed::from_bits)
+                <$Inner>::checked_mul(self.to_bits(), rhs).map(Self::from_bits)
             }
 
             /// Checked fixed-point division by integer.
             #[inline]
             pub fn checked_div_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
-                <$Inner>::checked_div(self.to_bits(), rhs).map($Fixed::from_bits)
+                <$Inner>::checked_div(self.to_bits(), rhs).map(Self::from_bits)
             }
 
             /// Checked fixed-point remainder for division by integer.
             #[inline]
             pub fn checked_rem_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
-                <$Inner>::checked_rem(self.to_bits(), rhs).map($Fixed::from_bits)
+                <$Inner>::checked_rem(self.to_bits(), rhs).map(Self::from_bits)
             }
 
             /// Checked fixed-point left shift.
             #[inline]
             pub fn checked_shl(self, rhs: u32) -> Option<$Fixed<Frac>> {
-                <$Inner>::checked_shl(self.to_bits(), rhs).map($Fixed::from_bits)
+                <$Inner>::checked_shl(self.to_bits(), rhs).map(Self::from_bits)
             }
 
             /// Checked fixed-point right shift.
             #[inline]
             pub fn checked_shr(self, rhs: u32) -> Option<$Fixed<Frac>> {
-                <$Inner>::checked_shr(self.to_bits(), rhs).map($Fixed::from_bits)
+                <$Inner>::checked_shr(self.to_bits(), rhs).map(Self::from_bits)
             }
 
             if_signed! {
@@ -2758,110 +2747,110 @@ assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
                 /// Checked absolute value.
                 #[inline]
                 pub fn checked_abs(self) -> Option<$Fixed<Frac>> {
-                    <$Inner>::checked_abs(self.to_bits()).map($Fixed::from_bits)
+                    <$Inner>::checked_abs(self.to_bits()).map(Self::from_bits)
                 }
             }
 
             /// Saturating fixed-point addition.
             #[inline]
             pub fn saturating_add(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                $Fixed::from_bits(<$Inner>::saturating_add(self.to_bits(), rhs.to_bits()))
+                Self::from_bits(<$Inner>::saturating_add(self.to_bits(), rhs.to_bits()))
             }
 
             /// Saturating fixed-point subtraction.
             #[inline]
             pub fn saturating_sub(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                $Fixed::from_bits(<$Inner>::saturating_sub(self.to_bits(), rhs.to_bits()))
+                Self::from_bits(<$Inner>::saturating_sub(self.to_bits(), rhs.to_bits()))
             }
 
             /// Saturating fixed-point multiplication.
             #[inline]
             pub fn saturating_mul(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                let (ans, dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::to_u32());
+                let (ans, dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
                 match dir {
-                    Ordering::Equal => $Fixed::from_bits(ans),
-                    Ordering::Less => $Fixed::max_value(),
-                    Ordering::Greater => $Fixed::min_value(),
+                    Ordering::Equal => Self::from_bits(ans),
+                    Ordering::Less => Self::max_value(),
+                    Ordering::Greater => Self::min_value(),
                 }
             }
 
             /// Saturating fixed-point division.
             #[inline]
             pub fn saturating_div(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::to_u32());
+                let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
                 match dir {
-                    Ordering::Equal => $Fixed::from_bits(ans),
-                    Ordering::Less => $Fixed::max_value(),
-                    Ordering::Greater => $Fixed::min_value(),
+                    Ordering::Equal => Self::from_bits(ans),
+                    Ordering::Less => Self::max_value(),
+                    Ordering::Greater => Self::min_value(),
                 }
             }
 
             /// Saturating fixed-point multiplication by integer.
             #[inline]
             pub fn saturating_mul_int(self, rhs: $Inner) -> $Fixed<Frac> {
-                $Fixed::from_bits(<$Inner>::saturating_mul(self.to_bits(), rhs))
+                Self::from_bits(<$Inner>::saturating_mul(self.to_bits(), rhs))
             }
 
             /// Wrapping negation.
             #[inline]
             pub fn wrapping_neg(self) -> $Fixed<Frac> {
-                $Fixed::from_bits(<$Inner>::wrapping_neg(self.to_bits()))
+                Self::from_bits(<$Inner>::wrapping_neg(self.to_bits()))
             }
 
             /// Wrapping fixed-point addition.
             #[inline]
             pub fn wrapping_add(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                $Fixed::from_bits(<$Inner>::wrapping_add(self.to_bits(), rhs.to_bits()))
+                Self::from_bits(<$Inner>::wrapping_add(self.to_bits(), rhs.to_bits()))
             }
 
             /// Wrapping fixed-point subtraction.
             #[inline]
             pub fn wrapping_sub(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                $Fixed::from_bits(<$Inner>::wrapping_sub(self.to_bits(), rhs.to_bits()))
+                Self::from_bits(<$Inner>::wrapping_sub(self.to_bits(), rhs.to_bits()))
             }
 
             /// Wrapping fixed-point multiplication.
             #[inline]
             pub fn wrapping_mul(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                let (ans, _dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::to_u32());
-                $Fixed::from_bits(ans)
+                let (ans, _dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
+                Self::from_bits(ans)
             }
 
             /// Wrapping fixed-point division.
             #[inline]
             pub fn wrapping_div(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                let (ans, _dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::to_u32());
-                $Fixed::from_bits(ans)
+                let (ans, _dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
+                Self::from_bits(ans)
             }
 
             /// Wrapping fixed-point multiplication by integer.
             #[inline]
             pub fn wrapping_mul_int(self, rhs: $Inner) -> $Fixed<Frac> {
-                $Fixed::from_bits(<$Inner>::wrapping_mul(self.to_bits(), rhs))
+                Self::from_bits(<$Inner>::wrapping_mul(self.to_bits(), rhs))
             }
 
             /// Wrapping fixed-point division by integer.
             #[inline]
             pub fn wrapping_div_int(self, rhs: $Inner) -> $Fixed<Frac> {
-                $Fixed::from_bits(<$Inner>::wrapping_div(self.to_bits(), rhs))
+                Self::from_bits(<$Inner>::wrapping_div(self.to_bits(), rhs))
             }
 
             /// Wrapping fixed-point remainder for division by integer.
             #[inline]
             pub fn wrapping_rem_int(self, rhs: $Inner) -> $Fixed<Frac> {
-                $Fixed::from_bits(<$Inner>::wrapping_rem(self.to_bits(), rhs))
+                Self::from_bits(<$Inner>::wrapping_rem(self.to_bits(), rhs))
             }
 
             /// Wrapping fixed-point left shift.
             #[inline]
             pub fn wrapping_shl(self, rhs: u32) -> $Fixed<Frac> {
-                $Fixed::from_bits(<$Inner>::wrapping_shl(self.to_bits(), rhs))
+                Self::from_bits(<$Inner>::wrapping_shl(self.to_bits(), rhs))
             }
 
             /// Wrapping fixed-point right shift.
             #[inline]
             pub fn wrapping_shr(self, rhs: u32) -> $Fixed<Frac> {
-                $Fixed::from_bits(<$Inner>::wrapping_shr(self.to_bits(), rhs))
+                Self::from_bits(<$Inner>::wrapping_shr(self.to_bits(), rhs))
             }
 
             if_signed! {
@@ -2869,7 +2858,7 @@ assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
                 /// Wrapping absolute value.
                 #[inline]
                 pub fn wrapping_abs(self) -> $Fixed<Frac> {
-                    $Fixed::from_bits(<$Inner>::wrapping_abs(self.to_bits()))
+                    Self::from_bits(<$Inner>::wrapping_abs(self.to_bits()))
                 }
             }
 
@@ -2877,70 +2866,70 @@ assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
             #[inline]
             pub fn overflowing_neg(self) -> ($Fixed<Frac>, bool) {
                 let (ans, o) = <$Inner>::overflowing_neg(self.to_bits());
-                ($Fixed::from_bits(ans), o)
+                (Self::from_bits(ans), o)
             }
 
             /// Overflowing fixed-point addition.
             #[inline]
             pub fn overflowing_add(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
                 let (ans, o) = <$Inner>::overflowing_add(self.to_bits(), rhs.to_bits());
-                ($Fixed::from_bits(ans), o)
+                (Self::from_bits(ans), o)
             }
 
             /// Overflowing fixed-point subtraction.
             #[inline]
             pub fn overflowing_sub(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
                 let (ans, o) = <$Inner>::overflowing_sub(self.to_bits(), rhs.to_bits());
-                ($Fixed::from_bits(ans), o)
+                (Self::from_bits(ans), o)
             }
 
             /// Overflowing fixed-point multiplication.
             #[inline]
             pub fn overflowing_mul(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
-                let (ans, dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::to_u32());
-                ($Fixed::from_bits(ans), dir != Ordering::Equal)
+                let (ans, dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
+                (Self::from_bits(ans), dir != Ordering::Equal)
             }
 
             /// Overflowing fixed-point division.
             #[inline]
             pub fn overflowing_div(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
-                let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::to_u32());
-                ($Fixed::from_bits(ans), dir != Ordering::Equal)
+                let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
+                (Self::from_bits(ans), dir != Ordering::Equal)
             }
 
             /// Overflowing fixed-point multiplication by integer.
             #[inline]
             pub fn overflowing_mul_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
                 let (ans, o) = <$Inner>::overflowing_mul(self.to_bits(), rhs);
-                ($Fixed::from_bits(ans), o)
+                (Self::from_bits(ans), o)
             }
 
             /// Overflowing fixed-point division by integer.
             #[inline]
             pub fn overflowing_div_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
                 let (ans, o) = <$Inner>::overflowing_div(self.to_bits(), rhs);
-                ($Fixed::from_bits(ans), o)
+                (Self::from_bits(ans), o)
             }
 
             /// Overflowing fixed-point remainder for division by integer.
             #[inline]
             pub fn overflowing_rem_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
                 let (ans, o) = <$Inner>::overflowing_rem(self.to_bits(), rhs);
-                ($Fixed::from_bits(ans), o)
+                (Self::from_bits(ans), o)
             }
 
             /// Overflowing fixed-point left shift.
             #[inline]
             pub fn overflowing_shl(self, rhs: u32) -> ($Fixed<Frac>, bool) {
                 let (ans, o) = <$Inner>::overflowing_shl(self.to_bits(), rhs);
-                ($Fixed::from_bits(ans), o)
+                (Self::from_bits(ans), o)
             }
 
             /// Overflowing fixed-point right shift.
             #[inline]
             pub fn overflowing_shr(self, rhs: u32) -> ($Fixed<Frac>, bool) {
                 let (ans, o) = <$Inner>::overflowing_shr(self.to_bits(), rhs);
-                ($Fixed::from_bits(ans), o)
+                (Self::from_bits(ans), o)
             }
 
             if_signed! {
@@ -2949,7 +2938,7 @@ assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
                 #[inline]
                 pub fn overflowing_abs(self) -> ($Fixed<Frac>, bool) {
                     let (ans, o) = <$Inner>::overflowing_abs(self.to_bits());
-                    ($Fixed::from_bits(ans), o)
+                    (Self::from_bits(ans), o)
                 }
             }
 
@@ -3036,7 +3025,7 @@ assert!(Fix::max_value().checked_next_power_of_two().is_none());
                     ),
                     #[inline]
                     pub fn checked_next_power_of_two(self) -> Option<$Fixed<Frac>> {
-                        <$Inner>::checked_next_power_of_two(self.to_bits()).map($Fixed::from_bits)
+                        <$Inner>::checked_next_power_of_two(self.to_bits()).map(Self::from_bits)
                     }
                 );
             }
@@ -3097,13 +3086,9 @@ assert_eq!(Fix::from_int(-5).signum(), -1);
                     #[inline]
                     pub fn signum(self) -> $Fixed<Frac> {
                         match self.to_bits().cmp(&0) {
-                            Ordering::Equal => $Fixed::from_bits(0),
-                            Ordering::Greater => {
-                                <$Fixed<Frac> as SealedFixed>::one().expect("overflow")
-                            }
-                            Ordering::Less => {
-                                <$Fixed<Frac> as SealedFixed>::minus_one().expect("overflow")
-                            }
+                            Ordering::Equal => Self::from_bits(0),
+                            Ordering::Greater => Self::one().expect("overflow"),
+                            Ordering::Less => Self::minus_one().expect("overflow"),
                         }
                     }
                 );

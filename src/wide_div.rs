@@ -13,6 +13,8 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
+use sealed::SealedInt;
+
 trait DivHalf: Copy {
     fn hi(self) -> Self;
     fn lo(self) -> Self;
@@ -85,37 +87,15 @@ macro_rules! div_half {
 
 div_half! { u8: 8, u16: 16, u32: 32, u64: 64, u128: 128 }
 
-trait NegAbs {
+trait NegAbsHiLo {
     type Abs;
     fn neg_abs(self) -> (bool, Self::Abs);
     fn from_neg_abs(neg: bool, abs: Self::Abs) -> Self;
 }
 
-macro_rules! neg_abs {
+macro_rules! neg_abs_hi_lo {
     ($($S:ty: $U:ty),*) => { $(
-        impl NegAbs for $S {
-            type Abs = $U;
-
-            #[inline]
-            fn neg_abs(self) -> (bool, $U) {
-                if self < 0 {
-                    (true, self.wrapping_neg() as $U)
-                } else {
-                    (false, self as $U)
-                }
-            }
-
-            #[inline]
-            fn from_neg_abs(neg: bool, abs: $U) -> $S {
-                if neg {
-                    abs.wrapping_neg() as $S
-                } else {
-                    abs as $S
-                }
-            }
-        }
-
-        impl NegAbs for ($S, $U) {
+        impl NegAbsHiLo for ($S, $U) {
             type Abs = ($U, $U);
 
             #[inline]
@@ -145,7 +125,7 @@ macro_rules! neg_abs {
     )* };
 }
 
-neg_abs! { i8: u8, i16: u16, i32: u32, i64: u64, i128: u128 }
+neg_abs_hi_lo! { i8: u8, i16: u16, i32: u32, i64: u64, i128: u128 }
 
 pub trait WideDivRem<U>: Sized {
     fn div_rem_from(self, dividend: (Self, U)) -> ((Self, U), Self);
@@ -176,8 +156,8 @@ macro_rules! signed_wide_div_rem {
                 let (d_neg, d_abs) = self.neg_abs();
                 let (q, r) = d_abs.div_rem_from(n_abs);
                 (
-                    NegAbs::from_neg_abs(n_neg != d_neg, q),
-                    NegAbs::from_neg_abs(n_neg, r),
+                    NegAbsHiLo::from_neg_abs(n_neg != d_neg, q),
+                    SealedInt::from_neg_abs(n_neg, r),
                 )
             }
         }

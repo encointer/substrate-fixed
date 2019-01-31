@@ -14,7 +14,7 @@
 // <https://opensource.org/licenses/MIT>.
 
 use core::cmp::Ordering;
-use frac::{self, IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
+use frac::{IsLessOrEqual, True, Unsigned, U0, U128, U16, U32, U64, U8};
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
@@ -31,7 +31,7 @@ macro_rules! fixed_cmp {
         {
             #[inline]
             fn eq(&self, rhs: &$Fixed<FracRhs>) -> bool {
-                let (fl, fr) = (Frac::to_u32(), FracRhs::to_u32());
+                let (fl, fr) = (Frac::U32, FracRhs::U32);
                 if fl == fr {
                     self.to_bits() == rhs.to_bits()
                 } else if fl < fr {
@@ -56,7 +56,7 @@ macro_rules! fixed_cmp {
         {
             #[inline]
             fn eq(&self, rhs: &$Inner) -> bool {
-                <$Fixed<Frac> as PartialEq<$Fixed<frac::U0>>>::eq(self, &$Fixed::from_bits(*rhs))
+                self.eq(&$Fixed::<U0>::from_bits(*rhs))
             }
         }
 
@@ -66,7 +66,7 @@ macro_rules! fixed_cmp {
         {
             #[inline]
             fn eq(&self, rhs: &$Fixed<Frac>) -> bool {
-                <$Fixed<frac::U0> as PartialEq<$Fixed<Frac>>>::eq(&$Fixed::from_bits(*self), rhs)
+                $Fixed::<U0>::from_bits(*self).eq(rhs)
             }
         }
 
@@ -87,7 +87,7 @@ macro_rules! fixed_cmp {
         {
             #[inline]
             fn partial_cmp(&self, rhs: &$Fixed<FracRhs>) -> Option<Ordering> {
-                let (fl, fr) = (Frac::to_u32(), FracRhs::to_u32());
+                let (fl, fr) = (Frac::U32, FracRhs::U32);
                 if fl == fr {
                     self.to_bits().partial_cmp(&rhs.to_bits())
                 } else if fl < fr {
@@ -112,7 +112,7 @@ macro_rules! fixed_cmp {
 
             #[inline]
             fn lt(&self, rhs: &$Fixed<FracRhs>) -> bool {
-                let (fl, fr) = (Frac::to_u32(), FracRhs::to_u32());
+                let (fl, fr) = (Frac::U32, FracRhs::U32);
                 if fl == fr {
                     self.to_bits() < rhs.to_bits()
                 } else if fl < fr {
@@ -134,7 +134,7 @@ macro_rules! fixed_cmp {
 
             #[inline]
             fn le(&self, rhs: &$Fixed<FracRhs>) -> bool {
-                let (fl, fr) = (Frac::to_u32(), FracRhs::to_u32());
+                let (fl, fr) = (Frac::U32, FracRhs::U32);
                 if fl == fr {
                     self.to_bits() <= rhs.to_bits()
                 } else if fl < fr {
@@ -170,27 +170,27 @@ macro_rules! fixed_cmp {
         {
             #[inline]
             fn partial_cmp(&self, rhs: &$Inner) -> Option<Ordering> {
-                self.partial_cmp(&$Fixed::<frac::U0>::from_bits(*rhs))
+                self.partial_cmp(&$Fixed::<U0>::from_bits(*rhs))
             }
 
             #[inline]
             fn lt(&self, rhs: &$Inner) -> bool {
-                self.lt(&$Fixed::<frac::U0>::from_bits(*rhs))
+                self.lt(&$Fixed::<U0>::from_bits(*rhs))
             }
 
             #[inline]
             fn le(&self, rhs: &$Inner) -> bool {
-                self.le(&$Fixed::<frac::U0>::from_bits(*rhs))
+                self.le(&$Fixed::<U0>::from_bits(*rhs))
             }
 
             #[inline]
             fn gt(&self, rhs: &$Inner) -> bool {
-                self.gt(&$Fixed::<frac::U0>::from_bits(*rhs))
+                self.gt(&$Fixed::<U0>::from_bits(*rhs))
             }
 
             #[inline]
             fn ge(&self, rhs: &$Inner) -> bool {
-                self.ge(&$Fixed::<frac::U0>::from_bits(*rhs))
+                self.ge(&$Fixed::<U0>::from_bits(*rhs))
             }
         }
 
@@ -200,27 +200,27 @@ macro_rules! fixed_cmp {
         {
             #[inline]
             fn partial_cmp(&self, rhs: &$Fixed<Frac>) -> Option<Ordering> {
-                $Fixed::<frac::U0>::from_bits(*self).partial_cmp(rhs)
+                $Fixed::<U0>::from_bits(*self).partial_cmp(rhs)
             }
 
             #[inline]
             fn lt(&self, rhs: &$Fixed<Frac>) -> bool {
-                $Fixed::<frac::U0>::from_bits(*self).lt(rhs)
+                $Fixed::<U0>::from_bits(*self).lt(rhs)
             }
 
             #[inline]
             fn le(&self, rhs: &$Fixed<Frac>) -> bool {
-                $Fixed::<frac::U0>::from_bits(*self).le(rhs)
+                $Fixed::<U0>::from_bits(*self).le(rhs)
             }
 
             #[inline]
             fn gt(&self, rhs: &$Fixed<Frac>) -> bool {
-                $Fixed::<frac::U0>::from_bits(*self).gt(rhs)
+                $Fixed::<U0>::from_bits(*self).gt(rhs)
             }
 
             #[inline]
             fn ge(&self, rhs: &$Fixed<Frac>) -> bool {
-                $Fixed::<frac::U0>::from_bits(*self).ge(rhs)
+                $Fixed::<U0>::from_bits(*self).ge(rhs)
             }
         }
     };

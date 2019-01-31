@@ -21,31 +21,24 @@ use sealed::SealedInt;
 pub trait SealedFloat: Copy + Debug + Display {
     type Bits: SealedInt;
 
-    fn prec() -> u32;
-
-    #[inline]
-    fn exp_bias() -> i32 {
-        let nbits = Self::Bits::NBITS;
-        let exp_bits = nbits - Self::prec();
-        (1 << (exp_bits - 1)) - 1
-    }
-
-    #[inline]
-    fn exp_min() -> i32 {
-        1 - Self::exp_bias()
-    }
-
-    #[inline]
-    fn exp_max() -> i32 {
-        Self::exp_bias()
-    }
+    const PREC: u32;
+    const EXP_BIAS: i32 = (1 << (Self::Bits::NBITS - Self::PREC - 1)) - 1;
+    const EXP_MIN: i32 = 1 - Self::EXP_BIAS;
+    const EXP_MAX: i32 = Self::EXP_BIAS;
+    const SIGN_MASK: Self::Bits;
+    const EXP_MASK: Self::Bits;
+    const MANT_MASK: Self::Bits;
 
     fn zero(neg: bool) -> Self;
     fn infinity(neg: bool) -> Self;
+    fn is_nan(self) -> bool;
     fn is_finite(self) -> bool;
+    fn is_zero(self) -> bool;
     fn is_sign_positive(self) -> bool;
+    fn is_sign_negative(self) -> bool;
 
     fn parts(self) -> (bool, i32, Self::Bits);
+    fn from_parts(sign: bool, exp: i32, mant: Self::Bits) -> Self;
 
     fn from_neg_abs(neg: bool, abs: u128, frac_bits: u32, int_bits: u32) -> Self;
     // self must be finite, otherwise meaningless results are returned
@@ -57,65 +50,69 @@ macro_rules! sealed_float {
         impl SealedFloat for $Float {
             type Bits = $Bits;
 
-            #[inline]
-            fn prec() -> u32 {
-                $prec
-            }
+            const PREC: u32 = $prec;
+            const SIGN_MASK: Self::Bits = Self::Bits::MSB;
+            const EXP_MASK: Self::Bits = Self::SIGN_MASK - (1 << (Self::PREC - 1));
+            const MANT_MASK: Self::Bits = (1 << (Self::PREC - 1)) - 1;
 
             #[inline]
             fn zero(neg: bool) -> $Float {
-                let nbits = <Self::Bits as SealedInt>::NBITS;
-                let neg_mask = !0 << (nbits - 1);
-                let neg_bits = if neg { neg_mask } else { 0 };
-                <$Float>::from_bits(neg_bits)
+                Self::from_bits(if neg { Self::SIGN_MASK } else { 0 })
             }
 
             #[inline]
             fn infinity(neg: bool) -> $Float {
-                let nbits = <Self::Bits as SealedInt>::NBITS;
-                let neg_mask = !0 << (nbits - 1);
-                let mant_mask = !(!0 << ($prec - 1));
-                let exp_mask = !(neg_mask | mant_mask);
+                Self::from_bits(Self::EXP_MASK | if neg { Self::SIGN_MASK } else { 0 })
+            }
 
-                let neg_bits = if neg { neg_mask } else { 0 };
-                <$Float>::from_bits(neg_bits | exp_mask)
+            #[inline]
+            fn is_nan(self) -> bool {
+                (self.to_bits() & !Self::SIGN_MASK) > Self::EXP_MASK
             }
 
             #[inline]
             fn is_finite(self) -> bool {
-                self.is_finite()
+                (self.to_bits() & !Self::SIGN_MASK) < Self::EXP_MASK
+            }
+
+            #[inline]
+            fn is_zero(self) -> bool {
+                (self.to_bits() & !Self::SIGN_MASK) == 0
             }
 
             #[inline]
             fn is_sign_positive(self) -> bool {
-                self.is_sign_positive()
+                (self.to_bits() & Self::SIGN_MASK) == 0
             }
 
             #[inline]
-            fn parts(self) -> (bool, i32, $Bits) {
-                let nbits = <Self::Bits as SealedInt>::NBITS;
-                let neg_mask = !0 << (nbits - 1);
-                let mant_mask = !(!0 << ($prec - 1));
-                let exp_mask = !(neg_mask | mant_mask);
+            fn is_sign_negative(self) -> bool {
+                (self.to_bits() & Self::SIGN_MASK) != 0
+            }
 
+            #[inline]
+            #[cfg_attr(feature = "cargo-clippy", allow(clippy::cast_lossless))]
+            fn parts(self) -> (bool, i32, $Bits) {
                 let bits = self.to_bits();
-                let neg = bits & neg_mask != 0;
-                let biased_exp = (bits & exp_mask) >> ($prec - 1);
-                let exp = ({
-                    #[cfg_attr(feature = "cargo-clippy", allow(clippy::cast_lossless))]
-                    {
-                        biased_exp as i32
-                    }
-                }) - <$Float as SealedFloat>::exp_bias();
-                let mant = bits & mant_mask;
+                let neg = bits & Self::SIGN_MASK != 0;
+                let biased_exp = (bits & Self::EXP_MASK) >> (Self::PREC - 1);
+                let exp = biased_exp as i32 - Self::EXP_BIAS;
+                let mant = bits & Self::MANT_MASK;
 
                 (neg, exp, mant)
             }
 
+            #[inline]
+            #[cfg_attr(feature = "cargo-clippy", allow(clippy::cast_lossless))]
+            fn from_parts(sign: bool, exp: i32, mant: $Bits) -> Self {
+                let sign_bits = if sign { Self::SIGN_MASK } else { 0 };
+                let biased_exp = (exp + Self::EXP_BIAS) as Self::Bits;
+                let exp_bits = biased_exp << (Self::PREC - 1);
+                let bits = sign_bits | exp_bits | mant;
+                Self::from_bits(bits)
+            }
+
             fn from_neg_abs(neg: bool, abs: u128, frac_bits: u32, int_bits: u32) -> $Float {
-                let prec = Self::prec();
-                let exp_min = Self::exp_min();
-                let exp_max = Self::exp_max();
                 let fix_bits = frac_bits + int_bits;
 
                 let extra_zeros = 128 - fix_bits;
@@ -127,10 +124,10 @@ macro_rules! sealed_float {
                 // remove leading zeros and implicit one
                 let mut mantissa = abs << leading_zeros << 1;
                 let exponent = int_bits as i32 - 1 - leading_zeros as i32;
-                let biased_exponent = if exponent > exp_max {
+                let biased_exponent = if exponent > Self::EXP_MAX {
                     return Self::infinity(neg);
-                } else if exponent < exp_min {
-                    let lost_prec = exp_min - exponent;
+                } else if exponent < Self::EXP_MIN {
+                    let lost_prec = Self::EXP_MIN - exponent;
                     if lost_prec as u32 >= (int_bits + frac_bits) {
                         mantissa = 0;
                     } else {
@@ -140,11 +137,11 @@ macro_rules! sealed_float {
                     }
                     0
                 } else {
-                    (exponent + exp_max) as Self::Bits
+                    (exponent + Self::EXP_MAX) as Self::Bits
                 };
                 // check for rounding
-                let round_up = (fix_bits >= prec) && {
-                    let shift = prec - 1;
+                let round_up = (fix_bits >= Self::PREC) && {
+                    let shift = Self::PREC - 1;
                     let mid_bit = !(!0 >> 1) >> (shift + extra_zeros);
                     let lower_bits = mid_bit - 1;
                     if mantissa & mid_bit == 0 {
@@ -157,12 +154,12 @@ macro_rules! sealed_float {
                     }
                 };
                 let bits_sign = if neg { !(!0 >> 1) } else { 0 };
-                let bits_exp = biased_exponent << (prec - 1);
-                let bits_mantissa = (if fix_bits >= prec - 1 {
-                    (mantissa >> (fix_bits - (prec - 1))) as Self::Bits
+                let bits_exp = biased_exponent << (Self::PREC - 1);
+                let bits_mantissa = (if fix_bits >= Self::PREC - 1 {
+                    (mantissa >> (fix_bits - (Self::PREC - 1))) as Self::Bits
                 } else {
-                    (mantissa as Self::Bits) << (prec - 1 - fix_bits)
-                }) & !(!0 << (prec - 1));
+                    (mantissa as Self::Bits) << (Self::PREC - 1 - fix_bits)
+                }) & !(!0 << (Self::PREC - 1));
                 let mut bits_exp_mantissa = bits_exp | bits_mantissa;
                 if round_up {
                     bits_exp_mantissa += 1;
@@ -176,13 +173,13 @@ macro_rules! sealed_float {
                 int_bits: u32,
             ) -> (bool, u128, bool) {
                 let float_bits = Self::Bits::NBITS as i32;
-                let prec = Self::prec() as i32;
+                let prec = Self::PREC as i32;
                 let fix_bits = (frac_bits + int_bits) as i32;
 
                 let (neg, exp, mut mantissa) = self.parts();
-                debug_assert!(exp <= Self::exp_max(), "not finite");
+                debug_assert!(exp <= Self::EXP_MAX, "not finite");
                 // if not subnormal, add implicit bit
-                if exp >= Self::exp_min() {
+                if exp >= Self::EXP_MIN {
                     mantissa |= 1 << (prec - 1);
                 }
                 if mantissa == 0 {

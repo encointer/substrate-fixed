@@ -11,10 +11,10 @@ Version 0.3.0 (unreleased)
   * The return type of `to_int` is now generic.
   * The new methods `to_fixed`, `to_float`, `checked_to_fixed`,
     `checked_to_int` and `checked_to_float` were added.
-  * The methods `from_fixed` and `to_fixed` and their checked versions
-    were added to the `Int` trait.
-  * The method `to_fixed` and its checked versions were added to the
-    `Float` trait.
+  * The methods `from_fixed` and `to_fixed`, and their checked
+    versions, were added to the `Int` trait.
+  * The method `from_fixed`, and the method `to_fixed` and its checked
+    versions, were added to the `Float` trait.
 
 Version 0.2.1 (2019-01-29)
 ==========================

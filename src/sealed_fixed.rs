@@ -51,6 +51,9 @@ pub trait SealedFixed: Copy + Debug + Display {
     fn overflowing_from_float<F>(float: F) -> (Self, bool)
     where
         F: Float;
+    fn to_float<F>(self) -> F
+    where
+        F: Float;
 
     #[inline]
     fn one() -> Option<Self> {
@@ -105,6 +108,14 @@ macro_rules! sealed_fixed {
                 F: Float,
             {
                 $Fixed::overflowing_from_float(float)
+            }
+
+            #[inline]
+            fn to_float<F>(self) -> F
+            where
+                F: Float,
+            {
+                $Fixed::to_float(self)
             }
 
             #[inline]

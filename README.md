@@ -45,11 +45,13 @@ numeric primitives are implemented. That is, you can use [`From`] or
   * The new methods [`to_fixed`], [`to_float`], [`checked_to_fixed`],
     [`checked_to_int`] and [`checked_to_float`] were added.
   * The methods [`from_fixed`][`Int::from_fixed`] and
-    [`to_fixed`][`Int::to_fixed`] and thier checked versions were
+    [`to_fixed`][`Int::to_fixed`], and thier checked versions, were
     added to the [`Int`] trait.
-  * The method [`to_fixed`][`Float::to_fixed`] and its checked
-    versions were added to the [`Float`] trait.
+  * The method [`from_fixed`][`Float::from_fixed`], and the method
+    [`to_fixed`][`Float::to_fixed`] and its checked versions, were
+    added to the [`Float`] trait.
 
+[`Float::from_fixed`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Float.html#method.from_fixed
 [`Float::to_fixed`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Float.html#method.to_fixed
 [`Float`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Float.html
 [`Int::from_fixed`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Int.html#method.from_fixed

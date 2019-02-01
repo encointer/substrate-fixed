@@ -313,6 +313,27 @@ pub trait Int: SealedInt {
 /// [`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html
 /// [`f16` feature]: ../index.html#optional-features
 pub trait Float: SealedFloat {
+    /// Converts from a fixed-point number.
+    ///
+    /// This method rounds to the nearest, with ties rounding to even.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Float;
+    /// type Fix = fixed::FixedI16<fixed::frac::U8>;
+    /// // 1.625 is 1.101 in binary
+    /// let fix = Fix::from_bits(0b1101 << (8 - 3));
+    /// assert_eq!(f32::from_fixed(fix), 1.625);
+    /// ```
+    #[inline]
+    fn from_fixed<F>(val: F) -> Self
+    where
+        F: Fixed,
+    {
+        val.to_float()
+    }
+
     /// Converts to a fixed-point number.
     ///
     /// This method rounds to the nearest, with ties rounding to even.

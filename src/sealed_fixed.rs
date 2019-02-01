@@ -15,7 +15,7 @@
 
 use core::fmt::{Debug, Display};
 use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
-use sealed::{Fixed, SealedInt};
+use sealed::{Fixed, Float, SealedInt};
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
@@ -47,6 +47,10 @@ pub trait SealedFixed: Copy + Debug + Display {
     fn overflowing_from_fixed<F>(fixed: F) -> (Self, bool)
     where
         F: Fixed;
+
+    fn overflowing_from_float<F>(float: F) -> (Self, bool)
+    where
+        F: Float;
 
     #[inline]
     fn one() -> Option<Self> {
@@ -93,6 +97,14 @@ macro_rules! sealed_fixed {
                 F: Fixed,
             {
                 $Fixed::overflowing_from_fixed(fixed)
+            }
+
+            #[inline]
+            fn overflowing_from_float<F>(float: F) -> (Self, bool)
+            where
+                F: Float,
+            {
+                $Fixed::overflowing_from_float(float)
             }
 
             #[inline]

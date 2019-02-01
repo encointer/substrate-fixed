@@ -46,7 +46,130 @@ use {
 /// [`u32`]: https://doc.rust-lang.org/nightly/std/primitive.u32.html
 /// [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
 /// [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
-pub trait Int: SealedInt {}
+pub trait Int: SealedInt {
+    /// Converts to a fixed-point number.
+    ///
+    /// # Panics
+    ///
+    /// In debug mode, panics if the value does not fit. In release
+    /// mode the value is wrapped, but it is not considered a breaking
+    /// change if in the future it panics; if wrapping is required use
+    /// [`wrapping_to_fixed`] instead.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Int;
+    /// type Fix = fixed::FixedI16<fixed::frac::U8>;
+    /// let fix: Fix = 3.to_fixed();
+    /// assert_eq!(fix, Fix::from_bits(3 << 8));
+    /// ```
+    ///
+    /// [`wrapping_to_fixed`]: #method.wrapping_to_fixed
+    #[inline]
+    fn to_fixed<F>(self) -> F
+    where
+        F: Fixed,
+    {
+        let (wrapped, overflow) = <Self as SealedInt>::overflowing_to_fixed(self);
+        debug_assert!(!overflow, "{} overflows", self);
+        let _ = overflow;
+        wrapped
+    }
+
+    /// Converts to a fixed-point number if it fits, otherwise returns [`None`].
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Int;
+    /// type Fix = fixed::FixedI16<fixed::frac::U8>;
+    /// assert_eq!(3.checked_to_fixed::<Fix>(), Some(Fix::from_bits(3 << 8)));
+    /// assert!(i32::max_value().checked_to_fixed::<Fix>().is_none());
+    /// ```
+    ///
+    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    #[inline]
+    fn checked_to_fixed<F>(self) -> Option<F>
+    where
+        F: Fixed,
+    {
+        match <Self as SealedInt>::overflowing_to_fixed(self) {
+            (wrapped, false) => Some(wrapped),
+            (_, true) => None,
+        }
+    }
+
+    /// Converts to a fixed-point number, saturating if it does not
+    /// fit.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Int;
+    /// type Fix = fixed::FixedU16<fixed::frac::U8>;
+    /// assert_eq!(3i64.saturating_to_fixed::<Fix>(), Fix::from_bits(3 << 8));
+    /// assert_eq!((-1i8).saturating_to_fixed::<Fix>(), Fix::min_value());
+    /// ```
+    #[inline]
+    fn saturating_to_fixed<F>(self) -> F
+    where
+        F: Fixed,
+    {
+        match <Self as SealedInt>::overflowing_to_fixed(self) {
+            (wrapped, false) => wrapped,
+            (_, true) => {
+                if self.is_negative() {
+                    F::from_bits(<F as SealedFixed>::Bits::min_value())
+                } else {
+                    F::from_bits(<F as SealedFixed>::Bits::max_value())
+                }
+            }
+        }
+    }
+
+    /// Converts to a fixed-point number, wrapping if it does not fit.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Int;
+    /// type Fix = fixed::FixedU16<fixed::frac::U8>;
+    /// assert_eq!(3i64.wrapping_to_fixed::<Fix>(), Fix::from_bits(3 << 8));
+    /// assert_eq!((-1i8).wrapping_to_fixed::<Fix>(), Fix::from_bits(0xff00));
+    /// ```
+    #[inline]
+    fn wrapping_to_fixed<F>(self) -> F
+    where
+        F: Fixed,
+    {
+        <Self as SealedInt>::overflowing_to_fixed(self).0
+    }
+
+    /// Converts to a fixed-point number.
+    ///
+    /// Returns a tuple of the fixed-point number and a [`bool`]
+    /// indicating whether an overflow has occurred. On overflow, the
+    /// wrapped value is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Int;
+    /// type Fix = fixed::FixedU16<fixed::frac::U8>;
+    /// assert_eq!(3i64.overflowing_to_fixed::<Fix>(), (Fix::from_bits(3 << 8), false));
+    /// assert_eq!((-1i8).overflowing_to_fixed::<Fix>(), (Fix::from_bits(0xff00), true));
+    /// ```
+    ///
+    ///[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    #[inline]
+    fn overflowing_to_fixed<F>(self) -> (F, bool)
+    where
+        F: Fixed,
+    {
+        <Self as SealedInt>::overflowing_to_fixed(self)
+    }
+}
 
 /// This trait is implemented for the primitive floating-point types,
 /// and for [`f16`] if the [`f16` feature] is enabled.
@@ -59,7 +182,171 @@ pub trait Int: SealedInt {}
 /// [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
 /// [`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html
 /// [`f16` feature]: ../index.html#optional-features
-pub trait Float: SealedFloat {}
+pub trait Float: SealedFloat {
+    /// Converts to a fixed-point number.
+    ///
+    /// This method rounds to the nearest, with ties rounding to even.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the value is not [finite].
+    ///
+    /// In debug mode, also panics if the value does not fit. In release mode
+    /// the value is wrapped, but it is not considered a breaking change if in
+    /// the future it panics; if wrapping is required use
+    /// [`wrapping_to_fixed`] instead.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Float;
+    /// type Fix = fixed::FixedI16<fixed::frac::U8>;
+    /// // 1.625 is 1.101 in binary
+    /// let fix: Fix = 1.625.to_fixed();
+    /// assert_eq!(fix, Fix::from_bits(0b1101 << (8 - 3)));
+    /// ```
+    ///
+    /// [`wrapping_to_fixed`]: #method.wrapping_to_fixed
+    /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
+    #[inline]
+    fn to_fixed<F>(self) -> F
+    where
+        F: Fixed,
+    {
+        let (wrapped, overflow) = <Self as SealedFloat>::overflowing_to_fixed(self);
+        debug_assert!(!overflow, "{} overflows", self);
+        let _ = overflow;
+        wrapped
+    }
+
+    /// Converts to a fixed-point number if it fits, otherwise returns [`None`].
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Float;
+    /// type Fix = fixed::FixedI16<fixed::frac::U8>;
+    /// // 1.625 is 1.101 in binary
+    /// let checked_fix: Option<Fix> = 1.625f32.checked_to_fixed();
+    /// let one_point_625 = Fix::from_bits(0b1101 << (8 - 3));
+    /// assert_eq!(checked_fix, Some(one_point_625));
+    /// assert!(1000f32.checked_to_fixed::<Fix>().is_none());
+    /// assert!(std::f64::NAN.checked_to_fixed::<Fix>().is_none());
+    /// ```
+    ///
+    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    #[inline]
+    fn checked_to_fixed<F>(self) -> Option<F>
+    where
+        F: Fixed,
+    {
+        if !self.is_finite() {
+            return None;
+        }
+        match <Self as SealedFloat>::overflowing_to_fixed(self) {
+            (wrapped, false) => Some(wrapped),
+            (_, true) => None,
+        }
+    }
+
+    /// Converts to a fixed-point number, saturating if it does not
+    /// fit.
+    ///
+    /// # Panics
+    ///
+    /// This method panics if the value is [NaN].
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Float;
+    /// type Fix = fixed::FixedI16<fixed::frac::U8>;
+    /// // 1.625 is 1.101 in binary
+    /// let fix: Fix = 1.625f32.saturating_to_fixed();
+    /// assert_eq!(fix, Fix::from_bits(0b1101 << (8 - 3)));
+    /// let neg_inf_to_fixed: Fix = std::f64::NEG_INFINITY.saturating_to_fixed();
+    /// assert_eq!(neg_inf_to_fixed, Fix::min_value());
+    /// ```
+    ///
+    /// [NaN]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_nan
+    #[inline]
+    fn saturating_to_fixed<F>(self) -> F
+    where
+        F: Fixed,
+    {
+        assert!(!self.is_nan(), "NaN");
+        let saturated = if self.is_sign_negative() {
+            F::from_bits(<F as SealedFixed>::Bits::min_value())
+        } else {
+            F::from_bits(<F as SealedFixed>::Bits::max_value())
+        };
+        if !self.is_finite() {
+            return saturated;
+        }
+        match <Self as SealedFloat>::overflowing_to_fixed(self) {
+            (wrapped, false) => wrapped,
+            (_, true) => saturated,
+        }
+    }
+
+    /// Converts to a fixed-point number, wrapping if it does not fit.
+    ///
+    /// # Panics
+    ///
+    /// This method panics if the value is not [finite].
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Float;
+    /// type Fix = fixed::FixedU16<fixed::frac::U8>;
+    /// // 6.5 is 110.1 in binary
+    /// let six_point_5 = Fix::from_bits(0b1101 << (8 - 1));
+    /// assert_eq!(6.5f32.wrapping_to_fixed::<Fix>(), six_point_5);
+    /// // 1030.5 = 1024 + 6.5, 1024 is a power of 2 that will be wrapped
+    /// assert_eq!(1030.5f64.wrapping_to_fixed::<Fix>(), six_point_5);
+    /// ```
+    ///
+    /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
+    #[inline]
+    fn wrapping_to_fixed<F>(self) -> F
+    where
+        F: Fixed,
+    {
+        <Self as SealedFloat>::overflowing_to_fixed(self).0
+    }
+
+    /// Converts to a fixed-point number.
+    ///
+    /// Returns a tuple of the fixed-point number and a [`bool`]
+    /// indicating whether an overflow has occurred. On overflow, the
+    /// wrapped value is returned.
+    ///
+    /// # Panics
+    ///
+    /// This method panics if the value is not [finite].
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Float;
+    /// type Fix = fixed::FixedU16<fixed::frac::U8>;
+    /// // 6.5 is 110.1 in binary
+    /// let six_point_5 = Fix::from_bits(0b1101 << (8 - 1));
+    /// assert_eq!(6.5f32.overflowing_to_fixed::<Fix>(), (six_point_5, false));
+    /// // 1030.5 = 1024 + 6.5, 1024 is a power of 2 that will be wrapped
+    /// assert_eq!(1030.5f64.overflowing_to_fixed::<Fix>(), (six_point_5, true));
+    /// ```
+    ///
+    ///[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    #[inline]
+    fn overflowing_to_fixed<F>(self) -> (F, bool)
+    where
+        F: Fixed,
+    {
+        <Self as SealedFloat>::overflowing_to_fixed(self)
+    }
+}
 
 /// This trait is implemented for all the fixed-point types.
 ///

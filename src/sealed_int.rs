@@ -33,6 +33,12 @@ pub trait SealedInt: Copy + Ord + Debug + Display {
     fn overflowing_from_fixed<F>(fixed: F) -> (Self, bool)
     where
         F: Fixed;
+    fn overflowing_to_fixed<F>(self) -> (F, bool)
+    where
+        F: Fixed;
+
+    fn min_value() -> Self;
+    fn max_value() -> Self;
 
     fn one_shl(shift: u32) -> Self;
     fn all_ones_shl(shift: u32) -> Self;
@@ -60,12 +66,30 @@ macro_rules! sealed_int {
             const MSB: $Int = 1 << (Self::NBITS - 1);
 
             #[inline]
+            fn min_value() -> $Int {
+                $Int::min_value()
+            }
+
+            #[inline]
+            fn max_value() -> $Int {
+                $Int::max_value()
+            }
+
+            #[inline]
             fn overflowing_from_fixed<F>(fixed: F) -> (Self, bool)
             where
                 F: Fixed,
             {
                 let (wrapped, overflow) = <$EquivFixed<U0>>::overflowing_from_fixed(fixed);
                 (wrapped.to_bits(), overflow)
+            }
+
+            #[inline]
+            fn overflowing_to_fixed<F>(self) -> (F, bool)
+            where
+                F: Fixed
+            {
+                F::overflowing_from_fixed(<$EquivFixed<U0>>::from_bits(self))
             }
 
             #[inline]
@@ -214,12 +238,30 @@ impl SealedInt for bool {
     const MSB: bool = true;
 
     #[inline]
+    fn min_value() -> bool {
+        false
+    }
+
+    #[inline]
+    fn max_value() -> bool {
+        true
+    }
+
+    #[inline]
     fn overflowing_from_fixed<F>(fixed: F) -> (Self, bool)
     where
         F: Fixed,
     {
         let (wrapped, overflow) = FixedU8::<U7>::overflowing_from_fixed(fixed);
         (wrapped.to_bits() & 0x80u8 != 0, overflow)
+    }
+
+    #[inline]
+    fn overflowing_to_fixed<F>(self) -> (F, bool)
+    where
+        F: Fixed,
+    {
+        F::overflowing_from_fixed(FixedU8::<U0>::from_bits(self as u8))
     }
 
     #[inline]

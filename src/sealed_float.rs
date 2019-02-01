@@ -16,7 +16,7 @@
 use core::fmt::{Debug, Display};
 #[cfg(feature = "f16")]
 use half::f16;
-use sealed::SealedInt;
+use sealed::{Fixed, SealedInt};
 
 pub trait SealedFloat: Copy + Debug + Display {
     type Bits: SealedInt;
@@ -38,6 +38,10 @@ pub trait SealedFloat: Copy + Debug + Display {
 
     fn parts(self) -> (bool, i32, Self::Bits);
     fn from_parts(sign: bool, exp: i32, mant: Self::Bits) -> Self;
+
+    fn overflowing_to_fixed<F>(self) -> (F, bool)
+    where
+        F: Fixed;
 
     fn from_neg_abs(neg: bool, abs: u128, frac_bits: u32, int_bits: u32) -> Self;
     // self must be finite, otherwise meaningless results are returned
@@ -104,6 +108,14 @@ macro_rules! sealed_float {
                 let exp_bits = biased_exp << (Self::PREC - 1);
                 let bits = sign_bits | exp_bits | mant;
                 Self::from_bits(bits)
+            }
+
+            #[inline]
+            fn overflowing_to_fixed<F>(self) -> (F, bool)
+            where
+                F: Fixed,
+            {
+                F::overflowing_from_float(self)
             }
 
             fn from_neg_abs(neg: bool, abs: u128, frac_bits: u32, int_bits: u32) -> $Float {

@@ -5,10 +5,12 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
-Version 0.2.2 (unreleased)
+Version 0.3.0 (unreleased)
 ==========================
 
-  * The new method `to_fixed` was added.
+  * The return type of `to_int` is now generic.
+  * The new methods `to_fixed`, `to_float`, `checked_to_fixed`,
+    `checked_to_int` and `checked_to_float` were added.
 
 Version 0.2.1 (2019-01-29)
 ==========================

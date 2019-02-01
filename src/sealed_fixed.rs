@@ -44,7 +44,7 @@ pub trait SealedFixed: Copy + Debug + Display {
     // 0 for no int bits
     const INT_LSB: u128 = Self::INT_MASK ^ (Self::INT_MASK << 1);
 
-    fn from_fixed<F>(fixed: F) -> Self
+    fn overflowing_from_fixed<F>(fixed: F) -> (Self, bool)
     where
         F: Fixed;
 
@@ -88,11 +88,11 @@ macro_rules! sealed_fixed {
             type Bits = $Bits;
 
             #[inline]
-            fn from_fixed<F>(fixed: F) -> Self
+            fn overflowing_from_fixed<F>(fixed: F) -> (Self, bool)
             where
                 F: Fixed,
             {
-                $Fixed::from_fixed(fixed)
+                $Fixed::overflowing_from_fixed(fixed)
             }
 
             #[inline]

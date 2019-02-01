@@ -20,7 +20,7 @@ This module contains sealed traits.
 use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
 #[cfg(feature = "f16")]
 use half::f16;
-pub(crate) use sealed_fixed::SealedFixed;
+pub(crate) use sealed_fixed::{SealedFixed, Widest};
 pub(crate) use sealed_float::SealedFloat;
 pub(crate) use sealed_int::SealedInt;
 use {

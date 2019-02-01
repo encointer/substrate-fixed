@@ -39,11 +39,18 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
 ## What’s new
 
-### Version 0.2.2 news (unreleased)
+### Version 0.3.0 news (unreleased)
 
-  * The new method [`to_fixed`] was added.
+  * The return type of [`to_int`] is now generic.
+  * The new methods [`to_fixed`], [`to_float`], [`checked_to_fixed`],
+    [`checked_to_int`] and [`checked_to_float`] were added.
 
-[`to_fixed`]: https://docs.rs/fixed/0.2.2/fixed/struct.FixedI32.html#method.to_fixed
+[`checked_to_int`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.checked_to_int
+[`checked_to_float`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.checked_to_float
+[`checked_to_fixed`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.checked_to_fixed
+[`checked_to_int`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.checked_to_int
+[`checked_to_float`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.checked_to_float
+[`checked_to_fixed`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.checked_to_fixed
 
 ### Version 0.2.1 news (2019-01-29)
 
@@ -151,8 +158,8 @@ use fixed::types::I20F12;
 let six_and_third = I20F12::from_int(19) / 3;
 // four decimal digits for 12 binary digits
 assert_eq!(six_and_third.to_string(), "6.3333");
-// convert to i32, taking the ceil
-assert_eq!(six_and_third.ceil().to_int(), 7);
+// find the ceil and convert to i32
+assert_eq!(six_and_third.ceil().to_int::<i32>(), 7);
 ```
 
 The type [`I20F12`] is a 32-bit fixed-point signed number with 20

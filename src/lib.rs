@@ -834,6 +834,8 @@ assert_eq!(Fix::from_bits(",
                         "0b1101 << (4 - 3)).to_float::<f64>(), "
                     ),
                     "1.625f64);
+let max_fixed = fixed::FixedU128::<fixed::frac::U0>::max_value();
+assert_eq!(max_fixed.to_float::<f32>(), std::f32::INFINITY);
 ```
 
 [`f16` feature]: index.html#optional-features
@@ -1086,45 +1088,6 @@ assert!(Fix::checked_from_float(std::f64::NAN).is_none());
                     }
                     let (wrapped, overflow) = Self::overflowing_from_float(val);
                     if overflow { None } else { Some(wrapped) }
-                }
-            );
-
-            doc_comment!(
-                concat!(
-                    "Converts a fixed-point number to a
-floating-point number. This method always returns [`Some`].
-
-The floating-point number can be of type [`f32`] or [`f64`]. If the
-[`f16` feature] is enabled, it can also be of type [`f16`].
-
-This method rounds to the nearest, with ties rounding to even.
-
-# Examples
-
-```rust
-type Fix = fixed::",
-                    stringify!($Fixed),
-                    "<fixed::frac::U4>;
-// 1.625 is 1.101 in binary
-let fix = Fix::from_bits(0b1101 << (4 - 3));
-assert_eq!(fix.checked_to_float::<f32>(), Some(1.625f32));
-let max_fixed = fixed::FixedU128::<fixed::frac::U0>::max_value();
-assert_eq!(max_fixed.checked_to_float::<f32>(), Some(std::f32::INFINITY));
-```
-
-[`Some`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.Some
-[`f16` feature]: index.html#optional-features
-[`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
-[`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
-[`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html
-",
-                ),
-                #[inline]
-                pub fn checked_to_float<F>(self) -> Option<F>
-                where
-                    F: Float,
-                {
-                    Some(self.to_float())
                 }
             );
 

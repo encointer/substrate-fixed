@@ -47,6 +47,38 @@ use {
 /// [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
 /// [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
 pub trait Int: SealedInt {
+    /// Converts from a fixed-point number.
+    ///
+    /// Any fractional bits are truncated.
+    ///
+    /// # Panics
+    ///
+    /// In debug mode, panics if the value does not fit. In release
+    /// mode the value is wrapped, but it is not considered a breaking
+    /// change if in the future it panics; if wrapping is required use
+    /// [`wrapping_from_fixed`] instead.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Int;
+    /// type Fix = fixed::FixedI16<fixed::frac::U8>;
+    /// let fix = Fix::from_bits(-3 << 8 | 5);
+    /// assert_eq!(i32::from_fixed(fix), -3);
+    /// ```
+    ///
+    /// [`wrapping_from_fixed`]: #method.wrapping_from_fixed
+    #[inline]
+    fn from_fixed<F>(val: F) -> Self
+    where
+        F: Fixed,
+    {
+        let (wrapped, overflow) = <Self as SealedInt>::overflowing_from_fixed(val);
+        debug_assert!(!overflow, "{} overflows", val);
+        let _ = overflow;
+        wrapped
+    }
+
     /// Converts to a fixed-point number.
     ///
     /// # Panics
@@ -77,6 +109,30 @@ pub trait Int: SealedInt {
         wrapped
     }
 
+    /// Converts from a fixed-point number if it fits, otherwise returns [`None`].
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Int;
+    /// type Fix = fixed::FixedI16<fixed::frac::U8>;
+    /// let fix = Fix::from_bits(-3 << 8 | 5);
+    /// assert_eq!(i32::checked_from_fixed(fix), Some(-3));
+    /// assert!(u32::checked_from_fixed(fix).is_none());
+    /// ```
+    ///
+    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    #[inline]
+    fn checked_from_fixed<F>(val: F) -> Option<Self>
+    where
+        F: Fixed,
+    {
+        match <Self as SealedInt>::overflowing_from_fixed(val) {
+            (wrapped, false) => Some(wrapped),
+            (_, true) => None,
+        }
+    }
+
     /// Converts to a fixed-point number if it fits, otherwise returns [`None`].
     ///
     /// # Examples
@@ -97,6 +153,35 @@ pub trait Int: SealedInt {
         match <Self as SealedInt>::overflowing_to_fixed(self) {
             (wrapped, false) => Some(wrapped),
             (_, true) => None,
+        }
+    }
+
+    /// Converts from a fixed-point number, saturating if it does not
+    /// fit.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Int;
+    /// type Fix = fixed::FixedI16<fixed::frac::U8>;
+    /// let fix = Fix::from_bits(-3 << 8 | 5);
+    /// assert_eq!(i32::saturating_from_fixed(fix), -3);
+    /// assert_eq!(u32::saturating_from_fixed(fix), 0);
+    /// ```
+    #[inline]
+    fn saturating_from_fixed<F>(val: F) -> Self
+    where
+        F: Fixed,
+    {
+        match <Self as SealedInt>::overflowing_from_fixed(val) {
+            (wrapped, false) => wrapped,
+            (_, true) => {
+                if val.to_bits().is_negative() {
+                    Self::min_value()
+                } else {
+                    Self::max_value()
+                }
+            }
         }
     }
 
@@ -128,6 +213,26 @@ pub trait Int: SealedInt {
         }
     }
 
+    /// Converts from a fixed-point number, wrapping if it does not
+    /// fit.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Int;
+    /// type Fix = fixed::FixedI16<fixed::frac::U8>;
+    /// let fix = Fix::from_bits(-3 << 8 | 5);
+    /// assert_eq!(i32::wrapping_from_fixed(fix), -3);
+    /// assert_eq!(u32::wrapping_from_fixed(fix), 3u32.wrapping_neg());
+    /// ```
+    #[inline]
+    fn wrapping_from_fixed<F>(val: F) -> Self
+    where
+        F: Fixed,
+    {
+        <Self as SealedInt>::overflowing_from_fixed(val).0
+    }
+
     /// Converts to a fixed-point number, wrapping if it does not fit.
     ///
     /// # Examples
@@ -144,6 +249,31 @@ pub trait Int: SealedInt {
         F: Fixed,
     {
         <Self as SealedInt>::overflowing_to_fixed(self).0
+    }
+
+    /// Converts from a fixed-point number.
+    ///
+    /// Returns a tuple of the integer and a [`bool`] indicating
+    /// whether an overflow has occurred. On overflow, the wrapped
+    /// value is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Int;
+    /// type Fix = fixed::FixedI16<fixed::frac::U8>;
+    /// let fix = Fix::from_bits(-3 << 8 | 5);
+    /// assert_eq!(i32::overflowing_from_fixed(fix), (-3, false));
+    /// assert_eq!(u32::overflowing_from_fixed(fix), (3u32.wrapping_neg(), true));
+    /// ```
+    ///
+    ///[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    #[inline]
+    fn overflowing_from_fixed<F>(val: F) -> (Self, bool)
+    where
+        F: Fixed,
+    {
+        <Self as SealedInt>::overflowing_from_fixed(val)
     }
 
     /// Converts to a fixed-point number.
@@ -338,7 +468,8 @@ pub trait Float: SealedFloat {
     /// assert_eq!(1030.5f64.overflowing_to_fixed::<Fix>(), (six_point_5, true));
     /// ```
     ///
-    ///[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
     #[inline]
     fn overflowing_to_fixed<F>(self) -> (F, bool)
     where

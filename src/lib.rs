@@ -746,7 +746,7 @@ assert_eq!(",
                 where
                     I: Int,
                 {
-                    let (wrapped, overflow) = I::overflowing_from_fixed(self);
+                    let (wrapped, overflow) = <I as SealedInt>::overflowing_from_fixed(self);
                     debug_assert!(!overflow, "{} overflows", self);
                     let _ = overflow;
                     wrapped
@@ -1032,7 +1032,7 @@ assert!(AllInt::",
                 where
                     I: Int,
                 {
-                    match I::overflowing_from_fixed(self) {
+                    match <I as SealedInt>::overflowing_from_fixed(self) {
                         (_, true) => None,
                         (wrapped, false) => Some(wrapped),
                     }

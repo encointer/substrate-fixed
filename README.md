@@ -44,13 +44,15 @@ numeric primitives are implemented. That is, you can use [`From`] or
   * The return type of [`to_int`] is now generic.
   * The new methods [`to_fixed`], [`to_float`], [`checked_to_fixed`],
     [`checked_to_int`] and [`checked_to_float`] were added.
-  * The method [`to_fixed`][`Int::to_fixed`] and its checked versions
-    were added to the [`Int`] trait.
+  * The methods [`from_fixed`][`Int::from_fixed`] and
+    [`to_fixed`][`Int::to_fixed`] and thier checked versions were
+    added to the [`Int`] trait.
   * The method [`to_fixed`][`Float::to_fixed`] and its checked
     versions were added to the [`Float`] trait.
 
 [`Float::to_fixed`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Float.html#method.to_fixed
 [`Float`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Float.html
+[`Int::from_fixed`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Int.html#method.from_fixed
 [`Int::to_fixed`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Int.html#method.to_fixed
 [`Int`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Int.html
 [`checked_to_fixed`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.checked_to_fixed

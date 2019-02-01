@@ -431,8 +431,7 @@ represented.
 # Examples
 
 ```rust
-use fixed::frac;
-type Fix = fixed::", stringify!($Fixed), "<frac::U4>;
+type Fix = fixed::", stringify!($Fixed), "<fixed::frac::U4>;
 assert_eq!(Fix::min_value(), Fix::from_bits(",
                     stringify!($Inner),
                     "::min_value()));
@@ -443,16 +442,15 @@ assert_eq!(Fix::min_value(), Fix::from_bits(",
             }
             pass_method! {
                 concat!(
-                    "Returns the largest value that can be 
+                    "Returns the largest value that can be
 represented.
 
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 assert_eq!(Fix::max_value(), Fix::from_bits(",
                     stringify!($Inner),
                     "::max_value()));
@@ -469,10 +467,9 @@ assert_eq!(Fix::max_value(), Fix::from_bits(",
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U6>;
+                    "<fixed::frac::U6>;
 assert_eq!(Fix::int_bits(), ",
                     stringify!($nbits),
                     " - 6);
@@ -492,10 +489,9 @@ assert_eq!(Fix::int_bits(), ",
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U6>;
+                    "<fixed::frac::U6>;
 assert_eq!(Fix::frac_bits(), 6);
 ```
 ",
@@ -514,10 +510,9 @@ representation identical to the given integer.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 // 0010.0000 == 2
 assert_eq!(Fix::from_bits(0b10_0000), 2);
 ```
@@ -537,10 +532,9 @@ representation identical to the given fixed-point number.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 // 2 is 0010.0000
 assert_eq!(Fix::from_int(2).to_bits(), 0b10_0000);
 ```
@@ -860,7 +854,7 @@ assert_eq!(max_fixed.to_float::<f32>(), std::f32::INFINITY);
 
             doc_comment!(
                 concat!(
-                    "Creates a fixed-point number from another 
+                    "Creates a fixed-point number from another
 fixed-point number if it fits, otherwise returns [`None`].
 
 Any extra fractional bits are truncated.
@@ -896,7 +890,7 @@ assert!(Dst::checked_from_fixed(too_large).is_none());
 
             doc_comment!(
                 concat!(
-                    "Converts a fixed-point number to another 
+                    "Converts a fixed-point number to another
 fixed-point number if it fits, otherwise returns [`None`].
 
 Any extra fractional bits are truncated.
@@ -910,11 +904,12 @@ type Src = fixed::",
 type Dst = fixed::FixedI32<fixed::frac::U16>;
 // 1.75 is 1.11 in binary
 let src = Src::from_bits(0b111 << (4 - 2));
-assert_eq!(src.checked_to_fixed::<Dst>(), Some(Dst::from_bits(0b111 << (16 - 2))));
-type NotEnoughIntBits = fixed::",
+let expected = Dst::from_bits(0b111 << (16 - 2));
+assert_eq!(src.checked_to_fixed::<Dst>(), Some(expected));
+type TooFewIntBits = fixed::",
                     stringify!($Fixed),
                     "<fixed::frac::U6>;
-assert!(Src::max_value().checked_to_fixed::<NotEnoughIntBits>().is_none());
+assert!(Src::max_value().checked_to_fixed::<TooFewIntBits>().is_none());
 ```
 
 [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
@@ -926,15 +921,15 @@ assert!(Src::max_value().checked_to_fixed::<NotEnoughIntBits>().is_none());
                     F: Fixed,
                 {
                     match F::overflowing_from_fixed(self) {
-                        (_, true) => None,
                         (wrapped, false) => Some(wrapped),
+                        (_, true) => None,
                     }
                 }
             );
 
             doc_comment!(
                 concat!(
-                    "Creates a fixed-point number from an integer if 
+                    "Creates a fixed-point number from an integer if
 it fits, otherwise returns [`None`].
 
 The integer can be of type [`bool`], [`i8`], [`i16`], [`i32`],
@@ -951,6 +946,14 @@ let too_large = ",
                     stringify!($Inner),
                     "::max_value();
 assert!(Fix::checked_from_int(too_large).is_none());
+let too_small = ",
+                    if_signed_unsigned!(
+                        $Signedness,
+                        concat!(stringify!($Inner), "::min_value()"),
+                        "-1",
+                    ),
+                    ";
+assert!(Fix::checked_from_int(too_small).is_none());
 ```
 
 [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
@@ -1004,7 +1007,7 @@ assert_eq!(",
                     "));
 type AllInt = fixed::",
                     stringify!($Fixed),
-                    "::<fixed::frac::U0>;
+                    "<fixed::frac::U0>;
 assert!(AllInt::",
                     if_signed_unsigned!(
                         $Signedness,
@@ -1035,8 +1038,8 @@ assert!(AllInt::",
                     I: Int,
                 {
                     match <I as SealedInt>::overflowing_from_fixed(self) {
-                        (_, true) => None,
                         (wrapped, false) => Some(wrapped),
+                        (_, true) => None,
                     }
                 }
             );
@@ -1093,46 +1096,33 @@ assert!(Fix::checked_from_float(std::f64::NAN).is_none());
 
             doc_comment!(
                 concat!(
-                    "
-Creates a fixed-point number from another fixed-point number,
-saturating the value if it does not fit.
+                    "Creates a fixed-point number from another
+fixed-point number, saturating the value if it does not fit.
 
-The source value does not need to have the same fixed-point type as
-the destination value.
-
-This method truncates the extra fractional bits in the source value.
-For example, if the source type has 24 fractional bits and the destination
-type has 10 fractional bits, then 14 fractional bits will be truncated.
+Any extra fractional bits are truncated.
 
 # Examples
 
 ```rust
-use fixed::frac;
-type Src = fixed::FixedI32<frac::U16>;
-type Fix = fixed::", stringify!($Fixed), "<frac::U4>;
-// 1.75 is 1.1100, that is Src::from_bits(0b111 << (16 - 2))
-// or Fix::from_bits(0b111<< (4 - 2))
+type Src = fixed::FixedI32<fixed::frac::U16>;
+type Dst = fixed::",
+                    stringify!($Fixed),
+                    "<fixed::frac::U4>;
+// 1.75 is 1.11 in binary
 let src = Src::from_bits(0b111 << (16 - 2));
-let expected = Fix::from_bits(0b111 << (4 - 2));
-assert_eq!(Fix::saturating_from_fixed(src), expected);",
-                    if_signed_else_empty_str!(
-                        $Signedness,
-                        "
-assert_eq!(Fix::saturating_from_fixed(-src), -expected);",
-                    ),
-                    "
+assert_eq!(Dst::saturating_from_fixed(src), Dst::from_bits(0b111 << (4 - 2)));
 let too_large = fixed::",
                     stringify!($Fixed),
-                    "::<frac::U3>::max_value();
-assert_eq!(Fix::saturating_from_fixed(too_large), Fix::max_value());
+                    "::<fixed::frac::U2>::max_value();
+assert_eq!(Dst::saturating_from_fixed(too_large), Dst::max_value());
 let too_small = ",
                     if_signed_unsigned!(
                         $Signedness,
-                        concat!("fixed::", stringify!($Fixed), "::<frac::U3>::min_value()"),
+                        concat!("fixed::", stringify!($Fixed), "::<fixed::frac::U2>::min_value()"),
                         "Src::from_bits(-1)"
                     ),
                     ";
-assert_eq!(Fix::saturating_from_fixed(too_small), Fix::min_value());
+assert_eq!(Dst::saturating_from_fixed(too_small), Dst::min_value());
 ```
 ",
                 ),
@@ -1176,140 +1166,50 @@ assert_eq!(Fix::saturating_from_fixed(too_small), Fix::min_value());
 
             doc_comment!(
                 concat!(
-                    "
-Creates a fixed-point number from another fixed-point number,
-wrapping the value on overflow.
+                    "Converts a fixed-point number to another
+fixed-point number, saturating the value if it does not fit.
 
-The source value does not need to have the same fixed-point type as
-the destination value.
-
-This method truncates the extra fractional bits in the source value.
-For example, if the source type has 24 fractional bits and the destination
-type has 10 fractional bits, then 14 fractional bits will be truncated.
+Any extra fractional bits are truncated.
 
 # Examples
 
 ```rust
-use fixed::frac;
-type Src = fixed::FixedI32<frac::U16>;
-type Fix = fixed::",
+type Src = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
-// 1.75 is 1.1100, that is Src::from_bits(0b111 << (16 - 2))
-// or Fix::from_bits(0b111<< (4 - 2))
-let src = Src::from_bits(0b111 << (16 - 2));
-let expected = Fix::from_bits(0b111 << (4 - 2));
-assert_eq!(Fix::wrapping_from_fixed(src), expected);",
-                    if_signed_else_empty_str!(
-                        $Signedness,
-                        "
-assert_eq!(Fix::wrapping_from_fixed(-src), -expected);",
-                    ),
-                    "
-// integer 0b1101 << (",
-                    stringify!($nbits),
-                    " - 7) will wrap to fixed-point 1010...
-let large = fixed::",
+                    "<fixed::frac::U4>;
+type Dst = fixed::FixedI32<fixed::frac::U16>;
+// 1.75 is 1.11 in binary
+let src = Src::from_bits(0b111 << (4 - 2));
+assert_eq!(src.saturating_to_fixed::<Dst>(), Dst::from_bits(0b111 << (16 - 2)));
+type TooFewIntBits = fixed::",
                     stringify!($Fixed),
-                    "::<frac::U0>::from_bits(0b1101 << (",
-                    stringify!($nbits),
-                    " - 7));
-let wrapped = Fix::from_bits(0b1010 << (", stringify!($nbits), " - 4));
-assert_eq!(Fix::wrapping_from_fixed(large), wrapped);
+                    "<fixed::frac::U6>;
+let saturated = Src::max_value().saturating_to_fixed::<TooFewIntBits>();
+assert_eq!(saturated, TooFewIntBits::max_value());
 ```
 ",
                 ),
                 #[inline]
-                pub fn wrapping_from_fixed<F>(val: F) -> $Fixed<Frac>
+                pub fn saturating_to_fixed<F>(self) -> F
                 where
                     F: Fixed,
                 {
-                    Self::overflowing_from_fixed(val).0
+                    match F::overflowing_from_fixed(self) {
+                        (wrapped, false) => wrapped,
+                        (_, true) => {
+                            if self.to_bits().is_negative() {
+                                F::from_bits(F::Bits::min_value())
+                            } else {
+                                F::from_bits(F::Bits::max_value())
+                            }
+                        }
+                    }
                 }
             );
 
             doc_comment!(
                 concat!(
-                    "
-Creates a fixed-point number from another fixed-point number.
-
-Returns a tuple of the fixed-point number and a [`bool`] indicating whether
-an overflow has occurred. On overflow, the wrapped value is returned.
-
-# Examples
-
-```rust
-use fixed::frac;
-type Src = fixed::FixedI32<frac::U16>;
-type Fix = fixed::",
-                    stringify!($Fixed),
-                    "<frac::U4>;
-// 1.75 is 1.1100, that is Src::from_bits(0b111 << (16 - 2))
-// or Fix::from_bits(0b111<< (4 - 2))
-let src = Src::from_bits(0b111 << (16 - 2));
-let expected = Fix::from_bits(0b111 << (4 - 2));
-assert_eq!(Fix::overflowing_from_fixed(src), (expected, false));",
-                    if_signed_else_empty_str!(
-                        $Signedness,
-                        "
-assert_eq!(Fix::overflowing_from_fixed(-src), (-expected, false));",
-                    ),
-                    "
-// integer 0b1101 << (",
-                    stringify!($nbits),
-                    " - 7) will wrap to fixed-point 1010...
-let large = fixed::",
-                    stringify!($Fixed),
-                    "::<frac::U0>::from_bits(0b1101 << (",
-                    stringify!($nbits),
-                    " - 7));
-let wrapped = Fix::from_bits(0b1010 << (",
-                    stringify!($nbits),
-                    " - 4));
-assert_eq!(Fix::overflowing_from_fixed(large), (wrapped, true));
-```
-
-[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
-",
-                ),
-                #[inline]
-                pub fn overflowing_from_fixed<F>(val: F) -> ($Fixed<Frac>, bool)
-                where
-                    F: Fixed,
-                {
-                    let (value, mut overflow) = F::Bits::to_fixed_overflow(
-                        val.to_bits(),
-                        F::FRAC_NBITS,
-                        Self::FRAC_NBITS,
-                        Self::INT_NBITS,
-                    );
-                    let bits = if_signed_unsigned!(
-                        $Signedness,
-                        match value {
-                            Widest::Unsigned(bits) => {
-                                if (bits as <Self as SealedFixed>::Bits) < 0 {
-                                    overflow = true;
-                                }
-                                bits as <Self as SealedFixed>::Bits
-                            }
-                            Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
-                        },
-                        match value {
-                            Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
-                            Widest::Negative(bits) => {
-                                overflow = true;
-                                bits as <Self as SealedFixed>::Bits
-                            }
-                        },
-                    );
-                    (SealedFixed::from_bits(bits), overflow)
-                }
-            );
-
-            doc_comment!(
-                concat!(
-                    "
-Creates a fixed-point number from an integer,
+                    "Creates a fixed-point number from an integer,
 saturating the value if it does not fit.
 
 The integer value can be of type [`bool`], [`i8`], [`i16`], [`i32`],
@@ -1318,17 +1218,10 @@ The integer value can be of type [`bool`], [`i8`], [`i16`], [`i32`],
 # Examples
 
 ```rust
-use fixed::frac;
-use std::", stringify!($Inner), ";
-type Fix = fixed::", stringify!($Fixed), "<frac::U4>;
-// 3 is 0011.0000, that is from_bits(3 << 4)
-assert_eq!(Fix::saturating_from_int(3), Fix::from_bits(3 << 4));",
-                    if_signed_else_empty_str!(
-                        $Signedness,
-                        "
-assert_eq!(Fix::saturating_from_int(-3), Fix::from_bits(-3 << 4));",
-                    ),
-                    "
+type Fix = fixed::",
+                    stringify!($Fixed),
+                    "<fixed::frac::U4>;
+assert_eq!(Fix::saturating_from_int(3), Fix::from_bits(3 << 4));
 let too_large = ",
                     stringify!($Inner),
                     "::max_value();
@@ -1396,8 +1289,240 @@ assert_eq!(Fix::saturating_from_int(too_small), Fix::min_value());
 
             doc_comment!(
                 concat!(
-                    "
-Creates a fixed-point number from an integer,
+                    "Converts a fixed-point number to an integer,
+saturating the value if it does not fit.
+
+The integer value can be of type [`bool`], [`i8`], [`i16`], [`i32`],
+[`i64`], [`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+
+Any fractional bits are truncated.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+                    stringify!($Fixed),
+                    "<fixed::frac::U4>;
+let two_point_5 = Fix::from_int(5) / 2;
+assert_eq!(two_point_5.saturating_to_int::<i32>(), 2);
+assert_eq!(",
+                    if_signed_unsigned!(
+                        $Signedness,
+                        "(-two_point_5).saturating_to_int::<i64>(), -3",
+                        "two_point_5.saturating_to_int::<i64>(), 2",
+                    ),
+                    ");
+type AllInt = fixed::",
+                    stringify!($Fixed),
+                    "<fixed::frac::U0>;
+assert_eq!(",
+                    if_signed_unsigned!(
+                        $Signedness,
+                        concat!(
+                            "AllInt::from_bits(-1).saturating_to_int::<u",
+                            stringify!($nbits),
+                            ">(), 0",
+                        ),
+                        concat!(
+                            "AllInt::max_value().saturating_to_int::<i",
+                            stringify!($nbits),
+                            ">(), i",
+                            stringify!($nbits),
+                            "::max_value()",
+                        ),
+                    ),
+                    ");
+```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[`i128`]: https://doc.rust-lang.org/nightly/std/primitive.i128.html
+[`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
+[`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
+[`i64`]: https://doc.rust-lang.org/nightly/std/primitive.i64.html
+[`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
+[`u128`]: https://doc.rust-lang.org/nightly/std/primitive.u128.html
+[`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
+[`u32`]: https://doc.rust-lang.org/nightly/std/primitive.u32.html
+[`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
+[`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
+",
+                ),
+                #[inline]
+                pub fn saturating_to_int<I>(self) -> I
+                where
+                    I: Int,
+                {
+                    match <I as SealedInt>::overflowing_from_fixed(self) {
+                        (wrapped, false) => wrapped,
+                        (_, true) => {
+                            if self.to_bits().is_negative() {
+                                I::min_value()
+                            } else {
+                                I::max_value()
+                            }
+                        }
+                    }
+                }
+            );
+
+            doc_comment!(
+                concat!(
+                    "Creates a fixed-point number from a
+floating-point number, saturating the value if it does not fit.
+
+The floating-point value can be of type [`f32`] or [`f64`].
+If the [`f16` feature] is enabled, it can also be of type [`f16`].
+
+This method rounds to the nearest, with ties rounding to even.
+
+# Panics
+
+This method panics if the value is [NaN].
+
+# Examples
+
+```rust
+use std::f64;
+type Fix = fixed::",
+                    stringify!($Fixed),
+                    "<fixed::frac::U4>;
+// 1.625 is 1.101 in binary
+let one_point_625 = Fix::from_bits(0b1101 << (4 - 3));
+assert_eq!(Fix::saturating_from_float(1.625f32), one_point_625);
+assert_eq!(Fix::saturating_from_float(2e38), Fix::max_value());
+assert_eq!(Fix::saturating_from_float(f64::NEG_INFINITY), Fix::min_value());
+```
+
+[`f16` feature]: index.html#optional-features
+[`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
+[`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
+[`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html
+[NaN]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_nan
+",
+                ),
+                #[inline]
+                pub fn saturating_from_float<F>(val: F) -> $Fixed<Frac>
+                where
+                    F: Float,
+                {
+                    assert!(!val.is_nan(), "NaN");
+                    let saturated = if val.is_sign_negative() {
+                        Self::min_value()
+                    } else {
+                        Self::max_value()
+                    };
+                    if !val.is_finite() {
+                        return saturated;
+                    }
+                    let (neg, abs_128, overflow) = F::to_fixed_neg_abs_overflow(
+                        val,
+                        Self::FRAC_NBITS,
+                        Self::INT_NBITS,
+                    );
+                    if overflow {
+                        return saturated;
+                    }
+                    let abs_bits = abs_128 as <<Self as SealedFixed>::Bits as SealedInt>::Unsigned;
+
+                    if <Self as SealedFixed>::Bits::IS_SIGNED {
+                        // most significant bit (msb) can be one only for min value,
+                        // that is for a negative value with only the msb true.
+                        let msb = <<Self as SealedFixed>::Bits as SealedInt>::Unsigned::MSB;
+                        if abs_bits & msb != 0 {
+                            if !neg || abs_bits != msb {
+                                return saturated;
+                            }
+                        }
+                    } else if neg && abs_bits != 0 {
+                        return saturated;
+                    }
+                    let bits = if neg {
+                        abs_bits.wrapping_neg()
+                    } else {
+                        abs_bits
+                    } as <Self as SealedFixed>::Bits;
+                    SealedFixed::from_bits(bits)
+                }
+            );
+
+            doc_comment!(
+                concat!(
+                    "Creates a fixed-point number from another
+fixed-point number, wrapping the value on overflow.
+
+Any extra fractional bits are truncated.
+
+# Examples
+
+```rust
+type Src = fixed::FixedI32<fixed::frac::U16>;
+type Dst = fixed::",
+                    stringify!($Fixed),
+                    "<fixed::frac::U4>;
+// 1.75 is 1.11 in binary
+let src = Src::from_bits(0b111 << (16 - 2));
+let expected = Dst::from_bits(0b111 << (4 - 2));
+assert_eq!(Dst::wrapping_from_fixed(src), expected);
+// integer 0b1101 << (",
+                    stringify!($nbits),
+                    " - 7) will wrap to fixed-point 1010...
+let too_large = fixed::",
+                    stringify!($Fixed),
+                    "::<fixed::frac::U0>::from_bits(0b1101 << (",
+                    stringify!($nbits),
+                    " - 7));
+let wrapped = Dst::from_bits(0b1010 << (", stringify!($nbits), " - 4));
+assert_eq!(Dst::wrapping_from_fixed(too_large), wrapped);
+```
+",
+                ),
+                #[inline]
+                pub fn wrapping_from_fixed<F>(val: F) -> $Fixed<Frac>
+                where
+                    F: Fixed,
+                {
+                    Self::overflowing_from_fixed(val).0
+                }
+            );
+
+            doc_comment!(
+                concat!(
+                    "Converts a fixed-point number to another
+fixed-point number, wrapping the value on overflow.
+
+Any extra fractional bits are truncated.
+
+# Examples
+
+```rust
+type Src = fixed::",
+                    stringify!($Fixed),
+                    "<fixed::frac::U4>;
+type Dst = fixed::FixedI32<fixed::frac::U16>;
+// 1.75 is 1.11 in binary
+let src = Src::from_bits(0b111 << (4 - 2));
+let expected = Dst::from_bits(0b111 << (16 - 2));
+assert_eq!(Dst::wrapping_from_fixed(src), expected);
+type TooFewIntBits = fixed::",
+                    stringify!($Fixed),
+                    "<fixed::frac::U6>;
+let wrapped = TooFewIntBits::from_bits(Src::max_value().to_bits() << 2);
+assert_eq!(Src::max_value().wrapping_to_fixed::<TooFewIntBits>(), wrapped);
+```
+",
+                ),
+                #[inline]
+                pub fn wrapping_to_fixed<F>(self) -> F
+                where
+                    F: Fixed,
+                {
+                    F::overflowing_from_fixed(self).0
+                }
+            );
+
+            doc_comment!(
+                concat!(
+                    "Creates a fixed-point number from an integer,
 wrapping the value on overflow.
 
 The integer value can be of type [`bool`], [`i8`], [`i16`], [`i32`],
@@ -1406,16 +1531,10 @@ The integer value can be of type [`bool`], [`i8`], [`i16`], [`i32`],
 # Examples
 
 ```rust
-use fixed::frac;
-type Fix = fixed::", stringify!($Fixed), "<frac::U4>;
-// 3 is 0011.0000, that is from_bits(3 << 4)
-assert_eq!(Fix::wrapping_from_int(3), Fix::from_bits(3 << 4));",
-                    if_signed_else_empty_str!(
-                        $Signedness,
-                        "
-assert_eq!(Fix::wrapping_from_int(-3), Fix::from_bits(-3 << 4));",
-                    ),
-                    "
+type Fix = fixed::",
+                    stringify!($Fixed),
+                    "<fixed::frac::U4>;
+assert_eq!(Fix::wrapping_from_int(3), Fix::from_bits(3 << 4));
 // integer 0b1101 << (",
                     stringify!($nbits),
                     " - 7) will wrap to fixed-point 1010...
@@ -1454,11 +1573,244 @@ assert_eq!(Fix::wrapping_from_int(large), wrapped);
 
             doc_comment!(
                 concat!(
-                    "
-Creates a fixed-point number from an integer.
+                    "Converts a fixed-point number to an integer,
+wrapping the value on overflow.
 
-Returns a tuple of the fixed-point number and a [`bool`] indicating whether
-an overflow has occurred. On overflow, the wrapped value is returned.
+The integer value can be of type [`bool`], [`i8`], [`i16`], [`i32`],
+[`i64`], [`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+
+Any fractional bits are truncated.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+                    stringify!($Fixed),
+                    "<fixed::frac::U4>;
+let two_point_5 = Fix::from_int(5) / 2;
+assert_eq!(two_point_5.wrapping_to_int::<i32>(), 2);
+assert_eq!(",
+                    if_signed_unsigned!(
+                        $Signedness,
+                        "(-two_point_5).wrapping_to_int::<i64>(), -3",
+                        "two_point_5.wrapping_to_int::<i64>(), 2",
+                    ),
+                    ");
+type AllInt = fixed::",
+                    stringify!($Fixed),
+                    "<fixed::frac::U0>;
+assert_eq!(",
+                    if_signed_unsigned!(
+                        $Signedness,
+                        concat!(
+                            "AllInt::from_bits(-1).wrapping_to_int::<u",
+                            stringify!($nbits),
+                            ">(), u",
+                            stringify!($nbits),
+                            "::max_value()",
+                        ),
+                        concat!(
+                            "AllInt::max_value().wrapping_to_int::<i",
+                            stringify!($nbits),
+                            ">(), -1",
+                        ),
+                    ),
+                    ");
+```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[`i128`]: https://doc.rust-lang.org/nightly/std/primitive.i128.html
+[`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
+[`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
+[`i64`]: https://doc.rust-lang.org/nightly/std/primitive.i64.html
+[`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
+[`u128`]: https://doc.rust-lang.org/nightly/std/primitive.u128.html
+[`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
+[`u32`]: https://doc.rust-lang.org/nightly/std/primitive.u32.html
+[`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
+[`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
+",
+                ),
+                #[inline]
+                pub fn wrapping_to_int<I>(self) -> I
+                where
+                    I: Int,
+                {
+                    <I as SealedInt>::overflowing_from_fixed(self).0
+                }
+            );
+
+            doc_comment!(
+                concat!(
+                    "Creates a fixed-point number from a
+floating-point number, wrapping the value on overflow.
+
+The floating-point value can be of type [`f32`] or [`f64`].
+If the [`f16` feature] is enabled, it can also be of type [`f16`].
+
+This method rounds to the nearest, with ties rounding to even.
+
+# Panics
+
+This method panics if the value is not [finite].
+
+# Examples
+
+```rust
+type Fix = fixed::",
+                    stringify!($Fixed),
+                    "<fixed::frac::U4>;
+// 1.75 is 1.11 in binary
+let from_bits = Fix::from_bits(0b111 << (4 - 2));
+assert_eq!(Fix::wrapping_from_float(1.75f32), from_bits);
+assert_eq!(Fix::wrapping_from_float(",
+                    if_signed_unsigned!($Signedness, "-1.75f64), -", "1.75f64), "),
+                    "from_bits);
+// 1.75 << (",
+                    stringify!($nbits),
+                    " - 4) wraps to binary 11000...
+let large = 1.75 * 2f32.powi(",
+                    stringify!($nbits),
+                    " - 4);
+let wrapped = Fix::from_bits(0b1100 << (",
+                    stringify!($nbits),
+                    " - 4));
+assert_eq!(Fix::wrapping_from_float(large), wrapped);
+```
+
+[`f16` feature]: index.html#optional-features
+[`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
+[`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
+[`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html
+[finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
+",
+                ),
+                #[inline]
+                pub fn wrapping_from_float<F>(val: F) -> $Fixed<Frac>
+                where
+                    F: Float,
+                {
+                    Self::overflowing_from_float(val).0
+                }
+            );
+
+            doc_comment!(
+                concat!(
+                    "Creates a fixed-point number from another
+fixed-point number.
+
+Returns a tuple of the fixed-point number and a [`bool`] indicating
+whether an overflow has occurred. On overflow, the wrapped value is
+returned.
+
+Any extra fractional bits are truncated.
+
+# Examples
+
+```rust
+type Src = fixed::FixedI32<fixed::frac::U16>;
+type Dst = fixed::",
+                    stringify!($Fixed),
+                    "<fixed::frac::U4>;
+// 1.75 is 1.11 in binary
+let src = Src::from_bits(0b111 << (16 - 2));
+let expected = Dst::from_bits(0b111 << (4 - 2));
+assert_eq!(Dst::overflowing_from_fixed(src), (expected, false));
+// integer 0b1101 << (",
+                    stringify!($nbits),
+                    " - 7) will wrap to fixed-point 1010...
+let too_large = fixed::",
+                    stringify!($Fixed),
+                    "::<fixed::frac::U0>::from_bits(0b1101 << (",
+                    stringify!($nbits),
+                    " - 7));
+let wrapped = Dst::from_bits(0b1010 << (", stringify!($nbits), " - 4));
+assert_eq!(Dst::overflowing_from_fixed(too_large), (wrapped, true));
+```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+",
+                ),
+                #[inline]
+                pub fn overflowing_from_fixed<F>(val: F) -> ($Fixed<Frac>, bool)
+                where
+                    F: Fixed,
+                {
+                    let (value, mut overflow) = F::Bits::to_fixed_overflow(
+                        val.to_bits(),
+                        F::FRAC_NBITS,
+                        Self::FRAC_NBITS,
+                        Self::INT_NBITS,
+                    );
+                    let bits = if_signed_unsigned!(
+                        $Signedness,
+                        match value {
+                            Widest::Unsigned(bits) => {
+                                if (bits as <Self as SealedFixed>::Bits) < 0 {
+                                    overflow = true;
+                                }
+                                bits as <Self as SealedFixed>::Bits
+                            }
+                            Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
+                        },
+                        match value {
+                            Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
+                            Widest::Negative(bits) => {
+                                overflow = true;
+                                bits as <Self as SealedFixed>::Bits
+                            }
+                        },
+                    );
+                    (SealedFixed::from_bits(bits), overflow)
+                }
+            );
+
+            doc_comment!(
+                concat!(
+                    "Converts a fixed-point number to another
+fixed-point number.
+
+Returns a tuple of the fixed-point number and a [`bool`] indicating
+whether an overflow has occurred. On overflow, the wrapped value is
+returned.
+
+Any extra fractional bits are truncated.
+
+# Examples
+
+```rust
+type Src = fixed::",
+                    stringify!($Fixed),
+                    "<fixed::frac::U4>;
+type Dst = fixed::FixedI32<fixed::frac::U16>;
+// 1.75 is 1.11 in binary
+let src = Src::from_bits(0b111 << (4 - 2));
+let expected = Dst::from_bits(0b111 << (16 - 2));
+assert_eq!(Dst::overflowing_from_fixed(src), (expected, false));
+type TooFewIntBits = fixed::",
+                    stringify!($Fixed),
+                    "<fixed::frac::U6>;
+let wrapped = TooFewIntBits::from_bits(Src::max_value().to_bits() << 2);
+assert_eq!(Src::max_value().overflowing_to_fixed::<TooFewIntBits>(), (wrapped, true));
+```
+",
+                ),
+                #[inline]
+                pub fn overflowing_to_fixed<F>(self) -> (F, bool)
+                where
+                    F: Fixed,
+                {
+                    F::overflowing_from_fixed(self)
+                }
+            );
+
+            doc_comment!(
+                concat!(
+                    "Creates a fixed-point number from an integer.
+
+Returns a tuple of the fixed-point number and a [`bool`] indicating
+whether an overflow has occurred. On overflow, the wrapped value is
+returned.
 
 The integer value can be of type [`bool`], [`i8`], [`i16`], [`i32`],
 [`i64`], [`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
@@ -1466,18 +1818,10 @@ The integer value can be of type [`bool`], [`i8`], [`i16`], [`i32`],
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
-// 3 is 0011.0000, that is from_bits(3 << 4)
-assert_eq!(Fix::overflowing_from_int(3), (Fix::from_bits(3 << 4), false));",
-                    if_signed_else_empty_str!(
-                        $Signedness,
-                        "
-assert_eq!(Fix::overflowing_from_int(-3), (Fix::from_bits(-3 << 4), false));",
-                    ),
-                    "
+                    "<fixed::frac::U4>;
+assert_eq!(Fix::overflowing_from_int(3), (Fix::from_bits(3 << 4), false));
 // integer 0b1101 << (",
                     stringify!($nbits),
                     " - 7) will wrap to fixed-point 1010...
@@ -1541,161 +1885,75 @@ assert_eq!(Fix::overflowing_from_int(large), (wrapped, true));
 
             doc_comment!(
                 concat!(
-                    "
-Creates a fixed-point number from a floating-point number,
-saturating the value if it does not fit.
+                    "Converts a fixed-point number to an integer.
 
-The floating-point value can be of type [`f32`] or [`f64`].
-If the [`f16` feature] is enabled, it can also be of type [`f16`].
+Returns a tuple of the integer and a [`bool`] indicating whether an
+overflow has occurred. On overflow, the wrapped value is returned.
 
-This method rounds to the nearest, with ties rounding to even.
+The integer value can be of type [`bool`], [`i8`], [`i16`], [`i32`],
+[`i64`], [`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
 
-# Panics
-
-This method panics if the value is [NaN].
+Any fractional bits are truncated.
 
 # Examples
 
 ```rust
-use fixed::frac;
-use std::f64;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
-// 1.75 is 0001.1100, that is from_bits(28)
-assert_eq!(Fix::saturating_from_float(1.75f32), Fix::from_bits(28));
-assert_eq!(Fix::saturating_from_float(",
+                    "<fixed::frac::U4>;
+let two_point_5 = Fix::from_int(5) / 2;
+assert_eq!(two_point_5.overflowing_to_int::<i32>(), (2, false));
+assert_eq!(",
                     if_signed_unsigned!(
                         $Signedness,
-                        "-1.75f64), Fix::from_bits(-",
-                        "1.75f64), Fix::from_bits(",
+                        "(-two_point_5).overflowing_to_int::<i64>(), (-3",
+                        "two_point_5.overflowing_to_int::<i64>(), (2",
                     ),
-                    "28));
-// 1e-10 is too small for four fractional bits
-assert_eq!(Fix::saturating_from_float(1e-10), Fix::from_bits(0));
-// 2e38 is too large for ",
+                    ", false));
+let does_not_fit = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>
-assert_eq!(Fix::saturating_from_float(2e38), Fix::max_value());
-assert_eq!(Fix::saturating_from_float(f64::NEG_INFINITY), Fix::min_value());
-```
-
-[`f16` feature]: index.html#optional-features
-[`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
-[`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
-[`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html
-[NaN]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_nan
-",
-                ),
-                #[inline]
-                pub fn saturating_from_float<F>(val: F) -> $Fixed<Frac>
-                where
-                    F: Float,
-                {
-                    assert!(!val.is_nan(), "NaN");
-                    let saturated = if val.is_sign_negative() {
-                        Self::min_value()
-                    } else {
-                        Self::max_value()
-                    };
-                    if !val.is_finite() {
-                        return saturated;
-                    }
-                    let (neg, abs_128, overflow) = F::to_fixed_neg_abs_overflow(
-                        val,
-                        Self::FRAC_NBITS,
-                        Self::INT_NBITS,
-                    );
-                    if overflow {
-                        return saturated;
-                    }
-                    let abs_bits = abs_128 as <<Self as SealedFixed>::Bits as SealedInt>::Unsigned;
-
-                    if <Self as SealedFixed>::Bits::IS_SIGNED {
-                        // most significant bit (msb) can be one only for min value,
-                        // that is for a negative value with only the msb true.
-                        let msb = <<Self as SealedFixed>::Bits as SealedInt>::Unsigned::MSB;
-                        if abs_bits & msb != 0 {
-                            if !neg || abs_bits != msb {
-                                return saturated;
-                            }
-                        }
-                    } else if neg && abs_bits != 0 {
-                        return saturated;
-                    }
-                    let bits = if neg {
-                        abs_bits.wrapping_neg()
-                    } else {
-                        abs_bits
-                    } as <Self as SealedFixed>::Bits;
-                    SealedFixed::from_bits(bits)
-                }
-            );
-
-            doc_comment!(
-                concat!(
-                    "
-Creates a fixed-point number from a floating-point number,
-wrapping the value on overflow.
-
-The floating-point value can be of type [`f32`] or [`f64`].
-If the [`f16` feature] is enabled, it can also be of type [`f16`].
-
-This method rounds to the nearest, with ties rounding to even.
-
-# Panics
-
-This method panics if the value is not [finite].
-
-# Examples
-
-```rust
-use fixed::frac;
-type Fix = fixed::", stringify!($Fixed), "<frac::U4>;
-// 1.75 is 0001.1100, that is from_bits(28)
-let from_bits = Fix::from_bits(28);
-assert_eq!(Fix::wrapping_from_float(1.75f32), from_bits);
-assert_eq!(Fix::wrapping_from_float(",
+                    "::<fixed::frac::U0>::",
+                    if_signed_unsigned!($Signedness, "from_bits(-1)", "max_value()"),
+                    ";
+let wrapped = ",
                     if_signed_unsigned!(
                         $Signedness,
-                        "-1.75f64), -",
-                        "1.75f64), ",
+                        concat!("1u", stringify!($nbits), ".wrapping_neg()"),
+                        concat!("-1i", stringify!($nbits)),
                     ),
-                    "from_bits);
-// 1e-10 is too small for four fractional bits
-assert_eq!(Fix::wrapping_from_float(1e-10), 0);
-// 1.75 << (",
+                    ";
+assert_eq!(does_not_fit.overflowing_to_int::<",
+                    if_signed_unsigned!($Signedness, "u", "i"),
                     stringify!($nbits),
-                    " - 4) wraps to binary 11000...
-let large = 1.75 * 2f32.powi(",
-                    stringify!($nbits),
-                    " - 4);
-let wrapped = Fix::from_bits(0b1100 << (",
-                    stringify!($nbits),
-                    " - 4));
-assert_eq!(Fix::wrapping_from_float(large), wrapped);
+                    ">(), (wrapped, true));
 ```
 
-[`f16` feature]: index.html#optional-features
-[`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
-[`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
-[`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html
-[finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[`i128`]: https://doc.rust-lang.org/nightly/std/primitive.i128.html
+[`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
+[`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
+[`i64`]: https://doc.rust-lang.org/nightly/std/primitive.i64.html
+[`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
+[`u128`]: https://doc.rust-lang.org/nightly/std/primitive.u128.html
+[`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
+[`u32`]: https://doc.rust-lang.org/nightly/std/primitive.u32.html
+[`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
+[`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
 ",
                 ),
                 #[inline]
-                pub fn wrapping_from_float<F>(val: F) -> $Fixed<Frac>
+                pub fn overflowing_to_int<I>(self) -> (I, bool)
                 where
-                    F: Float,
+                    I: Int,
                 {
-                    Self::overflowing_from_float(val).0
+                    <I as SealedInt>::overflowing_from_fixed(self)
                 }
             );
 
             doc_comment!(
                 concat!(
-                    "
-Creates a fixed-point number from a floating-point number.
+                    "Creates a fixed-point number from a
+floating-point number.
 
 Returns a tuple of the fixed-point number and a [`bool`] indicating whether
 an overflow has occurred. On overflow, the wrapped value is returned.
@@ -1712,25 +1970,18 @@ This method panics if the value is not [finite].
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
-// 1.75 is 0001.1100, that is from_bits(28)
-let from_bits = Fix::from_bits(28);
+                    "<fixed::frac::U4>;
+// 1.75 is 1.11 in binary
+let from_bits = Fix::from_bits(0b111 << (4 - 2));
 assert_eq!(Fix::overflowing_from_float(1.75f32), (from_bits, false));
 assert_eq!(Fix::overflowing_from_float(",
-                    if_signed_unsigned!(
-                        $Signedness,
-                        "-1.75f64), (-",
-                        "1.75f64), (",
-                    ),
+                    if_signed_unsigned!($Signedness, "-1.75f64), (-", "1.75f64), ("),
                     "from_bits, false));
-// 1e-10 is too small for four fractional bits
-assert_eq!(Fix::overflowing_from_float(1e-10), (Fix::from_bits(0), false));
 // 1.75 << (",
                     stringify!($nbits),
-                    " - 4) overflows and wraps to binary 11000...
+                    " - 4) wraps to binary 11000...
 let large = 1.75 * 2f32.powi(",
                     stringify!($nbits),
                     " - 4);
@@ -1808,10 +2059,9 @@ where the return value is always zero.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 // 0010.0000
 let two = Fix::from_int(2);
 // 0010.0100
@@ -1859,10 +2109,9 @@ where the return value is always equal to `self`.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 // 0000.0100
 let quarter = Fix::from_int(1) / 4;
 // 0010.0100
@@ -1904,10 +2153,9 @@ instead.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let two_half = Fix::from_int(5) / 2;
 assert_eq!(two_half.ceil(), Fix::from_int(3));",
                     if_signed_else_empty_str!(
@@ -1954,10 +2202,9 @@ Overflow can only occur when there are zero integer bits.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let two_half = Fix::from_int(5) / 2;
 assert_eq!(two_half.floor(), Fix::from_int(2));",
                     if_signed_else_empty_str!(
@@ -1997,10 +2244,9 @@ instead.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    r"<frac::U4>;
+                    r"<fixed::frac::U4>;
 let two_half = Fix::from_int(5) / 2;
 assert_eq!(two_half.round(), Fix::from_int(3));",
                     if_signed_else_empty_str!(
@@ -2032,10 +2278,9 @@ Checked ceil. Rounds to the next integer towards +∞, returning
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let two_half = Fix::from_int(5) / 2;
 assert_eq!(two_half.checked_ceil(), Some(Fix::from_int(3)));",
                     if_signed_else_empty_str!(
@@ -2076,10 +2321,9 @@ Always returns [`Some`] for unsigned values.",
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let two_half = Fix::from_int(5) / 2;
 assert_eq!(two_half.checked_floor(), Some(Fix::from_int(2)));",
                     if_signed_else_empty_str!(
@@ -2088,7 +2332,7 @@ assert_eq!(two_half.checked_floor(), Some(Fix::from_int(2)));",
 assert_eq!((-two_half).checked_floor(), Some(Fix::from_int(-3)));
 type AllFrac = fixed::",
                         stringify!($Fixed),
-                        "<frac::",
+                        "<fixed::frac::",
                         stringify!($Len),
                         ">;
 assert!(AllFrac::min_value().checked_floor().is_none());"
@@ -2122,10 +2366,9 @@ from zero, returning [`None`] on overflow.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                         stringify!($Fixed),
-                        "<frac::U4>;
+                        "<fixed::frac::U4>;
 let two_half = Fix::from_int(5) / 2;
 assert_eq!(two_half.checked_round(), Some(Fix::from_int(3)));",
                         if_signed_else_empty_str!(
@@ -2156,10 +2399,9 @@ overflow.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let two_half = Fix::from_int(5) / 2;
 assert_eq!(two_half.saturating_ceil(), Fix::from_int(3));",
                     if_signed_else_empty_str!(
@@ -2197,10 +2439,9 @@ overflow for unsigned values.",
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let two_half = Fix::from_int(5) / 2;
 assert_eq!(two_half.saturating_floor(), Fix::from_int(2));",
                     if_signed_else_empty_str!(
@@ -2209,7 +2450,7 @@ assert_eq!(two_half.saturating_floor(), Fix::from_int(2));",
 assert_eq!((-two_half).saturating_floor(), Fix::from_int(-3));
 type AllFrac = fixed::",
                         stringify!($Fixed),
-                        "<frac::",
+                        "<fixed::frac::",
                         stringify!($Len),
                         ">;
 assert_eq!(AllFrac::min_value().saturating_floor(), AllFrac::min_value());",
@@ -2234,10 +2475,9 @@ away from zero, and saturating on overflow.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let two_half = Fix::from_int(5) / 2;
 assert_eq!(two_half.saturating_round(), Fix::from_int(3));",
                     if_signed_else_empty_str!(
@@ -2270,10 +2510,9 @@ Wrapping ceil. Rounds to the next integer towards +∞, wrapping on overflow.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let two_half = Fix::from_int(5) / 2;
 assert_eq!(two_half.wrapping_ceil(), Fix::from_int(3));",
                     if_signed_else_empty_str!(
@@ -2309,10 +2548,9 @@ Cannot overflow for unsigned values.",
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let two_half = Fix::from_int(5) / 2;
 assert_eq!(two_half.wrapping_floor(), Fix::from_int(2));",
                     if_signed_else_empty_str!(
@@ -2321,7 +2559,7 @@ assert_eq!(two_half.wrapping_floor(), Fix::from_int(2));",
 assert_eq!((-two_half).wrapping_floor(), Fix::from_int(-3));
 type AllFrac = fixed::",
                         stringify!($Fixed),
-                        "<frac::",
+                        "<fixed::frac::",
                         stringify!($Len),
                         ">;
 assert_eq!(AllFrac::min_value().wrapping_floor(), AllFrac::from_int(0));",
@@ -2345,10 +2583,9 @@ rounded away from zero, and wrapping on overflow.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let two_half = Fix::from_int(5) / 2;
 assert_eq!(two_half.wrapping_round(), Fix::from_int(3));",
                     if_signed_else_empty_str!(
@@ -2379,10 +2616,9 @@ returned.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let two_half = Fix::from_int(5) / 2;
 assert_eq!(two_half.overflowing_ceil(), (Fix::from_int(3), false));",
                     if_signed_else_empty_str!(
@@ -2435,10 +2671,9 @@ Returns a tuple of the fixed-point number and [`false`][`bool`].",
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let two_half = Fix::from_int(5) / 2;
 assert_eq!(two_half.overflowing_floor(), (Fix::from_int(2), false));",
                     if_signed_else_empty_str!(
@@ -2447,7 +2682,7 @@ assert_eq!(two_half.overflowing_floor(), (Fix::from_int(2), false));",
 assert_eq!((-two_half).overflowing_floor(), (Fix::from_int(-3), false));
 type AllFrac = fixed::",
                         stringify!($Fixed),
-                        "<frac::",
+                        "<fixed::frac::",
                         stringify!($Len),
                         ">;
 assert_eq!(AllFrac::min_value().overflowing_floor(), (AllFrac::from_int(0), true));",
@@ -2482,10 +2717,9 @@ returned.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let two_half = Fix::from_int(5) / 2;
 assert_eq!(two_half.overflowing_round(), (Fix::from_int(3), false));",
                     if_signed_else_empty_str!(
@@ -2545,10 +2779,9 @@ Returns the number of ones in the binary representation.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let f = Fix::from_bits(0b11_0010);
 assert_eq!(f.count_ones(), 3);
 ```
@@ -2564,10 +2797,9 @@ Returns the number of zeros in the binary representation.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let f = Fix::from_bits(!0b11_0010);
 assert_eq!(f.count_zeros(), 3);
 ```
@@ -2583,10 +2815,9 @@ Returns the number of leading zeros in the binary representation.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let f = Fix::from_bits(0b10_0000);
 assert_eq!(f.leading_zeros(), ", stringify!($nbits), " - 6);
 ```
@@ -2602,10 +2833,9 @@ Returns the number of trailing zeros in the binary representation.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let f = Fix::from_bits(0b10_0000);
 assert_eq!(f.trailing_zeros(), 5);
 ```
@@ -2621,10 +2851,9 @@ Shifts to the left by *n* bits, wrapping the truncated bits to the right end.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let bits: ",
                     stringify!($Inner),
                     " = (0b111 << (",
@@ -2646,10 +2875,9 @@ Shifts to the right by *n* bits, wrapping the truncated bits to the left end.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                     stringify!($Fixed),
-                    "<frac::U4>;
+                    "<fixed::frac::U4>;
 let bits: ",
                     stringify!($Inner),
                     " = 0b1010111;
@@ -2946,10 +3174,9 @@ Returns `true` if the fixed-point number is
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                         stringify!($Fixed),
-                        "<frac::U4>;
+                        "<fixed::frac::U4>;
 // 3/8 is 0.0110
 let three_eights = Fix::from_bits(0b0110);
 // 1/2 is 0.1000
@@ -2973,10 +3200,9 @@ Returns the smallest power of two ≥ `self`.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                         stringify!($Fixed),
-                        "<frac::U4>;
+                        "<fixed::frac::U4>;
 // 3/8 is 0.0110
 let three_eights = Fix::from_bits(0b0110);
 // 1/2 is 0.1000
@@ -3001,10 +3227,9 @@ if the next power of two is too large to represent.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                         stringify!($Fixed),
-                        "<frac::U4>;
+                        "<fixed::frac::U4>;
 // 3/8 is 0.0110
 let three_eights = Fix::from_bits(0b0110);
 // 1/2 is 0.1000
@@ -3033,10 +3258,9 @@ Returns the absolute value.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                         stringify!($Fixed),
-                        "<frac::U4>;
+                        "<fixed::frac::U4>;
 let five = Fix::from_int(5);
 let minus_five = Fix::from_int(-5);
 assert_eq!(five.abs(), five);
@@ -3066,10 +3290,9 @@ This method panics:
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                         stringify!($Fixed),
-                        "<frac::U4>;
+                        "<fixed::frac::U4>;
 assert_eq!(Fix::from_int(5).signum(), 1);
 assert_eq!(Fix::from_int(0).signum(), 0);
 assert_eq!(Fix::from_int(-5).signum(), -1);
@@ -3097,10 +3320,9 @@ Returns `true` if the number is > 0.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                         stringify!($Fixed),
-                        "<frac::U4>;
+                        "<fixed::frac::U4>;
 assert!(Fix::from_int(5).is_positive());
 assert!(!Fix::from_int(0).is_positive());
 assert!(!Fix::from_int(-5).is_positive());
@@ -3121,10 +3343,9 @@ Returns `true` if the number is < 0.
 # Examples
 
 ```rust
-use fixed::frac;
 type Fix = fixed::",
                         stringify!($Fixed),
-                        "<frac::U4>;
+                        "<fixed::frac::U4>;
 assert!(!Fix::from_int(5).is_negative());
 assert!(!Fix::from_int(0).is_negative());
 assert!(Fix::from_int(-5).is_negative());

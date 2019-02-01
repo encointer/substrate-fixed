@@ -41,9 +41,9 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
 ### Version 0.3.0 news (unreleased)
 
-  * The return type of [`to_int`] is now generic.
-  * The new methods [`to_fixed`], [`to_float`], [`checked_to_fixed`]
-    and [`checked_to_int`] were added.
+  * The method [`to_int`] was changed; now its return type is generic.
+  * The new method [`to_fixed`] was added.
+  * Checked versions of [`to_fixed`] and [`to_int`] were added.
   * The methods [`from_fixed`][`Int::from_fixed`] and
     [`to_fixed`][`Int::to_fixed`], and thier checked versions, were
     added to the [`Int`] trait.
@@ -57,10 +57,7 @@ numeric primitives are implemented. That is, you can use [`From`] or
 [`Int::from_fixed`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Int.html#method.from_fixed
 [`Int::to_fixed`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Int.html#method.to_fixed
 [`Int`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Int.html
-[`checked_to_fixed`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.checked_to_fixed
-[`checked_to_int`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.checked_to_int
 [`to_fixed`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.to_fixed
-[`to_float`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.to_float
 [`to_int`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.to_int
 
 ### Version 0.2.1 news (2019-01-29)
@@ -74,36 +71,19 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
 ### Version 0.2.0 news (2019-01-29)
 
-  * The new methods [`from_fixed`], [`checked_from_fixed`],
-    [`saturating_from_fixed`], [`wrapping_from_fixed`] and
-    [`overflowing_from_fixed`] were added.
-  * The old method [`from_int`] was removed to be replaced.
-  * The new methods [`from_int`], [`checked_from_int`],
-    [`saturating_from_int`], [`wrapping_from_int`] and
-    [`overflowing_from_int`] were added.
-  * The new methods [`from_float`], [`checked_from_float`],
-    [`saturating_from_float`], [`wrapping_from_float`] and
-    [`overflowing_from_float`] were added.
+  * The method [`from_int`] was changed to accept a generic prameter.
+  * The new methods [`from_fixed`] and [`from_float`] were added.
+  * Checked versions of [`from_fixed`], [`from_int`] and
+    [`from_float`] were added.
   * The new method [`to_float`] was added.
-  * The methods [`from_f16`], [`from_f32`], [`from_f64`], [`to_f16`],
-    [`to_f32`] and [`to_f64`] were deprecated.
-  * The [`to_int`] method was fixed to truncate fractional bits as
+  * The [`to_int`] method was changed to truncate fractional bits as
     documented for negative values.
-  * The new methods [`ceil`], [`floor`], [`round`], [`checked_ceil`],
-    [`checked_floor`], [`checked_round`], [`saturating_ceil`],
-    [`saturating_floor`], [`saturating_round`], [`wrapping_ceil`],
-    [`wrapping_floor`], [`wrapping_round`], [`overflowing_ceil`],
-    [`overflowing_floor`] and [`overflowing_round`] were added.
+  * The new methods [`ceil`], [`floor`] and [`round`], and their
+    checked versions, were added.
   * The methods [`to_int_ceil`], [`to_int_floor`] and [`to_int_round`]
     were deprecated.
 
 [`ceil`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.ceil
-[`checked_ceil`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.checked_ceil
-[`checked_floor`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.checked_floor
-[`checked_from_fixed`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.checked_from_fixed
-[`checked_from_float`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.checked_from_float
-[`checked_from_int`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.checked_from_int
-[`checked_round`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.checked_round
 [`floor`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.floor
 [`from_f16`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.from_f16
 [`from_f32`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.from_f32
@@ -112,19 +92,7 @@ numeric primitives are implemented. That is, you can use [`From`] or
 [`from_float`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.from_float
 [`from_int`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.from_int
 [`from_int`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.from_int
-[`overflowing_ceil`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.overflowing_ceil
-[`overflowing_floor`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.overflowing_floor
-[`overflowing_from_fixed`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.overflowing_from_fixed
-[`overflowing_from_float`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.overflowing_from_float
-[`overflowing_from_int`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.overflowing_from_int
-[`overflowing_round`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.overflowing_round
 [`round`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.round
-[`saturating_ceil`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.saturating_ceil
-[`saturating_floor`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.saturating_floor
-[`saturating_from_fixed`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.saturating_from_fixed
-[`saturating_from_float`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.saturating_from_float
-[`saturating_from_int`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.saturating_from_int
-[`saturating_round`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.saturating_round
 [`to_f16`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.to_f16
 [`to_f32`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.to_f32
 [`to_f64`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.to_f64
@@ -133,12 +101,6 @@ numeric primitives are implemented. That is, you can use [`From`] or
 [`to_int_floor`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.to_int_floor
 [`to_int_round`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.to_int_round
 [`to_int`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.to_int
-[`wrapping_ceil`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.wrapping_ceil
-[`wrapping_floor`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.wrapping_floor
-[`wrapping_from_fixed`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.wrapping_from_fixed
-[`wrapping_from_float`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.wrapping_from_float
-[`wrapping_from_int`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.wrapping_from_int
-[`wrapping_round`]: https://docs.rs/fixed/0.2.1/fixed/struct.FixedI32.html#method.wrapping_round
 
 ### Version 0.1.6 news (2019-01-27)
 

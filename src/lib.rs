@@ -1131,7 +1131,7 @@ assert_eq!(Dst::saturating_from_fixed(too_small), Dst::min_value());
                 where
                     F: Fixed,
                 {
-                    let (value, overflow) = F::Bits::to_fixed_overflow(
+                    let (value, _, overflow) = F::Bits::to_fixed_dir_overflow(
                         val.to_bits(),
                         F::FRAC_NBITS,
                         Self::FRAC_NBITS,
@@ -1254,7 +1254,7 @@ assert_eq!(Fix::saturating_from_int(too_small), Fix::min_value());
                 where
                     I: Int,
                 {
-                    let (value, overflow) = I::to_fixed_overflow(
+                    let (value, _, overflow) = I::to_fixed_dir_overflow(
                         val,
                         0,
                         Self::FRAC_NBITS,
@@ -1736,7 +1736,7 @@ assert_eq!(Dst::overflowing_from_fixed(too_large), (wrapped, true));
                 where
                     F: Fixed,
                 {
-                    let (value, mut overflow) = F::Bits::to_fixed_overflow(
+                    let (value, _, mut overflow) = F::Bits::to_fixed_dir_overflow(
                         val.to_bits(),
                         F::FRAC_NBITS,
                         Self::FRAC_NBITS,
@@ -1854,7 +1854,7 @@ assert_eq!(Fix::overflowing_from_int(large), (wrapped, true));
                 where
                     I: Int,
                 {
-                    let (value, mut overflow) = I::to_fixed_overflow(
+                    let (value, _, mut overflow) = I::to_fixed_dir_overflow(
                         val,
                         0,
                         Self::FRAC_NBITS,
@@ -3033,14 +3033,14 @@ assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
             /// Wrapping fixed-point multiplication.
             #[inline]
             pub fn wrapping_mul(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                let (ans, _dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
+                let (ans, _) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
                 Self::from_bits(ans)
             }
 
             /// Wrapping fixed-point division.
             #[inline]
             pub fn wrapping_div(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                let (ans, _dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
+                let (ans, _) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
                 Self::from_bits(ans)
             }
 

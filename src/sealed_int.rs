@@ -13,6 +13,7 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
+use core::cmp::Ordering;
 use core::fmt::{Debug, Display};
 use frac::{Bit, False, True, Unsigned, U0, U1, U128, U16, U32, U64, U7, U8};
 use sealed::{Fixed, Widest};
@@ -45,12 +46,12 @@ pub trait SealedInt: Copy + Ord + Debug + Display {
     fn is_zero(self) -> bool;
     fn is_negative(self) -> bool;
 
-    fn to_fixed_overflow(
+    fn to_fixed_dir_overflow(
         self,
         src_frac_bits: u32,
         dst_frac_bits: u32,
         dst_int_bits: u32,
-    ) -> (Widest, bool);
+    ) -> (Widest, Ordering, bool);
 
     fn neg_abs(self) -> (bool, Self::Unsigned);
     fn from_neg_abs(neg: bool, abs: Self::Unsigned) -> Self;
@@ -132,34 +133,36 @@ macro_rules! sealed_int {
             }
 
             #[inline]
-            fn to_fixed_overflow(
+            fn to_fixed_dir_overflow(
                 self,
                 src_frac_bits: u32,
                 dst_frac_bits: u32,
                 dst_int_bits: u32,
-            ) -> (Widest, bool) {
+            ) -> (Widest, Ordering, bool) {
                 let src_bits = Self::NBITS as i32;
                 let dst_bits = (dst_frac_bits + dst_int_bits) as i32;
 
                 if self == 0 {
-                    return (Widest::Unsigned(0), false);
+                    return (Widest::Unsigned(0), Ordering::Equal, false);
                 }
 
                 let leading_zeros = self.leading_zeros();
-                let bits = self << leading_zeros;
-                let need_to_shr =
-                    leading_zeros as i32 + src_frac_bits as i32 - dst_frac_bits as i32;
-                let overflow = src_bits - need_to_shr > dst_bits;
-                let bits = if need_to_shr == 0 {
-                    u128::from(bits)
-                } else if need_to_shr < 0 && -need_to_shr < 128 {
-                    u128::from(bits) << -need_to_shr
-                } else if need_to_shr > 0 && need_to_shr < 128 {
-                    u128::from(bits) >> need_to_shr
-                } else {
-                    0
+                let need_to_shr = src_frac_bits as i32 - dst_frac_bits as i32;
+                let overflow = src_bits - dst_bits > need_to_shr + leading_zeros as i32;
+                let bits_128 = u128::from(self);
+                let (bits, lost_bits) = match need_to_shr {
+                    -128 => (0, false),
+                    -127..=-1 => (bits_128 << -need_to_shr, false),
+                    0 => (bits_128, false),
+                    1..=127 => {
+                        let shifted = bits_128 >> need_to_shr;
+                        (shifted, shifted << need_to_shr != bits_128)
+                    }
+                    128 => (0, true),
+                    _ => unreachable!(),
                 };
-                (Widest::Unsigned(bits), overflow)
+                let dir = if lost_bits { Ordering::Less } else { Ordering::Equal };
+                (Widest::Unsigned(bits), dir, overflow)
             }
         }
     };
@@ -192,17 +195,17 @@ macro_rules! sealed_int {
             }
 
             #[inline]
-            fn to_fixed_overflow(
+            fn to_fixed_dir_overflow(
                 self,
                 src_frac_bits: u32,
                 dst_frac_bits: u32,
                 dst_int_bits: u32,
-            ) -> (Widest, bool) {
+            ) -> (Widest, Ordering, bool) {
                 let src_bits = Self::NBITS as i32;
                 let dst_bits = (dst_frac_bits + dst_int_bits) as i32;
 
                 if self >= 0 {
-                    return SealedInt::to_fixed_overflow(
+                    return SealedInt::to_fixed_dir_overflow(
                         self as $Unsigned,
                         src_frac_bits,
                         dst_frac_bits,
@@ -211,20 +214,22 @@ macro_rules! sealed_int {
                 }
 
                 let leading_ones = (!self).leading_zeros();
-                let bits = self << (leading_ones - 1);
-                let need_to_shr =
-                    leading_ones as i32 - 1 + src_frac_bits as i32 - dst_frac_bits as i32;
-                let overflow = src_bits - need_to_shr > dst_bits;
-                let bits = if need_to_shr == 0 {
-                    i128::from(bits)
-                } else if need_to_shr < 0 && -need_to_shr < 128 {
-                    i128::from(bits) << -need_to_shr
-                } else if need_to_shr > 0 && need_to_shr < 128 {
-                    i128::from(bits) >> need_to_shr
-                } else {
-                    0
+                let need_to_shr = src_frac_bits as i32 - dst_frac_bits as i32;
+                let overflow = src_bits - dst_bits > need_to_shr + leading_ones as i32 - 1;
+                let bits_128 = i128::from(self);
+                let (bits, lost_bits) = match need_to_shr {
+                    -128 => (0, false),
+                    -127..=-1 => (bits_128 << -need_to_shr, false),
+                    0 => (bits_128, false),
+                    1..=127 => {
+                        let shifted = bits_128 >> need_to_shr;
+                        (shifted, shifted << need_to_shr != bits_128)
+                    }
+                    128 => (-1, true),
+                    _ => unreachable!(),
                 };
-                (Widest::Negative(bits), overflow)
+                let dir = if lost_bits { Ordering::Less } else { Ordering::Equal };
+                (Widest::Negative(bits), dir, overflow)
             }
         }
     };
@@ -289,26 +294,26 @@ impl SealedInt for bool {
     }
 
     #[inline]
-    fn to_fixed_overflow(
+    fn to_fixed_dir_overflow(
         self,
         src_frac_bits: u32,
         dst_frac_bits: u32,
         dst_int_bits: u32,
-    ) -> (Widest, bool) {
+    ) -> (Widest, Ordering, bool) {
         debug_assert_eq!(src_frac_bits, 0);
         let _ = src_frac_bits;
         if !self {
-            return (Widest::Unsigned(0), false);
+            return (Widest::Unsigned(0), Ordering::Equal, false);
         }
         let overflow = dst_int_bits == 0;
-        let bits = if dst_frac_bits == 0 {
-            1u128
+        let (bits, dir) = if dst_frac_bits == 0 {
+            (1, Ordering::Equal)
         } else if dst_frac_bits < 128 {
-            1u128 << dst_frac_bits
+            (1 << dst_frac_bits, Ordering::Equal)
         } else {
-            0
+            (0, Ordering::Less)
         };
-        (Widest::Unsigned(bits), overflow)
+        (Widest::Unsigned(bits), dir, overflow)
     }
 
     #[inline]

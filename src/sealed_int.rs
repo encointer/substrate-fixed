@@ -15,7 +15,6 @@
 
 use core::cmp::Ordering;
 use core::fmt::{Debug, Display};
-use core::i32;
 use frac::{Bit, False, True, Unsigned, U0, U1, U128, U16, U32, U64, U7, U8};
 use sealed::{Fixed, Widest};
 use {
@@ -152,14 +151,15 @@ macro_rules! sealed_int {
                 let overflow = src_bits - dst_bits > need_to_shr + leading_zeros as i32;
                 let bits_128 = u128::from(self);
                 let (bits, lost_bits) = match need_to_shr {
-                    i32::MIN..=-128 => (0, false),
+                    -0x7fff_ffff..=-128 => (0, false),
                     -127..=-1 => (bits_128 << -need_to_shr, false),
                     0 => (bits_128, false),
                     1..=127 => {
                         let shifted = bits_128 >> need_to_shr;
                         (shifted, shifted << need_to_shr != bits_128)
                     }
-                    _ => (0, true),
+                    128..=0x7fff_ffff => (0, true),
+                    _ => unreachable!(),
                 };
                 let dir = if lost_bits { Ordering::Less } else { Ordering::Equal };
                 (Widest::Unsigned(bits), dir, overflow)
@@ -218,14 +218,15 @@ macro_rules! sealed_int {
                 let overflow = src_bits - dst_bits > need_to_shr + leading_ones as i32 - 1;
                 let bits_128 = i128::from(self);
                 let (bits, lost_bits) = match need_to_shr {
-                    i32::MIN..=-128 => (0, false),
+                    -0x7fff_ffff..=-128 => (0, false),
                     -127..=-1 => (bits_128 << -need_to_shr, false),
                     0 => (bits_128, false),
                     1..=127 => {
                         let shifted = bits_128 >> need_to_shr;
                         (shifted, shifted << need_to_shr != bits_128)
                     }
-                    _ => (-1, true),
+                    128..=0x7fff_ffff => (-1, true),
+                    _ => unreachable!(),
                 };
                 let dir = if lost_bits { Ordering::Less } else { Ordering::Equal };
                 (Widest::Negative(bits), dir, overflow)

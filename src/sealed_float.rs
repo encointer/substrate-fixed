@@ -13,10 +13,11 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
+use core::cmp::Ordering;
 use core::fmt::{Debug, Display};
 #[cfg(feature = "f16")]
 use half::f16;
-use sealed::{Fixed, SealedInt};
+use sealed::{Fixed, SealedInt, Widest};
 
 pub trait SealedFloat: Copy + Debug + Display {
     type Bits: SealedInt;
@@ -45,11 +46,11 @@ pub trait SealedFloat: Copy + Debug + Display {
 
     fn from_neg_abs(neg: bool, abs: u128, frac_bits: u32, int_bits: u32) -> Self;
     // self must be finite, otherwise meaningless results are returned
-    fn to_fixed_neg_abs_overflow(self, frac_bits: u32, int_bits: u32) -> (bool, u128, bool);
+    fn to_fixed_dir_overflow(self, frac_bits: u32, int_bits: u32) -> (Widest, Ordering, bool);
 }
 
 macro_rules! sealed_float {
-    ($Float:ident($Bits:ty, $prec:expr)) => {
+    ($Float:ident($Bits:ty, $IBits:ty, $prec:expr)) => {
         impl SealedFloat for $Float {
             type Bits = $Bits;
 
@@ -173,14 +174,12 @@ macro_rules! sealed_float {
                 Self::from_bits(bits_sign | bits_exp_mantissa)
             }
 
-            fn to_fixed_neg_abs_overflow(
+            fn to_fixed_dir_overflow(
                 self,
-                frac_bits: u32,
-                int_bits: u32,
-            ) -> (bool, u128, bool) {
-                let float_bits = Self::Bits::NBITS as i32;
+                dst_frac_bits: u32,
+                dst_int_bits: u32,
+            ) -> (Widest, Ordering, bool) {
                 let prec = Self::PREC as i32;
-                let fix_bits = (frac_bits + int_bits) as i32;
 
                 let (neg, exp, mut mantissa) = self.parts();
                 debug_assert!(exp <= Self::EXP_MAX, "not finite");
@@ -189,50 +188,51 @@ macro_rules! sealed_float {
                     mantissa |= 1 << (prec - 1);
                 }
                 if mantissa == 0 {
-                    return (neg, 0, false);
+                    return (Widest::Unsigned(0), Ordering::Equal, false);
                 }
-                let leading_zeros = mantissa.leading_zeros();
-                mantissa <<= leading_zeros;
-                let mut need_to_shr = -exp + leading_zeros as i32 + prec - 1 - frac_bits as i32;
-                let rounding_bit = need_to_shr - 1;
-                if 0 <= rounding_bit
-                    && rounding_bit < float_bits
-                    && mantissa & (1 << rounding_bit) != 0
-                {
-                    // Rounding bit is one.
-                    // If any lower bit is one, round up.
-                    // If bit exactly above rounding is one, round up (tie to even).
-                    let round_up = (rounding_bit > 0 && mantissa & ((1 << rounding_bit) - 1) != 0)
-                        || (rounding_bit + 1 < float_bits
-                            && mantissa & (1 << (rounding_bit + 1)) != 0);
-                    if round_up {
-                        mantissa = match mantissa.overflowing_add(1 << rounding_bit) {
-                            (m, false) => m,
-                            (m, true) => {
-                                need_to_shr -= 1;
-                                (m >> 1) | (1 << (float_bits - 1))
-                            }
-                        };
-                    }
+
+                let mut src_frac_bits = prec - 1 - exp;
+                let need_to_shr = src_frac_bits - dst_frac_bits as i32;
+                if need_to_shr > prec {
+                    let dir = if neg {
+                        Ordering::Greater
+                    } else {
+                        Ordering::Less
+                    };
+                    return (Widest::Unsigned(0), dir, false);
                 }
-                // now rounding is done, we can truncate extra right bits
-                let overflow = float_bits - need_to_shr > fix_bits;
-                let abs = if need_to_shr == 0 {
-                    u128::from(mantissa)
-                } else if need_to_shr < 0 && -need_to_shr < 128 {
-                    u128::from(mantissa) << -need_to_shr
-                } else if need_to_shr > 0 && need_to_shr < 128 {
-                    u128::from(mantissa) >> need_to_shr
-                } else {
-                    0
-                };
-                (neg, abs, overflow)
+                let mut dir = Ordering::Equal;
+                if need_to_shr > 0 {
+                    let removed_bits = mantissa & !(!0 << need_to_shr);
+                    let will_be_lsb = 1 << need_to_shr;
+                    let tie = will_be_lsb >> 1;
+                    if removed_bits == 0 {
+                        // removed nothing
+                    } else if removed_bits < tie {
+                        dir = Ordering::Less;
+                    } else if removed_bits > tie || mantissa & will_be_lsb != 0 {
+                        mantissa += will_be_lsb;
+                        dir = Ordering::Greater;
+                    } else {
+                        dir = Ordering::Less;
+                    };
+                    mantissa >>= need_to_shr;
+                    src_frac_bits -= need_to_shr;
+                }
+                let mut mantissa = mantissa as $IBits;
+                if neg {
+                    mantissa = -mantissa;
+                    dir = dir.reverse();
+                }
+                let (fixed, _, overflow) =
+                    mantissa.to_fixed_dir_overflow(src_frac_bits, dst_frac_bits, dst_int_bits);
+                (fixed, dir, overflow)
             }
         }
     };
 }
 
 #[cfg(feature = "f16")]
-sealed_float! { f16(u16, 11) }
-sealed_float! { f32(u32, 24) }
-sealed_float! { f64(u64, 53) }
+sealed_float! { f16(u16, i16, 11) }
+sealed_float! { f32(u32, i32, 24) }
+sealed_float! { f64(u64, i64, 53) }

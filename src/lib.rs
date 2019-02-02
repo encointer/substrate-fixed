@@ -635,8 +635,8 @@ assert_eq!((src >> 4u32).to_fixed::<Dst>(), Dst::from_bits(1));
                 concat!(
                     "Creates a fixed-point number from an integer.
 
-The integer can be of type [`bool`], [`i8`], [`i16`], [`i32`],
-[`i64`], [`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+The integer can be of type [`i8`], [`i16`], [`i32`], [`i64`],
+[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
 
 # Panics
 
@@ -661,7 +661,6 @@ assert_eq!(Fix::from_int(",
                     "3 << 4));
 ```
 
-[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 [`i128`]: https://doc.rust-lang.org/nightly/std/primitive.i128.html
 [`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
 [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
@@ -691,8 +690,8 @@ assert_eq!(Fix::from_int(",
                 concat!(
                     "Converts a fixed-point number of type to an integer.
 
-The integer can be of type [`bool`], [`i8`], [`i16`], [`i32`],
-[`i64`], [`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+The integer can be of type [`i8`], [`i16`], [`i32`], [`i64`],
+[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
 
 Any fractional bits are truncated.
 
@@ -720,7 +719,6 @@ assert_eq!(",
                     ");
 ```
 
-[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 [`i128`]: https://doc.rust-lang.org/nightly/std/primitive.i128.html
 [`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
 [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
@@ -931,8 +929,8 @@ assert!(Src::max_value().checked_to_fixed::<TooFewIntBits>().is_none());
                     "Creates a fixed-point number from an integer if
 it fits, otherwise returns [`None`].
 
-The integer can be of type [`bool`], [`i8`], [`i16`], [`i32`],
-[`i64`], [`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+The integer can be of type [`i8`], [`i16`], [`i32`], [`i64`],
+[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
 
 # Examples
 
@@ -956,7 +954,6 @@ assert!(Fix::checked_from_int(too_small).is_none());
 ```
 
 [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
-[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 [`i128`]: https://doc.rust-lang.org/nightly/std/primitive.i128.html
 [`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
 [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
@@ -984,8 +981,8 @@ assert!(Fix::checked_from_int(too_small).is_none());
                     "Converts a fixed-point number to an integer if it
 fits, otherwise returns [`None`].
 
-The integer value can be of type [`bool`], [`i8`], [`i16`], [`i32`],
-[`i64`], [`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+The integer value can be of type [`i8`], [`i16`], [`i32`], [`i64`],
+[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
 
 Any fractional bits are truncated.
 
@@ -1018,7 +1015,6 @@ assert!(AllInt::",
 ```
 
 [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
-[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 [`i128`]: https://doc.rust-lang.org/nightly/std/primitive.i128.html
 [`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
 [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
@@ -1210,8 +1206,8 @@ assert_eq!(saturated, TooFewIntBits::max_value());
                     "Creates a fixed-point number from an integer,
 saturating the value if it does not fit.
 
-The integer value can be of type [`bool`], [`i8`], [`i16`], [`i32`],
-[`i64`], [`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+The integer value can be of type [`i8`], [`i16`], [`i32`], [`i64`],
+[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
 
 # Examples
 
@@ -1234,7 +1230,6 @@ let too_small = ",
 assert_eq!(Fix::saturating_from_int(too_small), Fix::min_value());
 ```
 
-[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 [`i128`]: https://doc.rust-lang.org/nightly/std/primitive.i128.html
 [`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
 [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
@@ -1289,8 +1284,8 @@ assert_eq!(Fix::saturating_from_int(too_small), Fix::min_value());
                     "Converts a fixed-point number to an integer,
 saturating the value if it does not fit.
 
-The integer value can be of type [`bool`], [`i8`], [`i16`], [`i32`],
-[`i64`], [`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+The integer value can be of type [`i8`], [`i16`], [`i32`], [`i64`],
+[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
 
 Any fractional bits are truncated.
 
@@ -1331,7 +1326,6 @@ assert_eq!(",
                     ");
 ```
 
-[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 [`i128`]: https://doc.rust-lang.org/nightly/std/primitive.i128.html
 [`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
 [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
@@ -1518,8 +1512,8 @@ assert_eq!(Src::max_value().wrapping_to_fixed::<TooFewIntBits>(), wrapped);
                     "Creates a fixed-point number from an integer,
 wrapping the value on overflow.
 
-The integer value can be of type [`bool`], [`i8`], [`i16`], [`i32`],
-[`i64`], [`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+The integer value can be of type [`i8`], [`i16`], [`i32`], [`i64`],
+[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
 
 # Examples
 
@@ -1542,7 +1536,6 @@ let wrapped = Fix::from_bits(0b1010 << (",
 assert_eq!(Fix::wrapping_from_int(large), wrapped);
 ```
 
-[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 [`i128`]: https://doc.rust-lang.org/nightly/std/primitive.i128.html
 [`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
 [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
@@ -1569,8 +1562,8 @@ assert_eq!(Fix::wrapping_from_int(large), wrapped);
                     "Converts a fixed-point number to an integer,
 wrapping the value on overflow.
 
-The integer value can be of type [`bool`], [`i8`], [`i16`], [`i32`],
-[`i64`], [`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+The integer value can be of type [`i8`], [`i16`], [`i32`], [`i64`],
+[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
 
 Any fractional bits are truncated.
 
@@ -1611,7 +1604,6 @@ assert_eq!(",
                     ");
 ```
 
-[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 [`i128`]: https://doc.rust-lang.org/nightly/std/primitive.i128.html
 [`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
 [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
@@ -1804,8 +1796,8 @@ Returns a tuple of the fixed-point number and a [`bool`] indicating
 whether an overflow has occurred. On overflow, the wrapped value is
 returned.
 
-The integer value can be of type [`bool`], [`i8`], [`i16`], [`i32`],
-[`i64`], [`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+The integer value can be of type [`i8`], [`i16`], [`i32`], [`i64`],
+[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
 
 # Examples
 
@@ -1881,8 +1873,8 @@ assert_eq!(Fix::overflowing_from_int(large), (wrapped, true));
 Returns a tuple of the integer and a [`bool`] indicating whether an
 overflow has occurred. On overflow, the wrapped value is returned.
 
-The integer value can be of type [`bool`], [`i8`], [`i16`], [`i32`],
-[`i64`], [`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+The integer value can be of type [`i8`], [`i16`], [`i32`], [`i64`],
+[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
 
 Any fractional bits are truncated.
 

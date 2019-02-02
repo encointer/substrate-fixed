@@ -9,6 +9,7 @@ Version 0.3.0 (unreleased)
 ==========================
 
   * The return type of `to_int` is now generic.
+  * The `Int` trait implementation for [`bool`] was removed.
   * The new method `to_fixed` was added.
   * The new methods `checked_to_fixed`, `checked_to_int`,
     `saturating_to_fixed`, `saturating_to_int`, `wrapping_to_fixed`,

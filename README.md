@@ -42,6 +42,7 @@ numeric primitives are implemented. That is, you can use [`From`] or
 ### Version 0.3.0 news (unreleased)
 
   * The method [`to_int`] was changed; now its return type is generic.
+  * The [`Int`] trait implementation for [`bool`] was removed.
   * The new method [`to_fixed`] was added.
   * Checked versions of [`to_fixed`] and [`to_int`] were added.
   * The methods [`from_fixed`][`Int::from_fixed`] and

@@ -15,7 +15,7 @@
 
 use core::cmp::Ordering;
 use core::fmt::{Debug, Display};
-use frac::{Bit, False, True, Unsigned, U0, U1, U128, U16, U32, U64, U7, U8};
+use frac::{Bit, False, True, Unsigned, U0, U128, U16, U32, U64, U8};
 use sealed::{Fixed, Widest};
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
@@ -245,97 +245,6 @@ macro_rules! sealed_int {
             }
         }
     };
-}
-
-impl SealedInt for bool {
-    type NBits = U1;
-    type IsSigned = False;
-    type Unsigned = bool;
-    type ReprFixed = FixedU8<U0>;
-
-    const MSB: bool = true;
-
-    #[inline]
-    fn min_value() -> bool {
-        false
-    }
-
-    #[inline]
-    fn max_value() -> bool {
-        true
-    }
-
-    #[inline]
-    fn overflowing_from_fixed<F>(fixed: F) -> (Self, bool)
-    where
-        F: Fixed,
-    {
-        let (wrapped, overflow) = FixedU8::<U7>::overflowing_from_fixed(fixed);
-        (wrapped.to_bits() & 0x80u8 != 0, overflow)
-    }
-
-    #[inline]
-    fn overflowing_to_fixed<F>(self) -> (F, bool)
-    where
-        F: Fixed,
-    {
-        F::overflowing_from_fixed(FixedU8::<U0>::from_bits(self as u8))
-    }
-
-    #[inline]
-    fn one_shl(shift: u32) -> bool {
-        let _ = shift;
-        debug_assert_eq!(shift, 0);
-        true
-    }
-
-    #[inline]
-    fn all_ones_shl(shift: u32) -> bool {
-        let _ = shift;
-        debug_assert_eq!(shift, 0);
-        true
-    }
-
-    #[inline]
-    fn is_zero(self) -> bool {
-        !self
-    }
-
-    #[inline]
-    fn is_negative(self) -> bool {
-        false
-    }
-
-    #[inline]
-    fn to_fixed_dir_overflow(
-        self,
-        src_frac_bits: i32,
-        dst_frac_bits: u32,
-        dst_int_bits: u32,
-    ) -> (Widest, Ordering, bool) {
-        if !self {
-            (Widest::Unsigned(0), Ordering::Equal, false)
-        } else {
-            1u8.to_fixed_dir_overflow(src_frac_bits, dst_frac_bits, dst_int_bits)
-        }
-    }
-
-    #[inline]
-    fn to_repr_fixed(self) -> FixedU8<U0> {
-        FixedU8::from_bits(self as u8)
-    }
-
-    #[inline]
-    fn neg_abs(self) -> (bool, bool) {
-        (false, self)
-    }
-
-    #[inline]
-    fn from_neg_abs(neg: bool, abs: bool) -> bool {
-        debug_assert!(!neg || !abs);
-        let _ = neg;
-        abs
-    }
 }
 
 sealed_int! { i8(U8, u8, FixedI8) }

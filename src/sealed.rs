@@ -28,14 +28,12 @@ use {
     FixedU8,
 };
 
-/// This trait is implemented for all the primitive integer types and
-/// [`bool`].
+/// This trait is implemented for all the primitive integer types.
 ///
 /// This trait is sealed and cannot be implemented for more types; it
-/// is implemented for [`bool`], [`i8`], [`i16`], [`i32`],
-/// [`i64`], [`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+/// is implemented for [`i8`], [`i16`], [`i32`], [`i64`], [`i128`],
+/// [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
 ///
-/// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 /// [`i128`]: https://doc.rust-lang.org/nightly/std/primitive.i128.html
 /// [`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
 /// [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
@@ -519,7 +517,6 @@ pub trait Float: SealedFloat {
 /// [`FixedU8`]: ../struct.FixedU8.html
 pub trait Fixed: SealedFixed {}
 
-impl Int for bool {}
 impl Int for i8 {}
 impl Int for i16 {}
 impl Int for i32 {}

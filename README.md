@@ -50,6 +50,8 @@ numeric primitives are implemented. That is, you can use [`From`] or
   * The method [`from_fixed`][`Float::from_fixed`], and the method
     [`to_fixed`][`Float::to_fixed`] and its checked versions, were
     added to the [`Float`] trait.
+  * Comparisons between all fixed-point numbers and all integers are
+    now supported.
 
 [`Float::from_fixed`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Float.html#method.from_fixed
 [`Float::to_fixed`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Float.html#method.to_fixed

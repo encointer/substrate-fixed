@@ -22,6 +22,8 @@ Version 0.3.0 (unreleased)
   * The methods `from_fixed`, `to_fixed`, `checked_to_fixed`,
     `saturating_to_fixed`, `wrapping_to_fixed` and
     `overflowing_to_fixed` were added to the `Float` trait.
+  * `PartialEq` and `PartialCmp` are now implemented for all
+    combinations of fixed-point numbers and primitive integers.
 
 Version 0.2.1 (2019-01-29)
 ==========================

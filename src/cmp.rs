@@ -14,216 +14,258 @@
 // <https://opensource.org/licenses/MIT>.
 
 use core::cmp::Ordering;
-use frac::{IsLessOrEqual, True, Unsigned, U0, U128, U16, U32, U64, U8};
+use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
+use sealed::{SealedFixed, SealedInt, Widest};
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
 
-macro_rules! fixed_cmp {
-    ($Fixed:ident($Inner:ty, $Len:ty, $bits_count:expr)) => {
-        impl<Frac> Eq for $Fixed<Frac> where Frac: Unsigned + IsLessOrEqual<$Len, Output = True> {}
-
-        impl<Frac, FracRhs> PartialEq<$Fixed<FracRhs>> for $Fixed<Frac>
+macro_rules! fixed_cmp_fixed {
+    ($Lhs:ident($LhsNBits:ident), $Rhs:ident($RhsNBits:ident)) => {
+        impl<FracLhs, FracRhs> PartialEq<$Rhs<FracRhs>> for $Lhs<FracLhs>
         where
-            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
-            FracRhs: Unsigned + IsLessOrEqual<$Len, Output = True>,
+            FracLhs: Unsigned + IsLessOrEqual<$LhsNBits, Output = True>,
+            FracRhs: Unsigned + IsLessOrEqual<$RhsNBits, Output = True>,
         {
             #[inline]
-            fn eq(&self, rhs: &$Fixed<FracRhs>) -> bool {
-                let (fl, fr) = (Frac::U32, FracRhs::U32);
-                if fl == fr {
-                    self.to_bits() == rhs.to_bits()
-                } else if fl < fr {
-                    rhs.eq(self)
-                } else {
-                    // self has more fractional bits
-                    let diff = fl - fr;
-                    if diff == $bits_count {
-                        0 == rhs.to_bits() && self.to_bits() == 0
-                    } else {
-                        let aligned = self.to_bits() >> diff;
-                        let extra = self.to_bits() & !(!0 << diff);
-                        aligned == rhs.to_bits() && extra == 0
-                    }
+            fn eq(&self, rhs: &$Rhs<FracRhs>) -> bool {
+                let (rhs_128, dir, overflow) = rhs.to_bits().to_fixed_dir_overflow(
+                    <$Rhs<FracRhs>>::FRAC_NBITS as i32,
+                    Self::FRAC_NBITS,
+                    Self::INT_NBITS,
+                );
+                let rhs_bits = match rhs_128 {
+                    Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
+                    Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
+                };
+                dir == Ordering::Equal && !overflow && rhs_bits == self.to_bits()
+            }
+        }
+
+        impl<FracLhs, FracRhs> PartialOrd<$Rhs<FracRhs>> for $Lhs<FracLhs>
+        where
+            FracLhs: Unsigned + IsLessOrEqual<$LhsNBits, Output = True>,
+            FracRhs: Unsigned + IsLessOrEqual<$RhsNBits, Output = True>,
+        {
+            #[inline]
+            fn partial_cmp(&self, rhs: &$Rhs<FracRhs>) -> Option<Ordering> {
+                match (self.to_bits().is_negative(), rhs.to_bits().is_negative()) {
+                    (false, true) => return Some(Ordering::Greater),
+                    (true, false) => return Some(Ordering::Less),
+                    _ => {}
                 }
+                let (rhs_128, dir, overflow) = rhs.to_bits().to_fixed_dir_overflow(
+                    <$Rhs<FracRhs>>::FRAC_NBITS as i32,
+                    Self::FRAC_NBITS,
+                    Self::INT_NBITS,
+                );
+                if overflow {
+                    return if rhs.to_bits().is_negative() {
+                        Some(Ordering::Greater)
+                    } else {
+                        Some(Ordering::Less)
+                    };
+                }
+                let rhs_bits = match rhs_128 {
+                    Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
+                    Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
+                };
+                Some(self.to_bits().cmp(&rhs_bits).then(dir))
+            }
+
+            #[inline]
+            fn lt(&self, rhs: &$Rhs<FracRhs>) -> bool {
+                match (self.to_bits().is_negative(), rhs.to_bits().is_negative()) {
+                    (false, true) => return false,
+                    (true, false) => return true,
+                    _ => {}
+                }
+                let (rhs_128, dir, overflow) = rhs.to_bits().to_fixed_dir_overflow(
+                    <$Rhs<FracRhs>>::FRAC_NBITS as i32,
+                    Self::FRAC_NBITS,
+                    Self::INT_NBITS,
+                );
+                if overflow {
+                    return !rhs.to_bits().is_negative();
+                }
+                let rhs_bits = match rhs_128 {
+                    Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
+                    Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
+                };
+                self.to_bits() < rhs_bits || (self.to_bits() == rhs_bits && dir == Ordering::Less)
+            }
+
+            #[inline]
+            fn le(&self, rhs: &$Rhs<FracRhs>) -> bool {
+                !self.gt(rhs)
+            }
+
+            #[inline]
+            fn gt(&self, rhs: &$Rhs<FracRhs>) -> bool {
+                match (self.to_bits().is_negative(), rhs.to_bits().is_negative()) {
+                    (false, true) => return true,
+                    (true, false) => return false,
+                    _ => {}
+                }
+                let (rhs_128, dir, overflow) = rhs.to_bits().to_fixed_dir_overflow(
+                    <$Rhs<FracRhs>>::FRAC_NBITS as i32,
+                    Self::FRAC_NBITS,
+                    Self::INT_NBITS,
+                );
+                if overflow {
+                    return rhs.to_bits().is_negative();
+                }
+                let rhs_bits = match rhs_128 {
+                    Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
+                    Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
+                };
+                self.to_bits() > rhs_bits
+                    || (self.to_bits() == rhs_bits && dir == Ordering::Greater)
+            }
+
+            #[inline]
+            fn ge(&self, rhs: &$Rhs<FracRhs>) -> bool {
+                !self.lt(rhs)
+            }
+        }
+    };
+}
+
+macro_rules! fixed_cmp_int {
+    ($Fix:ident($NBits:ident), $Int:ident) => {
+        impl<Frac> PartialEq<$Int> for $Fix<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
+        {
+            #[inline]
+            fn eq(&self, rhs: &$Int) -> bool {
+                self.eq(&rhs.to_repr_fixed())
             }
         }
 
-        impl<Frac> PartialEq<$Inner> for $Fixed<Frac>
+        impl<Frac> PartialEq<$Fix<Frac>> for $Int
         where
-            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
         {
             #[inline]
-            fn eq(&self, rhs: &$Inner) -> bool {
-                self.eq(&$Fixed::<U0>::from_bits(*rhs))
+            fn eq(&self, rhs: &$Fix<Frac>) -> bool {
+                self.to_repr_fixed().eq(rhs)
             }
         }
 
-        impl<Frac> PartialEq<$Fixed<Frac>> for $Inner
+        impl<Frac> PartialOrd<$Int> for $Fix<Frac>
         where
-            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
         {
             #[inline]
-            fn eq(&self, rhs: &$Fixed<Frac>) -> bool {
-                $Fixed::<U0>::from_bits(*self).eq(rhs)
+            fn partial_cmp(&self, rhs: &$Int) -> Option<Ordering> {
+                self.partial_cmp(&rhs.to_repr_fixed())
+            }
+
+            #[inline]
+            fn lt(&self, rhs: &$Int) -> bool {
+                self.lt(&rhs.to_repr_fixed())
+            }
+
+            #[inline]
+            fn le(&self, rhs: &$Int) -> bool {
+                self.le(&rhs.to_repr_fixed())
+            }
+
+            #[inline]
+            fn gt(&self, rhs: &$Int) -> bool {
+                self.gt(&rhs.to_repr_fixed())
+            }
+
+            #[inline]
+            fn ge(&self, rhs: &$Int) -> bool {
+                self.ge(&rhs.to_repr_fixed())
             }
         }
 
-        impl<Frac> Ord for $Fixed<Frac>
+        impl<Frac> PartialOrd<$Fix<Frac>> for $Int
         where
-            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
         {
             #[inline]
-            fn cmp(&self, rhs: &$Fixed<Frac>) -> Ordering {
+            fn partial_cmp(&self, rhs: &$Fix<Frac>) -> Option<Ordering> {
+                self.to_repr_fixed().partial_cmp(rhs)
+            }
+
+            #[inline]
+            fn lt(&self, rhs: &$Fix<Frac>) -> bool {
+                self.to_repr_fixed().lt(rhs)
+            }
+
+            #[inline]
+            fn le(&self, rhs: &$Fix<Frac>) -> bool {
+                self.to_repr_fixed().le(rhs)
+            }
+
+            #[inline]
+            fn gt(&self, rhs: &$Fix<Frac>) -> bool {
+                self.to_repr_fixed().gt(rhs)
+            }
+
+            #[inline]
+            fn ge(&self, rhs: &$Fix<Frac>) -> bool {
+                self.to_repr_fixed().ge(rhs)
+            }
+        }
+    };
+}
+
+macro_rules! fixed_cmp_all {
+    ($Fix:ident($NBits:ident)) => {
+        impl<Frac> Eq for $Fix<Frac> where Frac: Unsigned + IsLessOrEqual<$NBits, Output = True> {}
+
+        impl<Frac> Ord for $Fix<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
+        {
+            #[inline]
+            fn cmp(&self, rhs: &$Fix<Frac>) -> Ordering {
                 self.to_bits().cmp(&rhs.to_bits())
             }
         }
 
-        impl<Frac, FracRhs> PartialOrd<$Fixed<FracRhs>> for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
-            FracRhs: Unsigned + IsLessOrEqual<$Len, Output = True>,
-        {
-            #[inline]
-            fn partial_cmp(&self, rhs: &$Fixed<FracRhs>) -> Option<Ordering> {
-                let (fl, fr) = (Frac::U32, FracRhs::U32);
-                if fl == fr {
-                    self.to_bits().partial_cmp(&rhs.to_bits())
-                } else if fl < fr {
-                    rhs.partial_cmp(self).map(Ordering::reverse)
-                } else {
-                    // self has more fractional bits
-                    let diff = fl - fr;
-                    let (aligned, extra);
-                    if diff == $bits_count {
-                        aligned = 0;
-                        extra = self.to_bits();
-                    } else {
-                        aligned = self.to_bits() >> diff;
-                        extra = self.to_bits() & !(!0 << diff);
-                    }
-                    match aligned.partial_cmp(&rhs.to_bits()) {
-                        Some(Ordering::Equal) => extra.partial_cmp(&0),
-                        other => other,
-                    }
-                }
-            }
-
-            #[inline]
-            fn lt(&self, rhs: &$Fixed<FracRhs>) -> bool {
-                let (fl, fr) = (Frac::U32, FracRhs::U32);
-                if fl == fr {
-                    self.to_bits() < rhs.to_bits()
-                } else if fl < fr {
-                    rhs.gt(self)
-                } else {
-                    // self has more fractional bits
-                    let diff = fl - fr;
-                    let rhs_bits = rhs.to_bits();
-                    #[allow(unused_comparisons)]
-                    {
-                        if diff == $bits_count {
-                            0 < rhs_bits || (0 == rhs_bits && self.to_bits() < 0)
-                        } else {
-                            (self.to_bits() >> diff) < rhs_bits
-                        }
-                    }
-                }
-            }
-
-            #[inline]
-            fn le(&self, rhs: &$Fixed<FracRhs>) -> bool {
-                let (fl, fr) = (Frac::U32, FracRhs::U32);
-                if fl == fr {
-                    self.to_bits() <= rhs.to_bits()
-                } else if fl < fr {
-                    rhs.ge(self)
-                } else {
-                    // self has more fractional bits
-                    let diff = fl - fr;
-                    let rhs_bits = rhs.to_bits();
-                    if diff == $bits_count {
-                        0 < rhs_bits || (0 == rhs_bits && self.to_bits() <= 0)
-                    } else {
-                        let aligned = self.to_bits() >> diff;
-                        let extra = self.to_bits() & !(!0 << diff);
-                        aligned < rhs_bits || (aligned == rhs_bits && extra == 0)
-                    }
-                }
-            }
-
-            #[inline]
-            fn gt(&self, rhs: &$Fixed<FracRhs>) -> bool {
-                !self.le(rhs)
-            }
-
-            #[inline]
-            fn ge(&self, rhs: &$Fixed<FracRhs>) -> bool {
-                !self.lt(rhs)
-            }
-        }
-
-        impl<Frac> PartialOrd<$Inner> for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
-        {
-            #[inline]
-            fn partial_cmp(&self, rhs: &$Inner) -> Option<Ordering> {
-                self.partial_cmp(&$Fixed::<U0>::from_bits(*rhs))
-            }
-
-            #[inline]
-            fn lt(&self, rhs: &$Inner) -> bool {
-                self.lt(&$Fixed::<U0>::from_bits(*rhs))
-            }
-
-            #[inline]
-            fn le(&self, rhs: &$Inner) -> bool {
-                self.le(&$Fixed::<U0>::from_bits(*rhs))
-            }
-
-            #[inline]
-            fn gt(&self, rhs: &$Inner) -> bool {
-                self.gt(&$Fixed::<U0>::from_bits(*rhs))
-            }
-
-            #[inline]
-            fn ge(&self, rhs: &$Inner) -> bool {
-                self.ge(&$Fixed::<U0>::from_bits(*rhs))
-            }
-        }
-
-        impl<Frac> PartialOrd<$Fixed<Frac>> for $Inner
-        where
-            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
-        {
-            #[inline]
-            fn partial_cmp(&self, rhs: &$Fixed<Frac>) -> Option<Ordering> {
-                $Fixed::<U0>::from_bits(*self).partial_cmp(rhs)
-            }
-
-            #[inline]
-            fn lt(&self, rhs: &$Fixed<Frac>) -> bool {
-                $Fixed::<U0>::from_bits(*self).lt(rhs)
-            }
-
-            #[inline]
-            fn le(&self, rhs: &$Fixed<Frac>) -> bool {
-                $Fixed::<U0>::from_bits(*self).le(rhs)
-            }
-
-            #[inline]
-            fn gt(&self, rhs: &$Fixed<Frac>) -> bool {
-                $Fixed::<U0>::from_bits(*self).gt(rhs)
-            }
-
-            #[inline]
-            fn ge(&self, rhs: &$Fixed<Frac>) -> bool {
-                $Fixed::<U0>::from_bits(*self).ge(rhs)
-            }
-        }
+        fixed_cmp_fixed! { $Fix($NBits), FixedI8(U8) }
+        fixed_cmp_fixed! { $Fix($NBits), FixedI16(U16) }
+        fixed_cmp_fixed! { $Fix($NBits), FixedI32(U32) }
+        fixed_cmp_fixed! { $Fix($NBits), FixedI64(U64) }
+        fixed_cmp_fixed! { $Fix($NBits), FixedI128(U128) }
+        fixed_cmp_fixed! { $Fix($NBits), FixedU8(U8) }
+        fixed_cmp_fixed! { $Fix($NBits), FixedU16(U16) }
+        fixed_cmp_fixed! { $Fix($NBits), FixedU32(U32) }
+        fixed_cmp_fixed! { $Fix($NBits), FixedU64(U64) }
+        fixed_cmp_fixed! { $Fix($NBits), FixedU128(U128) }
+        fixed_cmp_int! { $Fix($NBits), i8 }
+        fixed_cmp_int! { $Fix($NBits), i16 }
+        fixed_cmp_int! { $Fix($NBits), i32 }
+        fixed_cmp_int! { $Fix($NBits), i64 }
+        fixed_cmp_int! { $Fix($NBits), i128 }
+        fixed_cmp_int! { $Fix($NBits), u8 }
+        fixed_cmp_int! { $Fix($NBits), u16 }
+        fixed_cmp_int! { $Fix($NBits), u32 }
+        fixed_cmp_int! { $Fix($NBits), u64 }
+        fixed_cmp_int! { $Fix($NBits), u128 }
     };
+}
+
+fixed_cmp_all! { FixedI8(U8) }
+fixed_cmp_all! { FixedI16(U16) }
+fixed_cmp_all! { FixedI32(U32) }
+fixed_cmp_all! { FixedI64(U64) }
+fixed_cmp_all! { FixedI128(U128) }
+fixed_cmp_all! { FixedU8(U8) }
+fixed_cmp_all! { FixedU16(U16) }
+fixed_cmp_all! { FixedU32(U32) }
+fixed_cmp_all! { FixedU64(U64) }
+fixed_cmp_all! { FixedU128(U128) }
+
+macro_rules! fixed_cmp {
+    ($Fixed:ident($Inner:ty, $Len:ty, $bits_count:expr)) => {};
 }
 
 fixed_cmp! { FixedU8(u8, U8, 8) }
@@ -252,6 +294,8 @@ mod tests {
         assert!(a.eq(&b) && b.eq(&a));
         assert_eq!(a.partial_cmp(&b), Some(Equal));
         assert_eq!(b.partial_cmp(&a), Some(Equal));
+        assert_eq!(a, -1i8);
+        assert_eq!(b, -1i128);
         a >>= 16;
         b >>= 16;
         // a = ffff.ffff = -2^-16, b = fff.ffff0 = -2^-16
@@ -270,12 +314,16 @@ mod tests {
         assert!(a.eq(&b) && b.eq(&a));
         assert_eq!(a.partial_cmp(&b), Some(Equal));
         assert_eq!(b.partial_cmp(&a), Some(Equal));
+        assert_eq!(a, -1i16 << 11);
+        assert_eq!(b, -1i64 << 11);
         a <<= 1;
         b <<= 1;
         // a = f000.0000 = -2^-12, b = 000.00000 = 0
         assert!(a.ne(&b) && b.ne(&a));
         assert_eq!(a.partial_cmp(&b), Some(Less));
         assert_eq!(b.partial_cmp(&a), Some(Greater));
+        assert!(a < 1u8);
+        assert_eq!(b, 0);
     }
 
     #[test]
@@ -289,6 +337,8 @@ mod tests {
         assert!(a.eq(&b) && b.eq(&a));
         assert_eq!(a.partial_cmp(&b), Some(Equal));
         assert_eq!(b.partial_cmp(&a), Some(Equal));
+        assert_eq!(a, 1u8);
+        assert_eq!(b, 1i128);
         a >>= 16;
         b >>= 16;
         // a = 0000.0001 = 2^-16, b = 000.00010 = 2^-16
@@ -307,11 +357,16 @@ mod tests {
         assert!(a.eq(&b) && b.eq(&a));
         assert_eq!(a.partial_cmp(&b), Some(Equal));
         assert_eq!(b.partial_cmp(&a), Some(Equal));
+        assert_eq!(a, 1i16 << 11);
+        assert_eq!(b, 1u64 << 11);
         a <<= 1;
         b <<= 1;
         // a = 1000.0000 = 2^12, b = 000.00000 = 0
         assert!(a.ne(&b) && b.ne(&a));
         assert_eq!(a.partial_cmp(&b), Some(Greater));
         assert_eq!(b.partial_cmp(&a), Some(Less));
+        assert!(a > -1i8);
+        assert_eq!(a, 1i32 << 12);
+        assert_eq!(b, 0);
     }
 }

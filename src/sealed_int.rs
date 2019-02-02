@@ -26,6 +26,7 @@ pub trait SealedInt: Copy + Ord + Debug + Display {
     type NBits: Unsigned;
     type IsSigned: Bit;
     type Unsigned: SealedInt;
+    type ReprFixed: Fixed;
 
     const NBITS: u32 = Self::NBits::U32;
     const IS_SIGNED: bool = Self::IsSigned::BOOL;
@@ -53,16 +54,19 @@ pub trait SealedInt: Copy + Ord + Debug + Display {
         dst_int_bits: u32,
     ) -> (Widest, Ordering, bool);
 
+    fn to_repr_fixed(self) -> Self::ReprFixed;
+
     fn neg_abs(self) -> (bool, Self::Unsigned);
     fn from_neg_abs(neg: bool, abs: Self::Unsigned) -> Self;
 }
 
 macro_rules! sealed_int {
-    ($Int:ident($NBits:ident, $IsSigned:ident, $Unsigned:ty, $EquivFixed:ident); $($rest:tt)*) => {
+    ($Int:ident($NBits:ident, $IsSigned:ident, $Unsigned:ty, $ReprFixed:ident); $($rest:tt)*) => {
         impl SealedInt for $Int {
             type NBits = $NBits;
             type IsSigned = $IsSigned;
             type Unsigned = $Unsigned;
+            type ReprFixed = $ReprFixed<U0>;
 
             const MSB: $Int = 1 << (Self::NBITS - 1);
 
@@ -81,7 +85,7 @@ macro_rules! sealed_int {
             where
                 F: Fixed,
             {
-                let (wrapped, overflow) = <$EquivFixed<U0>>::overflowing_from_fixed(fixed);
+                let (wrapped, overflow) = Self::ReprFixed::overflowing_from_fixed(fixed);
                 (wrapped.to_bits(), overflow)
             }
 
@@ -90,7 +94,7 @@ macro_rules! sealed_int {
             where
                 F: Fixed
             {
-                F::overflowing_from_fixed(<$EquivFixed<U0>>::from_bits(self))
+                F::overflowing_from_fixed(Self::ReprFixed::from_bits(self))
             }
 
             #[inline]
@@ -108,12 +112,17 @@ macro_rules! sealed_int {
                 self == 0
             }
 
+            #[inline]
+            fn to_repr_fixed(self) -> Self::ReprFixed {
+                Self::ReprFixed::from_bits(self)
+            }
+
             $($rest)*
         }
     };
-    ($Unsigned:ident($NBits:ident, $EquivFixed:ident)) => {
+    ($Unsigned:ident($NBits:ident, $ReprFixed:ident)) => {
         sealed_int! {
-            $Unsigned($NBits, False, $Unsigned, $EquivFixed);
+            $Unsigned($NBits, False, $Unsigned, $ReprFixed);
 
             #[inline]
             fn is_negative(self) -> bool {
@@ -166,9 +175,9 @@ macro_rules! sealed_int {
             }
         }
     };
-    ($Signed:ident($NBits:ident, $Unsigned:ty, $EquivFixed:ident)) => {
+    ($Signed:ident($NBits:ident, $Unsigned:ty, $ReprFixed:ident)) => {
         sealed_int! {
-            $Signed($NBits, True, $Unsigned, $EquivFixed);
+            $Signed($NBits, True, $Unsigned, $ReprFixed);
 
             #[inline]
             fn is_negative(self) -> bool {
@@ -242,6 +251,7 @@ impl SealedInt for bool {
     type NBits = U1;
     type IsSigned = False;
     type Unsigned = bool;
+    type ReprFixed = FixedU8<U0>;
 
     const MSB: bool = true;
 
@@ -308,6 +318,11 @@ impl SealedInt for bool {
         } else {
             1u8.to_fixed_dir_overflow(src_frac_bits, dst_frac_bits, dst_int_bits)
         }
+    }
+
+    #[inline]
+    fn to_repr_fixed(self) -> FixedU8<U0> {
+        FixedU8::from_bits(self as u8)
     }
 
     #[inline]

@@ -60,6 +60,7 @@ numeric primitives are implemented. That is, you can use [`From`] or
 [`Int::from_fixed`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Int.html#method.from_fixed
 [`Int::to_fixed`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Int.html#method.to_fixed
 [`Int`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Int.html
+[`bool`]: https://doc.rust-lang.org/nightly/std/convert/trait.From.html
 [`to_fixed`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.to_fixed
 [`to_int`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.to_int
 

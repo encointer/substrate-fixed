@@ -185,7 +185,6 @@ additional terms or conditions.
 #![warn(missing_docs)]
 #![doc(html_root_url = "https://docs.rs/fixed/0.2.1")]
 #![doc(test(attr(deny(warnings))))]
-#![cfg_attr(nightly_repr_transparent, feature(repr_transparent))]
 #![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
 
 #[cfg(feature = "f16")]

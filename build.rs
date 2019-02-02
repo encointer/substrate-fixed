@@ -5,6 +5,9 @@
 // the copyright notice and this notice are preserved. This file is
 // offered as-is, without any warranty.
 
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 use std::env;
 use std::ffi::OsString;
 use std::fs::{self, File};
@@ -22,12 +25,7 @@ fn main() {
         out_dir: PathBuf::from(cargo_env("OUT_DIR")),
         rustc: cargo_env("RUSTC"),
     };
-    env.check_feature(
-        "repr_transparent",
-        Optional(false),
-        TRY_REPR_TRANSPARENT,
-        Some("repr_transparent"),
-    );
+    // env.check_feature(...);
 }
 
 #[derive(PartialEq)]
@@ -37,7 +35,7 @@ impl Environment {
     //  1. If optional feature is availble (both with and without flag), output:
     //         cargo:rustc-cfg=<name>
     //  2. If feature is available with flag (both optional and not), output:
-    //         cargo:rustc-cfg_nightly=<name>
+    //         cargo:rustc-cfg=nightly_<name>
     //  3. If non-optional feature is not available, panic.
     fn check_feature(
         &self,
@@ -78,7 +76,7 @@ impl Environment {
                 .status()
                 .unwrap_or_else(|_| panic!("Unable to execute: {:?}", cmd));
             if status.success() {
-                if !optional.0 {
+                if optional.0 {
                     println!("cargo:rustc-cfg={}", name);
                 }
                 if *i == Iteration::Unstable {
@@ -129,11 +127,3 @@ fn create_file_or_panic(filename: &Path, contents: &str) {
     file.write_all(contents.as_bytes())
         .unwrap_or_else(|_| panic!("Unable to write to file: {:?}", filename));
 }
-
-const TRY_REPR_TRANSPARENT: &str = r#"// try_repr_transparent.rs
-#[repr(transparent)]
-struct Foo(i32);
-fn main() {
-    let _ = Foo(12);
-}
-"#;

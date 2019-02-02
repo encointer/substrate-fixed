@@ -1133,7 +1133,7 @@ assert_eq!(Dst::saturating_from_fixed(too_small), Dst::min_value());
                     let (value, _, overflow) = val.to_bits().to_fixed_dir_overflow(
                         F::FRAC_NBITS as i32,
                         Self::FRAC_NBITS,
-                        Self::FRAC_NBITS,
+                        Self::INT_NBITS,
                     );
                     if overflow {
                         return if val.to_bits().is_negative() {

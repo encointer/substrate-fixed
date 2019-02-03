@@ -8,8 +8,9 @@ as-is, without any warranty. -->
 Version 0.3.0 (unreleased)
 ==========================
 
-  * The return type of `to_int` is now generic.
-  * The `Int` trait implementation for [`bool`] was removed.
+  * Incompatible change: the return type of `to_int` is now generic.
+  * Incompatible change: the `Int` trait implementation for [`bool`]
+    was removed.
   * The new method `to_fixed` was added.
   * The new methods `checked_to_fixed`, `checked_to_int`,
     `saturating_to_fixed`, `saturating_to_int`, `wrapping_to_fixed`,
@@ -39,13 +40,13 @@ Version 0.2.1 (2019-01-29)
 Version 0.2.0 (2019-01-29)
 ==========================
 
+  * Incompatible change: The method `from_int` was change to accept a
+    generic parameter.
   * The new methods `from_fixed`, `checked_from_fixed`,
     `saturating_from_fixed`, `wrapping_from_fixed` and
     `overflowing_from_fixed` were added.
-  * The old method `from_int` was removed to be replaced.
-  * The new methods `from_int`, `checked_from_int`,
-    `saturating_from_int`, `wrapping_from_int` and
-    `overflowing_from_int` were added.
+  * The new methods `checked_from_int`, `saturating_from_int`,
+    `wrapping_from_int` and `overflowing_from_int` were added.
   * The new methods `from_float`, `checked_from_float`,
     `saturating_from_float`, `wrapping_from_float` and
     `overflowing_from_float` were added.

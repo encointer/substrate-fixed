@@ -41,18 +41,23 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
 ### Version 0.3.0 news (unreleased)
 
-  * The method [`to_int`] was changed; now its return type is generic.
-  * The [`Int`] trait implementation for [`bool`] was removed.
+  * <mark>Every fixed-point type now supports coversion to/from all
+    primitive number types, including checked versions of the
+    conversions.</mark>
+  * <mark>Every fixed-point type now supports comparisons with all
+    primitive number types.</mark>
+  * Incompatible change: the method [`to_int`] was changed; now its
+    return type is generic.
+  * Incompatible change: The [`Int`] trait implementation for [`bool`]
+    was removed.
   * The new method [`to_fixed`] was added.
   * Checked versions of [`to_fixed`] and [`to_int`] were added.
   * The methods [`from_fixed`][`Int::from_fixed`] and
-    [`to_fixed`][`Int::to_fixed`], and thier checked versions, were
+    [`to_fixed`][`Int::to_fixed`], and their checked versions, were
     added to the [`Int`] trait.
   * The method [`from_fixed`][`Float::from_fixed`], and the method
     [`to_fixed`][`Float::to_fixed`] and its checked versions, were
     added to the [`Float`] trait.
-  * Comparisons between all fixed-point numbers and all integers are
-    now supported.
 
 [`Float::from_fixed`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Float.html#method.from_fixed
 [`Float::to_fixed`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Float.html#method.to_fixed
@@ -75,7 +80,8 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
 ### Version 0.2.0 news (2019-01-29)
 
-  * The method [`from_int`] was changed to accept a generic prameter.
+  * Incompatible change: the method [`from_int`] was changed to accept
+    a generic prameter.
   * The new methods [`from_fixed`] and [`from_float`] were added.
   * Checked versions of [`from_fixed`], [`from_int`] and
     [`from_float`] were added.

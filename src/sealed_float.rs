@@ -33,6 +33,7 @@ pub trait SealedFloat: Copy + Debug + Display {
     fn zero(neg: bool) -> Self;
     fn infinity(neg: bool) -> Self;
     fn is_nan(self) -> bool;
+    fn is_infinite(self) -> bool;
     fn is_finite(self) -> bool;
     fn is_zero(self) -> bool;
     fn is_sign_negative(self) -> bool;
@@ -72,6 +73,11 @@ macro_rules! sealed_float {
             #[inline]
             fn is_nan(self) -> bool {
                 (self.to_bits() & !Self::SIGN_MASK) > Self::EXP_MASK
+            }
+
+            #[inline]
+            fn is_infinite(self) -> bool {
+                (self.to_bits() & !Self::SIGN_MASK) == Self::EXP_MASK
             }
 
             #[inline]

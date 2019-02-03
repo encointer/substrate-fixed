@@ -15,7 +15,9 @@
 
 use core::cmp::Ordering;
 use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
-use sealed::{SealedFixed, SealedInt, Widest};
+#[cfg(feature = "f16")]
+use half::f16;
+use sealed::{SealedFixed, SealedFloat, SealedInt, Widest};
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
@@ -98,30 +100,12 @@ macro_rules! fixed_cmp_fixed {
 
             #[inline]
             fn le(&self, rhs: &$Rhs<FracRhs>) -> bool {
-                !self.gt(rhs)
+                !rhs.lt(self)
             }
 
             #[inline]
             fn gt(&self, rhs: &$Rhs<FracRhs>) -> bool {
-                match (self.to_bits().is_negative(), rhs.to_bits().is_negative()) {
-                    (false, true) => return true,
-                    (true, false) => return false,
-                    _ => {}
-                }
-                let (rhs_128, dir, overflow) = rhs.to_bits().to_fixed_dir_overflow(
-                    <$Rhs<FracRhs>>::FRAC_NBITS as i32,
-                    Self::FRAC_NBITS,
-                    Self::INT_NBITS,
-                );
-                if overflow {
-                    return rhs.to_bits().is_negative();
-                }
-                let rhs_bits = match rhs_128 {
-                    Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
-                    Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
-                };
-                self.to_bits() > rhs_bits
-                    || (self.to_bits() == rhs_bits && dir == Ordering::Greater)
+                rhs.lt(self)
             }
 
             #[inline]
@@ -170,17 +154,17 @@ macro_rules! fixed_cmp_int {
 
             #[inline]
             fn le(&self, rhs: &$Int) -> bool {
-                self.le(&rhs.to_repr_fixed())
+                !rhs.lt(self)
             }
 
             #[inline]
             fn gt(&self, rhs: &$Int) -> bool {
-                self.gt(&rhs.to_repr_fixed())
+                rhs.lt(self)
             }
 
             #[inline]
             fn ge(&self, rhs: &$Int) -> bool {
-                self.ge(&rhs.to_repr_fixed())
+                !self.lt(rhs)
             }
         }
 
@@ -200,17 +184,183 @@ macro_rules! fixed_cmp_int {
 
             #[inline]
             fn le(&self, rhs: &$Fix<Frac>) -> bool {
-                self.to_repr_fixed().le(rhs)
+                !rhs.lt(self)
             }
 
             #[inline]
             fn gt(&self, rhs: &$Fix<Frac>) -> bool {
-                self.to_repr_fixed().gt(rhs)
+                rhs.lt(self)
             }
 
             #[inline]
             fn ge(&self, rhs: &$Fix<Frac>) -> bool {
-                self.to_repr_fixed().ge(rhs)
+                !self.lt(rhs)
+            }
+        }
+    };
+}
+
+macro_rules! fixed_cmp_float {
+    ($Fix:ident($NBits:ident), $Float:ident) => {
+        impl<Frac> PartialEq<$Float> for $Fix<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
+        {
+            #[inline]
+            fn eq(&self, rhs: &$Float) -> bool {
+                if !SealedFloat::is_finite(*rhs) {
+                    return false;
+                }
+                let (rhs_128, dir, overflow) =
+                    rhs.to_fixed_dir_overflow(Self::FRAC_NBITS, Self::INT_NBITS);
+                let rhs_bits = match rhs_128 {
+                    Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
+                    Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
+                };
+                dir == Ordering::Equal && !overflow && rhs_bits == self.to_bits()
+            }
+        }
+
+        impl<Frac> PartialEq<$Fix<Frac>> for $Float
+        where
+            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
+        {
+            #[inline]
+            fn eq(&self, rhs: &$Fix<Frac>) -> bool {
+                rhs.eq(self)
+            }
+        }
+
+        impl<Frac> PartialOrd<$Float> for $Fix<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
+        {
+            #[inline]
+            fn partial_cmp(&self, rhs: &$Float) -> Option<Ordering> {
+                if SealedFloat::is_nan(*rhs) {
+                    return None;
+                }
+                let rhs_is_neg = SealedFloat::is_sign_negative(*rhs);
+                if SealedFloat::is_infinite(*rhs) {
+                    return if rhs_is_neg {
+                        Some(Ordering::Greater)
+                    } else {
+                        Some(Ordering::Less)
+                    };
+                }
+                match (self.to_bits().is_negative(), rhs_is_neg) {
+                    (false, true) => return Some(Ordering::Greater),
+                    (true, false) => return Some(Ordering::Less),
+                    _ => {}
+                }
+                let (rhs_128, dir, overflow) =
+                    rhs.to_fixed_dir_overflow(Self::FRAC_NBITS, Self::INT_NBITS);
+                if overflow {
+                    return if rhs_is_neg {
+                        Some(Ordering::Greater)
+                    } else {
+                        Some(Ordering::Less)
+                    };
+                }
+                let rhs_bits = match rhs_128 {
+                    Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
+                    Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
+                };
+                Some(self.to_bits().cmp(&rhs_bits).then(dir))
+            }
+
+            #[inline]
+            fn lt(&self, rhs: &$Float) -> bool {
+                if SealedFloat::is_nan(*rhs) {
+                    return false;
+                }
+                let rhs_is_neg = SealedFloat::is_sign_negative(*rhs);
+                if SealedFloat::is_infinite(*rhs) {
+                    return !rhs_is_neg;
+                }
+                match (self.to_bits().is_negative(), rhs_is_neg) {
+                    (false, true) => return false,
+                    (true, false) => return true,
+                    _ => {}
+                }
+                let (rhs_128, dir, overflow) =
+                    rhs.to_fixed_dir_overflow(Self::FRAC_NBITS, Self::INT_NBITS);
+                if overflow {
+                    return !rhs_is_neg;
+                }
+                let rhs_bits = match rhs_128 {
+                    Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
+                    Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
+                };
+                let lhs_bits = self.to_bits();
+                lhs_bits < rhs_bits || (lhs_bits == rhs_bits && dir == Ordering::Less)
+            }
+
+            #[inline]
+            fn le(&self, rhs: &$Float) -> bool {
+                !SealedFloat::is_nan(*rhs) && !rhs.lt(self)
+            }
+
+            #[inline]
+            fn gt(&self, rhs: &$Float) -> bool {
+                rhs.lt(self)
+            }
+
+            #[inline]
+            fn ge(&self, rhs: &$Float) -> bool {
+                !SealedFloat::is_nan(*rhs) && !self.lt(rhs)
+            }
+        }
+
+        impl<Frac> PartialOrd<$Fix<Frac>> for $Float
+        where
+            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
+        {
+            #[inline]
+            fn partial_cmp(&self, rhs: &$Fix<Frac>) -> Option<Ordering> {
+                rhs.partial_cmp(self).map(Ordering::reverse)
+            }
+
+            #[inline]
+            fn lt(&self, rhs: &$Fix<Frac>) -> bool {
+                if SealedFloat::is_nan(*self) {
+                    return false;
+                }
+                let lhs_is_neg = SealedFloat::is_sign_negative(*self);
+                if SealedFloat::is_infinite(*self) {
+                    return lhs_is_neg;
+                }
+                match (lhs_is_neg, rhs.to_bits().is_negative()) {
+                    (false, true) => return false,
+                    (true, false) => return true,
+                    _ => {}
+                }
+                let (lhs_128, dir, overflow) =
+                    self.to_fixed_dir_overflow(<$Fix<Frac>>::FRAC_NBITS, <$Fix<Frac>>::INT_NBITS);
+                if overflow {
+                    return lhs_is_neg;
+                }
+                let lhs_bits = match lhs_128 {
+                    Widest::Unsigned(bits) => bits as <$Fix<Frac> as SealedFixed>::Bits,
+                    Widest::Negative(bits) => bits as <$Fix<Frac> as SealedFixed>::Bits,
+                };
+                let rhs_bits = rhs.to_bits();
+                lhs_bits < rhs_bits || (lhs_bits == rhs_bits && dir == Ordering::Greater)
+            }
+
+            #[inline]
+            fn le(&self, rhs: &$Fix<Frac>) -> bool {
+                !SealedFloat::is_nan(*self) && !rhs.lt(self)
+            }
+
+            #[inline]
+            fn gt(&self, rhs: &$Fix<Frac>) -> bool {
+                rhs.lt(self)
+            }
+
+            #[inline]
+            fn ge(&self, rhs: &$Fix<Frac>) -> bool {
+                !SealedFloat::is_nan(*self) && !self.lt(rhs)
             }
         }
     };
@@ -250,6 +400,10 @@ macro_rules! fixed_cmp_all {
         fixed_cmp_int! { $Fix($NBits), u32 }
         fixed_cmp_int! { $Fix($NBits), u64 }
         fixed_cmp_int! { $Fix($NBits), u128 }
+        #[cfg(feature = "f16")]
+        fixed_cmp_float! { $Fix($NBits), f16 }
+        fixed_cmp_float! { $Fix($NBits), f32 }
+        fixed_cmp_float! { $Fix($NBits), f64 }
     };
 }
 
@@ -280,6 +434,8 @@ fixed_cmp! { FixedI64(i64, U64, 64) }
 fixed_cmp! { FixedI128(i128, U128, 128) }
 
 #[cfg(test)]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::float_cmp))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::cyclomatic_complexity))]
 mod tests {
     use *;
 
@@ -302,6 +458,16 @@ mod tests {
         assert!(a.eq(&b) && b.eq(&a));
         assert_eq!(a.partial_cmp(&b), Some(Equal));
         assert_eq!(b.partial_cmp(&a), Some(Equal));
+        assert!(a < 0.0);
+        assert_eq!(a, -(-16f32).exp2());
+        assert!(a <= -(-16f32).exp2());
+        assert!(a >= -(-16f32).exp2());
+        assert!(a < (-16f32).exp2());
+        assert_ne!(a, -0.75 * (-16f32).exp2());
+        assert!(a < -0.75 * (-16f32).exp2());
+        assert!(a <= -0.75 * (-16f32).exp2());
+        assert!(a > -1.25 * (-16f32).exp2());
+        assert!(a >= -1.25 * (-16f32).exp2());
         a >>= 1;
         b >>= 1;
         // a = ffff.ffff = -2^-16, b = fff.ffff8 = -2^-17
@@ -345,6 +511,16 @@ mod tests {
         assert!(a.eq(&b) && b.eq(&a));
         assert_eq!(a.partial_cmp(&b), Some(Equal));
         assert_eq!(b.partial_cmp(&a), Some(Equal));
+        assert!(a > 0.0);
+        assert_eq!(a, (-16f64).exp2());
+        assert!(a <= (-16f64).exp2());
+        assert!(a >= (-16f64).exp2());
+        assert!(a > -(-16f64).exp2());
+        assert_ne!(a, 0.75 * (-16f64).exp2());
+        assert!(a > 0.75 * (-16f64).exp2());
+        assert!(a >= 0.75 * (-16f64).exp2());
+        assert!(a < 1.25 * (-16f64).exp2());
+        assert!(a <= 1.25 * (-16f64).exp2());
         a >>= 1;
         b >>= 1;
         // a = 0000.0000 = 0, b = 000.00008 = 2^-17

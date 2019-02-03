@@ -103,7 +103,7 @@ convert! { (FixedU32, FixedI32, U32) -> (FixedU128, FixedI128, U128) }
 
 convert! { (FixedU64, FixedI64, U64) -> (FixedU128, FixedI128, U128) }
 
-macro_rules! prim_to_fixed {
+macro_rules! int_to_fixed {
     (($SrcU:ident, $SrcI:ident, $SrcBits:ident) -> ($DstU:ident, $DstI:ident, $DstBits:ident)) => {
         // Condition: FracDst <= $DstBits - $SrcBits
         impl<FracDst> From<$SrcU> for $DstU<FracDst>
@@ -171,27 +171,27 @@ macro_rules! prim_to_fixed {
     };
 }
 
-prim_to_fixed! { (u8, i8) -> (FixedU8, FixedI8) }
-prim_to_fixed! { (u8, i8, U8) -> (FixedU16, FixedI16, U16) }
-prim_to_fixed! { (u8, i8, U8) -> (FixedU32, FixedI32, U32) }
-prim_to_fixed! { (u8, i8, U8) -> (FixedU64, FixedI64, U64) }
-prim_to_fixed! { (u8, i8, U8) -> (FixedU128, FixedI128, U128) }
+int_to_fixed! { (u8, i8) -> (FixedU8, FixedI8) }
+int_to_fixed! { (u8, i8, U8) -> (FixedU16, FixedI16, U16) }
+int_to_fixed! { (u8, i8, U8) -> (FixedU32, FixedI32, U32) }
+int_to_fixed! { (u8, i8, U8) -> (FixedU64, FixedI64, U64) }
+int_to_fixed! { (u8, i8, U8) -> (FixedU128, FixedI128, U128) }
 
-prim_to_fixed! { (u16, i16) -> (FixedU16, FixedI16) }
-prim_to_fixed! { (u16, i16, U16) -> (FixedU32, FixedI32, U32) }
-prim_to_fixed! { (u16, i16, U16) -> (FixedU64, FixedI64, U64) }
-prim_to_fixed! { (u16, i16, U16) -> (FixedU128, FixedI128, U128) }
+int_to_fixed! { (u16, i16) -> (FixedU16, FixedI16) }
+int_to_fixed! { (u16, i16, U16) -> (FixedU32, FixedI32, U32) }
+int_to_fixed! { (u16, i16, U16) -> (FixedU64, FixedI64, U64) }
+int_to_fixed! { (u16, i16, U16) -> (FixedU128, FixedI128, U128) }
 
-prim_to_fixed! { (u32, i32) -> (FixedU32, FixedI32) }
-prim_to_fixed! { (u32, i32, U32) -> (FixedU64, FixedI64, U64) }
-prim_to_fixed! { (u32, i32, U32) -> (FixedU128, FixedI128, U128) }
+int_to_fixed! { (u32, i32) -> (FixedU32, FixedI32) }
+int_to_fixed! { (u32, i32, U32) -> (FixedU64, FixedI64, U64) }
+int_to_fixed! { (u32, i32, U32) -> (FixedU128, FixedI128, U128) }
 
-prim_to_fixed! { (u64, i64) -> (FixedU64, FixedI64) }
-prim_to_fixed! { (u64, i64, U64) -> (FixedU128, FixedI128, U128) }
+int_to_fixed! { (u64, i64) -> (FixedU64, FixedI64) }
+int_to_fixed! { (u64, i64, U64) -> (FixedU128, FixedI128, U128) }
 
-prim_to_fixed! { (u128, i128) -> (FixedU128, FixedI128) }
+int_to_fixed! { (u128, i128) -> (FixedU128, FixedI128) }
 
-macro_rules! fixed_to_prim {
+macro_rules! fixed_to_int {
     (($SrcU:ident, $SrcI:ident) -> ($DstU:ident, $DstI:ident)) => {
         impl From<$SrcU<U0>> for $DstU {
             #[inline]
@@ -231,25 +231,25 @@ macro_rules! fixed_to_prim {
     };
 }
 
-fixed_to_prim! { (FixedU8, FixedI8) -> (u8, i8) }
-fixed_to_prim! { (FixedU8, FixedI8) -> wider (u16, i16) }
-fixed_to_prim! { (FixedU8, FixedI8) -> wider (u32, i32) }
-fixed_to_prim! { (FixedU8, FixedI8) -> wider (u64, i64) }
-fixed_to_prim! { (FixedU8, FixedI8) -> wider (u128, i128) }
+fixed_to_int! { (FixedU8, FixedI8) -> (u8, i8) }
+fixed_to_int! { (FixedU8, FixedI8) -> wider (u16, i16) }
+fixed_to_int! { (FixedU8, FixedI8) -> wider (u32, i32) }
+fixed_to_int! { (FixedU8, FixedI8) -> wider (u64, i64) }
+fixed_to_int! { (FixedU8, FixedI8) -> wider (u128, i128) }
 
-fixed_to_prim! { (FixedU16, FixedI16) -> (u16, i16) }
-fixed_to_prim! { (FixedU16, FixedI16) -> wider (u32, i32) }
-fixed_to_prim! { (FixedU16, FixedI16) -> wider (u64, i64) }
-fixed_to_prim! { (FixedU16, FixedI16) -> wider (u128, i128) }
+fixed_to_int! { (FixedU16, FixedI16) -> (u16, i16) }
+fixed_to_int! { (FixedU16, FixedI16) -> wider (u32, i32) }
+fixed_to_int! { (FixedU16, FixedI16) -> wider (u64, i64) }
+fixed_to_int! { (FixedU16, FixedI16) -> wider (u128, i128) }
 
-fixed_to_prim! { (FixedU32, FixedI32) -> (u32, i32) }
-fixed_to_prim! { (FixedU32, FixedI32) -> wider (u64, i64) }
-fixed_to_prim! { (FixedU32, FixedI32) -> wider (u128, i128) }
+fixed_to_int! { (FixedU32, FixedI32) -> (u32, i32) }
+fixed_to_int! { (FixedU32, FixedI32) -> wider (u64, i64) }
+fixed_to_int! { (FixedU32, FixedI32) -> wider (u128, i128) }
 
-fixed_to_prim! { (FixedU64, FixedI64) -> (u64, i64) }
-fixed_to_prim! { (FixedU64, FixedI64) -> wider (u128, i128) }
+fixed_to_int! { (FixedU64, FixedI64) -> (u64, i64) }
+fixed_to_int! { (FixedU64, FixedI64) -> wider (u128, i128) }
 
-fixed_to_prim! { (FixedU128, FixedI128) -> (u128, i128) }
+fixed_to_int! { (FixedU128, FixedI128) -> (u128, i128) }
 
 macro_rules! fixed_to_float {
     ($Fixed:ident($Len:ty) -> $Float:ident) => {

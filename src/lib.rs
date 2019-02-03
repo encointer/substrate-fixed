@@ -58,6 +58,8 @@ let six_and_third = I20F12::from_int(19) / 3;
 assert_eq!(six_and_third.to_string(), "6.3333");
 // find the ceil and convert to i32
 assert_eq!(six_and_third.ceil().to_int::<i32>(), 7);
+// we can also compare directly to integers
+assert_eq!(six_and_third.ceil(), 7);
 ```
 
 The type [`I20F12`] is a 32-bit fixed-point signed number with 20
@@ -106,7 +108,7 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 
 ```toml
 [dependencies]
-fixed = "0.2.1"
+fixed = "0.3.0"
 ```
 
 If you are using the 2015 Rust edition, you also need to declare it by
@@ -133,7 +135,7 @@ To enable features, you can add the dependency like this to
 
 ```toml
 [dependencies.fixed]
-version = "0.2.1"
+version = "0.3.0"
 features = ["f16", "serde"]
 ```
 
@@ -183,7 +185,7 @@ additional terms or conditions.
 */
 #![no_std]
 #![warn(missing_docs)]
-#![doc(html_root_url = "https://docs.rs/fixed/0.2.1")]
+#![doc(html_root_url = "https://docs.rs/fixed/0.3.0")]
 #![doc(test(attr(deny(warnings))))]
 #![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
 

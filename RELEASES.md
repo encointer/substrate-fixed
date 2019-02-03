@@ -5,7 +5,7 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
-Version 0.3.0 (unreleased)
+Version 0.3.0 (2019-02-03)
 ==========================
 
   * Incompatible change: the return type of `to_int` is now generic.

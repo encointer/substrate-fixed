@@ -469,14 +469,14 @@ assert_eq!(Fix::max_value(), Fix::from_bits(",
 type Fix = fixed::",
                     stringify!($Fixed),
                     "<fixed::frac::U6>;
-assert_eq!(Fix::int_bits(), ",
+assert_eq!(Fix::int_nbits(), ",
                     stringify!($nbits),
                     " - 6);
 ```
 "
                 ),
                 #[inline]
-                pub fn int_bits() -> u32 {
+                pub fn int_nbits() -> u32 {
                     Self::INT_NBITS
                 }
             );
@@ -491,12 +491,12 @@ assert_eq!(Fix::int_bits(), ",
 type Fix = fixed::",
                     stringify!($Fixed),
                     "<fixed::frac::U6>;
-assert_eq!(Fix::frac_bits(), 6);
+assert_eq!(Fix::frac_nbits(), 6);
 ```
 ",
                 ),
                 #[inline]
-                pub fn frac_bits() -> u32 {
+                pub fn frac_nbits() -> u32 {
                     Self::FRAC_NBITS
                 }
             );
@@ -2618,14 +2618,14 @@ assert_eq!(Fix::max_value().overflowing_ceil(), (Fix::min_value(), true));
                     if self.frac() == 0 {
                         return (int, false);
                     }
-                    if Self::int_bits() == 0 {
+                    if Self::INT_NBITS == 0 {
                         return (int, self.to_bits() > 0);
                     }
                     let int_lsb = Self::INT_LSB as <Self as SealedFixed>::Bits;
                     let increment = Self::from_bits(int_lsb);
                         if_signed! {
                             $Signedness;
-                            if Self::int_bits() == 1 {
+                            if Self::INT_NBITS == 1 {
                                 return int.overflowing_sub(increment);
                             }
                         }
@@ -2677,7 +2677,7 @@ assert_eq!(AllFrac::min_value().overflowing_floor(), (AllFrac::from_int(0), true
                     let int = self.int();
                     if_signed! {
                         $Signedness;
-                        if Self::int_bits() == 0 {
+                        if Self::INT_NBITS == 0 {
                             return (int, self.to_bits() < 0);
                         }
                     }
@@ -2725,7 +2725,7 @@ assert_eq!(Fix::max_value().overflowing_round(), (Fix::min_value(), true));
                     if_signed! {
                         $Signedness;
                         let tie = self.frac().to_bits() == frac_msb;
-                        if Self::int_bits() == 0 {
+                        if Self::INT_NBITS == 0 {
                             // if num is .100...00 = -0.5, we have overflow
                             // otherwise .100...01, 0 < x < -0.5,  no overflow
                             return (int, tie);
@@ -2737,14 +2737,14 @@ assert_eq!(Fix::max_value().overflowing_round(), (Fix::min_value(), true));
                         if tie && self.to_bits() < 0 {
                             return (int, false);
                         }
-                        if Self::int_bits() == 1 {
+                        if Self::INT_NBITS == 1 {
                             return int.overflowing_sub(increment);
                         }
                         int.overflowing_add(increment)
                     }
                     if_unsigned! {
                         $Signedness;
-                        if Self::int_bits() == 0 {
+                        if Self::INT_NBITS == 0 {
                             return (int, true);
                         }
                         int.overflowing_add(increment)
@@ -3337,65 +3337,58 @@ assert!(Fix::from_int(-5).is_negative());
                 }
             }
 
-            doc_comment!(
-                concat!(
-                    "Converts the fixed-point number of type `",
-                    stringify!($Fixed),
-                    "` to an integer of type `",
-                    stringify!($Inner),
-                    "`, rounding towards +∞.\n",
-                ),
-                #[deprecated(since = "0.2.0", note = "use f.ceil().to_int::<_>() instead")]
-                #[inline]
-                pub fn to_int_ceil(self) -> $Inner {
-                    if let Some(ceil) = self.checked_ceil() {
-                        ceil.to_int()
-                    } else {
-                        self.floor().to_int::<$Inner>() + 1
-                    }
-                }
-            );
+            /// Returns the number of integer bits.
+            #[inline]
+            #[deprecated(since = "0.3.0", note = "renamed to int_nbits")]
+            pub fn int_bits() -> u32 {
+                Self::int_nbits()
+            }
 
-            doc_comment!(
-                concat!(
-                    "Converts the fixed-point number of type `",
-                    stringify!($Fixed),
-                    "` to an integer of type `",
-                    stringify!($Inner),
-                    "` rounding towards −∞.\n",
-                ),
-                #[deprecated(since = "0.2.0", note = "use f.floor().to_int::<_>() instead")]
-                #[inline]
-                pub fn to_int_floor(self) -> $Inner {
-                    if let Some(floor) = self.checked_floor() {
-                        floor.to_int()
-                    } else {
-                        self.ceil().to_int::<$Inner>() - 1
-                    }
-                }
-            );
+            /// Returns the number of fractional bits bits.
+            #[inline]
+            #[deprecated(since = "0.3.0", note = "renamed to frac_nbits")]
+            pub fn frac_bits() -> u32 {
+                Self::frac_nbits()
+            }
 
-            doc_comment!(
-                concat!(
-                    "Converts the fixed-point number of type `",
-                    stringify!($Fixed),
-                    "` to an integer of type `",
-                    stringify!($Inner),
-                    "` rounding towards the nearest. Ties are rounded away from zero.\n",
-                ),
-                #[deprecated(since = "0.2.0", note = "use f.round().to_int::<_>() instead")]
-                #[inline]
-                pub fn to_int_round(self) -> $Inner {
-                    if let Some(round) = self.checked_round() {
-                        round.to_int()
-                    } else if let Some(floor) = self.checked_floor() {
-                        floor.to_int::<$Inner>() + 1
-                    } else {
-                        self.ceil().to_int::<$Inner>() - 1
-                    }
+            /// Converts the fixed-point number to an integer,
+            /// rounding towards +∞.
+            #[deprecated(since = "0.2.0", note = "use f.ceil().to_int::<_>() instead")]
+            #[inline]
+            pub fn to_int_ceil(self) -> $Inner {
+                if let Some(ceil) = self.checked_ceil() {
+                    ceil.to_int()
+                } else {
+                    self.floor().to_int::<$Inner>() + 1
                 }
-            );
+            }
 
+            /// Converts the fixed-point number to an integer,
+            /// rounding towards −∞.
+            #[deprecated(since = "0.2.0", note = "use f.floor().to_int::<_>() instead")]
+            #[inline]
+            pub fn to_int_floor(self) -> $Inner {
+                if let Some(floor) = self.checked_floor() {
+                    floor.to_int()
+                } else {
+                    self.ceil().to_int::<$Inner>() - 1
+                }
+            }
+
+            /// Converts the fixed-point number to an integer,
+            /// rounding towards the nearest. Ties are rounded away
+            /// from zero.
+            #[deprecated(since = "0.2.0", note = "use f.round().to_int::<_>() instead")]
+            #[inline]
+            pub fn to_int_round(self) -> $Inner {
+                if let Some(round) = self.checked_round() {
+                    round.to_int()
+                } else if let Some(floor) = self.checked_floor() {
+                    floor.to_int::<$Inner>() + 1
+                } else {
+                    self.ceil().to_int::<$Inner>() - 1
+                }
+            }
 
             #[cfg(feature = "f16")]
             deprecated_from_float! { fn from_f16(f16) -> $Fixed<Frac> }

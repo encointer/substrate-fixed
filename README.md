@@ -58,6 +58,8 @@ numeric primitives are implemented. That is, you can use [`From`] or
   * The method [`from_fixed`][`Float::from_fixed`], and the method
     [`to_fixed`][`Float::to_fixed`] and its checked versions, were
     added to the [`Float`] trait.
+  * The methods [`int_bits`] and [`frac_bits`] were deprecated and
+    replaced by the methods [`int_nbits`] and [`frac_nbits`].
 
 [`Float::from_fixed`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Float.html#method.from_fixed
 [`Float::to_fixed`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Float.html#method.to_fixed
@@ -66,6 +68,10 @@ numeric primitives are implemented. That is, you can use [`From`] or
 [`Int::to_fixed`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Int.html#method.to_fixed
 [`Int`]: https://docs.rs/fixed/0.3.0/fixed/sealed/trait.Int.html
 [`bool`]: https://doc.rust-lang.org/nightly/std/convert/trait.From.html
+[`frac_bits`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.frac_bits
+[`frac_nbits`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.frac_nbits
+[`int_bits`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.int_bits
+[`int_nbits`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.int_nbits
 [`to_fixed`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.to_fixed
 [`to_int`]: https://docs.rs/fixed/0.3.0/fixed/struct.FixedI32.html#method.to_int
 

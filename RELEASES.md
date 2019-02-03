@@ -26,6 +26,8 @@ Version 0.3.0 (unreleased)
     `overflowing_to_fixed` were added to the `Float` trait.
   * `PartialEq` and `PartialCmp` are now implemented for all
     combinations of fixed-point numbers and primitive integers.
+  * The methods `int_bits` and `frac_bits` were deprecated and
+    replaced by the methods `int_nbits` and `frac_nbits`.
 
 Version 0.2.1 (2019-01-29)
 ==========================

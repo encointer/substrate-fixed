@@ -14,7 +14,7 @@
 // <https://opensource.org/licenses/MIT>.
 
 use core::ops::{Add, Sub};
-use frac::{IsGreaterOrEqual, IsLessOrEqual, True, Unsigned, U0, U1, U128, U16, U32, U64, U8};
+use frac::{IsGreaterOrEqual, IsLessOrEqual, True, Unsigned, U0, U1, U128, U16, U2, U32, U64, U8};
 #[cfg(feature = "f16")]
 use half::f16;
 use {
@@ -190,6 +190,46 @@ int_to_fixed! { (u64, i64) -> (FixedU64, FixedI64) }
 int_to_fixed! { (u64, i64, U64) -> (FixedU128, FixedI128, U128) }
 
 int_to_fixed! { (u128, i128) -> (FixedU128, FixedI128) }
+
+macro_rules! bool_to_fixed {
+    ($DstU:ident, $DstI:ident, $DstBits:ident) => {
+        // Condition: FracDst <= $DstBits - 1
+        impl<FracDst> From<bool> for $DstU<FracDst>
+        where
+            FracDst: Unsigned
+                + IsLessOrEqual<$DstBits, Output = True>
+                + IsLessOrEqual<<$DstBits as Sub<U1>>::Output, Output = True>,
+        {
+            #[inline]
+            fn from(src: bool) -> $DstU<FracDst> {
+                let unshifted = $DstU::<FracDst>::from_bits(src.into()).to_bits();
+                let shift = FracDst::U32;
+                $DstU::<FracDst>::from_bits(unshifted << shift)
+            }
+        }
+
+        // Condition: FracDst <= $DstBits - 2
+        impl<FracDst> From<bool> for $DstI<FracDst>
+        where
+            FracDst: Unsigned
+                + IsLessOrEqual<$DstBits, Output = True>
+                + IsLessOrEqual<<$DstBits as Sub<U2>>::Output, Output = True>,
+        {
+            #[inline]
+            fn from(src: bool) -> $DstI<FracDst> {
+                let unshifted = $DstI::<FracDst>::from_bits(src.into()).to_bits();
+                let shift = FracDst::U32;
+                $DstI::<FracDst>::from_bits(unshifted << shift)
+            }
+        }
+    };
+}
+
+bool_to_fixed! { FixedU8, FixedI8, U8 }
+bool_to_fixed! { FixedU16, FixedI16, U16 }
+bool_to_fixed! { FixedU32, FixedI32, U32 }
+bool_to_fixed! { FixedU64, FixedI64, U64 }
+bool_to_fixed! { FixedU128, FixedI128, U128 }
 
 macro_rules! fixed_to_int {
     (($SrcU:ident, $SrcI:ident) -> ($DstU:ident, $DstI:ident)) => {
@@ -388,6 +428,14 @@ mod tests {
             assert_eq!(HL128::from(h), HL128::from_bits(val128));
             assert_eq!(HH128::from(h), HH128::from_bits(val128 << 119));
         }
+    }
+
+    #[test]
+    fn from_bool() {
+        assert_eq!(FixedI8::<frac::U6>::from(true), 1);
+        assert_eq!(FixedI8::<frac::U6>::from(false), 0);
+        assert_eq!(FixedI128::<frac::U64>::from(true), 1);
+        assert_eq!(FixedU128::<frac::U127>::from(true), 1);
     }
 
     #[test]

@@ -5,6 +5,12 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.3.1 (unreleased)
+==========================
+
+  * Reimplement `From<bool>` for all fixed-point types which can
+    represent the integer 1. This was inadvertently removed in 0.3.0.
+
 Version 0.3.0 (2019-02-03)
 ==========================
 

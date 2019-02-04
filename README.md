@@ -39,6 +39,12 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
 ## What’s new
 
+### Version 0.3.1 news (unreleased)
+
+  * Reimplement [`From<bool>`][`From`] for all fixed-point types which
+    can represent the integer 1. This was inadvertently removed in
+    0.3.0.
+
 ### Version 0.3.0 news (2019-02-03)
 
 #### Highlights
@@ -48,12 +54,12 @@ numeric primitives are implemented. That is, you can use [`From`] or
     conversions.
   * Every fixed-point type now supports comparisons with all primitive
     number types.
-	
+
 #### Incompatible changes
 
   * The method [`to_int`] was changed; now its return type is generic.
   * The [`Int`] trait implementation for [`bool`] was removed.
-  
+
 #### Other changes
 
   * The new method [`to_fixed`] was added.

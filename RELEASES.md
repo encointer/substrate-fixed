@@ -5,7 +5,7 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
-Version 0.3.1 (unreleased)
+Version 0.3.1 (2019-02-07)
 ==========================
 
   * Reimplement `From<bool>` for all fixed-point types which can

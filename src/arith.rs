@@ -750,6 +750,7 @@ impl FallbackHelper for i128 {
 macro_rules! mul_div_fallback {
     ($Single:ty, $Uns:ty, $Signedness:tt) => {
         impl MulDivDir for $Single {
+            #[inline]
             fn mul_dir(self, rhs: $Single, frac_nbits: u32) -> ($Single, Ordering) {
                 if frac_nbits == 0 {
                     let (ans, overflow) = self.overflowing_mul(rhs);
@@ -786,6 +787,7 @@ macro_rules! mul_div_fallback {
                 }
             }
 
+            #[inline]
             fn div_dir(self, rhs: $Single, frac_nbits: u32) -> ($Single, Ordering) {
                 if frac_nbits == 0 {
                     let (ans, overflow) = self.overflowing_div(rhs);

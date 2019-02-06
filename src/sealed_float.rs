@@ -125,6 +125,7 @@ macro_rules! sealed_float {
                 F::overflowing_from_float(self)
             }
 
+            #[inline]
             fn from_neg_abs(neg: bool, abs: u128, frac_bits: u32, int_bits: u32) -> $Float {
                 let fix_bits = frac_bits + int_bits;
 
@@ -180,6 +181,7 @@ macro_rules! sealed_float {
                 Self::from_bits(bits_sign | bits_exp_mantissa)
             }
 
+            #[inline]
             fn to_fixed_dir_overflow(
                 self,
                 dst_frac_bits: u32,

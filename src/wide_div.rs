@@ -134,6 +134,7 @@ pub trait WideDivRem<U>: Sized {
 macro_rules! unsigned_wide_div_rem {
     ($($U:ty),*) => { $(
         impl WideDivRem<$U> for $U {
+            #[inline]
             fn div_rem_from(self, dividend: ($U, $U)) -> (($U, $U), $U) {
                 let (mut n1, mut n0, mut d) = (dividend.0, dividend.1, self);
                 let (mut r, zeros) = d.normalize(&mut n1, &mut n0);
@@ -151,6 +152,7 @@ macro_rules! unsigned_wide_div_rem {
 macro_rules! signed_wide_div_rem {
     ($($S:ty: $U:ty),*) => { $(
         impl WideDivRem<$U> for $S {
+            #[inline]
             fn div_rem_from(self, dividend: ($S, $U)) -> (($S, $U), $S) {
                 let (n_neg, n_abs) = dividend.neg_abs();
                 let (d_neg, d_abs) = self.neg_abs();

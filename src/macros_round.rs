@@ -587,9 +587,9 @@ assert_eq!(two_half.overflowing_ceil(), (Fix::from_int(3), false));
             if_signed_unsigned!(
                 $Signedness,
                 "Returns a tuple of the fixed-point number and a
-[`bool`], indicatingwhether an overflow has occurred. On overflow, the
-wrapped value isreturned. Overflow can only occur when there are zero
-integer bits.",
+[`bool`], indicating whether an overflow has occurred. On overflow,
+the wrapped value isreturned. Overflow can only occur when there are
+zero integer bits.",
                 "Returns a tuple of the fixed-point number and
 [`false`][`bool`].",
             ),

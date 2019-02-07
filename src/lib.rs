@@ -245,7 +245,7 @@ macro_rules! fixed {
     ) => {
         comment!(
             $description,
-            "with `Frac` fractional bits.
+            " with `Frac` fractional bits.
 
 Currently `Frac` is an [`Unsigned`] as provided by the
 [typenum crate]; it is planned to move to [const generics] when they

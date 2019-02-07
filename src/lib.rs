@@ -511,7 +511,7 @@ assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
                 $Fixed($Inner) => fn rotate_right(self, n: u32)
             );
 
-            fixed_checked_arith! { $Fixed($Inner), $Signedness }
+            fixed_checked_arith! { $Fixed[$s_fixed]($Inner, $s_nbits), $Signedness }
 
             if_unsigned! {
                 $Signedness;

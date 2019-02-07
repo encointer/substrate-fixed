@@ -14,85 +14,306 @@
 // <https://opensource.org/licenses/MIT>.
 
 macro_rules! fixed_checked_arith {
-    ($Fixed:ident($Inner:ty), $Signedness:tt) => {
-        /// Checked negation.
-        #[inline]
-        pub fn checked_neg(self) -> Option<$Fixed<Frac>> {
-            <$Inner>::checked_neg(self.to_bits()).map(Self::from_bits)
-        }
+    ($Fixed:ident[$s_fixed:expr]($Inner:ty, $s_nbits:expr), $Signedness:tt) => {
+        comment!(
+            "Checked negation. Returns the negated value, or [`None`] on overflow.
 
-        /// Checked fixed-point addition.
-        #[inline]
-        pub fn checked_add(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
-            <$Inner>::checked_add(self.to_bits(), rhs.to_bits()).map(Self::from_bits)
-        }
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "Overflow can only occur when negating the minimum value.",
+                "Only zero can be negated without overflow.",
+            ),
+            "
 
-        /// Checked fixed-point subtraction.
-        #[inline]
-        pub fn checked_sub(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
-            <$Inner>::checked_sub(self.to_bits(), rhs.to_bits()).map(Self::from_bits)
-        }
+# Examples
 
-        /// Checked fixed-point multiplication.
-        #[inline]
-        pub fn checked_mul(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
-            let (ans, dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
-            match dir {
-                Ordering::Equal => Some(Self::from_bits(ans)),
-                _ => None,
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "assert_eq!(Fix::from_int(5).checked_neg(), Some(Fix::from_int(-5)));
+assert_eq!(Fix::min_value().checked_neg(), None);",
+                "assert_eq!(Fix::from_int(0).checked_neg(), Some(Fix::from_int(0)));
+assert_eq!(Fix::from_int(5).checked_neg(), None);",
+            ),
+            "
+```
+
+[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+";
+            #[inline]
+            pub fn checked_neg(self) -> Option<$Fixed<Frac>> {
+                <$Inner>::checked_neg(self.to_bits()).map(Self::from_bits)
             }
-        }
+        );
 
-        /// Checked fixed-point division.
-        #[inline]
-        pub fn checked_div(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
-            if rhs.to_bits() == 0 {
-                return None;
+        comment!(
+            "Checked addition. Returns the sum, or [`None`] on overflow.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+let one = Fix::from_int(1);
+assert_eq!((Fix::max_value() - one).checked_add(one), Some(Fix::max_value()));
+assert_eq!(Fix::max_value().checked_add(one), None);
+```
+
+[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+";
+            #[inline]
+            pub fn checked_add(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
+                <$Inner>::checked_add(self.to_bits(), rhs.to_bits()).map(Self::from_bits)
             }
-            let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
-            match dir {
-                Ordering::Equal => Some(Self::from_bits(ans)),
-                _ => None,
+        );
+
+        comment!(
+            "Checked subtraction. Returns the difference, or [`None`] on overflow.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+let one = Fix::from_int(1);
+assert_eq!((Fix::min_value() + one).checked_sub(one), Some(Fix::min_value()));
+assert_eq!(Fix::min_value().checked_sub(one), None);
+```
+
+[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+";
+            #[inline]
+            pub fn checked_sub(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
+                <$Inner>::checked_sub(self.to_bits(), rhs.to_bits()).map(Self::from_bits)
             }
-        }
+        );
 
-        /// Checked fixed-point multiplication by integer.
-        #[inline]
-        pub fn checked_mul_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
-            <$Inner>::checked_mul(self.to_bits(), rhs).map(Self::from_bits)
-        }
+        comment!(
+            "Checked multiplication. Returns the product, or [`None`] on overflow.
 
-        /// Checked fixed-point division by integer.
-        #[inline]
-        pub fn checked_div_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
-            <$Inner>::checked_div(self.to_bits(), rhs).map(Self::from_bits)
-        }
+# Examples
 
-        /// Checked fixed-point remainder for division by integer.
-        #[inline]
-        pub fn checked_rem_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
-            <$Inner>::checked_rem(self.to_bits(), rhs).map(Self::from_bits)
-        }
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+assert_eq!(Fix::max_value().checked_mul(Fix::from_int(1)), Some(Fix::max_value()));
+assert_eq!(Fix::max_value().checked_mul(Fix::from_int(2)), None);
+```
 
-        /// Checked fixed-point left shift.
-        #[inline]
-        pub fn checked_shl(self, rhs: u32) -> Option<$Fixed<Frac>> {
-            <$Inner>::checked_shl(self.to_bits(), rhs).map(Self::from_bits)
-        }
+[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+";
+            #[inline]
+            pub fn checked_mul(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
+                let (ans, dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
+                match dir {
+                    Ordering::Equal => Some(Self::from_bits(ans)),
+                    _ => None,
+                }
+            }
+        );
 
-        /// Checked fixed-point right shift.
-        #[inline]
-        pub fn checked_shr(self, rhs: u32) -> Option<$Fixed<Frac>> {
-            <$Inner>::checked_shr(self.to_bits(), rhs).map(Self::from_bits)
-        }
+        comment!(
+            "Checked division. Returns the quotient, or [`None`] if
+the divisor is zero or on overflow.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+assert_eq!(Fix::max_value().checked_div(Fix::from_int(1)), Some(Fix::max_value()));
+assert_eq!(Fix::max_value().checked_div(Fix::from_int(1) / 2), None);
+```
+
+[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+";
+            #[inline]
+            pub fn checked_div(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
+                if rhs.to_bits() == 0 {
+                    return None;
+                }
+                let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
+                match dir {
+                    Ordering::Equal => Some(Self::from_bits(ans)),
+                    _ => None,
+                }
+            }
+        );
+
+        comment!(
+            "Checked multiplication by an integer. Returns the
+product, or [`None`] on overflow.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+assert_eq!(Fix::max_value().checked_mul_int(1), Some(Fix::max_value()));
+assert_eq!(Fix::max_value().checked_mul_int(2), None);
+```
+
+[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+";
+            #[inline]
+            pub fn checked_mul_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
+                <$Inner>::checked_mul(self.to_bits(), rhs).map(Self::from_bits)
+            }
+        );
+
+        comment!(
+            "Checked division by an integer. Returns the quotient, or
+[`None`] if the divisor is zero",
+            if_signed_unsigned!(
+                $Signedness,
+                " or if the division results in overflow.",
+                ".",
+            ),
+            "
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+assert_eq!(Fix::max_value().checked_div_int(1), Some(Fix::max_value()));
+assert_eq!(Fix::from_int(1).checked_div_int(0), None);
+",
+            if_signed_else_empty_str!(
+                $Signedness,
+                "assert_eq!(Fix::min_value().checked_div_int(-1), None);
+",
+            ),
+            "```
+
+[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+";
+            #[inline]
+            pub fn checked_div_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
+                <$Inner>::checked_div(self.to_bits(), rhs).map(Self::from_bits)
+            }
+        );
+
+        comment!(
+            "Checked fixed-point remainder for division by an integer.
+Returns the remainder, or [`None`] if the divisor is zero",
+            if_signed_unsigned!(
+                $Signedness,
+                " or if the division results in overflow.",
+                ".",
+            ),
+            "
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+// binary 1.0101 / 8 = binary 0.0010 remainder 0.0101
+assert_eq!(Fix::from_bits(0b10101).checked_rem_int(8), Some(Fix::from_bits(0b101)));
+assert_eq!(Fix::from_int(1).checked_rem_int(0), None);
+",
+            if_signed_else_empty_str!(
+                $Signedness,
+                "assert_eq!(Fix::min_value().checked_rem_int(-1), None);
+",
+            ),
+            "```
+
+[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+";
+            #[inline]
+            pub fn checked_rem_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
+                <$Inner>::checked_rem(self.to_bits(), rhs).map(Self::from_bits)
+            }
+        );
+
+        comment!(
+            "Checked shift left. Returns the shifted number, or [`None`] if `rhs` ≥ ",
+            $s_nbits,
+            ".
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+assert_eq!((Fix::from_int(1) / 2).checked_shl(3), Some(Fix::from_int(4)));
+assert_eq!((Fix::from_int(1) / 2).checked_shl(",
+            $s_nbits,
+            "), None);
+```
+
+[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+";
+            #[inline]
+            pub fn checked_shl(self, rhs: u32) -> Option<$Fixed<Frac>> {
+                <$Inner>::checked_shl(self.to_bits(), rhs).map(Self::from_bits)
+            }
+        );
+
+        comment!(
+            "Checked shift right. Returns the shifted number, or [`None`] if `rhs` ≥ ",
+            $s_nbits,
+            ".
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+assert_eq!(Fix::from_int(4).checked_shr(3), Some(Fix::from_int(1) / 2));
+assert_eq!(Fix::from_int(4).checked_shr(",
+            $s_nbits,
+            "), None);
+```
+
+[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+";
+            #[inline]
+            pub fn checked_shr(self, rhs: u32) -> Option<$Fixed<Frac>> {
+                <$Inner>::checked_shr(self.to_bits(), rhs).map(Self::from_bits)
+            }
+        );
 
         if_signed! {
             $Signedness;
-            /// Checked absolute value.
-            #[inline]
-            pub fn checked_abs(self) -> Option<$Fixed<Frac>> {
-                <$Inner>::checked_abs(self.to_bits()).map(Self::from_bits)
-            }
+            comment!(
+                "Checked absolute value. Returns the absolute value, or [`None`] on overflow.
+
+Overflow can only occur when trying to find the absolute value of the minimum value.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+                $s_fixed,
+                "<fixed::frac::U4>;
+assert_eq!(Fix::from_int(-5).checked_abs(), Some(Fix::from_int(5)));
+assert_eq!(Fix::min_value().checked_abs(), None);
+```
+
+[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+";
+                #[inline]
+                pub fn checked_abs(self) -> Option<$Fixed<Frac>> {
+                    <$Inner>::checked_abs(self.to_bits()).map(Self::from_bits)
+                }
+            );
         }
 
         /// Saturating fixed-point addition.

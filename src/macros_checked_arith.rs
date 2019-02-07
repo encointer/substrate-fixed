@@ -316,45 +316,122 @@ assert_eq!(Fix::min_value().checked_abs(), None);
             );
         }
 
-        /// Saturating fixed-point addition.
-        #[inline]
-        pub fn saturating_add(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-            Self::from_bits(<$Inner>::saturating_add(self.to_bits(), rhs.to_bits()))
-        }
+        comment!(
+            "Saturating addition. Returns the sum, saturating on overflow.
 
-        /// Saturating fixed-point subtraction.
-        #[inline]
-        pub fn saturating_sub(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-            Self::from_bits(<$Inner>::saturating_sub(self.to_bits(), rhs.to_bits()))
-        }
+# Examples
 
-        /// Saturating fixed-point multiplication.
-        #[inline]
-        pub fn saturating_mul(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-            let (ans, dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
-            match dir {
-                Ordering::Equal => Self::from_bits(ans),
-                Ordering::Less => Self::max_value(),
-                Ordering::Greater => Self::min_value(),
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+assert_eq!(Fix::from_int(3).saturating_add(Fix::from_int(2)), Fix::from_int(5));
+assert_eq!(Fix::max_value().saturating_add(Fix::from_int(1)), Fix::max_value());
+```
+";
+            #[inline]
+            pub fn saturating_add(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                Self::from_bits(<$Inner>::saturating_add(self.to_bits(), rhs.to_bits()))
             }
-        }
+        );
 
-        /// Saturating fixed-point division.
-        #[inline]
-        pub fn saturating_div(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-            let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
-            match dir {
-                Ordering::Equal => Self::from_bits(ans),
-                Ordering::Less => Self::max_value(),
-                Ordering::Greater => Self::min_value(),
+        comment!(
+            "Saturating subtraction. Returns the difference, saturating on overflow.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "assert_eq!(Fix::from_int(1).saturating_sub(Fix::from_int(3)), Fix::from_int(-2));
+assert_eq!(Fix::min_value().saturating_sub(Fix::from_int(1)), Fix::min_value());",
+                "assert_eq!(Fix::from_int(5).saturating_sub(Fix::from_int(3)), Fix::from_int(2));
+assert_eq!(Fix::from_int(0).saturating_sub(Fix::from_int(1)), Fix::from_int(0));",
+            ),
+            "
+```
+";
+            #[inline]
+            pub fn saturating_sub(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                Self::from_bits(<$Inner>::saturating_sub(self.to_bits(), rhs.to_bits()))
             }
-        }
+        );
 
-        /// Saturating fixed-point multiplication by integer.
-        #[inline]
-        pub fn saturating_mul_int(self, rhs: $Inner) -> $Fixed<Frac> {
-            Self::from_bits(<$Inner>::saturating_mul(self.to_bits(), rhs))
-        }
+        comment!(
+            "Saturating multiplication. Returns the product, saturating on overflow.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+assert_eq!(Fix::from_int(3).saturating_mul(Fix::from_int(2)), Fix::from_int(6));
+assert_eq!(Fix::max_value().saturating_mul(Fix::from_int(2)), Fix::max_value());
+```
+";
+            #[inline]
+            pub fn saturating_mul(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                let (ans, dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
+                match dir {
+                    Ordering::Equal => Self::from_bits(ans),
+                    Ordering::Less => Self::max_value(),
+                    Ordering::Greater => Self::min_value(),
+                }
+            }
+        );
+
+        comment!(
+            "Saturating division. Returns the quotient, saturating on overflow.
+
+# Panics
+
+Panics if the divisor is zero.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+let one_half = Fix::from_int(1) / 2;
+assert_eq!(Fix::from_int(1).saturating_div(Fix::from_int(2)), one_half);
+assert_eq!(Fix::max_value().saturating_div(one_half), Fix::max_value());
+```
+";
+            #[inline]
+            pub fn saturating_div(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
+                match dir {
+                    Ordering::Equal => Self::from_bits(ans),
+                    Ordering::Less => Self::max_value(),
+                    Ordering::Greater => Self::min_value(),
+                }
+            }
+        );
+
+        comment!(
+            "Saturating multiplication by an integer. Returns the product, saturating on overflow.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+assert_eq!(Fix::from_int(3).saturating_mul_int(2), Fix::from_int(6));
+assert_eq!(Fix::max_value().saturating_mul_int(2), Fix::max_value());
+```
+";
+            #[inline]
+            pub fn saturating_mul_int(self, rhs: $Inner) -> $Fixed<Frac> {
+                Self::from_bits(<$Inner>::saturating_mul(self.to_bits(), rhs))
+            }
+        );
 
         /// Wrapping negation.
         #[inline]

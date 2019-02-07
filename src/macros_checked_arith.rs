@@ -433,75 +433,308 @@ assert_eq!(Fix::max_value().saturating_mul_int(2), Fix::max_value());
             }
         );
 
-        /// Wrapping negation.
-        #[inline]
-        pub fn wrapping_neg(self) -> $Fixed<Frac> {
-            Self::from_bits(<$Inner>::wrapping_neg(self.to_bits()))
-        }
+        comment!(
+            "Wrapping negation. Returns the negated value, wrapping on overflow.
 
-        /// Wrapping fixed-point addition.
-        #[inline]
-        pub fn wrapping_add(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-            Self::from_bits(<$Inner>::wrapping_add(self.to_bits(), rhs.to_bits()))
-        }
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "Overflow can only occur when negating the minimum value.",
+                "Only zero can be negated without overflow.",
+            ),
+            "
 
-        /// Wrapping fixed-point subtraction.
-        #[inline]
-        pub fn wrapping_sub(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-            Self::from_bits(<$Inner>::wrapping_sub(self.to_bits(), rhs.to_bits()))
-        }
+# Examples
 
-        /// Wrapping fixed-point multiplication.
-        #[inline]
-        pub fn wrapping_mul(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-            let (ans, _) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
-            Self::from_bits(ans)
-        }
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "assert_eq!(Fix::from_int(5).wrapping_neg(), Fix::from_int(-5));
+assert_eq!(Fix::min_value().wrapping_neg(), Fix::min_value());",
+                "assert_eq!(Fix::from_int(0).wrapping_neg(), Fix::from_int(0));
+assert_eq!(Fix::from_int(5).wrapping_neg(), Fix::wrapping_from_int(-5));
+let neg_five_bits = !Fix::from_int(5).to_bits() + 1;
+assert_eq!(Fix::from_int(5).wrapping_neg(), Fix::from_bits(neg_five_bits));",
+            ),
+            "
+```
+";
+            #[inline]
+            pub fn wrapping_neg(self) -> $Fixed<Frac> {
+                Self::from_bits(<$Inner>::wrapping_neg(self.to_bits()))
+            }
+        );
 
-        /// Wrapping fixed-point division.
-        #[inline]
-        pub fn wrapping_div(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-            let (ans, _) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
-            Self::from_bits(ans)
-        }
+        comment!(
+            "Wrapping addition. Returns the sum, wrapping on overflow.
 
-        /// Wrapping fixed-point multiplication by integer.
-        #[inline]
-        pub fn wrapping_mul_int(self, rhs: $Inner) -> $Fixed<Frac> {
-            Self::from_bits(<$Inner>::wrapping_mul(self.to_bits(), rhs))
-        }
+# Examples
 
-        /// Wrapping fixed-point division by integer.
-        #[inline]
-        pub fn wrapping_div_int(self, rhs: $Inner) -> $Fixed<Frac> {
-            Self::from_bits(<$Inner>::wrapping_div(self.to_bits(), rhs))
-        }
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+let one = Fix::from_int(1);
+let one_minus_bit = one - Fix::from_bits(1);
+assert_eq!(Fix::from_int(3).wrapping_add(Fix::from_int(2)), Fix::from_int(5));
+assert_eq!(Fix::max_value().wrapping_add(one), ",
+            if_signed_else_empty_str!($Signedness, "Fix::min_value() + "),
+            "one_minus_bit);
+```
+";
+            #[inline]
+            pub fn wrapping_add(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                Self::from_bits(<$Inner>::wrapping_add(self.to_bits(), rhs.to_bits()))
+            }
+        );
 
-        /// Wrapping fixed-point remainder for division by integer.
-        #[inline]
-        pub fn wrapping_rem_int(self, rhs: $Inner) -> $Fixed<Frac> {
-            Self::from_bits(<$Inner>::wrapping_rem(self.to_bits(), rhs))
-        }
+        comment!(
+            "Wrapping subtraction. Returns the difference, wrapping on overflow.
 
-        /// Wrapping fixed-point left shift.
-        #[inline]
-        pub fn wrapping_shl(self, rhs: u32) -> $Fixed<Frac> {
-            Self::from_bits(<$Inner>::wrapping_shl(self.to_bits(), rhs))
-        }
+# Examples
 
-        /// Wrapping fixed-point right shift.
-        #[inline]
-        pub fn wrapping_shr(self, rhs: u32) -> $Fixed<Frac> {
-            Self::from_bits(<$Inner>::wrapping_shr(self.to_bits(), rhs))
-        }
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+let one = Fix::from_int(1);
+let one_minus_bit = one - Fix::from_bits(1);
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "assert_eq!(Fix::from_int(3).wrapping_sub(Fix::from_int(5)), Fix::from_int(-2));
+assert_eq!(Fix::min_value()",
+                "assert_eq!(Fix::from_int(5).wrapping_sub(Fix::from_int(3)), Fix::from_int(2));
+assert_eq!(Fix::from_int(0)",
+            ),
+            ".wrapping_sub(one), Fix::max_value() - one_minus_bit);
+```
+";
+            #[inline]
+            pub fn wrapping_sub(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                Self::from_bits(<$Inner>::wrapping_sub(self.to_bits(), rhs.to_bits()))
+            }
+        );
+
+        comment!(
+            "Wrapping multiplication. Returns the product, wrapping on overflow.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+assert_eq!(Fix::from_int(3).wrapping_mul(Fix::from_int(2)), Fix::from_int(6));
+let wrapped = Fix::from_bits(!0 << 2);
+assert_eq!(Fix::max_value().wrapping_mul(Fix::from_int(4)), wrapped);
+```
+";
+            #[inline]
+            pub fn wrapping_mul(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                let (ans, _) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
+                Self::from_bits(ans)
+            }
+        );
+
+        comment!(
+            "Wrapping division. Returns the quotient, wrapping on overflow.
+
+# Panics
+
+Panics if the divisor is zero.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+let one_point_5 = Fix::from_bits(0b11 << (4 - 1));
+assert_eq!(Fix::from_int(3).wrapping_div(Fix::from_int(2)), one_point_5);
+let quarter = Fix::from_int(1) / 4;
+let wrapped = Fix::from_bits(!0 << 2);
+assert_eq!(Fix::max_value().wrapping_div(quarter), wrapped);
+```
+";
+            #[inline]
+            pub fn wrapping_div(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                let (ans, _) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
+                Self::from_bits(ans)
+            }
+        );
+
+        comment!(
+            "Wrapping multiplication by an integer. Returns the product, wrapping on overflow.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+assert_eq!(Fix::from_int(3).wrapping_mul_int(2), Fix::from_int(6));
+let wrapped = Fix::from_bits(!0 << 2);
+assert_eq!(Fix::max_value().wrapping_mul_int(4), wrapped);
+```
+";
+            #[inline]
+            pub fn wrapping_mul_int(self, rhs: $Inner) -> $Fixed<Frac> {
+                Self::from_bits(<$Inner>::wrapping_mul(self.to_bits(), rhs))
+            }
+        );
+
+        comment!(
+            "Wrapping division by an integer. Returns the quotient",
+            if_signed_unsigned!(
+                $Signedness,
+                ", wrapping on overflow.
+
+Overflow can only occur when dividing the minimum value by −1.",
+                ".
+
+Can never overflow for unsigned values.",
+            ),
+            "
+
+# Panics
+
+Panics if the divisor is zero.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+// 1.5 is binary 1.1
+let one_point_5 = Fix::from_bits(0b11 << (4 - 1));
+assert_eq!(Fix::from_int(3).wrapping_div_int(2), one_point_5);
+",
+            if_signed_else_empty_str!(
+                $Signedness,
+                "assert_eq!(Fix::min_value().wrapping_div_int(-1), Fix::min_value());
+",
+            ),
+            "```
+";
+            #[inline]
+            pub fn wrapping_div_int(self, rhs: $Inner) -> $Fixed<Frac> {
+                Self::from_bits(<$Inner>::wrapping_div(self.to_bits(), rhs))
+            }
+        );
+
+        comment!(
+            "Wrapping fixed-point remainder for division by an integer. Returns the remainder",
+            if_signed_unsigned!(
+                $Signedness,
+                ", wrapping on overflow.
+
+Overflow can only occur when dividing the minimum value by −1.",
+                ".
+
+Can never overflow for unsigned values.",
+            ),
+            "
+
+# Panics
+
+Panics if the divisor is zero.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+// binary 1.0101 / 8 = binary 0.0010 remainder 0.0101
+assert_eq!(Fix::from_bits(0b10101).wrapping_rem_int(8), Fix::from_bits(0b101));
+",
+            if_signed_else_empty_str!(
+                $Signedness,
+                "assert_eq!(Fix::min_value().wrapping_rem_int(-1), 0);
+",
+            ),
+            "```
+";
+            #[inline]
+            pub fn wrapping_rem_int(self, rhs: $Inner) -> $Fixed<Frac> {
+                Self::from_bits(<$Inner>::wrapping_rem(self.to_bits(), rhs))
+            }
+        );
+
+        comment!(
+            "Wrapping shift left. Wraps `rhs` if `rhs` ≥ ",
+            $s_nbits,
+            ", then shifts and returns the number.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+assert_eq!((Fix::from_int(1) / 2).wrapping_shl(3), Fix::from_int(4));
+assert_eq!((Fix::from_int(1) / 2).wrapping_shl(3 + ",
+            $s_nbits,
+            "), Fix::from_int(4));
+```
+";
+            #[inline]
+            pub fn wrapping_shl(self, rhs: u32) -> $Fixed<Frac> {
+                Self::from_bits(<$Inner>::wrapping_shl(self.to_bits(), rhs))
+            }
+        );
+
+        comment!(
+            "Wrapping shift right. Wraps `rhs` if `rhs` ≥ ",
+            $s_nbits,
+            ", then shifts and returns the number.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+assert_eq!((Fix::from_int(4)).wrapping_shr(3), Fix::from_int(1) / 2);
+assert_eq!((Fix::from_int(4)).wrapping_shr(3 + ",
+            $s_nbits,
+            "), Fix::from_int(1) / 2);
+```
+";
+            #[inline]
+            pub fn wrapping_shr(self, rhs: u32) -> $Fixed<Frac> {
+                Self::from_bits(<$Inner>::wrapping_shr(self.to_bits(), rhs))
+            }
+        );
 
         if_signed! {
             $Signedness;
-            /// Wrapping absolute value.
-            #[inline]
-            pub fn wrapping_abs(self) -> $Fixed<Frac> {
-                Self::from_bits(<$Inner>::wrapping_abs(self.to_bits()))
-            }
+            comment!(
+                "Wrapping absolute value. Returns the absolute value, wrapping on overflow.
+
+Overflow can only occur when trying to find the absolute value of the minimum value.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+                $s_fixed,
+                "<fixed::frac::U4>;
+assert_eq!(Fix::from_int(-5).wrapping_abs(), Fix::from_int(5));
+assert_eq!(Fix::min_value().wrapping_abs(), Fix::min_value());
+```
+";
+                #[inline]
+                pub fn wrapping_abs(self) -> $Fixed<Frac> {
+                    Self::from_bits(<$Inner>::wrapping_abs(self.to_bits()))
+                }
+            );
         }
 
         /// Overflowing negation.

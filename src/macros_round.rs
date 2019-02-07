@@ -112,11 +112,9 @@ assert_eq!((-two_and_quarter).frac(), three_quarters);
 
 # Panics
 
-If the result is too large to fit, the method panics in debug mode. In
-release mode, the method may either panic or wrap the value, with the
-current implementation wrapping the value. It is not considered a
-breaking change if in the future the method panics even in release
-mode; if wrapping is the required behavior use [`wrapping_ceil`]
+In debug mode, panics if the result does not fit. In release mode the
+result is wrapped, but it is not considered a breaking change if in
+the future it panics; if wrapping is required use [`wrapping_ceil`]
 instead.
 
 # Examples
@@ -154,11 +152,9 @@ assert_eq!(two_half.ceil(), Fix::from_int(3));
                 $Signedness,
                 "# Panics
 
-If the result is too large to fit, the method panics in debug mode. In
-release mode, the method may either panic or wrap the value, with the
-current implementation wrapping the value. It is not considered a
-breaking change if in the future the method panics even in release
-mode; if wrapping is the required behavior use [`wrapping_floor`]
+In debug mode, panics if the result does not fit. In release mode the
+result is wrapped, but it is not considered a breaking change if in
+the future it panics; if wrapping is required use [`wrapping_floor`]
 instead.
 
 Overflow can only occur when there are zero integer bits.
@@ -198,11 +194,9 @@ from zero.
 
 # Panics
 
-If the result is too large to fit, the method panics in debug mode. In
-release mode, the method may either panic or wrap the value, with the
-current implementation wrapping the value. It is not considered a
-breaking change if in the future the method panics even in release
-mode; if wrapping is the required behavior use [`wrapping_round`]
+In debug mode, panics if the result does not fit. In release mode the
+result is wrapped, but it is not considered a breaking change if in
+the future it panics; if wrapping is required use [`wrapping_round`]
 instead.
 
 # Examples

@@ -511,84 +511,6 @@ assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
                 $Fixed($Inner) => fn rotate_right(self, n: u32)
             );
 
-            fixed_checked_arith! { $Fixed[$s_fixed]($Inner, $s_nbits), $Signedness }
-
-            if_unsigned! {
-                $Signedness;
-                delegate!(
-                    "Returns `true` if the fixed-point number is
-2<sup><i>k</i></sup> for some integer <i>k</i>.
-
-# Examples
-
-```rust
-type Fix = fixed::",
-                    $s_fixed,
-                    "<fixed::frac::U4>;
-// 3/8 is 0.0110
-let three_eights = Fix::from_bits(0b0110);
-// 1/2 is 0.1000
-let half = Fix::from_bits(0b1000);
-assert!(!three_eights.is_power_of_two());
-assert!(half.is_power_of_two());
-```
-";
-                    $Fixed($Inner) => fn is_power_of_two(self) -> bool
-                );
-            }
-
-            if_unsigned! {
-                $Signedness;
-                delegate!(
-                    "Returns the smallest power of two ≥ `self`.
-
-# Examples
-
-```rust
-type Fix = fixed::",
-                    $s_fixed,
-                    "<fixed::frac::U4>;
-// 3/8 is 0.0110
-let three_eights = Fix::from_bits(0b0110);
-// 1/2 is 0.1000
-let half = Fix::from_bits(0b1000);
-assert_eq!(three_eights.next_power_of_two(), half);
-assert_eq!(half.next_power_of_two(), half);
-```
-";
-                    $Fixed($Inner) => fn next_power_of_two(self)
-                );
-            }
-
-            if_unsigned! {
-                $Signedness;
-                comment!(
-                    "Returns the smallest power of two ≥ `self`, or
-[`None`] if the next power of two is too large to represent.
-
-# Examples
-
-```rust
-type Fix = fixed::",
-                    $s_fixed,
-                    "<fixed::frac::U4>;
-// 3/8 is 0.0110
-let three_eights = Fix::from_bits(0b0110);
-// 1/2 is 0.1000
-let half = Fix::from_bits(0b1000);
-assert_eq!(three_eights.checked_next_power_of_two(), Some(half));
-assert!(Fix::max_value().checked_next_power_of_two().is_none());
-```
-
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
-";
-                    #[inline]
-                    pub fn checked_next_power_of_two(self) -> Option<$Fixed<Frac>> {
-                        <$Inner>::checked_next_power_of_two(self.to_bits()).map(Self::from_bits)
-                    }
-                );
-            }
-
             if_signed! {
                 $Signedness;
                 delegate!(
@@ -608,10 +530,7 @@ assert_eq!(minus_five.abs(), five);
 ";
                     $Fixed($Inner) => fn abs(self)
                 );
-            }
 
-            if_signed! {
-                $Signedness;
                 comment!(
                     "Returns a number representing the sign of `self`.
 
@@ -645,6 +564,78 @@ assert_eq!(Fix::from_int(-5).signum(), -1);
                 );
             }
 
+            fixed_checked_arith! { $Fixed[$s_fixed]($Inner, $s_nbits), $Signedness }
+
+            if_unsigned! {
+                $Signedness;
+                delegate!(
+                    "Returns `true` if the fixed-point number is
+2<sup><i>k</i></sup> for some integer <i>k</i>.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+                    $s_fixed,
+                    "<fixed::frac::U4>;
+// 3/8 is 0.0110
+let three_eights = Fix::from_bits(0b0110);
+// 1/2 is 0.1000
+let half = Fix::from_bits(0b1000);
+assert!(!three_eights.is_power_of_two());
+assert!(half.is_power_of_two());
+```
+";
+                    $Fixed($Inner) => fn is_power_of_two(self) -> bool
+                );
+
+                delegate!(
+                    "Returns the smallest power of two ≥ `self`.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+                    $s_fixed,
+                    "<fixed::frac::U4>;
+// 3/8 is 0.0110
+let three_eights = Fix::from_bits(0b0110);
+// 1/2 is 0.1000
+let half = Fix::from_bits(0b1000);
+assert_eq!(three_eights.next_power_of_two(), half);
+assert_eq!(half.next_power_of_two(), half);
+```
+";
+                    $Fixed($Inner) => fn next_power_of_two(self)
+                );
+
+                comment!(
+                    "Returns the smallest power of two ≥ `self`, or
+[`None`] if the next power of two is too large to represent.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+                    $s_fixed,
+                    "<fixed::frac::U4>;
+// 3/8 is 0.0110
+let three_eights = Fix::from_bits(0b0110);
+// 1/2 is 0.1000
+let half = Fix::from_bits(0b1000);
+assert_eq!(three_eights.checked_next_power_of_two(), Some(half));
+assert!(Fix::max_value().checked_next_power_of_two().is_none());
+```
+
+[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+";
+                    #[inline]
+                    pub fn checked_next_power_of_two(self) -> Option<$Fixed<Frac>> {
+                        <$Inner>::checked_next_power_of_two(self.to_bits()).map(Self::from_bits)
+                    }
+                );
+            }
+
             if_signed! {
                 $Signedness;
                 delegate!(
@@ -663,10 +654,7 @@ assert!(!Fix::from_int(-5).is_positive());
 ";
                     $Fixed($Inner) => fn is_positive(self) -> bool
                 );
-            }
 
-            if_signed! {
-                $Signedness;
                 delegate!(
                     "Returns `true` if the number is < 0.
 

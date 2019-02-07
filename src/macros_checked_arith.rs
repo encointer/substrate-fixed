@@ -737,84 +737,365 @@ assert_eq!(Fix::min_value().wrapping_abs(), Fix::min_value());
             );
         }
 
-        /// Overflowing negation.
-        #[inline]
-        pub fn overflowing_neg(self) -> ($Fixed<Frac>, bool) {
-            let (ans, o) = <$Inner>::overflowing_neg(self.to_bits());
-            (Self::from_bits(ans), o)
-        }
+        comment!(
+            "Overflowing negation.
 
-        /// Overflowing fixed-point addition.
-        #[inline]
-        pub fn overflowing_add(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
-            let (ans, o) = <$Inner>::overflowing_add(self.to_bits(), rhs.to_bits());
-            (Self::from_bits(ans), o)
-        }
+Returns a tuple of the negated value and a [`bool`] indicating whether
+an overflow has occurred. On overflow, the wrapped value is returned.
 
-        /// Overflowing fixed-point subtraction.
-        #[inline]
-        pub fn overflowing_sub(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
-            let (ans, o) = <$Inner>::overflowing_sub(self.to_bits(), rhs.to_bits());
-            (Self::from_bits(ans), o)
-        }
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "Overflow can only occur when negating the minimum value.",
+                "Only zero can be negated without overflow.",
+            ),
+            "
 
-        /// Overflowing fixed-point multiplication.
-        #[inline]
-        pub fn overflowing_mul(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
-            let (ans, dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
-            (Self::from_bits(ans), dir != Ordering::Equal)
-        }
+# Examples
 
-        /// Overflowing fixed-point division.
-        #[inline]
-        pub fn overflowing_div(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
-            let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
-            (Self::from_bits(ans), dir != Ordering::Equal)
-        }
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "assert_eq!(Fix::from_int(5).overflowing_neg(), (Fix::from_int(-5), false));
+assert_eq!(Fix::min_value().overflowing_neg(), (Fix::min_value(), true));",
+                "assert_eq!(Fix::from_int(0).overflowing_neg(), (Fix::from_int(0), false));
+assert_eq!(Fix::from_int(5).overflowing_neg(), Fix::overflowing_from_int(-5));
+let neg_five_bits = !Fix::from_int(5).to_bits() + 1;
+assert_eq!(Fix::from_int(5).overflowing_neg(), (Fix::from_bits(neg_five_bits), true));",
+            ),
+            "
+```
 
-        /// Overflowing fixed-point multiplication by integer.
-        #[inline]
-        pub fn overflowing_mul_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
-            let (ans, o) = <$Inner>::overflowing_mul(self.to_bits(), rhs);
-            (Self::from_bits(ans), o)
-        }
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+";
+            #[inline]
+            pub fn overflowing_neg(self) -> ($Fixed<Frac>, bool) {
+                let (ans, o) = <$Inner>::overflowing_neg(self.to_bits());
+                (Self::from_bits(ans), o)
+            }
+        );
 
-        /// Overflowing fixed-point division by integer.
-        #[inline]
-        pub fn overflowing_div_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
-            let (ans, o) = <$Inner>::overflowing_div(self.to_bits(), rhs);
-            (Self::from_bits(ans), o)
-        }
+        comment!(
+            "Overflowing addition.
 
-        /// Overflowing fixed-point remainder for division by integer.
-        #[inline]
-        pub fn overflowing_rem_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
-            let (ans, o) = <$Inner>::overflowing_rem(self.to_bits(), rhs);
-            (Self::from_bits(ans), o)
-        }
+Returns a tuple of the sum and a [`bool`] indicating whether an
+overflow has occurred. On overflow, the wrapped value is returned.
 
-        /// Overflowing fixed-point left shift.
-        #[inline]
-        pub fn overflowing_shl(self, rhs: u32) -> ($Fixed<Frac>, bool) {
-            let (ans, o) = <$Inner>::overflowing_shl(self.to_bits(), rhs);
-            (Self::from_bits(ans), o)
-        }
+# Examples
 
-        /// Overflowing fixed-point right shift.
-        #[inline]
-        pub fn overflowing_shr(self, rhs: u32) -> ($Fixed<Frac>, bool) {
-            let (ans, o) = <$Inner>::overflowing_shr(self.to_bits(), rhs);
-            (Self::from_bits(ans), o)
-        }
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+let one = Fix::from_int(1);
+let one_minus_bit = one - Fix::from_bits(1);
+assert_eq!(Fix::from_int(3).overflowing_add(Fix::from_int(2)), (Fix::from_int(5), false));
+assert_eq!(Fix::max_value().overflowing_add(one), (",
+            if_signed_else_empty_str!($Signedness, "Fix::min_value() + "),
+            "one_minus_bit, true));
+```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+";
+            #[inline]
+            pub fn overflowing_add(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
+                let (ans, o) = <$Inner>::overflowing_add(self.to_bits(), rhs.to_bits());
+                (Self::from_bits(ans), o)
+            }
+        );
+
+        comment!(
+            "Overflowing subtraction.
+
+Returns a tuple of the difference and a [`bool`] indicating whether an
+overflow has occurred. On overflow, the wrapped value is returned.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+let one = Fix::from_int(1);
+let one_minus_bit = one - Fix::from_bits(1);
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "assert_eq!(Fix::from_int(3).overflowing_sub(Fix::from_int(5)), (Fix::from_int(-2), false));
+assert_eq!(Fix::min_value()",
+                "assert_eq!(Fix::from_int(5).overflowing_sub(Fix::from_int(3)), (Fix::from_int(2), false));
+assert_eq!(Fix::from_int(0)",
+            ),
+            ".overflowing_sub(one), (Fix::max_value() - one_minus_bit, true));
+```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+";
+            #[inline]
+            pub fn overflowing_sub(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
+                let (ans, o) = <$Inner>::overflowing_sub(self.to_bits(), rhs.to_bits());
+                (Self::from_bits(ans), o)
+            }
+        );
+
+        comment!(
+            "Overflowing multiplication.
+
+Returns a tuple of the product and a [`bool`] indicating whether an
+overflow has occurred. On overflow, the wrapped value is returned.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+assert_eq!(Fix::from_int(3).overflowing_mul(Fix::from_int(2)), (Fix::from_int(6), false));
+let wrapped = Fix::from_bits(!0 << 2);
+assert_eq!(Fix::max_value().overflowing_mul(Fix::from_int(4)), (wrapped, true));
+```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+";
+            #[inline]
+            pub fn overflowing_mul(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
+                let (ans, dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
+                (Self::from_bits(ans), dir != Ordering::Equal)
+            }
+        );
+
+        comment!(
+            "Overflowing division.
+
+Returns a tuple of the quotient and a [`bool`] indicating whether an
+overflow has occurred. On overflow, the wrapped value is returned.
+
+# Panics
+
+Panics if the divisor is zero.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+let one_point_5 = Fix::from_bits(0b11 << (4 - 1));
+assert_eq!(Fix::from_int(3).overflowing_div(Fix::from_int(2)), (one_point_5, false));
+let quarter = Fix::from_int(1) / 4;
+let wrapped = Fix::from_bits(!0 << 2);
+assert_eq!(Fix::max_value().overflowing_div(quarter), (wrapped, true));
+```
+";
+            #[inline]
+            pub fn overflowing_div(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
+                let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
+                (Self::from_bits(ans), dir != Ordering::Equal)
+            }
+        );
+
+        comment!(
+            "Overflowing multiplication by an integer.
+
+Returns a tuple of the product and a [`bool`] indicating whether an
+overflow has occurred. On overflow, the wrapped value is returned.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+assert_eq!(Fix::from_int(3).overflowing_mul_int(2), (Fix::from_int(6), false));
+let wrapped = Fix::from_bits(!0 << 2);
+assert_eq!(Fix::max_value().overflowing_mul_int(4), (wrapped, true));
+```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+";
+            #[inline]
+            pub fn overflowing_mul_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
+                let (ans, o) = <$Inner>::overflowing_mul(self.to_bits(), rhs);
+                (Self::from_bits(ans), o)
+            }
+        );
+
+        comment!(
+            "Overflowing division by an integer.
+
+Returns a tuple of the quotient and ",
+            if_signed_unsigned!(
+                $Signedness,
+                "a [`bool`] indicating whether an overflow has
+occurred. On overflow, the wrapped value is returned. Overflow can
+only occur when dividing the minimum value by −1.",
+                "[`false`][`bool`], as the division can never overflow for unsigned values.",
+            ),
+            "
+
+# Panics
+
+Panics if the divisor is zero.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+// 1.5 is binary 1.1
+let one_point_5 = Fix::from_bits(0b11 << (4 - 1));
+assert_eq!(Fix::from_int(3).overflowing_div_int(2), (one_point_5, false));
+",
+            if_signed_else_empty_str!(
+                $Signedness,
+                "assert_eq!(Fix::min_value().overflowing_div_int(-1), (Fix::min_value(), true));
+",
+            ),
+            "```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+";
+            #[inline]
+            pub fn overflowing_div_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
+                let (ans, o) = <$Inner>::overflowing_div(self.to_bits(), rhs);
+                (Self::from_bits(ans), o)
+            }
+        );
+
+        comment!(
+            "Overflowing fixed-point remainder for division by an integer.
+
+Returns a tuple of the remainder and ",
+            if_signed_unsigned!(
+                $Signedness,
+                "a [`bool`] indicating whether an overflow has
+occurred. On overflow, the wrapped value is returned. Overflow can
+only occur when dividing the minimum value by −1.",
+                "[`false`][`bool`], as the division can never overflow for unsigned values.",
+            ),
+            "
+
+# Panics
+
+Panics if the divisor is zero.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+// binary 1.0101 / 8 = binary 0.0010 remainder 0.0101
+assert_eq!(Fix::from_bits(0b10101).overflowing_rem_int(8), (Fix::from_bits(0b101), false));
+",
+            if_signed_else_empty_str!(
+                $Signedness,
+                "assert_eq!(Fix::min_value().overflowing_rem_int(-1), (Fix::from_int(0), true));
+",
+            ),
+            "```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+";
+            #[inline]
+            pub fn overflowing_rem_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
+                let (ans, o) = <$Inner>::overflowing_rem(self.to_bits(), rhs);
+                (Self::from_bits(ans), o)
+            }
+        );
+
+        comment!(
+            "Overflowing shift left.
+
+Returns a tuple of the shifted value and a [`bool`] indicating whether
+an overflow has occurred. Overflow occurs when `rhs` ≥ ",
+            $s_nbits,
+            ". On overflow `rhs` is wrapped before the shift operation.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+assert_eq!((Fix::from_int(1) / 2).overflowing_shl(3), (Fix::from_int(4), false));
+assert_eq!((Fix::from_int(1) / 2).overflowing_shl(3 + ",
+            $s_nbits,
+            "), (Fix::from_int(4), true));
+```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+";
+            #[inline]
+            pub fn overflowing_shl(self, rhs: u32) -> ($Fixed<Frac>, bool) {
+                let (ans, o) = <$Inner>::overflowing_shl(self.to_bits(), rhs);
+                (Self::from_bits(ans), o)
+            }
+        );
+
+        comment!(
+            "Overflowing shift right.
+
+Returns a tuple of the shifted value and a [`bool`] indicating whether
+an overflow has occurred. Overflow occurs when `rhs` ≥ ",
+            $s_nbits,
+            ". On overflow `rhs` is wrapped before the shift operation.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+assert_eq!((Fix::from_int(4)).overflowing_shr(3), (Fix::from_int(1) / 2, false));
+assert_eq!((Fix::from_int(4)).overflowing_shr(3 + ",
+            $s_nbits,
+            "), (Fix::from_int(1) / 2, true));
+```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+";
+            #[inline]
+            pub fn overflowing_shr(self, rhs: u32) -> ($Fixed<Frac>, bool) {
+                let (ans, o) = <$Inner>::overflowing_shr(self.to_bits(), rhs);
+                (Self::from_bits(ans), o)
+            }
+        );
 
         if_signed! {
             $Signedness;
-            /// Overflowing absolute value.
-            #[inline]
-            pub fn overflowing_abs(self) -> ($Fixed<Frac>, bool) {
-                let (ans, o) = <$Inner>::overflowing_abs(self.to_bits());
-                (Self::from_bits(ans), o)
-            }
+            comment!(
+                "Overflowing absolute value.
+
+Returns a tuple of the absolute value and a [`bool`] indicating
+whether an overflow has occurred. On overflow, the wrapped value is
+returned.
+
+Overflow can only occur when trying to find the absolute value of the minimum value.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+                $s_fixed,
+                "<fixed::frac::U4>;
+assert_eq!(Fix::from_int(-5).overflowing_abs(), (Fix::from_int(5), false));
+assert_eq!(Fix::min_value().overflowing_abs(), (Fix::min_value(), true));
+```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+";
+                #[inline]
+                pub fn overflowing_abs(self) -> ($Fixed<Frac>, bool) {
+                    let (ans, o) = <$Inner>::overflowing_abs(self.to_bits());
+                    (Self::from_bits(ans), o)
+                }
+            );
         }
     };
 }

@@ -260,10 +260,18 @@ use fixed::",
             ";
 let eleven = ",
             $s_fixed,
-            "::<U3>::from_bits(11 << 3);
-let five_half = eleven >> 1u32;
+            "::<U3>::from_int(11);
+assert_eq!(eleven, ",
+            $s_fixed,
+            "::<U3>::from_bits(11 << 3));
+assert_eq!(eleven, 11);
 assert_eq!(eleven.to_string(), \"11.0\");
-assert_eq!(five_half.to_string(), \"5.5\");
+let two_point_75 = eleven / 4;
+assert_eq!(two_point_75, ",
+            $s_fixed,
+            "::<U3>::from_bits(11 << 1));
+assert_eq!(two_point_75, 2.75);
+assert_eq!(two_point_75.to_string(), \"2.8\");
 ```
 
 [`Unsigned`]: https://docs.rs/typenum/^1.3/typenum/marker_traits/trait.Unsigned.html

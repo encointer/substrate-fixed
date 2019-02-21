@@ -51,8 +51,9 @@ pub trait Int: SealedInt {
     ///
     /// # Panics
     ///
-    /// In debug mode, panics if the value does not fit. In release
-    /// mode the value is wrapped, but it is not considered a breaking
+    /// When debug assertions are enabled, panics if the value does
+    /// not fit. When debug assertions are not enabled, the wrapped
+    /// value can be returned, but it is not considered a breaking
     /// change if in the future it panics; if wrapping is required use
     /// [`wrapping_from_fixed`] instead.
     ///
@@ -81,8 +82,9 @@ pub trait Int: SealedInt {
     ///
     /// # Panics
     ///
-    /// In debug mode, panics if the value does not fit. In release
-    /// mode the value is wrapped, but it is not considered a breaking
+    /// When debug assertions are enabled, panics if the value does
+    /// not fit. When debug assertions are not enabled, the wrapped
+    /// value can be returned, but it is not considered a breaking
     /// change if in the future it panics; if wrapping is required use
     /// [`wrapping_to_fixed`] instead.
     ///
@@ -340,10 +342,11 @@ pub trait Float: SealedFloat {
     ///
     /// Panics if the value is not [finite].
     ///
-    /// In debug mode, also panics if the value does not fit. In release mode
-    /// the value is wrapped, but it is not considered a breaking change if in
-    /// the future it panics; if wrapping is required use
-    /// [`wrapping_to_fixed`] instead.
+    /// When debug assertions are enabled, also panics if the value
+    /// does not fit. When debug assertions are not enabled, the
+    /// wrapped value can be returned, but it is not considered a
+    /// breaking change if in the future it panics; if wrapping is
+    /// required use [`wrapping_to_fixed`] instead.
     ///
     /// # Examples
     ///

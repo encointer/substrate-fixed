@@ -112,10 +112,10 @@ assert_eq!((-two_and_quarter).frac(), three_quarters);
 
 # Panics
 
-In debug mode, panics if the result does not fit. In release mode the
-result is wrapped, but it is not considered a breaking change if in
-the future it panics; if wrapping is required use [`wrapping_ceil`]
-instead.
+When debug assertions are enabled, panics if the result does not fit.
+When debug assertions are not enabled, the wrapped result can be
+returned, but it is not considered a breaking change if in the future
+it panics; if wrapping is required use [`wrapping_ceil`] instead.
 
 # Examples
 
@@ -152,10 +152,10 @@ assert_eq!(two_half.ceil(), Fix::from_int(3));
                 $Signedness,
                 "# Panics
 
-In debug mode, panics if the result does not fit. In release mode the
-result is wrapped, but it is not considered a breaking change if in
-the future it panics; if wrapping is required use [`wrapping_floor`]
-instead.
+When debug assertions are enabled, panics if the result does not fit.
+When debug assertions are not enabled, the wrapped result can be
+returned, but it is not considered a breaking change if in the future
+it panics; if wrapping is required use [`wrapping_floor`] instead.
 
 Overflow can only occur when there are zero integer bits.
 
@@ -194,10 +194,10 @@ from zero.
 
 # Panics
 
-In debug mode, panics if the result does not fit. In release mode the
-result is wrapped, but it is not considered a breaking change if in
-the future it panics; if wrapping is required use [`wrapping_round`]
-instead.
+When debug assertions are enabled, panics if the result does not fit.
+When debug assertions are not enabled, the wrapped result can be
+returned, but it is not considered a breaking change if in the future
+it panics; if wrapping is required use [`wrapping_round`] instead.
 
 # Examples
 

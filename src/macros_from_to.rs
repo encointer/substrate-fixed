@@ -63,9 +63,10 @@ Any extra fractional bits are truncated.
 
 # Panics
 
-In debug mode, panics if the value does not fit. In release mode the
-value is wrapped, but it is not considered a breaking change if in the
-future it panics; if wrapping is required use [`wrapping_from_fixed`]
+When debug assertions are enabled, panics if the value does not fit.
+When debug assertions are not enabled, the wrapped value can be
+returned, but it is not considered a breaking change if in the future
+it panics; if wrapping is required use [`wrapping_from_fixed`]
 instead.
 
 # Examples
@@ -104,10 +105,10 @@ Any extra fractional bits are truncated.
 
 # Panics
 
-In debug mode, panics if the value does not fit. In release mode the
-value is wrapped, but it is not considered a breaking change if in the
-future it panics; if wrapping is required use [`wrapping_to_fixed`]
-instead.
+When debug assertions are enabled, panics if the value does not fit.
+When debug assertions are not enabled, the wrapped value can be
+returned, but it is not considered a breaking change if in the future
+it panics; if wrapping is required use [`wrapping_to_fixed`] instead.
 
 # Examples
 
@@ -145,10 +146,10 @@ The integer can be of type [`i8`], [`i16`], [`i32`], [`i64`],
 
 # Panics
 
-In debug mode, panics if the value does not fit. In release mode the
-value is wrapped, but it is not considered a breaking change if in the
-future it panics; if wrapping is required use [`wrapping_from_int`]
-instead.
+When debug assertions are enabled, panics if the value does not fit.
+When debug assertions are not enabled, the wrapped value can be
+returned, but it is not considered a breaking change if in the future
+it panics; if wrapping is required use [`wrapping_from_int`] instead.
 
 # Examples
 
@@ -200,10 +201,10 @@ Any fractional bits are truncated.
 
 # Panics
 
-In debug mode, panics if the value does not fit. In release mode the
-value is wrapped, but it is not considered a breaking change if in the
-future it panics; if wrapping is required use [`wrapping_to_int`]
-instead.
+When debug assertions are enabled, panics if the value does not fit.
+When debug assertions are not enabled, the wrapped value can be
+returned, but it is not considered a breaking change if in the future
+it panics; if wrapping is required use [`wrapping_to_int`] instead.
 
 # Examples
 
@@ -259,10 +260,11 @@ This method rounds to the nearest, with ties rounding to even.
 
 Panics if the value is not [finite].
 
-In debug mode, also panics if the value does not fit. In release mode
-the value is wrapped, but it is not considered a breaking change if in
-the future it panics; if wrapping is required use
-[`wrapping_from_float`] instead.
+When debug assertions are enabled, panics if the value does not fit.
+When debug assertions are not enabled, the wrapped value can be
+returned, but it is not considered a breaking change if in the future
+it panics; if wrapping is required use [`wrapping_from_float`]
+instead.
 
 # Examples
 

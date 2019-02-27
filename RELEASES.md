@@ -5,6 +5,11 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.3.2 (2019-02-27)
+==========================
+
+  * The `Wrapping` wrapper was added.
+
 Version 0.3.1 (2019-02-07)
 ==========================
 

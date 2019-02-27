@@ -39,6 +39,12 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
 ## What’s new
 
+### Version 0.3.2 news (2019-02-27)
+
+  * The [`Wrapping`] wrapper was added.
+
+[`Wrapping`]: https://docs.rs/fixed/0.3.2/fixed/struct.Wrapping.html
+
 ### Version 0.3.1 news (2019-02-07)
 
   * Reimplement [`From<bool>`][`From`] for all fixed-point types which
@@ -73,19 +79,19 @@ numeric primitives are implemented. That is, you can use [`From`] or
   * The methods [`int_bits`] and [`frac_bits`] were deprecated and
     replaced by the methods [`int_nbits`] and [`frac_nbits`].
 
-[`Float::from_fixed`]: https://docs.rs/fixed/0.3.1/fixed/sealed/trait.Float.html#method.from_fixed
-[`Float::to_fixed`]: https://docs.rs/fixed/0.3.1/fixed/sealed/trait.Float.html#method.to_fixed
-[`Float`]: https://docs.rs/fixed/0.3.1/fixed/sealed/trait.Float.html
-[`Int::from_fixed`]: https://docs.rs/fixed/0.3.1/fixed/sealed/trait.Int.html#method.from_fixed
-[`Int::to_fixed`]: https://docs.rs/fixed/0.3.1/fixed/sealed/trait.Int.html#method.to_fixed
-[`Int`]: https://docs.rs/fixed/0.3.1/fixed/sealed/trait.Int.html
+[`Float::from_fixed`]: https://docs.rs/fixed/0.3.2/fixed/sealed/trait.Float.html#method.from_fixed
+[`Float::to_fixed`]: https://docs.rs/fixed/0.3.2/fixed/sealed/trait.Float.html#method.to_fixed
+[`Float`]: https://docs.rs/fixed/0.3.2/fixed/sealed/trait.Float.html
+[`Int::from_fixed`]: https://docs.rs/fixed/0.3.2/fixed/sealed/trait.Int.html#method.from_fixed
+[`Int::to_fixed`]: https://docs.rs/fixed/0.3.2/fixed/sealed/trait.Int.html#method.to_fixed
+[`Int`]: https://docs.rs/fixed/0.3.2/fixed/sealed/trait.Int.html
 [`bool`]: https://doc.rust-lang.org/nightly/std/convert/trait.From.html
-[`frac_bits`]: https://docs.rs/fixed/0.3.1/fixed/struct.FixedI32.html#method.frac_bits
-[`frac_nbits`]: https://docs.rs/fixed/0.3.1/fixed/struct.FixedI32.html#method.frac_nbits
-[`int_bits`]: https://docs.rs/fixed/0.3.1/fixed/struct.FixedI32.html#method.int_bits
-[`int_nbits`]: https://docs.rs/fixed/0.3.1/fixed/struct.FixedI32.html#method.int_nbits
-[`to_fixed`]: https://docs.rs/fixed/0.3.1/fixed/struct.FixedI32.html#method.to_fixed
-[`to_int`]: https://docs.rs/fixed/0.3.1/fixed/struct.FixedI32.html#method.to_int
+[`frac_bits`]: https://docs.rs/fixed/0.3.2/fixed/struct.FixedI32.html#method.frac_bits
+[`frac_nbits`]: https://docs.rs/fixed/0.3.2/fixed/struct.FixedI32.html#method.frac_nbits
+[`int_bits`]: https://docs.rs/fixed/0.3.2/fixed/struct.FixedI32.html#method.int_bits
+[`int_nbits`]: https://docs.rs/fixed/0.3.2/fixed/struct.FixedI32.html#method.int_nbits
+[`to_fixed`]: https://docs.rs/fixed/0.3.2/fixed/struct.FixedI32.html#method.to_fixed
+[`to_int`]: https://docs.rs/fixed/0.3.2/fixed/struct.FixedI32.html#method.to_int
 
 ### Other releases
 
@@ -155,7 +161,7 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 
 ```toml
 [dependencies]
-fixed = "0.3.1"
+fixed = "0.3.2"
 ```
 
 If you are using the 2015 Rust edition, you also need to declare it by
@@ -182,7 +188,7 @@ To enable features, you can add the dependency like this to
 
 ```toml
 [dependencies.fixed]
-version = "0.3.1"
+version = "0.3.2"
 features = ["f16", "serde"]
 ```
 
@@ -210,22 +216,22 @@ additional terms or conditions.
 [*typenum* crate]: https://crates.io/crates/typenum
 [LICENSE-APACHE]: https://www.apache.org/licenses/LICENSE-2.0
 [LICENSE-MIT]: https://opensource.org/licenses/MIT
-[`FixedI128`]: https://docs.rs/fixed/0.3.1/fixed/struct.FixedI128.html
-[`FixedI16`]: https://docs.rs/fixed/0.3.1/fixed/struct.FixedI16.html
-[`FixedI32`]: https://docs.rs/fixed/0.3.1/fixed/struct.FixedI32.html
-[`FixedI64`]: https://docs.rs/fixed/0.3.1/fixed/struct.FixedI64.html
-[`FixedI8`]: https://docs.rs/fixed/0.3.1/fixed/struct.FixedI8.html
-[`FixedU128`]: https://docs.rs/fixed/0.3.1/fixed/struct.FixedU128.html
-[`FixedU16`]: https://docs.rs/fixed/0.3.1/fixed/struct.FixedU16.html
-[`FixedU32`]: https://docs.rs/fixed/0.3.1/fixed/struct.FixedU32.html
-[`FixedU64`]: https://docs.rs/fixed/0.3.1/fixed/struct.FixedU64.html
-[`FixedU8`]: https://docs.rs/fixed/0.3.1/fixed/struct.FixedU8.html
+[`FixedI128`]: https://docs.rs/fixed/0.3.2/fixed/struct.FixedI128.html
+[`FixedI16`]: https://docs.rs/fixed/0.3.2/fixed/struct.FixedI16.html
+[`FixedI32`]: https://docs.rs/fixed/0.3.2/fixed/struct.FixedI32.html
+[`FixedI64`]: https://docs.rs/fixed/0.3.2/fixed/struct.FixedI64.html
+[`FixedI8`]: https://docs.rs/fixed/0.3.2/fixed/struct.FixedI8.html
+[`FixedU128`]: https://docs.rs/fixed/0.3.2/fixed/struct.FixedU128.html
+[`FixedU16`]: https://docs.rs/fixed/0.3.2/fixed/struct.FixedU16.html
+[`FixedU32`]: https://docs.rs/fixed/0.3.2/fixed/struct.FixedU32.html
+[`FixedU64`]: https://docs.rs/fixed/0.3.2/fixed/struct.FixedU64.html
+[`FixedU8`]: https://docs.rs/fixed/0.3.2/fixed/struct.FixedU8.html
 [`From`]: https://doc.rust-lang.org/nightly/std/convert/trait.From.html
-[`I20F12`]: https://docs.rs/fixed/0.3.1/fixed/types/type.I20F12.html
-[`I4F12`]: https://docs.rs/fixed/0.3.1/fixed/types/type.I4F12.html
-[`I4F4`]: https://docs.rs/fixed/0.3.1/fixed/types/type.I4F4.html
+[`I20F12`]: https://docs.rs/fixed/0.3.2/fixed/types/type.I20F12.html
+[`I4F12`]: https://docs.rs/fixed/0.3.2/fixed/types/type.I4F12.html
+[`I4F4`]: https://docs.rs/fixed/0.3.2/fixed/types/type.I4F4.html
 [`Into`]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
-[`U20F12`]: https://docs.rs/fixed/0.3.1/fixed/types/type.U20F12.html
+[`U20F12`]: https://docs.rs/fixed/0.3.2/fixed/types/type.U20F12.html
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html
 [`from_fixed`]: struct.FixedI8.html#method.from_fixed
 [const generics]: https://github.com/rust-lang/rust/issues/44580

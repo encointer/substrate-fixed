@@ -211,6 +211,7 @@ mod sealed_int;
 mod serdeize;
 pub mod types;
 mod wide_div;
+mod wrapping;
 
 use arith::MulDivDir;
 use core::cmp::Ordering;
@@ -220,6 +221,7 @@ use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
 #[cfg(feature = "f16")]
 use half::f16;
 use sealed::{Fixed, Float, Int, SealedFixed, SealedFloat, SealedInt, Widest};
+pub use wrapping::Wrapping;
 
 #[macro_use]
 mod macros_from_to;

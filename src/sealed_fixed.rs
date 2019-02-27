@@ -14,6 +14,7 @@
 // <https://opensource.org/licenses/MIT>.
 
 use core::fmt::{Debug, Display};
+use core::hash::Hash;
 use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
 use sealed::{Fixed, Float, SealedInt};
 use {
@@ -28,7 +29,7 @@ pub enum Widest {
     Negative(i128),
 }
 
-pub trait SealedFixed: Copy + Debug + Display {
+pub trait SealedFixed: Copy + Debug + Default + Display + Eq + Hash + Ord {
     type FracNBits: Unsigned;
     type Bits: SealedInt;
 
@@ -83,10 +84,16 @@ pub trait SealedFixed: Copy + Debug + Display {
         <Self::Bits as SealedInt>::Unsigned,
         <Self::Bits as SealedInt>::Unsigned,
     );
+
+    fn wrapping_ceil(self) -> Self;
+    fn wrapping_floor(self) -> Self;
+    fn wrapping_round(self) -> Self;
+    fn wrapping_neg(self) -> Self;
+    fn wrapping_abs(self) -> Self;
 }
 
 macro_rules! sealed_fixed {
-    ($Fixed:ident($Bits:ty, $Len:ty)) => {
+    ($Fixed:ident($Bits:ty, $Len:ty, $Signedness:tt)) => {
         impl<Frac> SealedFixed for $Fixed<Frac>
         where
             Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
@@ -146,17 +153,46 @@ macro_rules! sealed_fixed {
                 };
                 (neg, int_abs, frac_abs)
             }
+
+            #[inline]
+            fn wrapping_ceil(self) -> Self {
+                self.wrapping_ceil()
+            }
+
+            #[inline]
+            fn wrapping_floor(self) -> Self {
+                self.wrapping_floor()
+            }
+
+            #[inline]
+            fn wrapping_round(self) -> Self {
+                self.wrapping_round()
+            }
+
+            #[inline]
+            fn wrapping_neg(self) -> Self {
+                self.wrapping_neg()
+            }
+
+            #[inline]
+            fn wrapping_abs(self) -> Self {
+                if_signed_unsigned! {
+                    $Signedness,
+                    self.wrapping_abs(),
+                    self,
+                }
+            }
         }
     };
 }
 
-sealed_fixed! { FixedI8(i8, U8) }
-sealed_fixed! { FixedI16(i16, U16) }
-sealed_fixed! { FixedI32(i32, U32) }
-sealed_fixed! { FixedI64(i64, U64) }
-sealed_fixed! { FixedI128(i128, U128) }
-sealed_fixed! { FixedU8(u8, U8) }
-sealed_fixed! { FixedU16(u16, U16) }
-sealed_fixed! { FixedU32(u32, U32) }
-sealed_fixed! { FixedU64(u64, U64) }
-sealed_fixed! { FixedU128(u128, U128) }
+sealed_fixed! { FixedI8(i8, U8, Signed) }
+sealed_fixed! { FixedI16(i16, U16, Signed) }
+sealed_fixed! { FixedI32(i32, U32, Signed) }
+sealed_fixed! { FixedI64(i64, U64, Signed) }
+sealed_fixed! { FixedI128(i128, U128, Signed) }
+sealed_fixed! { FixedU8(u8, U8, Unsigned) }
+sealed_fixed! { FixedU16(u16, U16, Unsigned) }
+sealed_fixed! { FixedU32(u32, U32, Unsigned) }
+sealed_fixed! { FixedU64(u64, U64, Unsigned) }
+sealed_fixed! { FixedU128(u128, U128, Unsigned) }

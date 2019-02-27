@@ -547,7 +547,10 @@ macro_rules! fixed_arith {
         where
             Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
         {
-            fn sum<I: Iterator<Item = $Fixed<Frac>>>(iter: I) -> $Fixed<Frac> {
+            fn sum<I>(iter: I) -> $Fixed<Frac>
+            where
+                I: Iterator<Item = $Fixed<Frac>>,
+            {
                 iter.fold(Self::from_bits(0), Add::add)
             }
         }
@@ -556,7 +559,10 @@ macro_rules! fixed_arith {
         where
             Frac: 'a + Unsigned + IsLessOrEqual<$Len, Output = True>,
         {
-            fn sum<I: Iterator<Item = &'a $Fixed<Frac>>>(iter: I) -> $Fixed<Frac> {
+            fn sum<I>(iter: I) -> $Fixed<Frac>
+            where
+                I: Iterator<Item = &'a $Fixed<Frac>>,
+            {
                 iter.fold(Self::from_bits(0), Add::add)
             }
         }
@@ -565,7 +571,10 @@ macro_rules! fixed_arith {
         where
             Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
         {
-            fn product<I: Iterator<Item = $Fixed<Frac>>>(mut iter: I) -> $Fixed<Frac> {
+            fn product<I>(mut iter: I) -> $Fixed<Frac>
+            where
+                I: Iterator<Item = $Fixed<Frac>>,
+            {
                 match iter.next() {
                     None => Self::one().expect("overflow"),
                     Some(first) => iter.fold(first, Mul::mul),
@@ -577,7 +586,10 @@ macro_rules! fixed_arith {
         where
             Frac: 'a + Unsigned + IsLessOrEqual<$Len, Output = True>,
         {
-            fn product<I: Iterator<Item = &'a $Fixed<Frac>>>(mut iter: I) -> $Fixed<Frac> {
+            fn product<I>(mut iter: I) -> $Fixed<Frac>
+            where
+                I: Iterator<Item = &'a $Fixed<Frac>>,
+            {
                 match iter.next() {
                     None => Self::one().expect("overflow"),
                     Some(first) => iter.fold(*first, Mul::mul),

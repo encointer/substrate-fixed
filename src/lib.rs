@@ -72,7 +72,7 @@ fractional bits adding up to a total of eight, 16, 32, 64 or 128 bits.
 // −8 ≤ I4F4 < 8 with steps of 1/16 (about 0.06)
 use fixed::types::I4F4;
 let a = I4F4::from_int(1);
-// multiplication and division by integers is possible
+// multiplication and division by integers are possible
 let ans1 = a / 5 * 17;
 // 1 / 5 × 17 = 3 2/5 (3.4), but we get 3 3/16 (3.19)
 assert_eq!(ans1, I4F4::from_bits((3 << 4) + 3));

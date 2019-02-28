@@ -48,7 +48,10 @@ pub struct Wrapping<F>(pub F)
 where
     F: Fixed;
 
-impl<F: Fixed> Wrapping<F> {
+impl<F> Wrapping<F>
+where
+    F: Fixed,
+{
     /// Wrapping ceil. Rounds to the next integer towards +∞, wrapping
     /// on overflow.
     ///

@@ -435,7 +435,7 @@ fixed_cmp! { FixedI128(i128, U128, 128) }
 
 #[cfg(test)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::float_cmp))]
-#[cfg_attr(feature = "cargo-clippy", allow(clippy::cyclomatic_complexity))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::cognitive_complexity))]
 mod tests {
     use *;
 

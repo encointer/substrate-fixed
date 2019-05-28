@@ -233,5 +233,5 @@ additional terms or conditions.
 [`Into`]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
 [`U20F12`]: https://docs.rs/fixed/0.3.2/fixed/types/type.U20F12.html
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html
-[`from_fixed`]: struct.FixedI8.html#method.from_fixed
+[`from_fixed`]: https://docs.rs/fixed/0.3.2/fixed/struct.FixedI8.html#method.from_fixed
 [const generics]: https://github.com/rust-lang/rust/issues/44580

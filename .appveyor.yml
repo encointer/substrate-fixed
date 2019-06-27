@@ -15,7 +15,7 @@ environment:
     - TARGET: i686-pc-windows-gnu
 
 cache:
-  - '%USERPROFILE%\.cargo\registry\cache'
+  - '%USERPROFILE%\.cargo\registry\cache -> Cargo.toml'
 
 install:
   - set PATH=%USERPROFILE%\.cargo\bin;%PATH%

@@ -32,18 +32,21 @@ use {
 ///
 /// This trait is sealed and cannot be implemented for more types; it
 /// is implemented for [`i8`], [`i16`], [`i32`], [`i64`], [`i128`],
-/// [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+/// [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], and
+/// [`usize`].
 ///
 /// [`i128`]: https://doc.rust-lang.org/nightly/std/primitive.i128.html
 /// [`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
 /// [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
 /// [`i64`]: https://doc.rust-lang.org/nightly/std/primitive.i64.html
 /// [`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
+/// [`isize`]: https://doc.rust-lang.org/nightly/std/primitive.isize.html
 /// [`u128`]: https://doc.rust-lang.org/nightly/std/primitive.u128.html
 /// [`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
 /// [`u32`]: https://doc.rust-lang.org/nightly/std/primitive.u32.html
 /// [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
 /// [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
+/// [`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
 pub trait Int: SealedInt {
     /// Converts from a fixed-point number.
     ///

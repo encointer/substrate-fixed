@@ -5,6 +5,11 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.3.3 (unreleased)
+==========================
+
+  * Conversions to/from `isize` and `usize` were added.
+
 Version 0.3.2 (2019-02-27)
 ==========================
 

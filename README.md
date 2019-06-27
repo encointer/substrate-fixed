@@ -39,6 +39,13 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
 ## What’s new
 
+### Version 0.3.3 news (unreleased)
+
+  * Conversions to/from [`isize`] and [`usize`] were added.
+
+[`isize`]: https://doc.rust-lang.org/nightly/std/primitive.isize.html
+[`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
+
 ### Version 0.3.2 news (2019-02-27)
 
   * The [`Wrapping`] wrapper was added.

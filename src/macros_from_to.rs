@@ -142,7 +142,8 @@ assert_eq!((src >> 4u32).to_fixed::<Dst>(), Dst::from_bits(1));
             "Creates a fixed-point number from an integer.
 
 The integer can be of type [`i8`], [`i16`], [`i32`], [`i64`],
-[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+[`i128`], [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], and
+[`usize`].
 
 # Panics
 
@@ -172,11 +173,13 @@ assert_eq!(Fix::from_int(",
 [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
 [`i64`]: https://doc.rust-lang.org/nightly/std/primitive.i64.html
 [`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
+[`isize`]: https://doc.rust-lang.org/nightly/std/primitive.isize.html
 [`u128`]: https://doc.rust-lang.org/nightly/std/primitive.u128.html
 [`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
 [`u32`]: https://doc.rust-lang.org/nightly/std/primitive.u32.html
 [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
 [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
+[`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
 [`wrapping_from_int`]: #method.wrapping_from_int
 ";
             #[inline]
@@ -195,7 +198,8 @@ assert_eq!(Fix::from_int(",
             "Converts a fixed-point number of type to an integer.
 
 The integer can be of type [`i8`], [`i16`], [`i32`], [`i64`],
-[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+[`i128`], [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], and
+[`usize`].
 
 Any fractional bits are truncated.
 
@@ -228,11 +232,13 @@ assert_eq!(",
 [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
 [`i64`]: https://doc.rust-lang.org/nightly/std/primitive.i64.html
 [`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
+[`isize`]: https://doc.rust-lang.org/nightly/std/primitive.isize.html
 [`u128`]: https://doc.rust-lang.org/nightly/std/primitive.u128.html
 [`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
 [`u32`]: https://doc.rust-lang.org/nightly/std/primitive.u32.html
 [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
 [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
+[`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
 [`wrapping_to_int`]: #method.wrapping_to_int
 ";
             #[inline]
@@ -424,7 +430,8 @@ assert!(Src::max_value().checked_to_fixed::<TooFewIntBits>().is_none());
 otherwise returns [`None`].
 
 The integer can be of type [`i8`], [`i16`], [`i32`], [`i64`],
-[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+[`i128`], [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], and
+[`usize`].
 
 # Examples
 
@@ -453,11 +460,13 @@ assert!(Fix::checked_from_int(too_small).is_none());
 [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
 [`i64`]: https://doc.rust-lang.org/nightly/std/primitive.i64.html
 [`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
+[`isize`]: https://doc.rust-lang.org/nightly/std/primitive.isize.html
 [`u128`]: https://doc.rust-lang.org/nightly/std/primitive.u128.html
 [`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
 [`u32`]: https://doc.rust-lang.org/nightly/std/primitive.u32.html
 [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
 [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
+[`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
 ";
             #[inline]
             pub fn checked_from_int<I>(val: I) -> Option<$Fixed<Frac>>
@@ -473,8 +482,9 @@ assert!(Fix::checked_from_int(too_small).is_none());
             "Converts a fixed-point number to an integer if it fits,
 otherwise returns [`None`].
 
-The integer value can be of type [`i8`], [`i16`], [`i32`], [`i64`],
-[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+The integer can be of type [`i8`], [`i16`], [`i32`], [`i64`],
+[`i128`], [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], and
+[`usize`].
 
 Any fractional bits are truncated.
 
@@ -512,11 +522,13 @@ assert!(AllInt::",
 [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
 [`i64`]: https://doc.rust-lang.org/nightly/std/primitive.i64.html
 [`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
+[`isize`]: https://doc.rust-lang.org/nightly/std/primitive.isize.html
 [`u128`]: https://doc.rust-lang.org/nightly/std/primitive.u128.html
 [`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
 [`u32`]: https://doc.rust-lang.org/nightly/std/primitive.u32.html
 [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
 [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
+[`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
 ";
             #[inline]
             pub fn checked_to_int<I>(self) -> Option<I>
@@ -690,8 +702,9 @@ assert_eq!(saturated, TooFewIntBits::max_value());
             "Creates a fixed-point number from an integer, saturating
 the value if it does not fit.
 
-The integer value can be of type [`i8`], [`i16`], [`i32`], [`i64`],
-[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+The integer can be of type [`i8`], [`i16`], [`i32`], [`i64`],
+[`i128`], [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], and
+[`usize`].
 
 # Examples
 
@@ -719,11 +732,13 @@ assert_eq!(Fix::saturating_from_int(too_small), Fix::min_value());
 [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
 [`i64`]: https://doc.rust-lang.org/nightly/std/primitive.i64.html
 [`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
+[`isize`]: https://doc.rust-lang.org/nightly/std/primitive.isize.html
 [`u128`]: https://doc.rust-lang.org/nightly/std/primitive.u128.html
 [`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
 [`u32`]: https://doc.rust-lang.org/nightly/std/primitive.u32.html
 [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
 [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
+[`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
 ";
             #[inline]
             pub fn saturating_from_int<I>(val: I) -> $Fixed<Frac>
@@ -766,8 +781,9 @@ assert_eq!(Fix::saturating_from_int(too_small), Fix::min_value());
             "Converts a fixed-point number to an integer, saturating
 the value if it does not fit.
 
-The integer value can be of type [`i8`], [`i16`], [`i32`], [`i64`],
-[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+The integer can be of type [`i8`], [`i16`], [`i32`], [`i64`],
+[`i128`], [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], and
+[`usize`].
 
 Any fractional bits are truncated.
 
@@ -813,11 +829,13 @@ assert_eq!(",
 [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
 [`i64`]: https://doc.rust-lang.org/nightly/std/primitive.i64.html
 [`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
+[`isize`]: https://doc.rust-lang.org/nightly/std/primitive.isize.html
 [`u128`]: https://doc.rust-lang.org/nightly/std/primitive.u128.html
 [`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
 [`u32`]: https://doc.rust-lang.org/nightly/std/primitive.u32.html
 [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
 [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
+[`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
 ";
             #[inline]
             pub fn saturating_to_int<I>(self) -> I
@@ -988,8 +1006,9 @@ assert_eq!(Src::max_value().wrapping_to_fixed::<TooFewIntBits>(), wrapped);
             "Creates a fixed-point number from an integer, wrapping
 the value on overflow.
 
-The integer value can be of type [`i8`], [`i16`], [`i32`], [`i64`],
-[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+The integer can be of type [`i8`], [`i16`], [`i32`], [`i64`],
+[`i128`], [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], and
+[`usize`].
 
 # Examples
 
@@ -1017,11 +1036,13 @@ assert_eq!(Fix::wrapping_from_int(large), wrapped);
 [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
 [`i64`]: https://doc.rust-lang.org/nightly/std/primitive.i64.html
 [`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
+[`isize`]: https://doc.rust-lang.org/nightly/std/primitive.isize.html
 [`u128`]: https://doc.rust-lang.org/nightly/std/primitive.u128.html
 [`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
 [`u32`]: https://doc.rust-lang.org/nightly/std/primitive.u32.html
 [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
 [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
+[`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
 ";
             #[inline]
             pub fn wrapping_from_int<I>(val: I) -> $Fixed<Frac>
@@ -1036,8 +1057,9 @@ assert_eq!(Fix::wrapping_from_int(large), wrapped);
             "Converts a fixed-point number to an integer, wrapping the
 value on overflow.
 
-The integer value can be of type [`i8`], [`i16`], [`i32`], [`i64`],
-[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+The integer can be of type [`i8`], [`i16`], [`i32`], [`i64`],
+[`i128`], [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], and
+[`usize`].
 
 Any fractional bits are truncated.
 
@@ -1083,11 +1105,13 @@ assert_eq!(",
 [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
 [`i64`]: https://doc.rust-lang.org/nightly/std/primitive.i64.html
 [`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
+[`isize`]: https://doc.rust-lang.org/nightly/std/primitive.isize.html
 [`u128`]: https://doc.rust-lang.org/nightly/std/primitive.u128.html
 [`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
 [`u32`]: https://doc.rust-lang.org/nightly/std/primitive.u32.html
 [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
 [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
+[`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
 ";
             #[inline]
             pub fn wrapping_to_int<I>(self) -> I
@@ -1264,8 +1288,9 @@ Returns a tuple of the fixed-point number and a [`bool`] indicating
 whether an overflow has occurred. On overflow, the wrapped value is
 returned.
 
-The integer value can be of type [`i8`], [`i16`], [`i32`], [`i64`],
-[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+The integer can be of type [`i8`], [`i16`], [`i32`], [`i64`],
+[`i128`], [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], and
+[`usize`].
 
 # Examples
 
@@ -1294,11 +1319,13 @@ assert_eq!(Fix::overflowing_from_int(large), (wrapped, true));
 [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
 [`i64`]: https://doc.rust-lang.org/nightly/std/primitive.i64.html
 [`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
+[`isize`]: https://doc.rust-lang.org/nightly/std/primitive.isize.html
 [`u128`]: https://doc.rust-lang.org/nightly/std/primitive.u128.html
 [`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
 [`u32`]: https://doc.rust-lang.org/nightly/std/primitive.u32.html
 [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
 [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
+[`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
 ";
             #[inline]
             pub fn overflowing_from_int<I>(val: I) -> ($Fixed<Frac>, bool)
@@ -1339,8 +1366,9 @@ assert_eq!(Fix::overflowing_from_int(large), (wrapped, true));
 Returns a tuple of the integer and a [`bool`] indicating whether an
 overflow has occurred. On overflow, the wrapped value is returned.
 
-The integer value can be of type [`i8`], [`i16`], [`i32`], [`i64`],
-[`i128`], [`u8`], [`u16`], [`u32`], [`u64`], and [`u128`].
+The integer can be of type [`i8`], [`i16`], [`i32`], [`i64`],
+[`i128`], [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], and
+[`usize`].
 
 Any fractional bits are truncated.
 
@@ -1383,11 +1411,13 @@ assert_eq!(does_not_fit.overflowing_to_int::<",
 [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
 [`i64`]: https://doc.rust-lang.org/nightly/std/primitive.i64.html
 [`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
+[`isize`]: https://doc.rust-lang.org/nightly/std/primitive.isize.html
 [`u128`]: https://doc.rust-lang.org/nightly/std/primitive.u128.html
 [`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
 [`u32`]: https://doc.rust-lang.org/nightly/std/primitive.u32.html
 [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
 [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
+[`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
 ";
             #[inline]
             pub fn overflowing_to_int<I>(self) -> (I, bool)

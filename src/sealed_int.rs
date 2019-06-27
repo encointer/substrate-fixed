@@ -86,7 +86,7 @@ macro_rules! sealed_int {
                 F: Fixed,
             {
                 let (wrapped, overflow) = Self::ReprFixed::overflowing_from_fixed(fixed);
-                (wrapped.to_bits(), overflow)
+                (wrapped.to_bits().same_repr(), overflow)
             }
 
             #[inline]
@@ -94,7 +94,7 @@ macro_rules! sealed_int {
             where
                 F: Fixed
             {
-                F::overflowing_from_fixed(Self::ReprFixed::from_bits(self))
+                F::overflowing_from_fixed(Self::ReprFixed::from_bits(self.same_repr()))
             }
 
             #[inline]
@@ -114,7 +114,7 @@ macro_rules! sealed_int {
 
             #[inline]
             fn to_repr_fixed(self) -> Self::ReprFixed {
-                Self::ReprFixed::from_bits(self)
+                Self::ReprFixed::from_bits(self.same_repr())
             }
 
             $($rest)*
@@ -158,7 +158,7 @@ macro_rules! sealed_int {
                 let leading_zeros = self.leading_zeros();
                 let need_to_shr = src_frac_bits - dst_frac_bits as i32;
                 let overflow = src_bits - dst_bits > need_to_shr + leading_zeros as i32;
-                let bits_128 = u128::from(self);
+                let bits_128 = self.to_128();
                 let (bits, lost_bits) = match need_to_shr {
                     -0x7fff_ffff..=-128 => (0, false),
                     -127..=-1 => (bits_128 << -need_to_shr, false),
@@ -224,7 +224,7 @@ macro_rules! sealed_int {
                     (!self).leading_zeros() - 1
                 };
                 let overflow = src_bits - dst_bits > need_to_shr + leading as i32;
-                let bits_128 = i128::from(self);
+                let bits_128 = self.to_128();
                 let (bits, lost_bits) = match need_to_shr {
                     -0x7fff_ffff..=-128 => (0, false),
                     -127..=-1 => (bits_128 << -need_to_shr, false),
@@ -252,8 +252,101 @@ sealed_int! { i16(U16, u16, FixedI16) }
 sealed_int! { i32(U32, u32, FixedI32) }
 sealed_int! { i64(U64, u64, FixedI64) }
 sealed_int! { i128(U128, u128, FixedI128) }
+#[cfg(target_pointer_width = "32")]
+sealed_int! { isize(U32, usize, FixedI32) }
+#[cfg(target_pointer_width = "64")]
+sealed_int! { isize(U64, usize, FixedI64) }
 sealed_int! { u8(U8, FixedU8) }
 sealed_int! { u16(U16, FixedU16) }
 sealed_int! { u32(U32, FixedU32) }
 sealed_int! { u64(U64, FixedU64) }
 sealed_int! { u128(U128, FixedU128) }
+#[cfg(target_pointer_width = "32")]
+sealed_int! { usize(U32, FixedU32) }
+#[cfg(target_pointer_width = "64")]
+sealed_int! { usize(U64, FixedU64) }
+
+trait SameRepr<T> {
+    fn same_repr(self) -> T;
+}
+
+impl<T> SameRepr<T> for T {
+    #[inline]
+    fn same_repr(self) -> T {
+        self
+    }
+}
+
+macro_rules! same_repr {
+    ($A:ident, $B:ident) => {
+        impl SameRepr<$A> for $B {
+            #[inline]
+            fn same_repr(self) -> $A {
+                self as $A
+            }
+        }
+        impl SameRepr<$B> for $A {
+            #[inline]
+            fn same_repr(self) -> $B {
+                self as $B
+            }
+        }
+    };
+}
+
+#[cfg(target_pointer_width = "32")]
+same_repr! { u32, usize }
+#[cfg(target_pointer_width = "32")]
+same_repr! { i32, isize }
+#[cfg(target_pointer_width = "64")]
+same_repr! { u64, usize }
+#[cfg(target_pointer_width = "64")]
+same_repr! { i64, isize }
+
+trait To128 {
+    type Output;
+    fn to_128(self) -> Self::Output;
+}
+
+macro_rules! to_128 {
+    ($T:ident) => {
+        impl To128 for $T {
+            type Output = $T;
+            #[inline]
+            fn to_128(self) -> $T {
+                self
+            }
+        }
+    };
+    ($Dst:ident::from($Src:ident)) => {
+        impl To128 for $Src {
+            type Output = $Dst;
+            #[inline]
+            fn to_128(self) -> $Dst {
+                <$Dst>::from(self)
+            }
+        }
+    };
+    ($Src:ident as $Dst:ident) => {
+        impl To128 for $Src {
+            type Output = $Dst;
+            #[inline]
+            fn to_128(self) -> $Dst {
+                self as $Dst
+            }
+        }
+    };
+}
+
+to_128! { i128::from(i8) }
+to_128! { i128::from(i16) }
+to_128! { i128::from(i32) }
+to_128! { i128::from(i64) }
+to_128! { i128 }
+to_128! { isize as i128 }
+to_128! { u128::from(u8) }
+to_128! { u128::from(u16) }
+to_128! { u128::from(u32) }
+to_128! { u128::from(u64) }
+to_128! { u128 }
+to_128! { usize as u128 }

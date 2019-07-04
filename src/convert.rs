@@ -236,31 +236,19 @@ macro_rules! fixed_to_int {
         impl From<$SrcU<U0>> for $DstU {
             #[inline]
             fn from(src: $SrcU<U0>) -> $DstU {
-                src.to_bits()
+                src.to_bits().into()
             }
         }
 
         impl From<$SrcI<U0>> for $DstI {
             #[inline]
             fn from(src: $SrcI<U0>) -> $DstI {
-                src.to_bits()
+                src.to_bits().into()
             }
         }
     };
     (($SrcU:ident, $SrcI:ident) -> wider ($DstU:ident, $DstI:ident)) => {
-        impl From<$SrcU<U0>> for $DstU {
-            #[inline]
-            fn from(src: $SrcU<U0>) -> $DstU {
-                src.to_bits().into()
-            }
-        }
-
-        impl From<$SrcI<U0>> for $DstI {
-            #[inline]
-            fn from(src: $SrcI<U0>) -> $DstI {
-                src.to_bits().into()
-            }
-        }
+        fixed_to_int! { ($SrcU, $SrcI) -> ($DstU, $DstI) }
 
         impl From<$SrcU<U0>> for $DstI {
             #[inline]
@@ -276,11 +264,13 @@ fixed_to_int! { (FixedU8, FixedI8) -> wider (u16, i16) }
 fixed_to_int! { (FixedU8, FixedI8) -> wider (u32, i32) }
 fixed_to_int! { (FixedU8, FixedI8) -> wider (u64, i64) }
 fixed_to_int! { (FixedU8, FixedI8) -> wider (u128, i128) }
+fixed_to_int! { (FixedU8, FixedI8) -> wider (usize, isize) }
 
 fixed_to_int! { (FixedU16, FixedI16) -> (u16, i16) }
 fixed_to_int! { (FixedU16, FixedI16) -> wider (u32, i32) }
 fixed_to_int! { (FixedU16, FixedI16) -> wider (u64, i64) }
 fixed_to_int! { (FixedU16, FixedI16) -> wider (u128, i128) }
+fixed_to_int! { (FixedU16, FixedI16) -> (usize, isize) }
 
 fixed_to_int! { (FixedU32, FixedI32) -> (u32, i32) }
 fixed_to_int! { (FixedU32, FixedI32) -> wider (u64, i64) }

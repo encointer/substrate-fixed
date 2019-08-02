@@ -90,10 +90,7 @@ assert_eq!(Dst::from_fixed(src >> 4), Dst::from_bits(1));
             where
                 F: Fixed,
             {
-                let (wrapped, overflow) = Self::overflowing_from_fixed(val);
-                debug_assert!(!overflow, "{} overflows", val);
-                let _ = overflow;
-                wrapped
+                SealedFixed::from_fixed(val)
             }
         );
 
@@ -131,10 +128,7 @@ assert_eq!((src >> 4u32).to_fixed::<Dst>(), Dst::from_bits(1));
             where
                 F: Fixed,
             {
-                let (wrapped, overflow) = <F as SealedFixed>::overflowing_from_fixed(self);
-                debug_assert!(!overflow, "{} overflows", self);
-                let _ = overflow;
-                wrapped
+                SealedFixed::from_fixed(self)
             }
         );
 
@@ -187,10 +181,7 @@ assert_eq!(Fix::from_int(",
             where
                 I: Int,
             {
-                let (wrapped, overflow) = Self::overflowing_from_int(val);
-                debug_assert!(!overflow, "{} overflows", val);
-                let _ = overflow;
-                wrapped
+                SealedInt::to_fixed(val)
             }
         );
 
@@ -246,10 +237,7 @@ assert_eq!(",
             where
                 I: Int,
             {
-                let (wrapped, overflow) = <I as SealedInt>::overflowing_from_fixed(self);
-                debug_assert!(!overflow, "{} overflows", self);
-                let _ = overflow;
-                wrapped
+                SealedInt::from_fixed(self)
             }
         );
 
@@ -383,8 +371,7 @@ assert!(Dst::checked_from_fixed(too_large).is_none());
             where
                 F: Fixed,
             {
-                let (wrapped, overflow) = Self::overflowing_from_fixed(val);
-                if overflow { None } else { Some(wrapped) }
+                SealedFixed::checked_from_fixed(val)
             }
         );
 
@@ -418,10 +405,7 @@ assert!(Src::max_value().checked_to_fixed::<TooFewIntBits>().is_none());
             where
                 F: Fixed,
             {
-                match <F as SealedFixed>::overflowing_from_fixed(self) {
-                    (wrapped, false) => Some(wrapped),
-                    (_, true) => None,
-                }
+                SealedFixed::checked_from_fixed(self)
             }
         );
 
@@ -473,8 +457,7 @@ assert!(Fix::checked_from_int(too_small).is_none());
             where
                 I: Int,
             {
-                let (wrapped, overflow) = Self::overflowing_from_int(val);
-                if overflow { None } else { Some(wrapped) }
+                SealedInt::checked_to_fixed(val)
             }
         );
 
@@ -535,10 +518,7 @@ assert!(AllInt::",
             where
                 I: Int,
             {
-                match <I as SealedInt>::overflowing_from_fixed(self) {
-                    (wrapped, false) => Some(wrapped),
-                    (_, true) => None,
-                }
+                SealedInt::checked_from_fixed(self)
             }
         );
 
@@ -625,35 +605,7 @@ assert_eq!(Dst::saturating_from_fixed(too_small), Dst::min_value());
             where
                 F: Fixed,
             {
-                let (value, _, overflow) = val.to_bits().to_fixed_dir_overflow(
-                    F::FRAC_NBITS as i32,
-                    Self::FRAC_NBITS,
-                    Self::INT_NBITS,
-                );
-                if overflow {
-                    return if val.to_bits().is_negative() {
-                        Self::min_value()
-                    } else {
-                        Self::max_value()
-                    };
-                }
-                let bits = if_signed_unsigned!(
-                    $Signedness,
-                    match value {
-                        Widest::Unsigned(bits) => {
-                            if (bits as <Self as SealedFixed>::Bits) < 0 {
-                                return Self::max_value();
-                            }
-                            bits as <Self as SealedFixed>::Bits
-                        }
-                        Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
-                    },
-                    match value {
-                        Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
-                        Widest::Negative(_) => return Self::min_value(),
-                    },
-                );
-                SealedFixed::from_bits(bits)
+                SealedFixed::saturating_from_fixed(val)
             }
         );
 
@@ -685,16 +637,7 @@ assert_eq!(saturated, TooFewIntBits::max_value());
             where
                 F: Fixed,
             {
-                match <F as SealedFixed>::overflowing_from_fixed(self) {
-                    (wrapped, false) => wrapped,
-                    (_, true) => {
-                        if self.to_bits().is_negative() {
-                            F::from_bits(F::Bits::min_value())
-                        } else {
-                            F::from_bits(F::Bits::max_value())
-                        }
-                    }
-                }
+                SealedFixed::saturating_from_fixed(self)
             }
         );
 
@@ -745,35 +688,7 @@ assert_eq!(Fix::saturating_from_int(too_small), Fix::min_value());
             where
                 I: Int,
             {
-                let (value, _, overflow) = val.to_fixed_dir_overflow(
-                    0,
-                    Self::FRAC_NBITS,
-                    Self::INT_NBITS,
-                );
-                if overflow {
-                    return if val.is_negative() {
-                        Self::min_value()
-                    } else {
-                        Self::max_value()
-                    };
-                }
-                let bits = if_signed_unsigned!(
-                    $Signedness,
-                    match value {
-                        Widest::Unsigned(bits) => {
-                            if (bits as <Self as SealedFixed>::Bits) < 0 {
-                                return Self::max_value();
-                            }
-                            bits as <Self as SealedFixed>::Bits
-                        }
-                        Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
-                    },
-                    match value {
-                        Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
-                        Widest::Negative(_) => return Self::min_value(),
-                    },
-                );
-                SealedFixed::from_bits(bits)
+                SealedInt::saturating_to_fixed(val)
             }
         );
 
@@ -842,16 +757,7 @@ assert_eq!(",
             where
                 I: Int,
             {
-                match <I as SealedInt>::overflowing_from_fixed(self) {
-                    (wrapped, false) => wrapped,
-                    (_, true) => {
-                        if self.to_bits().is_negative() {
-                            I::min_value()
-                        } else {
-                            I::max_value()
-                        }
-                    }
-                }
+                SealedInt::saturating_from_fixed(self)
             }
         );
 
@@ -965,7 +871,7 @@ assert_eq!(Dst::wrapping_from_fixed(too_large), wrapped);
             where
                 F: Fixed,
             {
-                Self::overflowing_from_fixed(val).0
+                SealedFixed::wrapping_from_fixed(val)
             }
         );
 
@@ -998,7 +904,7 @@ assert_eq!(Src::max_value().wrapping_to_fixed::<TooFewIntBits>(), wrapped);
             where
                 F: Fixed,
             {
-                <F as SealedFixed>::overflowing_from_fixed(self).0
+                SealedFixed::wrapping_from_fixed(self)
             }
         );
 
@@ -1049,7 +955,7 @@ assert_eq!(Fix::wrapping_from_int(large), wrapped);
             where
                 I: Int,
             {
-                Self::overflowing_from_int(val).0
+                SealedInt::wrapping_to_fixed(val)
             }
         );
 
@@ -1118,7 +1024,7 @@ assert_eq!(",
             where
                 I: Int,
             {
-                <I as SealedInt>::overflowing_from_fixed(self).0
+                SealedInt::wrapping_from_fixed(self)
             }
         );
 
@@ -1216,31 +1122,7 @@ assert_eq!(Dst::overflowing_from_fixed(too_large), (wrapped, true));
             where
                 F: Fixed,
             {
-                let (value, _, mut overflow) = val.to_bits().to_fixed_dir_overflow(
-                    F::FRAC_NBITS as i32,
-                    Self::FRAC_NBITS,
-                    Self::INT_NBITS,
-                );
-                let bits = if_signed_unsigned!(
-                    $Signedness,
-                    match value {
-                        Widest::Unsigned(bits) => {
-                            if (bits as <Self as SealedFixed>::Bits) < 0 {
-                                overflow = true;
-                            }
-                            bits as <Self as SealedFixed>::Bits
-                        }
-                        Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
-                    },
-                    match value {
-                        Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
-                        Widest::Negative(bits) => {
-                            overflow = true;
-                            bits as <Self as SealedFixed>::Bits
-                        }
-                    },
-                );
-                (SealedFixed::from_bits(bits), overflow)
+                SealedFixed::overflowing_from_fixed(val)
             }
         );
 
@@ -1277,7 +1159,7 @@ assert_eq!(Src::max_value().overflowing_to_fixed::<TooFewIntBits>(), (wrapped, t
             where
                 F: Fixed,
             {
-                <F as SealedFixed>::overflowing_from_fixed(self)
+                SealedFixed::overflowing_from_fixed(self)
             }
         );
 
@@ -1332,31 +1214,7 @@ assert_eq!(Fix::overflowing_from_int(large), (wrapped, true));
             where
                 I: Int,
             {
-                let (value, _, mut overflow) = val.to_fixed_dir_overflow(
-                    0,
-                    Self::FRAC_NBITS,
-                    Self::INT_NBITS,
-                );
-                let bits = if_signed_unsigned!(
-                    $Signedness,
-                    match value {
-                        Widest::Unsigned(bits) => {
-                            if (bits as <Self as SealedFixed>::Bits) < 0 {
-                                overflow = true;
-                            }
-                            bits as <Self as SealedFixed>::Bits
-                        }
-                        Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
-                    },
-                    match value {
-                        Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
-                        Widest::Negative(bits) => {
-                            overflow = true;
-                            bits as <Self as SealedFixed>::Bits
-                        }
-                    },
-                );
-                (SealedFixed::from_bits(bits), overflow)
+                SealedInt::overflowing_to_fixed(val)
             }
         );
 
@@ -1424,7 +1282,7 @@ assert_eq!(does_not_fit.overflowing_to_int::<",
             where
                 I: Int,
             {
-                <I as SealedInt>::overflowing_from_fixed(self)
+                SealedInt::overflowing_from_fixed(self)
             }
         );
 

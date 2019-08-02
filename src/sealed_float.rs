@@ -16,7 +16,7 @@
 #[cfg(feature = "f16")]
 use half::f16;
 use {
-    crate::sealed::{Fixed, SealedInt, Widest},
+    crate::sealed::{Fixed, SealedFixed, SealedInt, Widest},
     core::{
         cmp::Ordering,
         fmt::{Debug, Display},
@@ -45,6 +45,56 @@ pub trait SealedFloat: Copy + Debug + Display {
     fn parts(self) -> (bool, i32, Self::Bits);
     fn from_parts(sign: bool, exp: i32, mant: Self::Bits) -> Self;
 
+    #[inline]
+    fn to_fixed<F>(self) -> F
+    where
+        F: Fixed,
+    {
+        let (wrapped, overflow) = Self::overflowing_to_fixed(self);
+        debug_assert!(!overflow, "{} overflows", self);
+        let _ = overflow;
+        wrapped
+    }
+    #[inline]
+    fn checked_to_fixed<F>(self) -> Option<F>
+    where
+        F: Fixed,
+    {
+        if !self.is_finite() {
+            return None;
+        }
+        match Self::overflowing_to_fixed(self) {
+            (wrapped, false) => Some(wrapped),
+            (_, true) => None,
+        }
+    }
+    #[inline]
+    fn saturating_to_fixed<F>(self) -> F
+    where
+        F: Fixed,
+    {
+        assert!(!self.is_nan(), "NaN");
+        let saturated = if self.is_sign_negative() {
+            F::from_bits(<F as SealedFixed>::Bits::min_value())
+        } else {
+            F::from_bits(<F as SealedFixed>::Bits::max_value())
+        };
+        if !self.is_finite() {
+            return saturated;
+        }
+        match Self::overflowing_to_fixed(self) {
+            (wrapped, false) => wrapped,
+            (_, true) => saturated,
+        }
+    }
+    #[inline]
+    fn wrapping_to_fixed<F>(self) -> F
+    where
+        F: Fixed,
+    {
+        let (wrapped, _) = Self::overflowing_to_fixed(self);
+        wrapped
+    }
     fn overflowing_to_fixed<F>(self) -> (F, bool)
     where
         F: Fixed;

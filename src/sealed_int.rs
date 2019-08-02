@@ -36,9 +36,72 @@ pub trait SealedInt: Copy + Ord + Debug + Display {
     const IS_SIGNED: bool = Self::IsSigned::BOOL;
     const MSB: Self;
 
-    fn overflowing_from_fixed<F>(fixed: F) -> (Self, bool)
+    #[inline]
+    fn from_fixed<F>(val: F) -> Self
+    where
+        F: Fixed,
+    {
+        let (wrapped, overflow) = Self::overflowing_from_fixed(val);
+        debug_assert!(!overflow, "{} overflows", val);
+        let _ = overflow;
+        wrapped
+    }
+    #[inline]
+    fn checked_from_fixed<F>(val: F) -> Option<Self>
+    where
+        F: Fixed,
+    {
+        match Self::overflowing_from_fixed(val) {
+            (_, true) => None,
+            (wrapped, false) => Some(wrapped),
+        }
+    }
+    fn saturating_from_fixed<F>(val: F) -> Self
     where
         F: Fixed;
+    #[inline]
+    fn wrapping_from_fixed<F>(val: F) -> Self
+    where
+        F: Fixed,
+    {
+        let (wrapped, _) = Self::overflowing_from_fixed(val);
+        wrapped
+    }
+    fn overflowing_from_fixed<F>(val: F) -> (Self, bool)
+    where
+        F: Fixed;
+
+    #[inline]
+    fn to_fixed<F>(self) -> F
+    where
+        F: Fixed,
+    {
+        let (wrapped, overflow) = Self::overflowing_to_fixed(self);
+        debug_assert!(!overflow, "{} overflows", self);
+        let _ = overflow;
+        wrapped
+    }
+    #[inline]
+    fn checked_to_fixed<F>(self) -> Option<F>
+    where
+        F: Fixed,
+    {
+        match Self::overflowing_to_fixed(self) {
+            (_, true) => None,
+            (wrapped, false) => Some(wrapped),
+        }
+    }
+    fn saturating_to_fixed<F>(self) -> F
+    where
+        F: Fixed;
+    #[inline]
+    fn wrapping_to_fixed<F>(self) -> F
+    where
+        F: Fixed,
+    {
+        let (wrapped, _) = Self::overflowing_to_fixed(self);
+        wrapped
+    }
     fn overflowing_to_fixed<F>(self) -> (F, bool)
     where
         F: Fixed;
@@ -85,21 +148,35 @@ macro_rules! sealed_int {
             }
 
             #[inline]
-            fn overflowing_from_fixed<F>(fixed: F) -> (Self, bool)
+            fn saturating_from_fixed<F>(val: F) -> Self
             where
                 F: Fixed,
             {
-                let (wrapped, overflow) = Self::ReprFixed::overflowing_from_fixed(fixed);
+                let saturated = Self::ReprFixed::saturating_from_fixed(val);
+                IntRepr::from_int_repr(saturated.to_bits())
+            }
+            #[inline]
+            fn overflowing_from_fixed<F>(val: F) -> (Self, bool)
+            where
+                F: Fixed,
+            {
+                let (wrapped, overflow) = Self::ReprFixed::overflowing_from_fixed(val);
                 (IntRepr::from_int_repr(wrapped.to_bits()), overflow)
             }
 
+            #[inline]
+            fn saturating_to_fixed<F>(self) -> F
+            where
+                F: Fixed,
+            {
+                SealedFixed::saturating_from_fixed(self.to_repr_fixed())
+            }
             #[inline]
             fn overflowing_to_fixed<F>(self) -> (F, bool)
             where
                 F: Fixed
             {
-                let from_bits = Self::ReprFixed::from_bits(self.int_repr());
-                <F as SealedFixed>::overflowing_from_fixed(from_bits)
+                SealedFixed::overflowing_from_fixed(self.to_repr_fixed())
             }
 
             #[inline]

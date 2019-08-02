@@ -49,9 +49,37 @@ pub trait SealedFixed: Copy + Debug + Default + Display + Eq + Hash + Ord {
     // 0 for no int bits
     const INT_LSB: u128 = Self::INT_MASK ^ (Self::INT_MASK << 1);
 
+    #[inline]
+    fn from_fixed<F>(val: F) -> Self
+    where
+        F: Fixed,
+    {
+        let (wrapped, overflow) = SealedFixed::overflowing_from_fixed(val);
+        debug_assert!(!overflow, "{} overflows", val);
+        let _ = overflow;
+        wrapped
+    }
+    #[inline]
+    fn checked_from_fixed<F>(val: F) -> Option<Self>
+    where
+        F: Fixed,
+    {
+        match SealedFixed::overflowing_from_fixed(val) {
+            (_, true) => None,
+            (wrapped, false) => Some(wrapped),
+        }
+    }
     fn saturating_from_fixed<F>(fixed: F) -> Self
     where
         F: Fixed;
+    #[inline]
+    fn wrapping_from_fixed<F>(val: F) -> Self
+    where
+        F: Fixed,
+    {
+        let (wrapped, _) = SealedFixed::overflowing_from_fixed(val);
+        wrapped
+    }
     fn overflowing_from_fixed<F>(fixed: F) -> (Self, bool)
     where
         F: Fixed;
@@ -109,19 +137,73 @@ macro_rules! sealed_fixed {
             type Bits = $Bits;
 
             #[inline]
-            fn saturating_from_fixed<F>(fixed: F) -> Self
+            fn saturating_from_fixed<F>(val: F) -> Self
             where
                 F: Fixed,
             {
-                $Fixed::saturating_from_fixed(fixed)
+                let (value, _, overflow) = val.to_bits().to_fixed_dir_overflow(
+                    F::FRAC_NBITS as i32,
+                    Self::FRAC_NBITS,
+                    Self::INT_NBITS,
+                );
+                if overflow {
+                    return if val.to_bits().is_negative() {
+                        Self::from_bits(Self::Bits::min_value())
+                    } else {
+                        Self::from_bits(Self::Bits::max_value())
+                    };
+                }
+                let bits = if_signed_unsigned!(
+                    $Signedness,
+                    match value {
+                        Widest::Unsigned(bits) => {
+                            if (bits as Self::Bits) < 0 {
+                                return Self::from_bits(Self::Bits::max_value());
+                            }
+                            bits as Self::Bits
+                        }
+                        Widest::Negative(bits) => bits as Self::Bits,
+                    },
+                    match value {
+                        Widest::Unsigned(bits) => bits as Self::Bits,
+                        Widest::Negative(_) => {
+                            return Self::from_bits(Self::Bits::min_value());
+                        }
+                    },
+                );
+                SealedFixed::from_bits(bits)
             }
 
             #[inline]
-            fn overflowing_from_fixed<F>(fixed: F) -> (Self, bool)
+            fn overflowing_from_fixed<F>(val: F) -> (Self, bool)
             where
                 F: Fixed,
             {
-                $Fixed::overflowing_from_fixed(fixed)
+                let (value, _, mut overflow) = val.to_bits().to_fixed_dir_overflow(
+                    F::FRAC_NBITS as i32,
+                    Self::FRAC_NBITS,
+                    Self::INT_NBITS,
+                );
+                let bits = if_signed_unsigned!(
+                    $Signedness,
+                    match value {
+                        Widest::Unsigned(bits) => {
+                            if (bits as Self::Bits) < 0 {
+                                overflow = true;
+                            }
+                            bits as Self::Bits
+                        }
+                        Widest::Negative(bits) => bits as Self::Bits,
+                    },
+                    match value {
+                        Widest::Unsigned(bits) => bits as Self::Bits,
+                        Widest::Negative(bits) => {
+                            overflow = true;
+                            bits as Self::Bits
+                        }
+                    },
+                );
+                (SealedFixed::from_bits(bits), overflow)
             }
 
             #[inline]

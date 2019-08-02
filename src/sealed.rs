@@ -159,51 +159,35 @@ macro_rules! checked_int {
             where
                 F: Fixed,
             {
-                let (wrapped, overflow) = <Self as SealedInt>::overflowing_from_fixed(val);
-                debug_assert!(!overflow, "{} overflows", val);
-                let _ = overflow;
-                wrapped
+                SealedInt::from_fixed(val)
             }
             #[inline]
             fn checked_from_fixed<F>(val: F) -> Option<Self>
             where
                 F: Fixed,
             {
-                match <Self as SealedInt>::overflowing_from_fixed(val) {
-                    (wrapped, false) => Some(wrapped),
-                    (_, true) => None,
-                }
+                SealedInt::checked_from_fixed(val)
             }
             #[inline]
             fn saturating_from_fixed<F>(val: F) -> Self
             where
                 F: Fixed,
             {
-                match <Self as SealedInt>::overflowing_from_fixed(val) {
-                    (wrapped, false) => wrapped,
-                    (_, true) => {
-                        if val.to_bits().is_negative() {
-                            Self::min_value()
-                        } else {
-                            Self::max_value()
-                        }
-                    }
-                }
+                SealedInt::saturating_from_fixed(val)
             }
             #[inline]
             fn wrapping_from_fixed<F>(val: F) -> Self
             where
                 F: Fixed,
             {
-                let (wrapped, _) = <Self as SealedInt>::overflowing_from_fixed(val);
-                wrapped
+                SealedInt::wrapping_from_fixed(val)
             }
             #[inline]
             fn overflowing_from_fixed<F>(val: F) -> (Self, bool)
             where
                 F: Fixed,
             {
-                <Self as SealedInt>::overflowing_from_fixed(val)
+                SealedInt::overflowing_from_fixed(val)
             }
         }
 
@@ -213,51 +197,35 @@ macro_rules! checked_int {
             where
                 F: Fixed,
             {
-                let (wrapped, overflow) = <Self as SealedInt>::overflowing_to_fixed(self);
-                debug_assert!(!overflow, "{} overflows", self);
-                let _ = overflow;
-                wrapped
+                SealedInt::to_fixed(self)
             }
             #[inline]
             fn checked_to_fixed<F>(self) -> Option<F>
             where
                 F: Fixed,
             {
-                match <Self as SealedInt>::overflowing_to_fixed(self) {
-                    (wrapped, false) => Some(wrapped),
-                    (_, true) => None,
-                }
+                SealedInt::checked_to_fixed(self)
             }
             #[inline]
             fn saturating_to_fixed<F>(self) -> F
             where
                 F: Fixed,
             {
-                match <Self as SealedInt>::overflowing_to_fixed(self) {
-                    (wrapped, false) => wrapped,
-                    (_, true) => {
-                        if self.is_negative() {
-                            F::from_bits(<F as SealedFixed>::Bits::min_value())
-                        } else {
-                            F::from_bits(<F as SealedFixed>::Bits::max_value())
-                        }
-                    }
-                }
+                SealedInt::saturating_to_fixed(self)
             }
             #[inline]
             fn wrapping_to_fixed<F>(self) -> F
             where
                 F: Fixed,
             {
-                let (wrapped, _) = <Self as SealedInt>::overflowing_to_fixed(self);
-                wrapped
+                SealedInt::wrapping_to_fixed(self)
             }
             #[inline]
             fn overflowing_to_fixed<F>(self) -> (F, bool)
             where
                 F: Fixed,
             {
-                <Self as SealedInt>::overflowing_to_fixed(self)
+                SealedInt::overflowing_to_fixed(self)
             }
         }
     };
@@ -322,57 +290,35 @@ macro_rules! checked_float {
             where
                 F: Fixed,
             {
-                let (wrapped, overflow) = <Self as SealedFloat>::overflowing_to_fixed(self);
-                debug_assert!(!overflow, "{} overflows", self);
-                let _ = overflow;
-                wrapped
+                SealedFloat::to_fixed(self)
             }
             #[inline]
             fn checked_to_fixed<F>(self) -> Option<F>
             where
                 F: Fixed,
             {
-                if !self.is_finite() {
-                    return None;
-                }
-                match <Self as SealedFloat>::overflowing_to_fixed(self) {
-                    (wrapped, false) => Some(wrapped),
-                    (_, true) => None,
-                }
+                SealedFloat::checked_to_fixed(self)
             }
             #[inline]
             fn saturating_to_fixed<F>(self) -> F
             where
                 F: Fixed,
             {
-                assert!(!self.is_nan(), "NaN");
-                let saturated = if self.is_sign_negative() {
-                    F::from_bits(<F as SealedFixed>::Bits::min_value())
-                } else {
-                    F::from_bits(<F as SealedFixed>::Bits::max_value())
-                };
-                if !self.is_finite() {
-                    return saturated;
-                }
-                match <Self as SealedFloat>::overflowing_to_fixed(self) {
-                    (wrapped, false) => wrapped,
-                    (_, true) => saturated,
-                }
+                SealedFloat::saturating_to_fixed(self)
             }
             #[inline]
             fn wrapping_to_fixed<F>(self) -> F
             where
                 F: Fixed,
             {
-                let (wrapped, _) = <Self as SealedFloat>::overflowing_to_fixed(self);
-                wrapped
+                SealedFloat::wrapping_to_fixed(self)
             }
             #[inline]
             fn overflowing_to_fixed<F>(self) -> (F, bool)
             where
                 F: Fixed,
             {
-                <Self as SealedFloat>::overflowing_to_fixed(self)
+                SealedFloat::overflowing_to_fixed(self)
             }
         }
     };
@@ -394,44 +340,35 @@ macro_rules! checked_fixed {
             where
                 F: Fixed,
             {
-                let (wrapped, overflow) = <Self as SealedFixed>::overflowing_from_fixed(val);
-                debug_assert!(!overflow, "{} overflows", val);
-                let _ = overflow;
-                wrapped
+                SealedFixed::from_fixed(val)
             }
             #[inline]
             fn checked_from_fixed<F>(val: F) -> Option<Self>
             where
                 F: Fixed,
             {
-                let (wrapped, overflow) = <Self as SealedFixed>::overflowing_from_fixed(val);
-                if overflow {
-                    None
-                } else {
-                    Some(wrapped)
-                }
+                SealedFixed::checked_from_fixed(val)
             }
             #[inline]
             fn saturating_from_fixed<F>(val: F) -> Self
             where
                 F: Fixed,
             {
-                <Self as SealedFixed>::saturating_from_fixed(val)
+                SealedFixed::saturating_from_fixed(val)
             }
             #[inline]
             fn wrapping_from_fixed<F>(val: F) -> Self
             where
                 F: Fixed,
             {
-                let (wrapped, _) = <Self as SealedFixed>::overflowing_from_fixed(val);
-                wrapped
+                SealedFixed::wrapping_from_fixed(val)
             }
             #[inline]
             fn overflowing_from_fixed<F>(val: F) -> (Self, bool)
             where
                 F: Fixed,
             {
-                <Self as SealedFixed>::overflowing_from_fixed(val)
+                SealedFixed::overflowing_from_fixed(val)
             }
         }
 
@@ -444,42 +381,35 @@ macro_rules! checked_fixed {
             where
                 F: Fixed,
             {
-                let (wrapped, overflow) = <F as SealedFixed>::overflowing_from_fixed(self);
-                debug_assert!(!overflow, "{} overflows", self);
-                let _ = overflow;
-                wrapped
+                SealedFixed::from_fixed(self)
             }
             #[inline]
             fn checked_to_fixed<F>(self) -> Option<F>
             where
                 F: Fixed,
             {
-                match <F as SealedFixed>::overflowing_from_fixed(self) {
-                    (wrapped, false) => Some(wrapped),
-                    (_, true) => None,
-                }
+                SealedFixed::checked_from_fixed(self)
             }
             #[inline]
             fn saturating_to_fixed<F>(self) -> F
             where
                 F: Fixed,
             {
-                <F as SealedFixed>::saturating_from_fixed(self)
+                SealedFixed::saturating_from_fixed(self)
             }
             #[inline]
             fn wrapping_to_fixed<F>(self) -> F
             where
                 F: Fixed,
             {
-                let (wrapped, _) = <F as SealedFixed>::overflowing_from_fixed(self);
-                wrapped
+                SealedFixed::wrapping_from_fixed(self)
             }
             #[inline]
             fn overflowing_to_fixed<F>(self) -> (F, bool)
             where
                 F: Fixed,
             {
-                <F as SealedFixed>::overflowing_from_fixed(self)
+                SealedFixed::overflowing_from_fixed(self)
             }
         }
     };

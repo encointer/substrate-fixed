@@ -209,6 +209,7 @@ mod sealed_float;
 mod sealed_int;
 #[cfg(feature = "serde")]
 mod serdeize;
+pub mod traits;
 pub mod types;
 mod wide_div;
 mod wrapping;

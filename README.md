@@ -41,6 +41,7 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
 ### Version 0.4.0 news (unreleased)
 
+  * The [*fixed* crate] now requires rustc version 1.31.1 or later.
   * The [`traits`] module was added, with its traits [`LossyFrom`],
     [`LossyInto`], [`FromFixed`] and [`ToFixed`].
   * All types implementing the sealed traits [`Int`], [`Float`] and

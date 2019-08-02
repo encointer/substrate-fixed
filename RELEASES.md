@@ -8,6 +8,7 @@ as-is, without any warranty. -->
 Version 0.4.0 (unreleased)
 ==========================
 
+  * The *fixed* crate now requires rustc version 1.31.1 or later.
   * The `traits` module was added, with its traits `LossyFrom`,
     `LossyInto`, `FromFixed` and `ToFixed`.
   * All types implementing the sealed traits `Int`, `Float` and

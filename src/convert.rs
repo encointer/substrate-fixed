@@ -17,6 +17,7 @@ use core::ops::{Add, Sub};
 use frac::{IsGreaterOrEqual, IsLessOrEqual, True, Unsigned, U0, U1, U128, U16, U2, U32, U64, U8};
 #[cfg(feature = "f16")]
 use half::f16;
+use traits::{CheckedFromFixed, LossyFrom};
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
@@ -89,6 +90,71 @@ macro_rules! convert {
     };
 }
 
+macro_rules! convert_lossy {
+    (($SrcU:ident, $SrcI:ident, $SrcBits:ident) -> ($DstU:ident, $DstI:ident, $DstBits:ident)) => {
+        // Conditions: FracDst + $SrcBits <= FracSrc + $DstBits
+        impl<FracSrc, FracDst, FracSrcP, FracDstP> LossyFrom<$SrcU<FracSrc>> for $DstU<FracDst>
+        where
+            FracSrc: Unsigned
+                + IsLessOrEqual<$SrcBits, Output = True>
+                + Add<$DstBits, Output = FracSrcP>,
+            FracDst: Unsigned
+                + IsLessOrEqual<$DstBits, Output = True>
+                + Add<$SrcBits, Output = FracDstP>,
+            FracSrcP: Unsigned,
+            FracDstP: Unsigned + IsLessOrEqual<FracSrcP, Output = True>,
+        {
+            #[inline]
+            fn lossy_from(src: $SrcU<FracSrc>) -> $DstU<FracDst> {
+                CheckedFromFixed::wrapping_from_fixed(src)
+            }
+        }
+
+        // Conditions: FracDst + $SrcBits <= FracSrc + $DstBits
+        impl<FracSrc, FracDst, FracSrcP, FracDstP> LossyFrom<$SrcI<FracSrc>> for $DstI<FracDst>
+        where
+            FracSrc: Unsigned
+                + IsLessOrEqual<$SrcBits, Output = True>
+                + Add<$DstBits, Output = FracSrcP>,
+            FracDst: Unsigned
+                + IsLessOrEqual<$DstBits, Output = True>
+                + Add<$SrcBits, Output = FracDstP>,
+            FracSrcP: Unsigned,
+            FracDstP: Unsigned + IsLessOrEqual<FracSrcP, Output = True>,
+        {
+            #[inline]
+            fn lossy_from(src: $SrcI<FracSrc>) -> $DstI<FracDst> {
+                CheckedFromFixed::wrapping_from_fixed(src)
+            }
+        }
+
+        // Conditions: FracDst + $SrcBits + 1 <= FracSrc + $DstBits
+        impl<FracSrc, FracDst, FracSrcP, FracDstP> LossyFrom<$SrcU<FracSrc>> for $DstI<FracDst>
+        where
+            FracSrc: Unsigned
+                + IsLessOrEqual<$SrcBits, Output = True>
+                + Add<$DstBits, Output = FracSrcP>,
+            FracDst: Unsigned
+                + IsLessOrEqual<$DstBits, Output = True>
+                + Add<<$SrcBits as Add<U1>>::Output, Output = FracDstP>,
+            FracSrcP: Unsigned,
+            FracDstP: Unsigned + IsLessOrEqual<FracSrcP, Output = True>,
+        {
+            #[inline]
+            fn lossy_from(src: $SrcU<FracSrc>) -> $DstI<FracDst> {
+                CheckedFromFixed::wrapping_from_fixed(src)
+            }
+        }
+    };
+    ($SrcU:ident, $SrcI:ident, $SrcBits:ident) => {
+        convert_lossy! { ($SrcU, $SrcI, $SrcBits) -> (FixedU8, FixedI8, U8) }
+        convert_lossy! { ($SrcU, $SrcI, $SrcBits) -> (FixedU16, FixedI16, U16) }
+        convert_lossy! { ($SrcU, $SrcI, $SrcBits) -> (FixedU32, FixedI32, U32) }
+        convert_lossy! { ($SrcU, $SrcI, $SrcBits) -> (FixedU64, FixedI64, U64) }
+        convert_lossy! { ($SrcU, $SrcI, $SrcBits) -> (FixedU128, FixedI128, U128) }
+    };
+}
+
 convert! { (FixedU8, FixedI8, U8) -> (FixedU16, FixedI16, U16) }
 convert! { (FixedU8, FixedI8, U8) -> (FixedU32, FixedI32, U32) }
 convert! { (FixedU8, FixedI8, U8) -> (FixedU64, FixedI64, U64) }
@@ -102,6 +168,12 @@ convert! { (FixedU32, FixedI32, U32) -> (FixedU64, FixedI64, U64) }
 convert! { (FixedU32, FixedI32, U32) -> (FixedU128, FixedI128, U128) }
 
 convert! { (FixedU64, FixedI64, U64) -> (FixedU128, FixedI128, U128) }
+
+convert_lossy! { FixedU8, FixedI8, U8 }
+convert_lossy! { FixedU16, FixedI16, U16 }
+convert_lossy! { FixedU32, FixedI32, U32 }
+convert_lossy! { FixedU64, FixedI64, U64 }
+convert_lossy! { FixedU128, FixedI128, U128 }
 
 macro_rules! int_to_fixed {
     (($SrcU:ident, $SrcI:ident, $SrcBits:ident) -> ($DstU:ident, $DstI:ident, $DstBits:ident)) => {
@@ -152,6 +224,48 @@ macro_rules! int_to_fixed {
                 $DstI::<FracDst>::from_bits(unshifted << shift)
             }
         }
+
+        // Condition: FracDst <= $DstBits - $SrcBits
+        impl<FracDst> LossyFrom<$SrcU> for $DstU<FracDst>
+        where
+            FracDst: Unsigned
+                + IsLessOrEqual<$DstBits, Output = True>
+                + IsLessOrEqual<<$DstBits as Sub<$SrcBits>>::Output, Output = True>,
+        {
+            #[inline]
+            fn lossy_from(src: $SrcU) -> $DstU<FracDst> {
+                From::from(src)
+            }
+        }
+
+        // Condition: FracDst <= $DstBits - $SrcBits
+        impl<FracDst> LossyFrom<$SrcI> for $DstI<FracDst>
+        where
+            FracDst: Unsigned
+                + IsLessOrEqual<$DstBits, Output = True>
+                + IsLessOrEqual<<$DstBits as Sub<$SrcBits>>::Output, Output = True>,
+        {
+            #[inline]
+            fn lossy_from(src: $SrcI) -> $DstI<FracDst> {
+                From::from(src)
+            }
+        }
+
+        // Condition: FracDst <= $DstBits - $SrcBits - 1
+        impl<FracDst> LossyFrom<$SrcU> for $DstI<FracDst>
+        where
+            FracDst: Unsigned
+                + IsLessOrEqual<$DstBits, Output = True>
+                + IsLessOrEqual<
+                    <<$DstBits as Sub<$SrcBits>>::Output as Sub<U1>>::Output,
+                    Output = True,
+                >,
+        {
+            #[inline]
+            fn lossy_from(src: $SrcU) -> $DstI<FracDst> {
+                From::from(src)
+            }
+        }
     };
 
     (($SrcU:ident, $SrcI:ident) -> ($DstU:ident, $DstI:ident)) => {
@@ -166,6 +280,20 @@ macro_rules! int_to_fixed {
             #[inline]
             fn from(src: $SrcI) -> $DstI<U0> {
                 $DstI::<U0>::from_bits(src)
+            }
+        }
+
+        impl LossyFrom<$SrcU> for $DstU<U0> {
+            #[inline]
+            fn lossy_from(src: $SrcU) -> $DstU<U0> {
+                From::from(src)
+            }
+        }
+
+        impl LossyFrom<$SrcI> for $DstI<U0> {
+            #[inline]
+            fn lossy_from(src: $SrcI) -> $DstI<U0> {
+                From::from(src)
             }
         }
     };
@@ -281,6 +409,68 @@ fixed_to_int! { (FixedU64, FixedI64) -> wider (u128, i128) }
 
 fixed_to_int! { (FixedU128, FixedI128) -> (u128, i128) }
 
+macro_rules! fixed_to_int_lossy {
+    (($SrcU:ident, $SrcI:ident, $SrcBits:ident) -> ($DstU:ident, $DstI:ident, $DstBits:ident)) => {
+        // Conditions: $SrcBits <= FracSrc + $DstBits
+        impl<FracSrc, FracSrcP> LossyFrom<$SrcU<FracSrc>> for $DstU
+        where
+            FracSrc: Unsigned
+                + IsLessOrEqual<$SrcBits, Output = True>
+                + Add<$DstBits, Output = FracSrcP>,
+            FracSrcP: Unsigned,
+            $SrcBits: IsLessOrEqual<FracSrcP, Output = True>,
+        {
+            #[inline]
+            fn lossy_from(src: $SrcU<FracSrc>) -> $DstU {
+                CheckedFromFixed::wrapping_from_fixed(src)
+            }
+        }
+
+        // Conditions: $SrcBits <= FracSrc + $DstBits
+        impl<FracSrc, FracSrcP> LossyFrom<$SrcI<FracSrc>> for $DstI
+        where
+            FracSrc: Unsigned
+                + IsLessOrEqual<$SrcBits, Output = True>
+                + Add<$DstBits, Output = FracSrcP>,
+            FracSrcP: Unsigned,
+            $SrcBits: IsLessOrEqual<FracSrcP, Output = True>,
+        {
+            #[inline]
+            fn lossy_from(src: $SrcI<FracSrc>) -> $DstI {
+                CheckedFromFixed::wrapping_from_fixed(src)
+            }
+        }
+
+        // Conditions: $SrcBits + 1 <= FracSrc + $DstBits
+        impl<FracSrc, FracSrcP> LossyFrom<$SrcU<FracSrc>> for $DstI
+        where
+            FracSrc: Unsigned
+                + IsLessOrEqual<$SrcBits, Output = True>
+                + Add<$DstBits, Output = FracSrcP>,
+            FracSrcP: Unsigned,
+            <$SrcBits as Add<U1>>::Output: IsLessOrEqual<FracSrcP, Output = True>,
+        {
+            #[inline]
+            fn lossy_from(src: $SrcU<FracSrc>) -> $DstI {
+                CheckedFromFixed::wrapping_from_fixed(src)
+            }
+        }
+    };
+    ($SrcU:ident, $SrcI:ident, $SrcBits:ident) => {
+        fixed_to_int_lossy! { ($SrcU, $SrcI, $SrcBits) -> (u8, i8, U8) }
+        fixed_to_int_lossy! { ($SrcU, $SrcI, $SrcBits) -> (u16, i16, U16) }
+        fixed_to_int_lossy! { ($SrcU, $SrcI, $SrcBits) -> (u32, i32, U32) }
+        fixed_to_int_lossy! { ($SrcU, $SrcI, $SrcBits) -> (u64, i64, U64) }
+        fixed_to_int_lossy! { ($SrcU, $SrcI, $SrcBits) -> (u128, i128, U128) }
+    };
+}
+
+fixed_to_int_lossy! { FixedU8, FixedI8, U8 }
+fixed_to_int_lossy! { FixedU16, FixedI16, U16 }
+fixed_to_int_lossy! { FixedU32, FixedI32, U32 }
+fixed_to_int_lossy! { FixedU64, FixedI64, U64 }
+fixed_to_int_lossy! { FixedU128, FixedI128, U128 }
+
 macro_rules! fixed_to_float {
     ($Fixed:ident($Len:ty) -> $Float:ident) => {
         impl<Frac> From<$Fixed<Frac>> for $Float
@@ -309,6 +499,37 @@ fixed_to_float! { FixedI32(U32) -> f64 }
 fixed_to_float! { FixedU8(U8) -> f64 }
 fixed_to_float! { FixedU16(U16) -> f64 }
 fixed_to_float! { FixedU32(U32) -> f64 }
+
+macro_rules! fixed_to_float_lossy {
+    ($Fixed:ident($Len:ty) -> $Float:ident) => {
+        impl<Frac> LossyFrom<$Fixed<Frac>> for $Float
+        where
+            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+        {
+            #[inline]
+            fn lossy_from(src: $Fixed<Frac>) -> $Float {
+                src.to_float()
+            }
+        }
+    };
+    ($Fixed:ident($Len:ty)) => {
+        #[cfg(feature = "f16")]
+        fixed_to_float_lossy! { $Fixed($Len) -> f16 }
+        fixed_to_float_lossy! { $Fixed($Len) -> f32 }
+        fixed_to_float_lossy! { $Fixed($Len) -> f64 }
+    };
+}
+
+fixed_to_float_lossy! { FixedI8(U8) }
+fixed_to_float_lossy! { FixedI16(U16) }
+fixed_to_float_lossy! { FixedI32(U32) }
+fixed_to_float_lossy! { FixedI64(U64) }
+fixed_to_float_lossy! { FixedI128(U128) }
+fixed_to_float_lossy! { FixedU8(U8) }
+fixed_to_float_lossy! { FixedU16(U16) }
+fixed_to_float_lossy! { FixedU32(U32) }
+fixed_to_float_lossy! { FixedU64(U64) }
+fixed_to_float_lossy! { FixedU128(U128) }
 
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::float_cmp))]
 #[cfg(test)]

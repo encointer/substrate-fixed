@@ -19,6 +19,61 @@ This module contains traits.
 
 use sealed::Fixed;
 
+/// This trait provides infallible conversions that might be lossy.
+///
+/// This trait is implemented for conversions between integer
+/// primitives, floating-point primitives and fixed-point numbers.
+///
+/// # Examples
+///
+/// ```rust
+/// use fixed::traits::LossyFrom;
+/// use fixed::types::{I12F4, I4F60};
+/// // original is 0x1.234
+/// let original = I4F60::from_bits(0x1234i64 << (60 - 12));
+/// let lossy = I12F4::lossy_from(original);
+/// assert_eq!(lossy, I12F4::from_bits(0x0012));
+/// ```
+pub trait LossyFrom<Src> {
+    /// Performs the conversion.
+    fn lossy_from(src: Src) -> Self;
+}
+
+/// This trait provides infallible conversions that might be lossy.
+/// This is the reciprocal of [`LossyFrom`].
+///
+/// Usually [`LossyFrom`] should be implemented instead of this trait;
+/// there is a blanket implementation which provides this trait when
+/// [`LossyFrom`] is implemented (similar to [`Into`] and [`From`]).
+///
+/// # Examples
+///
+/// ```rust
+/// use fixed::traits::LossyInto;
+/// use fixed::types::{I12F4, I4F12};
+/// // original is 0x1.234
+/// let original = I4F12::from_bits(0x1234);
+/// let lossy: I12F4 = original.lossy_into();
+/// assert_eq!(lossy, I12F4::from_bits(0x0012));
+/// ```
+///
+/// [`From`]: https://doc.rust-lang.org/nightly/std/convert/trait.From.html
+/// [`Into`]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
+/// [`LossyFrom`]: trait.LossyFrom.html
+pub trait LossyInto<Dst> {
+    /// Performs the conversion.
+    fn lossy_into(self) -> Dst;
+}
+
+impl<Src, Dst> LossyInto<Dst> for Src
+where
+    Dst: LossyFrom<Src>,
+{
+    fn lossy_into(self) -> Dst {
+        Dst::lossy_from(self)
+    }
+}
+
 /// This trait provides checked conversions from fixed-point numbers.
 ///
 /// This trait is implemented for conversions between integer

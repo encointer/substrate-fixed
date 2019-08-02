@@ -17,7 +17,7 @@ use core::ops::{Add, Sub};
 use frac::{IsGreaterOrEqual, IsLessOrEqual, True, Unsigned, U0, U1, U128, U16, U2, U32, U64, U8};
 #[cfg(feature = "f16")]
 use half::f16;
-use traits::{CheckedFromFixed, LossyFrom};
+use traits::{FromFixed, LossyFrom};
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
@@ -106,7 +106,7 @@ macro_rules! convert_lossy {
         {
             #[inline]
             fn lossy_from(src: $SrcU<FracSrc>) -> $DstU<FracDst> {
-                CheckedFromFixed::wrapping_from_fixed(src)
+                FromFixed::wrapping_from_fixed(src)
             }
         }
 
@@ -124,7 +124,7 @@ macro_rules! convert_lossy {
         {
             #[inline]
             fn lossy_from(src: $SrcI<FracSrc>) -> $DstI<FracDst> {
-                CheckedFromFixed::wrapping_from_fixed(src)
+                FromFixed::wrapping_from_fixed(src)
             }
         }
 
@@ -142,7 +142,7 @@ macro_rules! convert_lossy {
         {
             #[inline]
             fn lossy_from(src: $SrcU<FracSrc>) -> $DstI<FracDst> {
-                CheckedFromFixed::wrapping_from_fixed(src)
+                FromFixed::wrapping_from_fixed(src)
             }
         }
     };
@@ -422,7 +422,7 @@ macro_rules! fixed_to_int_lossy {
         {
             #[inline]
             fn lossy_from(src: $SrcU<FracSrc>) -> $DstU {
-                CheckedFromFixed::wrapping_from_fixed(src)
+                FromFixed::wrapping_from_fixed(src)
             }
         }
 
@@ -437,7 +437,7 @@ macro_rules! fixed_to_int_lossy {
         {
             #[inline]
             fn lossy_from(src: $SrcI<FracSrc>) -> $DstI {
-                CheckedFromFixed::wrapping_from_fixed(src)
+                FromFixed::wrapping_from_fixed(src)
             }
         }
 
@@ -452,7 +452,7 @@ macro_rules! fixed_to_int_lossy {
         {
             #[inline]
             fn lossy_from(src: $SrcU<FracSrc>) -> $DstI {
-                CheckedFromFixed::wrapping_from_fixed(src)
+                FromFixed::wrapping_from_fixed(src)
             }
         }
     };

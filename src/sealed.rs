@@ -23,7 +23,7 @@ use half::f16;
 pub(crate) use sealed_fixed::{SealedFixed, Widest};
 pub(crate) use sealed_float::SealedFloat;
 pub(crate) use sealed_int::SealedInt;
-use traits::{CheckedFromFixed, CheckedToFixed};
+use traits::{FromFixed, ToFixed};
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
@@ -48,7 +48,7 @@ use {
 /// [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
 /// [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
 /// [`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
-pub trait Int: SealedInt + CheckedFromFixed + CheckedToFixed {
+pub trait Int: SealedInt + FromFixed + ToFixed {
     /// Converts from a fixed-point number.
     ///
     /// Any fractional bits are truncated.
@@ -318,7 +318,7 @@ pub trait Int: SealedInt + CheckedFromFixed + CheckedToFixed {
 /// [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
 /// [`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html
 /// [`f16` feature]: ../index.html#optional-features
-pub trait Float: SealedFloat + CheckedToFixed {
+pub trait Float: SealedFloat + ToFixed {
     /// Converts from a fixed-point number.
     ///
     /// This method rounds to the nearest, with ties rounding to even.
@@ -525,7 +525,7 @@ pub trait Float: SealedFloat + CheckedToFixed {
 /// [`FixedU32`]: ../struct.FixedU32.html
 /// [`FixedU64`]: ../struct.FixedU64.html
 /// [`FixedU8`]: ../struct.FixedU8.html
-pub trait Fixed: SealedFixed + CheckedFromFixed + CheckedToFixed {
+pub trait Fixed: SealedFixed + FromFixed + ToFixed {
     /// Converts from another fixed-point number which can have a
     /// different type.
     ///
@@ -888,7 +888,7 @@ impl<Frac> Fixed for FixedU32<Frac> where Frac: Unsigned + IsLessOrEqual<U32, Ou
 impl<Frac> Fixed for FixedU64<Frac> where Frac: Unsigned + IsLessOrEqual<U64, Output = True> {}
 impl<Frac> Fixed for FixedU128<Frac> where Frac: Unsigned + IsLessOrEqual<U128, Output = True> {}
 
-impl CheckedToFixed for bool {
+impl ToFixed for bool {
     #[inline]
     fn to_fixed<F>(self) -> F
     where
@@ -928,7 +928,7 @@ impl CheckedToFixed for bool {
 
 macro_rules! checked_int {
     ($Int:ty) => {
-        impl CheckedFromFixed for $Int {
+        impl FromFixed for $Int {
             #[inline]
             fn from_fixed<F>(val: F) -> Self
             where
@@ -966,7 +966,7 @@ macro_rules! checked_int {
             }
         }
 
-        impl CheckedToFixed for $Int {
+        impl ToFixed for $Int {
             #[inline]
             fn to_fixed<F>(self) -> F
             where
@@ -1021,7 +1021,7 @@ checked_int! { usize }
 
 macro_rules! checked_fixed {
     ($Fixed:ident, $NBits:ident) => {
-        impl<Frac> CheckedFromFixed for $Fixed<Frac>
+        impl<Frac> FromFixed for $Fixed<Frac>
         where
             Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
         {
@@ -1062,7 +1062,7 @@ macro_rules! checked_fixed {
             }
         }
 
-        impl<Frac> CheckedToFixed for $Fixed<Frac>
+        impl<Frac> ToFixed for $Fixed<Frac>
         where
             Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
         {
@@ -1118,7 +1118,7 @@ checked_fixed! { FixedU128, U128 }
 
 macro_rules! checked_float {
     ($Float:ty) => {
-        impl CheckedFromFixed for $Float {
+        impl FromFixed for $Float {
             #[inline]
             fn from_fixed<F>(val: F) -> Self
             where
@@ -1156,7 +1156,7 @@ macro_rules! checked_float {
             }
         }
 
-        impl CheckedToFixed for $Float {
+        impl ToFixed for $Float {
             #[inline]
             fn to_fixed<F>(self) -> F
             where

@@ -82,7 +82,7 @@ where
 /// # Examples
 ///
 /// ```rust
-/// use fixed::traits::CheckedFromFixed;
+/// use fixed::traits::FromFixed;
 /// use fixed::types::U8F8;
 /// // 0x87.65
 /// let f = U8F8::from_bits(0x8765);
@@ -95,7 +95,7 @@ where
 /// assert_eq!(i8::wrapping_from_fixed(f), 0x87u8 as i8);
 /// assert_eq!(i8::overflowing_from_fixed(f), (0x87u8 as i8, true));
 /// ```
-pub trait CheckedFromFixed {
+pub trait FromFixed {
     /// Converts from a fixed-point number.
     ///
     /// Any extra fractional bits are truncated.
@@ -160,7 +160,7 @@ pub trait CheckedFromFixed {
 /// # Examples
 ///
 /// ```rust
-/// use fixed::traits::CheckedToFixed;
+/// use fixed::traits::ToFixed;
 /// use fixed::types::{U8F8, U16F16};
 /// let f: U8F8 = 13.5f32.to_fixed();
 /// assert_eq!(f, U8F8::from_bits((13 << 8) | (1 << 7)));
@@ -175,7 +175,7 @@ pub trait CheckedFromFixed {
 /// let overflowing: (U8F8, bool) = too_large.overflowing_to_fixed();
 /// assert_eq!(overflowing, (U8F8::from_bits(0x3456), true));
 /// ```
-pub trait CheckedToFixed {
+pub trait ToFixed {
     /// Converts to a fixed-point number.
     ///
     /// Any extra fractional bits are truncated.

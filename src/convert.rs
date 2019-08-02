@@ -562,6 +562,68 @@ int_to_float_lossy! { u64 }
 int_to_float_lossy! { u128 }
 int_to_float_lossy! { usize }
 
+#[cfg(feature = "f16")]
+impl LossyFrom<f16> for f16 {
+    #[inline]
+    fn lossy_from(src: f16) -> f16 {
+        src
+    }
+}
+#[cfg(feature = "f16")]
+impl LossyFrom<f16> for f32 {
+    #[inline]
+    fn lossy_from(src: f16) -> f32 {
+        f32::from(src)
+    }
+}
+#[cfg(feature = "f16")]
+impl LossyFrom<f16> for f64 {
+    #[inline]
+    fn lossy_from(src: f16) -> f64 {
+        f64::from(src)
+    }
+}
+
+#[cfg(feature = "f16")]
+impl LossyFrom<f32> for f16 {
+    #[inline]
+    fn lossy_from(src: f32) -> f16 {
+        f16::from_f32(src)
+    }
+}
+impl LossyFrom<f32> for f32 {
+    #[inline]
+    fn lossy_from(src: f32) -> f32 {
+        src
+    }
+}
+impl LossyFrom<f32> for f64 {
+    #[inline]
+    fn lossy_from(src: f32) -> f64 {
+        f64::from(src)
+    }
+}
+
+#[cfg(feature = "f16")]
+impl LossyFrom<f64> for f16 {
+    #[inline]
+    fn lossy_from(src: f64) -> f16 {
+        f16::from_f64(src)
+    }
+}
+impl LossyFrom<f64> for f32 {
+    #[inline]
+    fn lossy_from(src: f64) -> f32 {
+        src as f32
+    }
+}
+impl LossyFrom<f64> for f64 {
+    #[inline]
+    fn lossy_from(src: f64) -> f64 {
+        src
+    }
+}
+
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::float_cmp))]
 #[cfg(test)]
 mod tests {

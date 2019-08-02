@@ -233,7 +233,8 @@ pub trait Int: SealedInt {
     where
         F: Fixed,
     {
-        <Self as SealedInt>::overflowing_from_fixed(val).0
+        let (wrapped, _) = <Self as SealedInt>::overflowing_from_fixed(val);
+        wrapped
     }
 
     /// Converts to a fixed-point number, wrapping if it does not fit.
@@ -251,7 +252,8 @@ pub trait Int: SealedInt {
     where
         F: Fixed,
     {
-        <Self as SealedInt>::overflowing_to_fixed(self).0
+        let (wrapped, _) = <Self as SealedInt>::overflowing_to_fixed(self);
+        wrapped
     }
 
     /// Converts from a fixed-point number.
@@ -468,7 +470,8 @@ pub trait Float: SealedFloat {
     where
         F: Fixed,
     {
-        <Self as SealedFloat>::overflowing_to_fixed(self).0
+        let (wrapped, _) = <Self as SealedFloat>::overflowing_to_fixed(self);
+        wrapped
     }
 
     /// Converts to a fixed-point number.
@@ -521,7 +524,339 @@ pub trait Float: SealedFloat {
 /// [`FixedU32`]: ../struct.FixedU32.html
 /// [`FixedU64`]: ../struct.FixedU64.html
 /// [`FixedU8`]: ../struct.FixedU8.html
-pub trait Fixed: SealedFixed {}
+pub trait Fixed: SealedFixed {
+    /// Converts from another fixed-point number which can have a
+    /// different type.
+    ///
+    /// Any extra fractional bits are truncated.
+    ///
+    /// # Panics
+    ///
+    /// When debug assertions are enabled, panics if the value does
+    /// not fit. When debug assertions are not enabled, the wrapped
+    /// value can be returned, but it is not considered a breaking
+    /// change if in the future it panics; if wrapping is required use
+    /// [`wrapping_from_fixed`] instead.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Fixed;
+    /// type Src = fixed::FixedI32<fixed::frac::U16>;
+    /// type Dst = fixed::FixedI16<fixed::frac::U4>;
+    /// // 1.75 is 1.11 in binary
+    /// let src = Src::from_bits(0b111 << (16 - 2));
+    /// let dst: Dst = Fixed::from_fixed(src);
+    /// assert_eq!(dst, Dst::from_bits(0b111 << (4 - 2)));
+    /// // src >> 4 is 0.000111, which for Dst is truncated to 0.0001
+    /// let trunc: Dst = Fixed::from_fixed(src >> 4);
+    /// assert_eq!(trunc, Dst::from_bits(1));
+    /// ```
+    ///
+    /// [`wrapping_from_fixed`]: #method.wrapping_from_fixed
+    #[inline]
+    fn from_fixed<F>(val: F) -> Self
+    where
+        F: Fixed,
+    {
+        let (wrapped, overflow) = <Self as SealedFixed>::overflowing_from_fixed(val);
+        debug_assert!(!overflow, "{} overflows", val);
+        let _ = overflow;
+        wrapped
+    }
+
+    /// Converts to another fixed-point number which can have a
+    /// different type.
+    ///
+    /// Any extra fractional bits are truncated.
+    ///
+    /// # Panics
+    ///
+    /// When debug assertions are enabled, panics if the value does
+    /// not fit. When debug assertions are not enabled, the wrapped
+    /// value can be returned, but it is not considered a breaking
+    /// change if in the future it panics; if wrapping is required use
+    /// [`wrapping_to_fixed`] instead.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Fixed;
+    /// fn erase_type(a: impl Fixed) -> impl Fixed { a }
+    ///
+    /// type Src = fixed::FixedI16<fixed::frac::U6>;
+    /// type Dst = fixed::FixedI32<fixed::frac::U4>;
+    /// // 1.75 is 1.11 in binary
+    /// let src = erase_type(Src::from_bits(0b111 << (6 - 2)));
+    /// let dst: Dst = src.to_fixed();
+    /// assert_eq!(dst, Dst::from_bits(0b111 << (4 - 2)));
+    /// // src >> 4 is 0.000111, which for Dst is truncated to 0.0001
+    /// let shifted = erase_type(Src::from_bits(0b111 << (6 - 2)) >> 4);
+    /// let trunc: Dst = shifted.to_fixed();
+    /// assert_eq!(trunc, Dst::from_bits(1));
+    /// ```
+    ///
+    /// [`wrapping_to_fixed`]: #method.wrapping_to_fixed
+    #[inline]
+    fn to_fixed<F>(self) -> F
+    where
+        F: Fixed,
+    {
+        let (wrapped, overflow) = <F as SealedFixed>::overflowing_from_fixed(self);
+        debug_assert!(!overflow, "{} overflows", self);
+        let _ = overflow;
+        wrapped
+    }
+
+    /// Converts from a fixed-point number if it fits, otherwise returns [`None`].
+    ///
+    /// Any extra fractional bits are truncated.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Fixed;
+    /// type Src = fixed::FixedI32<fixed::frac::U16>;
+    /// type Dst = fixed::FixedI16<fixed::frac::U4>;
+    /// // 1.75 is 1.11 in binary
+    /// let src = Src::from_bits(0b111 << (16 - 2));
+    /// let dst: Option<Dst> = Fixed::checked_from_fixed(src);
+    /// assert_eq!(dst, Some(Dst::from_bits(0b111 << (4 - 2))));
+    /// let too_large = Src::max_value();
+    /// let no_fit: Option<Dst> = Fixed::checked_from_fixed(too_large);
+    /// assert!(no_fit.is_none());
+    /// ```
+    ///
+    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    #[inline]
+    fn checked_from_fixed<F>(val: F) -> Option<Self>
+    where
+        F: Fixed,
+    {
+        let (wrapped, overflow) = <Self as SealedFixed>::overflowing_from_fixed(val);
+        if overflow {
+            None
+        } else {
+            Some(wrapped)
+        }
+    }
+
+    /// Converts to a fixed-point number if it fits, otherwise returns [`None`].
+    ///
+    /// Any extra fractional bits are truncated.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Fixed;
+    /// fn erase_type(a: impl Fixed) -> impl Fixed { a }
+    ///
+    /// type Src = fixed::FixedI32<fixed::frac::U16>;
+    /// type Dst = fixed::FixedI16<fixed::frac::U4>;
+    /// // 1.75 is 1.11 in binary
+    /// let src = erase_type(Src::from_bits(0b111 << (16 - 2)));
+    /// let dst: Option<Dst> = src.checked_to_fixed();
+    /// assert_eq!(dst, Some(Dst::from_bits(0b111 << (4 - 2))));
+    /// let too_large = erase_type(Src::max_value());
+    /// let no_fit: Option<Dst> = too_large.checked_to_fixed();
+    /// assert!(no_fit.is_none());
+    /// ```
+    ///
+    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    #[inline]
+    fn checked_to_fixed<F>(self) -> Option<F>
+    where
+        F: Fixed,
+    {
+        match <F as SealedFixed>::overflowing_from_fixed(self) {
+            (wrapped, false) => Some(wrapped),
+            (_, true) => None,
+        }
+    }
+
+    /// Converts from a fixed-point number, saturating if it does not
+    /// fit.
+    ///
+    /// Any extra fractional bits are truncated.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Fixed;
+    /// type Src = fixed::FixedI32<fixed::frac::U16>;
+    /// type Dst = fixed::FixedI16<fixed::frac::U4>;
+    /// // 1.75 is 1.11 in binary
+    /// let src = Src::from_bits(0b111 << (16 - 2));
+    /// let dst: Dst = Fixed::saturating_from_fixed(src);
+    /// assert_eq!(dst, Dst::from_bits(0b111 << (4 - 2)));
+    /// let too_large = Src::max_value();
+    /// let sat_max: Dst = Fixed::saturating_from_fixed(too_large);
+    /// assert_eq!(sat_max, Dst::max_value());
+    /// let too_small = Src::min_value();
+    /// let sat_min: Dst = Fixed::saturating_from_fixed(too_small);
+    /// assert_eq!(sat_min, Dst::min_value());
+    /// ```
+    #[inline]
+    fn saturating_from_fixed<F>(val: F) -> Self
+    where
+        F: Fixed,
+    {
+        <Self as SealedFixed>::saturating_from_fixed(val)
+    }
+
+    /// Converts to a fixed-point number, saturating if it does not
+    /// fit.
+    ///
+    /// Any extra fractional bits are truncated.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Fixed;
+    /// fn erase_type(a: impl Fixed) -> impl Fixed { a }
+    ///
+    /// type Src = fixed::FixedI32<fixed::frac::U16>;
+    /// type Dst = fixed::FixedI16<fixed::frac::U4>;
+    /// // 1.75 is 1.11 in binary
+    /// let src = erase_type(Src::from_bits(0b111 << (16 - 2)));
+    /// let dst: Dst = src.saturating_to_fixed();
+    /// assert_eq!(dst, Dst::from_bits(0b111 << (4 - 2)));
+    /// let too_large = erase_type(Src::max_value());
+    /// let sat_max: Dst = too_large.saturating_to_fixed();
+    /// assert_eq!(sat_max, Dst::max_value());
+    /// let too_small = erase_type(Src::min_value());
+    /// let sat_min: Dst = too_small.saturating_to_fixed();
+    /// assert_eq!(sat_min, Dst::min_value());
+    /// ```
+    #[inline]
+    fn saturating_to_fixed<F>(self) -> F
+    where
+        F: Fixed,
+    {
+        <F as SealedFixed>::saturating_from_fixed(self)
+    }
+
+    /// Converts from a fixed-point number, wrapping if it does not
+    /// fit.
+    ///
+    /// Any extra fractional bits are truncated.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Fixed;
+    /// type Src = fixed::FixedI32<fixed::frac::U16>;
+    /// type Dst = fixed::FixedI16<fixed::frac::U4>;
+    /// // 1.75 is 1.11 in binary
+    /// let src = Src::from_bits(0b111 << (16 - 2));
+    /// let dst: Dst = Fixed::wrapping_from_fixed(src);
+    /// assert_eq!(dst, Dst::from_bits(0b111 << (4 - 2)));
+    /// // 0x1234.5678 is wrapped and truncated to 0x234.5
+    /// let too_large = Src::from_bits(0x1234_5678);
+    /// let wrapped: Dst = Fixed::wrapping_from_fixed(too_large);
+    /// assert_eq!(wrapped, Dst::from_bits(0x2345));
+    /// ```
+    #[inline]
+    fn wrapping_from_fixed<F>(val: F) -> Self
+    where
+        F: Fixed,
+    {
+        let (wrapped, _) = <Self as SealedFixed>::overflowing_from_fixed(val);
+        wrapped
+    }
+
+    /// Converts to a fixed-point number, wrapping if it does not fit.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Fixed;
+    /// fn erase_type(a: impl Fixed) -> impl Fixed { a }
+    ///
+    /// type Src = fixed::FixedI32<fixed::frac::U16>;
+    /// type Dst = fixed::FixedI16<fixed::frac::U4>;
+    /// // 1.75 is 1.11 in binary
+    /// let src = erase_type(Src::from_bits(0b111 << (16 - 2)));
+    /// let dst: Dst = src.wrapping_to_fixed();
+    /// assert_eq!(dst, Dst::from_bits(0b111 << (4 - 2)));
+    /// // 0x1234.5678 is wrapped and truncated to 0x234.5
+    /// let too_large = erase_type(Src::from_bits(0x1234_5678));
+    /// let wrapped: Dst = too_large.wrapping_to_fixed();
+    /// assert_eq!(wrapped, Dst::from_bits(0x2345));
+    /// ```
+    #[inline]
+    fn wrapping_to_fixed<F>(self) -> F
+    where
+        F: Fixed,
+    {
+        let (wrapped, _) = <F as SealedFixed>::overflowing_from_fixed(self);
+        wrapped
+    }
+
+    /// Converts from a fixed-point number.
+    ///
+    /// Returns a tuple of the fixed-point number and a [`bool`]
+    /// indicating whether an overflow has occurred. On overflow, the
+    /// wrapped value is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Fixed;
+    /// type Src = fixed::FixedI32<fixed::frac::U16>;
+    /// type Dst = fixed::FixedI16<fixed::frac::U4>;
+    /// // 1.75 is 1.11 in binary
+    /// let src = Src::from_bits(0b111 << (16 - 2));
+    /// let dst: (Dst, bool) = Fixed::overflowing_from_fixed(src);
+    /// assert_eq!(dst, (Dst::from_bits(0b111 << (4 - 2)), false));
+    /// // 0x1234.5678 is wrapped and truncated to 0x234.5
+    /// let too_large = Src::from_bits(0x1234_5678);
+    /// let wrapped: (Dst, bool) = Fixed::overflowing_from_fixed(too_large);
+    /// assert_eq!(wrapped, (Dst::from_bits(0x2345), true));
+    /// ```
+    ///
+    ///[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    #[inline]
+    fn overflowing_from_fixed<F>(val: F) -> (Self, bool)
+    where
+        F: Fixed,
+    {
+        <Self as SealedFixed>::overflowing_from_fixed(val)
+    }
+
+    /// Converts to a fixed-point number.
+    ///
+    /// Returns a tuple of the fixed-point number and a [`bool`]
+    /// indicating whether an overflow has occurred. On overflow, the
+    /// wrapped value is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::sealed::Fixed;
+    /// fn erase_type(a: impl Fixed) -> impl Fixed { a }
+    ///
+    /// type Src = fixed::FixedI32<fixed::frac::U16>;
+    /// type Dst = fixed::FixedI16<fixed::frac::U4>;
+    /// // 1.75 is 1.11 in binary
+    /// let src = erase_type(Src::from_bits(0b111 << (16 - 2)));
+    /// let dst: (Dst, bool) = src.overflowing_to_fixed();
+    /// assert_eq!(dst, (Dst::from_bits(0b111 << (4 - 2)), false));
+    /// // 0x1234.5678 is wrapped and truncated to 0x234.5
+    /// let too_large = erase_type(Src::from_bits(0x1234_5678));
+    /// let wrapped: (Dst, bool) = too_large.overflowing_to_fixed();
+    /// assert_eq!(wrapped, (Dst::from_bits(0x2345), true));
+    /// ```
+    ///
+    ///[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    #[inline]
+    fn overflowing_to_fixed<F>(self) -> (F, bool)
+    where
+        F: Fixed,
+    {
+        <F as SealedFixed>::overflowing_from_fixed(self)
+    }
+}
 
 impl Int for i8 {}
 impl Int for i16 {}

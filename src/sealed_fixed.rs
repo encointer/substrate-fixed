@@ -45,6 +45,9 @@ pub trait SealedFixed: Copy + Debug + Default + Display + Eq + Hash + Ord {
     // 0 for no int bits
     const INT_LSB: u128 = Self::INT_MASK ^ (Self::INT_MASK << 1);
 
+    fn saturating_from_fixed<F>(fixed: F) -> Self
+    where
+        F: Fixed;
     fn overflowing_from_fixed<F>(fixed: F) -> (Self, bool)
     where
         F: Fixed;
@@ -100,6 +103,14 @@ macro_rules! sealed_fixed {
         {
             type FracNBits = Frac;
             type Bits = $Bits;
+
+            #[inline]
+            fn saturating_from_fixed<F>(fixed: F) -> Self
+            where
+                F: Fixed,
+            {
+                $Fixed::saturating_from_fixed(fixed)
+            }
 
             #[inline]
             fn overflowing_from_fixed<F>(fixed: F) -> (Self, bool)

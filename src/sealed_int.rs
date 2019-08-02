@@ -16,7 +16,7 @@
 use core::cmp::Ordering;
 use core::fmt::{Debug, Display};
 use frac::{Bit, False, True, Unsigned, U0, U128, U16, U32, U64, U8};
-use sealed::{Fixed, Widest};
+use sealed::{Fixed, SealedFixed, Widest};
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
@@ -94,7 +94,8 @@ macro_rules! sealed_int {
             where
                 F: Fixed
             {
-                F::overflowing_from_fixed(Self::ReprFixed::from_bits(self.int_repr()))
+                let from_bits = Self::ReprFixed::from_bits(self.int_repr());
+                <F as SealedFixed>::overflowing_from_fixed(from_bits)
             }
 
             #[inline]

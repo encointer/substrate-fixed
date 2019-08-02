@@ -131,7 +131,7 @@ assert_eq!((src >> 4u32).to_fixed::<Dst>(), Dst::from_bits(1));
             where
                 F: Fixed,
             {
-                let (wrapped, overflow) = F::overflowing_from_fixed(self);
+                let (wrapped, overflow) = <F as SealedFixed>::overflowing_from_fixed(self);
                 debug_assert!(!overflow, "{} overflows", self);
                 let _ = overflow;
                 wrapped
@@ -418,7 +418,7 @@ assert!(Src::max_value().checked_to_fixed::<TooFewIntBits>().is_none());
             where
                 F: Fixed,
             {
-                match F::overflowing_from_fixed(self) {
+                match <F as SealedFixed>::overflowing_from_fixed(self) {
                     (wrapped, false) => Some(wrapped),
                     (_, true) => None,
                 }
@@ -685,7 +685,7 @@ assert_eq!(saturated, TooFewIntBits::max_value());
             where
                 F: Fixed,
             {
-                match F::overflowing_from_fixed(self) {
+                match <F as SealedFixed>::overflowing_from_fixed(self) {
                     (wrapped, false) => wrapped,
                     (_, true) => {
                         if self.to_bits().is_negative() {
@@ -998,7 +998,7 @@ assert_eq!(Src::max_value().wrapping_to_fixed::<TooFewIntBits>(), wrapped);
             where
                 F: Fixed,
             {
-                F::overflowing_from_fixed(self).0
+                <F as SealedFixed>::overflowing_from_fixed(self).0
             }
         );
 
@@ -1277,7 +1277,7 @@ assert_eq!(Src::max_value().overflowing_to_fixed::<TooFewIntBits>(), (wrapped, t
             where
                 F: Fixed,
             {
-                F::overflowing_from_fixed(self)
+                <F as SealedFixed>::overflowing_from_fixed(self)
             }
         );
 

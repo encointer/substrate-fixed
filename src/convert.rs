@@ -17,6 +17,7 @@ use core::ops::{Add, Sub};
 use frac::{IsGreaterOrEqual, IsLessOrEqual, True, Unsigned, U0, U1, U128, U16, U2, U32, U64, U8};
 #[cfg(feature = "f16")]
 use half::f16;
+use sealed::SealedInt;
 use traits::{FromFixed, LossyFrom};
 use {
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
@@ -530,6 +531,36 @@ fixed_to_float_lossy! { FixedU16(U16) }
 fixed_to_float_lossy! { FixedU32(U32) }
 fixed_to_float_lossy! { FixedU64(U64) }
 fixed_to_float_lossy! { FixedU128(U128) }
+
+macro_rules! int_to_float_lossy {
+    ($Int:ident -> $Float:ident) => {
+        impl LossyFrom<$Int> for $Float {
+            #[inline]
+            fn lossy_from(src: $Int) -> $Float {
+                <$Int as SealedInt>::to_repr_fixed(src).to_float()
+            }
+        }
+    };
+    ($Int:ident) => {
+        #[cfg(feature = "f16")]
+        int_to_float_lossy! { $Int -> f16 }
+        int_to_float_lossy! { $Int -> f32 }
+        int_to_float_lossy! { $Int -> f64 }
+    };
+}
+
+int_to_float_lossy! { i8 }
+int_to_float_lossy! { i16 }
+int_to_float_lossy! { i32 }
+int_to_float_lossy! { i64 }
+int_to_float_lossy! { i128 }
+int_to_float_lossy! { isize }
+int_to_float_lossy! { u8 }
+int_to_float_lossy! { u16 }
+int_to_float_lossy! { u32 }
+int_to_float_lossy! { u64 }
+int_to_float_lossy! { u128 }
+int_to_float_lossy! { usize }
 
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::float_cmp))]
 #[cfg(test)]

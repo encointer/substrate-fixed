@@ -13,15 +13,19 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-use core::ops::{Add, Sub};
-use frac::{IsGreaterOrEqual, IsLessOrEqual, True, Unsigned, U0, U1, U128, U16, U2, U32, U64, U8};
 #[cfg(feature = "f16")]
 use half::f16;
-use sealed::SealedInt;
-use traits::{FromFixed, LossyFrom};
 use {
-    FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
-    FixedU8,
+    crate::{
+        frac::{
+            IsGreaterOrEqual, IsLessOrEqual, True, Unsigned, U0, U1, U128, U16, U2, U32, U64, U8,
+        },
+        sealed::SealedInt,
+        traits::{FromFixed, LossyFrom},
+        FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
+        FixedU8,
+    },
+    core::ops::{Add, Sub},
 };
 
 macro_rules! convert {
@@ -627,7 +631,7 @@ impl LossyFrom<f64> for f64 {
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::float_cmp))]
 #[cfg(test)]
 mod tests {
-    use *;
+    use crate::*;
 
     #[test]
     fn expanding_from_unsigned() {

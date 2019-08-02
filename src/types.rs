@@ -18,8 +18,8 @@ This module provides type aliases for all supported fixed-point
 numbers.
 */
 
-use frac;
-use {
+use crate::frac;
+use crate::{
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };

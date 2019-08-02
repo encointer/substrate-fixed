@@ -17,17 +17,19 @@
 This module contains sealed traits.
 */
 
-use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
-#[cfg(feature = "f16")]
-use half::f16;
-pub(crate) use sealed_fixed::{SealedFixed, Widest};
-pub(crate) use sealed_float::SealedFloat;
-pub(crate) use sealed_int::SealedInt;
-use traits::{FromFixed, ToFixed};
-use {
+use crate::{
+    frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
+    traits::{FromFixed, ToFixed},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
+pub(crate) use crate::{
+    sealed_fixed::{SealedFixed, Widest},
+    sealed_float::SealedFloat,
+    sealed_int::SealedInt,
+};
+#[cfg(feature = "f16")]
+use half::f16;
 
 /// This trait is implemented for all the primitive integer types.
 ///

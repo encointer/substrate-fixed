@@ -13,13 +13,17 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-use core::fmt::{Debug, Display};
-use core::hash::Hash;
-use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
-use sealed::{Fixed, Float, SealedInt};
 use {
-    FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
-    FixedU8,
+    crate::{
+        frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
+        sealed::{Fixed, Float, SealedInt},
+        FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
+        FixedU8,
+    },
+    core::{
+        fmt::{Debug, Display},
+        hash::Hash,
+    },
 };
 
 // Unsigned can have 0 ≤ x < 2↑128, that is its msb can be 0 or 1.

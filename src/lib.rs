@@ -189,12 +189,6 @@ additional terms or conditions.
 #![doc(test(attr(deny(warnings))))]
 #![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
 
-#[cfg(feature = "f16")]
-extern crate half;
-#[cfg(feature = "serde")]
-extern crate serde;
-extern crate typenum;
-
 #[macro_use]
 mod macros;
 
@@ -214,15 +208,21 @@ pub mod types;
 mod wide_div;
 mod wrapping;
 
-use arith::MulDivDir;
-use core::cmp::Ordering;
-use core::hash::{Hash, Hasher};
-use core::marker::PhantomData;
-use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
+pub use crate::wrapping::Wrapping;
 #[cfg(feature = "f16")]
 use half::f16;
-use sealed::{Fixed, Float, Int, SealedFixed, SealedFloat, SealedInt, Widest};
-pub use wrapping::Wrapping;
+use {
+    crate::{
+        arith::MulDivDir,
+        frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
+        sealed::{Fixed, Float, Int, SealedFixed, SealedFloat, SealedInt, Widest},
+    },
+    core::{
+        cmp::Ordering,
+        hash::{Hash, Hasher},
+        marker::PhantomData,
+    },
+};
 
 #[macro_use]
 mod macros_from_to;
@@ -694,12 +694,12 @@ fixed! { "A 128-bit fixed-point signed integer", FixedI128(i128, U128, "128"), S
 
 #[cfg(test)]
 mod tests {
-    use *;
+    use crate::*;
 
     #[cfg_attr(feature = "cargo-clippy", allow(clippy::cognitive_complexity))]
     #[test]
     fn rounding() {
-        use frac::{U16, U32};
+        use crate::frac::{U16, U32};
 
         type I0F32 = FixedI32<U32>;
 

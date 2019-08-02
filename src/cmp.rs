@@ -13,14 +13,16 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-use core::cmp::Ordering;
-use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
 #[cfg(feature = "f16")]
 use half::f16;
-use sealed::{SealedFixed, SealedFloat, SealedInt, Widest};
 use {
-    FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
-    FixedU8,
+    crate::{
+        frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
+        sealed::{SealedFixed, SealedFloat, SealedInt, Widest},
+        FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
+        FixedU8,
+    },
+    core::cmp::Ordering,
 };
 
 macro_rules! fixed_cmp_fixed {
@@ -437,7 +439,7 @@ fixed_cmp! { FixedI128(i128, U128, 128) }
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::float_cmp))]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::cognitive_complexity))]
 mod tests {
-    use *;
+    use crate::*;
 
     #[test]
     fn cmp_signed() {

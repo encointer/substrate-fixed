@@ -39,13 +39,18 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
 ## What’s new
 
-### Version 0.3.4 news (unreleased)
+### Version 0.4.0 news (unreleased)
 
   * The [`traits`] module was added, with its traits [`LossyFrom`],
     [`LossyInto`], [`FromFixed`] and [`ToFixed`].
   * All types implementing the sealed traits [`Int`], [`Float`] and
     [`Fixed`] now also implement [`FromFixed`] and [`ToFixed`].
-  * The sealed trait [`Fixed`] now has provided conversion methods.
+
+#### Incompatible changes
+
+  * The sealed traits [`Int`] and [`Float`] now have no provided
+    methods as they would clash with the methods of their super-traits
+    [`FromFixed`] and [`ToFixed`].
 
 [`Fixed`]: https://docs.rs/fixed/0.3.4/fixed/sealed/trait.Fixed.html
 [`Float`]: https://docs.rs/fixed/0.3.4/fixed/sealed/trait.Float.html

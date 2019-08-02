@@ -5,14 +5,16 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
-Version 0.3.4 (unreleased)
+Version 0.4.0 (unreleased)
 ==========================
 
   * The `traits` module was added, with its traits `LossyFrom`,
     `LossyInto`, `FromFixed` and `ToFixed`.
   * All types implementing the sealed traits `Int`, `Float` and
     `Fixed` now also implement `FromFixed` and `ToFixed`.
-  * The sealed trait `Fixed` now has provided conversion methods.
+  * Incompatible change: The sealed traits `Int` and `Float` now have
+    no provided methods as they would clash with the methods of their
+    super-traits `FromFixed` and `ToFixed`.
 
 Version 0.3.3 (2019-06-27)
 ==========================

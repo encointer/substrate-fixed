@@ -13,7 +13,7 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-use sealed::SealedInt;
+use crate::sealed::SealedInt;
 
 trait DivHalf: Copy {
     fn hi(self) -> Self;

@@ -13,16 +13,18 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-use core::cmp::Ordering;
-use core::fmt::{
-    Binary, Debug, Display, Formatter, LowerHex, Octal, Result as FmtResult, UpperHex,
-};
-use core::str;
-use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
-use sealed::{SealedFixed, SealedInt};
 use {
-    FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
-    FixedU8,
+    crate::{
+        frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
+        sealed::{SealedFixed, SealedInt},
+        FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
+        FixedU8,
+    },
+    core::{
+        cmp::Ordering,
+        fmt::{Binary, Debug, Display, Formatter, LowerHex, Octal, Result as FmtResult, UpperHex},
+        str,
+    },
 };
 
 trait Radix2 {
@@ -375,9 +377,9 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::*;
     use core::fmt::{Debug, Error as FmtError, Formatter, Result as FmtResult, Write};
     use core::mem;
-    use *;
 
     struct Buf([u8; 256]);
     impl Buf {
@@ -441,7 +443,7 @@ mod tests {
 
     #[test]
     fn hex() {
-        use frac::U7 as Frac;
+        use crate::frac::U7 as Frac;
         let frac = Frac::U32;
         for i in 0..(1 << frac) {
             let p = 0x1234_5678_9abc_def0u64 ^ i as u64;
@@ -458,7 +460,7 @@ mod tests {
 
     #[test]
     fn dec() {
-        use frac::U7 as Frac;
+        use crate::frac::U7 as Frac;
         let frac = Frac::U32;
         for i in 0..(1 << frac) {
             let bits = !0u32 ^ i;

@@ -13,11 +13,15 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-use core::cmp::Ordering;
-use core::fmt::{Debug, Display};
 #[cfg(feature = "f16")]
 use half::f16;
-use sealed::{Fixed, SealedInt, Widest};
+use {
+    crate::sealed::{Fixed, SealedInt, Widest},
+    core::{
+        cmp::Ordering,
+        fmt::{Debug, Display},
+    },
+};
 
 pub trait SealedFloat: Copy + Debug + Display {
     type Bits: SealedInt;

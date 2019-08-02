@@ -200,7 +200,7 @@ adding this to your crate root (usually *lib.rs* or *main.rs*):
 extern crate fixed;
 ```
 
-The *fixed* crate requires rustc version 1.28.0 or later.
+The *fixed* crate requires rustc version 1.31.1 or later.
 
 ## Optional features
 

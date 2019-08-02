@@ -17,7 +17,7 @@
 This module contains traits.
  */
 
-use sealed::Fixed;
+use crate::sealed::Fixed;
 
 /// This trait provides infallible conversions that might be lossy.
 ///

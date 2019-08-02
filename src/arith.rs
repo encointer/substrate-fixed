@@ -13,18 +13,23 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-use core::cmp::Ordering;
-use core::iter::{Product, Sum};
-use core::ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign,
-    Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
-};
-use frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
-use sealed::{SealedFixed, SealedInt};
-use wide_div::WideDivRem;
 use {
-    FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
-    FixedU8,
+    crate::{
+        frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
+        sealed::{SealedFixed, SealedInt},
+        wide_div::WideDivRem,
+        FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
+        FixedU8,
+    },
+    core::{
+        cmp::Ordering,
+        iter::{Product, Sum},
+        ops::{
+            Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div,
+            DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign,
+            Sub, SubAssign,
+        },
+    },
 };
 
 macro_rules! refs {
@@ -846,11 +851,11 @@ mul_div_fallback! { i128, u128, Signed }
 
 #[cfg(test)]
 mod tests {
-    use *;
+    use crate::*;
 
     #[test]
     fn fixed_u16() {
-        use frac::U7 as Frac;
+        use crate::frac::U7 as Frac;
         let frac = Frac::U32;
         let a = 12;
         let b = 4;
@@ -870,7 +875,7 @@ mod tests {
 
     #[test]
     fn fixed_i16() {
-        use frac::U7 as Frac;
+        use crate::frac::U7 as Frac;
         let frac = Frac::U32;
         let a = 12;
         let b = 4;
@@ -894,7 +899,7 @@ mod tests {
 
     #[test]
     fn fixed_u128() {
-        use frac::U7 as Frac;
+        use crate::frac::U7 as Frac;
         let frac = Frac::U32;
         let a = 0x0003_4567_89ab_cdef_0123_4567_89ab_cdef_u128;
         let b = 5;
@@ -916,7 +921,7 @@ mod tests {
 
     #[test]
     fn fixed_i128() {
-        use frac::U7 as Frac;
+        use crate::frac::U7 as Frac;
         let frac = Frac::U32;
         let a = 0x0003_4567_89ab_cdef_0123_4567_89ab_cdef_i128;
         let b = 5;

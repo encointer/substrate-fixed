@@ -39,6 +39,23 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
 ## What’s new
 
+### Version 0.3.4 news (unreleased)
+
+  * The [`traits`] module was added, with its traits [`LossyFrom`],
+    [`LossyInto`], [`FromFixed`] and [`ToFixed`].
+  * All types implementing the sealed traits [`Int`], [`Float`] and
+    [`Fixed`] now also implement [`FromFixed`] and [`ToFixed`].
+  * The sealed trait [`Fixed`] now has provided conversion methods.
+
+[`Fixed`]: https://docs.rs/fixed/0.3.4/fixed/sealed/trait.Fixed.html
+[`Float`]: https://docs.rs/fixed/0.3.4/fixed/sealed/trait.Float.html
+[`FromFixed`]: https://docs.rs/fixed/0.3.4/fixed/traits/trait.FromFixed.html
+[`Int`]: https://docs.rs/fixed/0.3.4/fixed/sealed/trait.Int.html
+[`LossyFrom`]: https://docs.rs/fixed/0.3.4/fixed/traits/trait.LossyFrom.html
+[`LossyInto`]: https://docs.rs/fixed/0.3.4/fixed/traits/trait.LossyInto.html
+[`ToFixed`]: https://docs.rs/fixed/0.3.4/fixed/traits/trait.ToFixed.html
+[`traits`]: https://docs.rs/fixed/0.3.4/fixed/traits/index.html
+
 ### Version 0.3.3 news (2019-06-27)
 
   * Conversions to/from [`isize`] and [`usize`] were added.

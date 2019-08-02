@@ -5,6 +5,15 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.3.4 (unreleased)
+==========================
+
+  * The `traits` module was added, with its traits `LossyFrom`,
+    `LossyInto`, `FromFixed` and `ToFixed`.
+  * All types implementing the sealed traits `Int`, `Float` and
+    `Fixed` now also implement `FromFixed` and `ToFixed`.
+  * The sealed trait `Fixed` now has provided conversion methods.
+
 Version 0.3.3 (2019-06-27)
 ==========================
 
@@ -25,8 +34,8 @@ Version 0.3.0 (2019-02-03)
 ==========================
 
   * Incompatible change: the return type of `to_int` is now generic.
-  * Incompatible change: the `Int` trait implementation for [`bool`]
-    was removed.
+  * Incompatible change: the `Int` trait implementation for `bool` was
+    removed.
   * The new method `to_fixed` was added.
   * The new methods `checked_to_fixed`, `checked_to_int`,
     `saturating_to_fixed`, `saturating_to_int`, `wrapping_to_fixed`,

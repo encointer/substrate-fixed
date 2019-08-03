@@ -18,7 +18,7 @@ use half::f16;
 use {
     crate::{
         frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
-        sealed::{SealedFixed, SealedFloat, SealedInt, Widest},
+        sealed::{Fixed, SealedFixed, SealedFloat, SealedInt, Widest},
         FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
         FixedU8,
     },
@@ -40,8 +40,8 @@ macro_rules! fixed_cmp_fixed {
                     Self::INT_NBITS,
                 );
                 let rhs_bits = match rhs_128 {
-                    Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
-                    Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
+                    Widest::Unsigned(bits) => bits as <Self as Fixed>::Bits,
+                    Widest::Negative(bits) => bits as <Self as Fixed>::Bits,
                 };
                 dir == Ordering::Equal && !overflow && rhs_bits == self.to_bits()
             }
@@ -72,8 +72,8 @@ macro_rules! fixed_cmp_fixed {
                     };
                 }
                 let rhs_bits = match rhs_128 {
-                    Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
-                    Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
+                    Widest::Unsigned(bits) => bits as <Self as Fixed>::Bits,
+                    Widest::Negative(bits) => bits as <Self as Fixed>::Bits,
                 };
                 Some(self.to_bits().cmp(&rhs_bits).then(dir))
             }
@@ -94,8 +94,8 @@ macro_rules! fixed_cmp_fixed {
                     return !rhs.to_bits().is_negative();
                 }
                 let rhs_bits = match rhs_128 {
-                    Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
-                    Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
+                    Widest::Unsigned(bits) => bits as <Self as Fixed>::Bits,
+                    Widest::Negative(bits) => bits as <Self as Fixed>::Bits,
                 };
                 self.to_bits() < rhs_bits || (self.to_bits() == rhs_bits && dir == Ordering::Less)
             }
@@ -216,8 +216,8 @@ macro_rules! fixed_cmp_float {
                 let (rhs_128, dir, overflow) =
                     rhs.to_fixed_dir_overflow(Self::FRAC_NBITS, Self::INT_NBITS);
                 let rhs_bits = match rhs_128 {
-                    Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
-                    Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
+                    Widest::Unsigned(bits) => bits as <Self as Fixed>::Bits,
+                    Widest::Negative(bits) => bits as <Self as Fixed>::Bits,
                 };
                 dir == Ordering::Equal && !overflow && rhs_bits == self.to_bits()
             }
@@ -265,8 +265,8 @@ macro_rules! fixed_cmp_float {
                     };
                 }
                 let rhs_bits = match rhs_128 {
-                    Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
-                    Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
+                    Widest::Unsigned(bits) => bits as <Self as Fixed>::Bits,
+                    Widest::Negative(bits) => bits as <Self as Fixed>::Bits,
                 };
                 Some(self.to_bits().cmp(&rhs_bits).then(dir))
             }
@@ -291,8 +291,8 @@ macro_rules! fixed_cmp_float {
                     return !rhs_is_neg;
                 }
                 let rhs_bits = match rhs_128 {
-                    Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
-                    Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
+                    Widest::Unsigned(bits) => bits as <Self as Fixed>::Bits,
+                    Widest::Negative(bits) => bits as <Self as Fixed>::Bits,
                 };
                 let lhs_bits = self.to_bits();
                 lhs_bits < rhs_bits || (lhs_bits == rhs_bits && dir == Ordering::Less)
@@ -343,8 +343,8 @@ macro_rules! fixed_cmp_float {
                     return lhs_is_neg;
                 }
                 let lhs_bits = match lhs_128 {
-                    Widest::Unsigned(bits) => bits as <$Fix<Frac> as SealedFixed>::Bits,
-                    Widest::Negative(bits) => bits as <$Fix<Frac> as SealedFixed>::Bits,
+                    Widest::Unsigned(bits) => bits as <$Fix<Frac> as Fixed>::Bits,
+                    Widest::Negative(bits) => bits as <$Fix<Frac> as Fixed>::Bits,
                 };
                 let rhs_bits = rhs.to_bits();
                 lhs_bits < rhs_bits || (lhs_bits == rhs_bits && dir == Ordering::Greater)

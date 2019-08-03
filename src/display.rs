@@ -148,7 +148,7 @@ where
 #[inline]
 fn fmt_radix2<F, Bits>(num: F, radix: &dyn Radix2, fmt: &mut Formatter) -> FmtResult
 where
-    F: SealedFixed<Bits = Bits>,
+    F: SealedFixed<SBits = Bits>,
     Bits: SealedInt,
     Bits::Unsigned: FmtRadix2Helper,
 {
@@ -368,7 +368,7 @@ where
 #[inline]
 fn fmt_dec<F, Bits>(num: F, fmt: &mut Formatter) -> FmtResult
 where
-    F: SealedFixed<Bits = Bits>,
+    F: SealedFixed<SBits = Bits>,
     Bits: SealedInt,
     Bits::Unsigned: FmtDecHelper,
 {

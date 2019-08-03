@@ -224,11 +224,12 @@ use {
     },
 };
 
-/// A "prelude" for users of the *fixed* crate.
+/// A prelude for users of the *fixed* crate.
 ///
-/// This prelude is similar to the standard library's prelude in that you'll
-/// almost always want to import its entire contents, but unlike the standard
-/// library's prelude you'll have to do so manually:
+/// This prelude is similar to the [standard library’s
+/// prelude][prelude] in that you’ll almost always want to import its
+/// entire contents, but unlike the standard library’s prelude you’ll
+/// have to do so manually:
 ///
 /// ```
 /// ##[allow(unused_imports)]
@@ -236,8 +237,13 @@ use {
 /// ```
 ///
 /// The prelude may grow over time as additional items see ubiquitous use.
+///
+/// [prelude]: https://doc.rust-lang.org/nightly/std/prelude/index.html
 pub mod prelude {
-    pub use crate::traits::{FromFixed, ToFixed};
+    pub use crate::{
+        sealed::Fixed,
+        traits::{FromFixed, ToFixed},
+    };
 }
 
 #[macro_use]

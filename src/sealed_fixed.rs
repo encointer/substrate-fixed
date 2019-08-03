@@ -35,10 +35,10 @@ pub enum Widest {
 
 pub trait SealedFixed: Copy + Debug + Default + Display + Eq + Hash + Ord {
     type FracNBits: Unsigned;
-    type Bits: SealedInt;
+    type SBits: SealedInt;
 
     const FRAC_NBITS: u32 = Self::FracNBits::U32;
-    const INT_NBITS: u32 = Self::Bits::NBITS - Self::FRAC_NBITS;
+    const INT_NBITS: u32 = Self::SBits::NBITS - Self::FRAC_NBITS;
 
     const FRAC_MASK: u128 = !Self::INT_MASK;
     // split shift in two parts in case that FRAC_NBITS == 128
@@ -96,31 +96,33 @@ pub trait SealedFixed: Copy + Debug + Default + Display + Eq + Hash + Ord {
 
     #[inline]
     fn one() -> Option<Self> {
-        let min_int_bits = if Self::Bits::IS_SIGNED { 2 } else { 1 };
+        let min_int_bits = if Self::SBits::IS_SIGNED { 2 } else { 1 };
         if Self::INT_NBITS < min_int_bits {
             None
         } else {
-            Some(Self::from_bits(Self::Bits::one_shl(Self::FRAC_NBITS)))
+            Some(Self::from_sbits(Self::SBits::one_shl(Self::FRAC_NBITS)))
         }
     }
 
     #[inline]
     fn minus_one() -> Option<Self> {
-        if !Self::Bits::IS_SIGNED || Self::INT_NBITS < 1 {
+        if !Self::SBits::IS_SIGNED || Self::INT_NBITS < 1 {
             None
         } else {
-            Some(Self::from_bits(Self::Bits::all_ones_shl(Self::FRAC_NBITS)))
+            Some(Self::from_sbits(Self::SBits::all_ones_shl(
+                Self::FRAC_NBITS,
+            )))
         }
     }
 
-    fn from_bits(bits: Self::Bits) -> Self;
-    fn to_bits(self) -> Self::Bits;
+    fn from_sbits(bits: Self::SBits) -> Self;
+    fn to_sbits(self) -> Self::SBits;
     fn parts(
         self,
     ) -> (
         bool,
-        <Self::Bits as SealedInt>::Unsigned,
-        <Self::Bits as SealedInt>::Unsigned,
+        <Self::SBits as SealedInt>::Unsigned,
+        <Self::SBits as SealedInt>::Unsigned,
     );
 
     fn wrapping_ceil(self) -> Self;
@@ -137,7 +139,7 @@ macro_rules! sealed_fixed {
             Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
         {
             type FracNBits = Frac;
-            type Bits = $Bits;
+            type SBits = $Bits;
 
             #[inline]
             fn saturating_from_fixed<F>(val: F) -> Self
@@ -151,30 +153,30 @@ macro_rules! sealed_fixed {
                 );
                 if overflow {
                     return if val.to_bits().is_negative() {
-                        Self::from_bits(Self::Bits::min_value())
+                        Fixed::from_bits(Self::SBits::min_value())
                     } else {
-                        Self::from_bits(Self::Bits::max_value())
+                        Fixed::from_bits(Self::SBits::max_value())
                     };
                 }
                 let bits = if_signed_unsigned!(
                     $Signedness,
                     match value {
                         Widest::Unsigned(bits) => {
-                            if (bits as Self::Bits) < 0 {
-                                return Self::from_bits(Self::Bits::max_value());
+                            if (bits as Self::SBits) < 0 {
+                                return Fixed::from_bits(Self::SBits::max_value());
                             }
-                            bits as Self::Bits
+                            bits as Self::SBits
                         }
-                        Widest::Negative(bits) => bits as Self::Bits,
+                        Widest::Negative(bits) => bits as Self::SBits,
                     },
                     match value {
-                        Widest::Unsigned(bits) => bits as Self::Bits,
+                        Widest::Unsigned(bits) => bits as Self::SBits,
                         Widest::Negative(_) => {
-                            return Self::from_bits(Self::Bits::min_value());
+                            return Fixed::from_bits(Self::SBits::min_value());
                         }
                     },
                 );
-                SealedFixed::from_bits(bits)
+                Fixed::from_bits(bits)
             }
 
             #[inline]
@@ -191,22 +193,22 @@ macro_rules! sealed_fixed {
                     $Signedness,
                     match value {
                         Widest::Unsigned(bits) => {
-                            if (bits as Self::Bits) < 0 {
+                            if (bits as Self::SBits) < 0 {
                                 overflow = true;
                             }
-                            bits as Self::Bits
+                            bits as Self::SBits
                         }
-                        Widest::Negative(bits) => bits as Self::Bits,
+                        Widest::Negative(bits) => bits as Self::SBits,
                     },
                     match value {
-                        Widest::Unsigned(bits) => bits as Self::Bits,
+                        Widest::Unsigned(bits) => bits as Self::SBits,
                         Widest::Negative(bits) => {
                             overflow = true;
-                            bits as Self::Bits
+                            bits as Self::SBits
                         }
                     },
                 );
-                (SealedFixed::from_bits(bits), overflow)
+                (Fixed::from_bits(bits), overflow)
             }
 
             #[inline]
@@ -234,19 +236,19 @@ macro_rules! sealed_fixed {
                     $Signedness,
                     match value {
                         Widest::Unsigned(bits) => {
-                            if (bits as <Self as SealedFixed>::Bits) < 0 {
+                            if (bits as Self::SBits) < 0 {
                                 return Self::max_value();
                             }
-                            bits as <Self as SealedFixed>::Bits
+                            bits as Self::SBits
                         }
-                        Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
+                        Widest::Negative(bits) => bits as Self::SBits,
                     },
                     match value {
-                        Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
+                        Widest::Unsigned(bits) => bits as Self::SBits,
                         Widest::Negative(_) => return Self::min_value(),
                     },
                 );
-                SealedFixed::from_bits(bits)
+                Fixed::from_bits(bits)
             }
             #[inline]
             fn overflowing_from_float<F>(val: F) -> (Self, bool)
@@ -262,22 +264,22 @@ macro_rules! sealed_fixed {
                     $Signedness,
                     match value {
                         Widest::Unsigned(bits) => {
-                            if (bits as <Self as SealedFixed>::Bits) < 0 {
+                            if (bits as Self::SBits) < 0 {
                                 overflow = true;
                             }
-                            bits as <Self as SealedFixed>::Bits
+                            bits as Self::SBits
                         }
-                        Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
+                        Widest::Negative(bits) => bits as Self::SBits,
                     },
                     match value {
-                        Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
+                        Widest::Unsigned(bits) => bits as Self::SBits,
                         Widest::Negative(bits) => {
                             overflow = true;
-                            bits as <Self as SealedFixed>::Bits
+                            bits as Self::SBits
                         }
                     },
                 );
-                (SealedFixed::from_bits(bits), overflow)
+                (Fixed::from_bits(bits), overflow)
             }
 
             #[inline]
@@ -290,12 +292,12 @@ macro_rules! sealed_fixed {
             }
 
             #[inline]
-            fn from_bits(bits: Self::Bits) -> Self {
+            fn from_sbits(bits: Self::SBits) -> Self {
                 $Fixed::from_bits(bits)
             }
 
             #[inline]
-            fn to_bits(self) -> Self::Bits {
+            fn to_sbits(self) -> Self::SBits {
                 $Fixed::to_bits(self)
             }
 
@@ -304,8 +306,8 @@ macro_rules! sealed_fixed {
                 self,
             ) -> (
                 bool,
-                <Self::Bits as SealedInt>::Unsigned,
-                <Self::Bits as SealedInt>::Unsigned,
+                <Self::SBits as SealedInt>::Unsigned,
+                <Self::SBits as SealedInt>::Unsigned,
             ) {
                 let (neg, abs) = SealedInt::neg_abs(self.to_bits());
                 let (int_abs, frac_abs) = if Self::INT_NBITS == 0 {

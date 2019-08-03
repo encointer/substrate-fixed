@@ -17,6 +17,7 @@ keywords = ["mathematics", "numerics"]
 categories = ["algorithms", "data-structures", "no-std", "science"]
 license = "MIT/Apache-2.0"
 edition = "2018"
+autobenches = false
 
 [features]
 f16 = ["half"]
@@ -34,5 +35,16 @@ version = "1.0.25"
 default-features = false
 optional = true
 
+[dev-dependencies]
+rand = { version = "0.6", default-features = false }
+rand_xoshiro = "0.2"
+criterion = "0.2"
+num-traits = { version = "0.2", default-features = false }
+
 [package.metadata.docs.rs]
 features = ["f16", "serde"]
+
+[[bench]]
+name = "bench_main"
+harness = false
+

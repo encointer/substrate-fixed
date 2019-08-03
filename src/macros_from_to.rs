@@ -31,7 +31,10 @@ assert_eq!(Fix::from_bits(0b10_0000), 2);
 ";
             #[inline]
             pub fn from_bits(bits: $Inner) -> $Fixed<Frac> {
-                $Fixed((bits, PhantomData))
+                $Fixed {
+                    bits,
+                    phantom: PhantomData,
+                }
             }
         );
 
@@ -51,7 +54,7 @@ assert_eq!(Fix::from_int(2).to_bits(), 0b10_0000);
 ";
             #[inline]
             pub fn to_bits(self) -> $Inner {
-                (self.0).0
+                self.bits
             }
         );
 

@@ -108,7 +108,7 @@ macro_rules! pass_assign {
         {
             #[inline]
             fn $method(&mut self, rhs: $Fixed<Frac>) {
-                (&mut (self.0).0).$method(rhs.to_bits())
+                self.bits.$method(rhs.to_bits())
             }
         }
 
@@ -198,7 +198,7 @@ macro_rules! shift_assign {
         {
             #[inline]
             fn $method(&mut self, rhs: $Rhs) {
-                (&mut (self.0).0).$method(rhs)
+                self.bits.$method(rhs)
             }
         }
 

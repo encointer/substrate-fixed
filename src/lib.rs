@@ -304,9 +304,13 @@ assert_eq!(two_point_75.to_string(), \"2.8\");
 [typenum crate]: https://crates.io/crates/typenum
 ";
             #[repr(transparent)]
-            pub struct $Fixed<Frac>(($Inner, PhantomData<Frac>))
+            pub struct $Fixed<Frac>
             where
-                Frac: Unsigned + IsLessOrEqual<$Len, Output = True>;
+                Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
+            {
+                bits: $Inner,
+                phantom: PhantomData<Frac>,
+            }
         );
 
         impl<Frac> Clone for $Fixed<Frac>

@@ -7,6 +7,7 @@
 
 #![allow(dead_code)]
 #![allow(unused_variables)]
+#![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
 
 use std::env;
 use std::ffi::OsString;

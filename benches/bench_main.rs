@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
+
 use {
     criterion::{
         black_box, criterion_group, criterion_main, Bencher, Benchmark, Criterion, Throughput,
@@ -26,7 +28,7 @@ where
 {
     let value: T = rng.gen();
     if value != T::zero() {
-        return value;
+        value
     } else {
         T::one()
     }

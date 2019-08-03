@@ -289,10 +289,7 @@ assert_eq!(Fix::from_float(",
             where
                 F: Float,
             {
-                let (wrapped, overflow) = Self::overflowing_from_float(val);
-                debug_assert!(!overflow, "{} overflows", val);
-                let _ = overflow;
-                wrapped
+                SealedFloat::to_fixed(val)
             }
         );
 
@@ -332,13 +329,7 @@ assert_eq!(max_fixed.to_float::<f32>(), std::f32::INFINITY);
             where
                 F: Float,
             {
-                let (neg, abs) = self.to_bits().neg_abs();
-                SealedFloat::from_neg_abs(
-                    neg,
-                    u128::from(abs),
-                    Self::FRAC_NBITS,
-                    Self::INT_NBITS,
-                )
+                SealedFixed::to_float(self)
             }
         );
 
@@ -562,11 +553,7 @@ assert!(Fix::checked_from_float(std::f64::NAN).is_none());
             where
                 F: Float,
             {
-                if !val.is_finite() {
-                    return None;
-                }
-                let (wrapped, overflow) = Self::overflowing_from_float(val);
-                if overflow { None } else { Some(wrapped) }
+                SealedFloat::checked_to_fixed(val)
             }
         );
 
@@ -799,39 +786,7 @@ assert_eq!(Fix::saturating_from_float(f64::NEG_INFINITY), Fix::min_value());
             where
                 F: Float,
             {
-                assert!(!val.is_nan(), "NaN");
-                let saturated = if val.is_sign_negative() {
-                    Self::min_value()
-                } else {
-                    Self::max_value()
-                };
-                if !val.is_finite() {
-                    return saturated;
-                }
-                let (value, _, overflow) = val.to_fixed_dir_overflow(
-                    Self::FRAC_NBITS,
-                    Self::INT_NBITS,
-                );
-                if overflow {
-                    return saturated;
-                }
-                let bits = if_signed_unsigned!(
-                    $Signedness,
-                    match value {
-                        Widest::Unsigned(bits) => {
-                            if (bits as <Self as SealedFixed>::Bits) < 0 {
-                                return Self::max_value();
-                            }
-                            bits as <Self as SealedFixed>::Bits
-                        }
-                        Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
-                    },
-                    match value {
-                        Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
-                        Widest::Negative(_) => return Self::min_value(),
-                    },
-                );
-                SealedFixed::from_bits(bits)
+                SealedFloat::saturating_to_fixed(val)
             }
         );
 
@@ -1076,7 +1031,7 @@ assert_eq!(Fix::wrapping_from_float(large), wrapped);
             where
                 F: Float,
             {
-                Self::overflowing_from_float(val).0
+                SealedFloat::wrapping_to_fixed(val)
             }
         );
 
@@ -1338,33 +1293,7 @@ assert_eq!(Fix::overflowing_from_float(large), (wrapped, true));
             where
                 F: Float,
             {
-                if !val.is_finite() {
-                    panic!("{} is not finite", val);
-                }
-                let (value, _, mut overflow) = val.to_fixed_dir_overflow(
-                    Self::FRAC_NBITS,
-                    Self::INT_NBITS,
-                );
-                let bits = if_signed_unsigned!(
-                    $Signedness,
-                    match value {
-                        Widest::Unsigned(bits) => {
-                            if (bits as <Self as SealedFixed>::Bits) < 0 {
-                                overflow = true;
-                            }
-                            bits as <Self as SealedFixed>::Bits
-                        }
-                        Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
-                    },
-                    match value {
-                        Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
-                        Widest::Negative(bits) => {
-                            overflow = true;
-                            bits as <Self as SealedFixed>::Bits
-                        }
-                    },
-                );
-                (SealedFixed::from_bits(bits), overflow)
+                SealedFloat::overflowing_to_fixed(val)
             }
         );
     };

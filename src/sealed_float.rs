@@ -64,8 +64,8 @@ pub trait SealedFloat: Copy + Debug + Display {
             return None;
         }
         match Self::overflowing_to_fixed(self) {
-            (wrapped, false) => Some(wrapped),
             (_, true) => None,
+            (wrapped, false) => Some(wrapped),
         }
     }
     #[inline]
@@ -73,19 +73,7 @@ pub trait SealedFloat: Copy + Debug + Display {
     where
         F: Fixed,
     {
-        assert!(!self.is_nan(), "NaN");
-        let saturated = if self.is_sign_negative() {
-            F::from_bits(<F as SealedFixed>::Bits::min_value())
-        } else {
-            F::from_bits(<F as SealedFixed>::Bits::max_value())
-        };
-        if !self.is_finite() {
-            return saturated;
-        }
-        match Self::overflowing_to_fixed(self) {
-            (wrapped, false) => wrapped,
-            (_, true) => saturated,
-        }
+        SealedFixed::saturating_from_float(self)
     }
     #[inline]
     fn wrapping_to_fixed<F>(self) -> F
@@ -95,9 +83,13 @@ pub trait SealedFloat: Copy + Debug + Display {
         let (wrapped, _) = Self::overflowing_to_fixed(self);
         wrapped
     }
+    #[inline]
     fn overflowing_to_fixed<F>(self) -> (F, bool)
     where
-        F: Fixed;
+        F: Fixed,
+    {
+        SealedFixed::overflowing_from_float(self)
+    }
 
     fn from_neg_abs(neg: bool, abs: u128, frac_bits: u32, int_bits: u32) -> Self;
     // self must be finite, otherwise meaningless results are returned
@@ -169,14 +161,6 @@ macro_rules! sealed_float {
                 let exp_bits = biased_exp << (Self::PREC - 1);
                 let bits = sign_bits | exp_bits | mant;
                 Self::from_bits(bits)
-            }
-
-            #[inline]
-            fn overflowing_to_fixed<F>(self) -> (F, bool)
-            where
-                F: Fixed,
-            {
-                F::overflowing_from_float(self)
             }
 
             #[inline]

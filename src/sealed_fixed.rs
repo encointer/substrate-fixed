@@ -16,7 +16,7 @@
 use {
     crate::{
         frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
-        sealed::{Fixed, Float, SealedInt},
+        sealed::{Fixed, SealedFloat, SealedInt},
         FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
         FixedU8,
     },
@@ -84,12 +84,15 @@ pub trait SealedFixed: Copy + Debug + Default + Display + Eq + Hash + Ord {
     where
         F: Fixed;
 
+    fn saturating_from_float<F>(float: F) -> Self
+    where
+        F: SealedFloat;
     fn overflowing_from_float<F>(float: F) -> (Self, bool)
     where
-        F: Float;
+        F: SealedFloat;
     fn to_float<F>(self) -> F
     where
-        F: Float;
+        F: SealedFloat;
 
     #[inline]
     fn one() -> Option<Self> {
@@ -207,19 +210,83 @@ macro_rules! sealed_fixed {
             }
 
             #[inline]
-            fn overflowing_from_float<F>(float: F) -> (Self, bool)
+            fn saturating_from_float<F>(val: F) -> Self
             where
-                F: Float,
+                F: SealedFloat,
             {
-                $Fixed::overflowing_from_float(float)
+                if val.is_nan() {
+                    panic!("NaN");
+                }
+                let saturated = if val.is_sign_negative() {
+                    Self::min_value()
+                } else {
+                    Self::max_value()
+                };
+                if !val.is_finite() {
+                    return saturated;
+                }
+                let (value, _, overflow) =
+                    val.to_fixed_dir_overflow(Self::FRAC_NBITS, Self::INT_NBITS);
+                if overflow {
+                    return saturated;
+                }
+                let bits = if_signed_unsigned!(
+                    $Signedness,
+                    match value {
+                        Widest::Unsigned(bits) => {
+                            if (bits as <Self as SealedFixed>::Bits) < 0 {
+                                return Self::max_value();
+                            }
+                            bits as <Self as SealedFixed>::Bits
+                        }
+                        Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
+                    },
+                    match value {
+                        Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
+                        Widest::Negative(_) => return Self::min_value(),
+                    },
+                );
+                SealedFixed::from_bits(bits)
+            }
+            #[inline]
+            fn overflowing_from_float<F>(val: F) -> (Self, bool)
+            where
+                F: SealedFloat,
+            {
+                if !val.is_finite() {
+                    panic!("{} is not finite", val);
+                }
+                let (value, _, mut overflow) =
+                    val.to_fixed_dir_overflow(Self::FRAC_NBITS, Self::INT_NBITS);
+                let bits = if_signed_unsigned!(
+                    $Signedness,
+                    match value {
+                        Widest::Unsigned(bits) => {
+                            if (bits as <Self as SealedFixed>::Bits) < 0 {
+                                overflow = true;
+                            }
+                            bits as <Self as SealedFixed>::Bits
+                        }
+                        Widest::Negative(bits) => bits as <Self as SealedFixed>::Bits,
+                    },
+                    match value {
+                        Widest::Unsigned(bits) => bits as <Self as SealedFixed>::Bits,
+                        Widest::Negative(bits) => {
+                            overflow = true;
+                            bits as <Self as SealedFixed>::Bits
+                        }
+                    },
+                );
+                (SealedFixed::from_bits(bits), overflow)
             }
 
             #[inline]
             fn to_float<F>(self) -> F
             where
-                F: Float,
+                F: SealedFloat,
             {
-                $Fixed::to_float(self)
+                let (neg, abs) = self.to_bits().neg_abs();
+                SealedFloat::from_neg_abs(neg, u128::from(abs), Self::FRAC_NBITS, Self::INT_NBITS)
             }
 
             #[inline]

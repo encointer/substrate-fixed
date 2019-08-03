@@ -215,7 +215,7 @@ use {
     crate::{
         arith::MulDivDir,
         frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
-        sealed::{Fixed, Float, Int, SealedFixed, SealedFloat, SealedInt, Widest},
+        sealed::{Fixed, Float, Int, SealedFixed, SealedFloat, SealedInt},
     },
     core::{
         cmp::Ordering,

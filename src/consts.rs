@@ -22,9 +22,9 @@ number, and are rounded down at that precision.
 # Examples
 
 ```rust
-let pi: fixed::types::I8F8 = fixed::consts::PI.to_fixed();
-println!("π with eight binary places is {:b}", pi);
-assert_eq!(format!("{:b}", pi), "11.00100100");
+let tau: fixed::types::I8F8 = fixed::consts::TAU.to_fixed();
+println!("τ = 2π with eight binary places is {:b}", tau);
+assert_eq!(format!("{:b}", tau), "110.01001000");
 ```
 */
 

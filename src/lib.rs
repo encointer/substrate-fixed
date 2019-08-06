@@ -233,7 +233,7 @@ use {
 /// have to do so manually:
 ///
 /// ```
-/// ##[allow(unused_imports)]
+/// # #[allow(unused_imports)]
 /// use fixed::prelude::*;
 /// ```
 ///

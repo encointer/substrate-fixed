@@ -94,27 +94,6 @@ pub trait SealedFixed: Copy + Debug + Default + Display + Eq + Hash + Ord {
     where
         F: SealedFloat;
 
-    #[inline]
-    fn one() -> Option<Self> {
-        let min_int_bits = if Self::SBits::IS_SIGNED { 2 } else { 1 };
-        if Self::INT_NBITS < min_int_bits {
-            None
-        } else {
-            Some(Self::from_sbits(Self::SBits::one_shl(Self::FRAC_NBITS)))
-        }
-    }
-
-    #[inline]
-    fn minus_one() -> Option<Self> {
-        if !Self::SBits::IS_SIGNED || Self::INT_NBITS < 1 {
-            None
-        } else {
-            Some(Self::from_sbits(Self::SBits::all_ones_shl(
-                Self::FRAC_NBITS,
-            )))
-        }
-    }
-
     fn from_sbits(bits: Self::SBits) -> Self;
     fn to_sbits(self) -> Self::SBits;
     fn parts(

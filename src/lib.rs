@@ -563,11 +563,16 @@ assert_eq!(minus_five.abs(), five);
 
 # Panics
 
-This method panics:
+When debug assertions are enabled, this method panics
   * if the value is positive and the fixed-point number has zero
     or one integer bits such that it cannot hold the value 1.
   * if the value is negative and the fixed-point number has zero
     integer bits, such that it cannot hold the value −1.
+
+When debug assertions are not enabled, the wrapped value can be
+returned in those cases, but it is not considered a breaking change if
+in the future it panics; using this method when 1 and −1 cannot be
+represented is almost certainly a bug.
 
 # Examples
 
@@ -584,8 +589,8 @@ assert_eq!(Fix::from_int(-5).signum(), -1);
                     pub fn signum(self) -> $Fixed<Frac> {
                         match self.to_bits().cmp(&0) {
                             Ordering::Equal => Self::from_bits(0),
-                            Ordering::Greater => Self::one().expect("overflow"),
-                            Ordering::Less => Self::minus_one().expect("overflow"),
+                            Ordering::Greater => 1.to_fixed(),
+                            Ordering::Less => (-1).to_fixed(),
                         }
                     }
                 );

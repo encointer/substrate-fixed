@@ -396,11 +396,17 @@ pub trait FixedSigned: Fixed {
     ///
     /// # Panics
     ///
-    /// This method panics:
-    ///   * if the value is positive and the fixed-point number has zero
-    ///     or one integer bits such that it cannot hold the value 1.
-    ///   * if the value is negative and the fixed-point number has zero
-    ///     integer bits, such that it cannot hold the value −1.
+    /// When debug assertions are enabled, this method panics
+    ///   * if the value is positive and the fixed-point number has
+    ///     zero or one integer bits such that it cannot hold the
+    ///     value 1.
+    ///   * if the value is negative and the fixed-point number has
+    ///     zero integer bits, such that it cannot hold the value −1.
+    ///
+    /// When debug assertions are not enabled, the wrapped value can
+    /// be returned in those cases, but it is not considered a
+    /// breaking change if in the future it panics; using this method
+    /// when 1 and −1 cannot be represented is almost certainly a bug.
     fn signum(self) -> Self;
 
     /// Checked absolute value. Returns the absolute value, or [`None`] on overflow.

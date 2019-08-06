@@ -13,21 +13,25 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-use crate::frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8};
-use crate::sealed::{Fixed, SealedFixed};
 use crate::{
+    frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
+    sealed::Fixed,
+    traits::ToFixed,
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
-use core::cmp::Ordering;
-use core::default::Default;
-use core::fmt::{Debug, Display, Formatter, Result as FmtResult};
-use core::hash::{Hash, Hasher};
-use core::iter::{Product, Sum};
-use core::num::Wrapping as CoreWrapping;
-use core::ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign,
-    Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
+use core::{
+    cmp::Ordering,
+    default::Default,
+    fmt::{Debug, Display, Formatter, Result as FmtResult},
+    hash::{Hash, Hasher},
+    iter::{Product, Sum},
+    num::Wrapping as CoreWrapping,
+    ops::{
+        Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div,
+        DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub,
+        SubAssign,
+    },
 };
 
 /// Provides intentionally wrapped arithmetic on fixed-point numbers.
@@ -507,7 +511,7 @@ macro_rules! ops {
                 I: Iterator<Item = Wrapping<$Fixed<Frac>>>,
             {
                 match iter.next() {
-                    None => Wrapping($Fixed::one().unwrap_or_else(|| $Fixed::from_bits(0))),
+                    None => Wrapping(1.wrapping_to_fixed()),
                     Some(first) => iter.fold(first, Mul::mul),
                 }
             }
@@ -522,7 +526,7 @@ macro_rules! ops {
                 I: Iterator<Item = &'a Wrapping<$Fixed<Frac>>>,
             {
                 match iter.next() {
-                    None => Wrapping($Fixed::one().unwrap_or_else(|| $Fixed::from_bits(0))),
+                    None => Wrapping(1.wrapping_to_fixed()),
                     Some(first) => iter.fold(*first, Mul::mul),
                 }
             }

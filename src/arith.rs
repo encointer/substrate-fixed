@@ -16,7 +16,7 @@
 use {
     crate::{
         frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
-        sealed::{SealedFixed, SealedInt},
+        sealed::SealedInt,
         wide_div::WideDivRem,
         FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
         FixedU8,
@@ -581,7 +581,7 @@ macro_rules! fixed_arith {
                 I: Iterator<Item = $Fixed<Frac>>,
             {
                 match iter.next() {
-                    None => Self::one().expect("overflow"),
+                    None => 1.to_fixed(),
                     Some(first) => iter.fold(first, Mul::mul),
                 }
             }
@@ -596,7 +596,7 @@ macro_rules! fixed_arith {
                 I: Iterator<Item = &'a $Fixed<Frac>>,
             {
                 match iter.next() {
-                    None => Self::one().expect("overflow"),
+                    None => 1.to_fixed(),
                     Some(first) => iter.fold(*first, Mul::mul),
                 }
             }

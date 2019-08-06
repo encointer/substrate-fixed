@@ -396,11 +396,13 @@ macro_rules! fixed_cmp_all {
         fixed_cmp_int! { $Fix($NBits), i32 }
         fixed_cmp_int! { $Fix($NBits), i64 }
         fixed_cmp_int! { $Fix($NBits), i128 }
+        fixed_cmp_int! { $Fix($NBits), isize }
         fixed_cmp_int! { $Fix($NBits), u8 }
         fixed_cmp_int! { $Fix($NBits), u16 }
         fixed_cmp_int! { $Fix($NBits), u32 }
         fixed_cmp_int! { $Fix($NBits), u64 }
         fixed_cmp_int! { $Fix($NBits), u128 }
+        fixed_cmp_int! { $Fix($NBits), usize }
         #[cfg(feature = "f16")]
         fixed_cmp_float! { $Fix($NBits), f16 }
         fixed_cmp_float! { $Fix($NBits), f32 }

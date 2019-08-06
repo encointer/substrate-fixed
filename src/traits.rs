@@ -45,6 +45,11 @@ where
     Self: Not<Output = Self> + Shl<u32, Output = Self> + Shr<u32, Output = Self>,
     Self: AddAssign + SubAssign + MulAssign + DivAssign,
     Self: BitAndAssign + BitOrAssign + BitXorAssign + ShlAssign<u32> + ShrAssign<u32>,
+    Self: PartialOrd<i8> + PartialOrd<i16> + PartialOrd<i32>,
+    Self: PartialOrd<i64> + PartialOrd<i128> + PartialOrd<isize>,
+    Self: PartialOrd<u8> + PartialOrd<u16> + PartialOrd<u32>,
+    Self: PartialOrd<u64> + PartialOrd<u128> + PartialOrd<usize>,
+    Self: PartialOrd<f32> + PartialOrd<f64>,
 {
     /// The primitive integer underlying type.
     type Bits;

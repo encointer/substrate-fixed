@@ -23,11 +23,31 @@ use crate::{
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
+use core::{
+    fmt::{Binary, Debug, Display, LowerHex, Octal, UpperHex},
+    hash::Hash,
+    ops::{
+        Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div,
+        DivAssign, Mul, MulAssign, Neg, Not, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
+    },
+};
 #[cfg(feature = "f16")]
 use half::f16;
 
 /// This trait provides common methods to all fixed-point numbers.
-pub trait Fixed: Copy + FromFixed + ToFixed + sealed::Fixed {
+pub trait Fixed
+where
+    Self: Clone + Copy + Default,
+    Self: Debug + Display + Binary + Octal + LowerHex + UpperHex,
+    Self: Eq + Hash + Ord,
+    Self: FromFixed + ToFixed + sealed::Fixed,
+    Self: Add<Output = Self> + Sub<Output = Self> + Mul<Output = Self> + Div<Output = Self>,
+    Self: Neg<Output = Self> + Not<Output = Self>,
+    Self: BitAnd<Output = Self> + BitOr<Output = Self> + BitXor<Output = Self>,
+    Self: Shl<u32, Output = Self> + Shr<u32, Output = Self>,
+    Self: AddAssign + SubAssign + MulAssign + DivAssign,
+    Self: BitAndAssign + BitOrAssign + BitXorAssign + ShlAssign<u32> + ShrAssign<u32>,
+{
     /// The primitive integer underlying type.
     type Bits;
 
@@ -156,6 +176,15 @@ pub trait Fixed: Copy + FromFixed + ToFixed + sealed::Fixed {
 
     /// Shifts to the right by *n* bits, wrapping the truncated bits to the left end.
     fn rotate_right(self, n: u32) -> Self;
+
+    /// Multiplication by an integer.
+    fn mul_int(self, rhs: Self::Bits) -> Self;
+
+    /// Division by an integer.
+    fn div_int(self, rhs: Self::Bits) -> Self;
+
+    /// Remainder for division by an integer.
+    fn rem_int(self, rhs: Self::Bits) -> Self;
 
     /// Checked negation. Returns the negated value, or [`None`] on overflow.
     ///
@@ -964,6 +993,18 @@ macro_rules! impl_fixed {
             trait_delegate! { fn trailing_zeros(self) -> u32 }
             trait_delegate! { fn rotate_left(self, n: u32) -> Self }
             trait_delegate! { fn rotate_right(self, n: u32) -> Self }
+            #[inline]
+            fn mul_int(self, rhs: Self::Bits) -> Self {
+                self * rhs
+            }
+            #[inline]
+            fn div_int(self, rhs: Self::Bits) -> Self {
+                self / rhs
+            }
+            #[inline]
+            fn rem_int(self, rhs: Self::Bits) -> Self {
+                self % rhs
+            }
             trait_delegate! { fn checked_neg(self) -> Option<Self> }
             trait_delegate! { fn checked_add(self, rhs: Self) -> Option<Self> }
             trait_delegate! { fn checked_sub(self, rhs: Self) -> Option<Self> }

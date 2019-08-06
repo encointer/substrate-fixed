@@ -552,6 +552,8 @@ assert_eq!(two_half.overflowing_ceil(), (Fix::from_int(3), false));
             ),
             "assert_eq!(Fix::max_value().overflowing_ceil(), (Fix::min_value(), true));
 ```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 ";
             #[inline]
             pub fn overflowing_ceil(self) -> ($Fixed<Frac>, bool) {
@@ -610,6 +612,8 @@ assert_eq!(AllFrac::min_value().overflowing_floor(), (AllFrac::from_int(0), true
 ",
             ),
             "```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 ";
             #[inline]
             pub fn overflowing_floor(self) -> ($Fixed<Frac>, bool) {
@@ -648,6 +652,8 @@ assert_eq!(two_half.overflowing_round(), (Fix::from_int(3), false));
             ),
             "assert_eq!(Fix::max_value().overflowing_round(), (Fix::min_value(), true));
 ```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 ";
             #[inline]
             pub fn overflowing_round(self) -> ($Fixed<Frac>, bool) {

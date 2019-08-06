@@ -595,7 +595,7 @@ assert_eq!(Fix::from_int(-5).signum(), -1);
             if_unsigned! {
                 $Signedness;
                 delegate!(
-                    "Returns `true` if the fixed-point number is
+                    "Returns [`true`][`bool`] if the fixed-point number is
 2<sup><i>k</i></sup> for some integer <i>k</i>.
 
 # Examples
@@ -611,12 +611,21 @@ let half = Fix::from_bits(0b1000);
 assert!(!three_eights.is_power_of_two());
 assert!(half.is_power_of_two());
 ```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 ";
                     $Fixed($Inner) => fn is_power_of_two(self) -> bool
                 );
 
                 delegate!(
                     "Returns the smallest power of two ≥ `self`.
+
+# Panics
+
+When debug assertions are enabled, panics if the next power of two is
+too large to represent. When debug assertions are not enabled, zero
+can be returned, but it is not considered a breaking change if in the
+future it panics.
 
 # Examples
 
@@ -665,7 +674,7 @@ assert!(Fix::max_value().checked_next_power_of_two().is_none());
             if_signed! {
                 $Signedness;
                 delegate!(
-                    "Returns `true` if the number is > 0.
+                    "Returns [`true`][`bool`] if the number is > 0.
 
 # Examples
 
@@ -677,12 +686,14 @@ assert!(Fix::from_int(5).is_positive());
 assert!(!Fix::from_int(0).is_positive());
 assert!(!Fix::from_int(-5).is_positive());
 ```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 ";
                     $Fixed($Inner) => fn is_positive(self) -> bool
                 );
 
                 delegate!(
-                    "Returns `true` if the number is < 0.
+                    "Returns [`true`][`bool`] if the number is < 0.
 
 # Examples
 
@@ -694,6 +705,8 @@ assert!(!Fix::from_int(5).is_negative());
 assert!(!Fix::from_int(0).is_negative());
 assert!(Fix::from_int(-5).is_negative());
 ```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 ";
                     $Fixed($Inner) => fn is_negative(self) -> bool
                 );

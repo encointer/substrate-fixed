@@ -43,7 +43,8 @@ numeric primitives are implemented. That is, you can use [`From`] or
 
   * The [*fixed* crate] now requires rustc version 1.31.1 or later.
   * The [`traits`] module was added, with its traits [`Fixed`],
-    [`FromFixed`], [`ToFixed`], [`LossyFrom`] and [`LossyInto`],.
+    [`FixedSigned`], [`FixedUnsigned`], [`FromFixed`], [`ToFixed`],
+    [`LossyFrom`] and [`LossyInto`],.
   * The [`saturating_neg`] method was added to all fixed-point
     numbers, and the [`saturating_abs`] method was added to signed
     fixed-point numbers.
@@ -55,6 +56,8 @@ numeric primitives are implemented. That is, you can use [`From`] or
     [`FromFixed`] and [`ToFixed`].
 
 [`Fixed`]: https://docs.rs/fixed/0.3.4/fixed/traits/trait.Fixed.html
+[`FixedSigned`]: https://docs.rs/fixed/0.3.4/fixed/traits/trait.FixedSigned.html
+[`FixedUnsigned`]: https://docs.rs/fixed/0.3.4/fixed/traits/trait.FixedUnsigned.html
 [`Float`]: https://docs.rs/fixed/0.3.4/fixed/sealed/trait.Float.html
 [`FromFixed`]: https://docs.rs/fixed/0.3.4/fixed/traits/trait.FromFixed.html
 [`Int`]: https://docs.rs/fixed/0.3.4/fixed/sealed/trait.Int.html

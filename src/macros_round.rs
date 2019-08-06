@@ -73,7 +73,7 @@ numbers, except in the case where there are no integer bits, that is `",
                 $s_fixed,
                 "<U",
                 $s_nbits,
-                ">` where the return value is always equal to 
+                ">` where the return value is always equal to
 `self`.
 
 ",
@@ -532,7 +532,7 @@ assert_eq!(two_half.wrapping_round(), Fix::from_int(3));
         comment!(
             "Overflowing ceil. Rounds to the next integer towards +∞.
 
-Returns a tuple of the fixed-point number and a [`bool`], indicating
+Returns a [tuple] of the fixed-point number and a [`bool`], indicating
 whether an overflow has occurred. On overflow, the wrapped value is
 returned.
 
@@ -554,6 +554,7 @@ assert_eq!(two_half.overflowing_ceil(), (Fix::from_int(3), false));
 ```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
             pub fn overflowing_ceil(self) -> ($Fixed<Frac>, bool) {
@@ -579,15 +580,14 @@ assert_eq!(two_half.overflowing_ceil(), (Fix::from_int(3), false));
         comment!(
             "Overflowing floor. Rounds to the next integer towards −∞.
 
+Returns a [tuple] of the fixed-point number and
 ",
             if_signed_unsigned!(
                 $Signedness,
-                "Returns a tuple of the fixed-point number and a
-[`bool`], indicating whether an overflow has occurred. On overflow,
-the wrapped value isreturned. Overflow can only occur when there are
-zero integer bits.",
-                "Returns a tuple of the fixed-point number and
-[`false`][`bool`].",
+                "a [`bool`], indicating whether an overflow has
+occurred. On overflow, the wrapped value isreturned. Overflow can only
+occur when there are zero integer bits.",
+                "[`false`][`bool`].",
             ),
             "
 
@@ -614,6 +614,7 @@ assert_eq!(AllFrac::min_value().overflowing_floor(), (AllFrac::from_int(0), true
             "```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
             pub fn overflowing_floor(self) -> ($Fixed<Frac>, bool) {
@@ -632,7 +633,7 @@ assert_eq!(AllFrac::min_value().overflowing_floor(), (AllFrac::from_int(0), true
             "Overflowing round. Rounds to the next integer to the
 nearest, with ties rounded away from zero.
 
-Returns a tuple of the fixed-point number and a [`bool`] indicating
+Returns a [tuple] of the fixed-point number and a [`bool`] indicating
 whether an overflow has occurred. On overflow, the wrapped value is
 returned.
 
@@ -654,6 +655,7 @@ assert_eq!(two_half.overflowing_round(), (Fix::from_int(3), false));
 ```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
             pub fn overflowing_round(self) -> ($Fixed<Frac>, bool) {

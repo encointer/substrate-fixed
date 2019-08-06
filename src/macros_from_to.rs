@@ -1042,7 +1042,7 @@ assert_eq!(Fix::wrapping_from_float(large), wrapped);
             "Creates a fixed-point number from another fixed-point
 number.
 
-Returns a tuple of the fixed-point number and a [`bool`] indicating
+Returns a [tuple] of the fixed-point number and a [`bool`] indicating
 whether an overflow has occurred. On overflow, the wrapped value is
 returned.
 
@@ -1074,6 +1074,7 @@ assert_eq!(Dst::overflowing_from_fixed(too_large), (wrapped, true));
 ```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
             pub fn overflowing_from_fixed<F>(val: F) -> ($Fixed<Frac>, bool)
@@ -1088,7 +1089,7 @@ assert_eq!(Dst::overflowing_from_fixed(too_large), (wrapped, true));
             "Converts a fixed-point number to another fixed-point
 number.
 
-Returns a tuple of the fixed-point number and a [`bool`] indicating
+Returns a [tuple] of the fixed-point number and a [`bool`] indicating
 whether an overflow has occurred. On overflow, the wrapped value is
 returned.
 
@@ -1124,7 +1125,7 @@ assert_eq!(Src::max_value().overflowing_to_fixed::<TooFewIntBits>(), (wrapped, t
         comment!(
             "Creates a fixed-point number from an integer.
 
-Returns a tuple of the fixed-point number and a [`bool`] indicating
+Returns a [tuple] of the fixed-point number and a [`bool`] indicating
 whether an overflow has occurred. On overflow, the wrapped value is
 returned.
 
@@ -1166,6 +1167,7 @@ assert_eq!(Fix::overflowing_from_int(large), (wrapped, true));
 [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
 [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
 [`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
             pub fn overflowing_from_int<I>(val: I) -> ($Fixed<Frac>, bool)
@@ -1179,7 +1181,7 @@ assert_eq!(Fix::overflowing_from_int(large), (wrapped, true));
         comment!(
             "Converts a fixed-point number to an integer.
 
-Returns a tuple of the integer and a [`bool`] indicating whether an
+Returns a [tuple] of the integer and a [`bool`] indicating whether an
 overflow has occurred. On overflow, the wrapped value is returned.
 
 The integer can be of type [`i8`], [`i16`], [`i32`], [`i64`],
@@ -1234,6 +1236,7 @@ assert_eq!(does_not_fit.overflowing_to_int::<",
 [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
 [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
 [`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
             pub fn overflowing_to_int<I>(self) -> (I, bool)
@@ -1248,7 +1251,7 @@ assert_eq!(does_not_fit.overflowing_to_int::<",
             "Creates a fixed-point number from a floating-point
 number.
 
-Returns a tuple of the fixed-point number and a [`bool`] indicating whether
+Returns a [tuple] of the fixed-point number and a [`bool`] indicating whether
 an overflow has occurred. On overflow, the wrapped value is returned.
 
 The floating-point value can be of type [`f32`] or [`f64`].
@@ -1290,6 +1293,7 @@ assert_eq!(Fix::overflowing_from_float(large), (wrapped, true));
 [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
 [`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html
 [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
             pub fn overflowing_from_float<F>(val: F) -> ($Fixed<Frac>, bool)

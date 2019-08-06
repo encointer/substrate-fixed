@@ -802,7 +802,7 @@ assert_eq!(Fix::min_value().wrapping_abs(), Fix::min_value());
         comment!(
             "Overflowing negation.
 
-Returns a tuple of the negated value and a [`bool`] indicating whether
+Returns a [tuple] of the negated value and a [`bool`] indicating whether
 an overflow has occurred. On overflow, the wrapped value is returned.
 
 ",
@@ -833,6 +833,7 @@ assert_eq!(Fix::from_int(5).overflowing_neg(), (Fix::from_bits(neg_five_bits), t
 ```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
             pub fn overflowing_neg(self) -> ($Fixed<Frac>, bool) {
@@ -844,7 +845,7 @@ assert_eq!(Fix::from_int(5).overflowing_neg(), (Fix::from_bits(neg_five_bits), t
         comment!(
             "Overflowing addition.
 
-Returns a tuple of the sum and a [`bool`] indicating whether an
+Returns a [tuple] of the sum and a [`bool`] indicating whether an
 overflow has occurred. On overflow, the wrapped value is returned.
 
 # Examples
@@ -862,6 +863,7 @@ assert_eq!(Fix::max_value().overflowing_add(one), (",
 ```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
             pub fn overflowing_add(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
@@ -873,7 +875,7 @@ assert_eq!(Fix::max_value().overflowing_add(one), (",
         comment!(
             "Overflowing subtraction.
 
-Returns a tuple of the difference and a [`bool`] indicating whether an
+Returns a [tuple] of the difference and a [`bool`] indicating whether an
 overflow has occurred. On overflow, the wrapped value is returned.
 
 # Examples
@@ -896,6 +898,7 @@ assert_eq!(Fix::from_int(0)",
 ```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
             pub fn overflowing_sub(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
@@ -907,7 +910,7 @@ assert_eq!(Fix::from_int(0)",
         comment!(
             "Overflowing multiplication.
 
-Returns a tuple of the product and a [`bool`] indicating whether an
+Returns a [tuple] of the product and a [`bool`] indicating whether an
 overflow has occurred. On overflow, the wrapped value is returned.
 
 # Examples
@@ -922,6 +925,7 @@ assert_eq!(Fix::max_value().overflowing_mul(Fix::from_int(4)), (wrapped, true));
 ```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
             pub fn overflowing_mul(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
@@ -933,7 +937,7 @@ assert_eq!(Fix::max_value().overflowing_mul(Fix::from_int(4)), (wrapped, true));
         comment!(
             "Overflowing division.
 
-Returns a tuple of the quotient and a [`bool`] indicating whether an
+Returns a [tuple] of the quotient and a [`bool`] indicating whether an
 overflow has occurred. On overflow, the wrapped value is returned.
 
 # Panics
@@ -963,7 +967,7 @@ assert_eq!(Fix::max_value().overflowing_div(quarter), (wrapped, true));
         comment!(
             "Overflowing multiplication by an integer.
 
-Returns a tuple of the product and a [`bool`] indicating whether an
+Returns a [tuple] of the product and a [`bool`] indicating whether an
 overflow has occurred. On overflow, the wrapped value is returned.
 
 # Examples
@@ -978,6 +982,7 @@ assert_eq!(Fix::max_value().overflowing_mul_int(4), (wrapped, true));
 ```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
             pub fn overflowing_mul_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
@@ -989,7 +994,7 @@ assert_eq!(Fix::max_value().overflowing_mul_int(4), (wrapped, true));
         comment!(
             "Overflowing division by an integer.
 
-Returns a tuple of the quotient and ",
+Returns a [tuple] of the quotient and ",
             if_signed_unsigned!(
                 $Signedness,
                 "a [`bool`] indicating whether an overflow has
@@ -1021,6 +1026,7 @@ assert_eq!(Fix::from_int(3).overflowing_div_int(2), (one_point_5, false));
             "```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
             pub fn overflowing_div_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
@@ -1032,7 +1038,7 @@ assert_eq!(Fix::from_int(3).overflowing_div_int(2), (one_point_5, false));
         comment!(
             "Overflowing fixed-point remainder for division by an integer.
 
-Returns a tuple of the remainder and ",
+Returns a [tuple] of the remainder and ",
             if_signed_unsigned!(
                 $Signedness,
                 "a [`bool`] indicating whether an overflow has
@@ -1063,6 +1069,7 @@ assert_eq!(Fix::from_bits(0b10101).overflowing_rem_int(8), (Fix::from_bits(0b101
             "```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
             pub fn overflowing_rem_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
@@ -1074,7 +1081,7 @@ assert_eq!(Fix::from_bits(0b10101).overflowing_rem_int(8), (Fix::from_bits(0b101
         comment!(
             "Overflowing shift left.
 
-Returns a tuple of the shifted value and a [`bool`] indicating whether
+Returns a [tuple] of the shifted value and a [`bool`] indicating whether
 an overflow has occurred. Overflow occurs when `rhs` ≥ ",
             $s_nbits,
             ". On overflow `rhs` is wrapped before the shift operation.
@@ -1092,6 +1099,7 @@ assert_eq!((Fix::from_int(1) / 2).overflowing_shl(3 + ",
 ```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
             pub fn overflowing_shl(self, rhs: u32) -> ($Fixed<Frac>, bool) {
@@ -1103,7 +1111,7 @@ assert_eq!((Fix::from_int(1) / 2).overflowing_shl(3 + ",
         comment!(
             "Overflowing shift right.
 
-Returns a tuple of the shifted value and a [`bool`] indicating whether
+Returns a [tuple] of the shifted value and a [`bool`] indicating whether
 an overflow has occurred. Overflow occurs when `rhs` ≥ ",
             $s_nbits,
             ". On overflow `rhs` is wrapped before the shift operation.
@@ -1121,6 +1129,7 @@ assert_eq!((Fix::from_int(4)).overflowing_shr(3 + ",
 ```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
             pub fn overflowing_shr(self, rhs: u32) -> ($Fixed<Frac>, bool) {
@@ -1134,7 +1143,7 @@ assert_eq!((Fix::from_int(4)).overflowing_shr(3 + ",
             comment!(
                 "Overflowing absolute value.
 
-Returns a tuple of the absolute value and a [`bool`] indicating
+Returns a [tuple] of the absolute value and a [`bool`] indicating
 whether an overflow has occurred. On overflow, the wrapped value is
 returned.
 
@@ -1151,6 +1160,7 @@ assert_eq!(Fix::min_value().overflowing_abs(), (Fix::min_value(), true));
 ```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
                 #[inline]
                 pub fn overflowing_abs(self) -> ($Fixed<Frac>, bool) {

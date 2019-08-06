@@ -223,7 +223,7 @@ pub const LN_10: FixedU128<U126> = FixedU128 {
     phantom: PhantomData,
 };
 
-#[allow(clippy::float_cmp)]
+#[allow(clippy::cognitive_complexity, clippy::float_cmp)]
 #[cfg(test)]
 mod tests {
     use crate::{consts::*, traits::FromFixed};

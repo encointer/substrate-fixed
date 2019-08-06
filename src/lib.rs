@@ -240,10 +240,7 @@ use {
 ///
 /// [prelude]: https://doc.rust-lang.org/nightly/std/prelude/index.html
 pub mod prelude {
-    pub use crate::{
-        sealed::Fixed,
-        traits::{FromFixed, ToFixed},
-    };
+    pub use crate::traits::{Fixed, FromFixed, ToFixed};
 }
 
 #[macro_use]

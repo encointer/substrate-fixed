@@ -18,7 +18,8 @@ use half::f16;
 use {
     crate::{
         frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
-        sealed::{Fixed, SealedFixed, SealedFloat, SealedInt, Widest},
+        sealed::{SealedFixed, SealedFloat, SealedInt, Widest},
+        traits::Fixed,
         FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
         FixedU8,
     },

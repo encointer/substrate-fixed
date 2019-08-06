@@ -56,7 +56,7 @@ assert_eq!((-two_and_quarter).int(), -three);
 ";
             #[inline]
             pub fn int(self) -> $Fixed<Frac> {
-                let mask = Self::INT_MASK as <Self as Fixed>::Bits;
+                let mask = Self::INT_MASK as <Self as SealedFixed>::SBits;
                 Self::from_bits(self.to_bits() & mask)
             }
         );
@@ -102,7 +102,7 @@ assert_eq!((-two_and_quarter).frac(), three_quarters);
 ";
             #[inline]
             pub fn frac(self) -> $Fixed<Frac> {
-                let mask = Self::FRAC_MASK as <Self as Fixed>::Bits;
+                let mask = Self::FRAC_MASK as <Self as SealedFixed>::SBits;
                 Self::from_bits(self.to_bits() & mask)
             }
         );
@@ -562,7 +562,7 @@ assert_eq!(two_half.overflowing_ceil(), (Fix::from_int(3), false));
                 if Self::INT_NBITS == 0 {
                     return (int, self.to_bits() > 0);
                 }
-                let int_lsb = Self::INT_LSB as <Self as Fixed>::Bits;
+                let int_lsb = Self::INT_LSB as <Self as SealedFixed>::SBits;
                 let increment = Self::from_bits(int_lsb);
                 if_signed! {
                     $Signedness;
@@ -652,11 +652,11 @@ assert_eq!(two_half.overflowing_round(), (Fix::from_int(3), false));
             #[inline]
             pub fn overflowing_round(self) -> ($Fixed<Frac>, bool) {
                 let int = self.int();
-                let frac_msb = Self::FRAC_MSB as <Self as Fixed>::Bits;
+                let frac_msb = Self::FRAC_MSB as <Self as SealedFixed>::SBits;
                 if (self.to_bits() & frac_msb) == 0 {
                     return (int, false);
                 }
-                let int_lsb = Self::INT_LSB as <Self as Fixed>::Bits;
+                let int_lsb = Self::INT_LSB as <Self as SealedFixed>::SBits;
                 let increment = Self::from_bits(int_lsb);
                 if_signed! {
                     $Signedness;

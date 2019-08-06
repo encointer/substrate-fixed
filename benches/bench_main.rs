@@ -4,10 +4,7 @@ use {
     criterion::{
         black_box, criterion_group, criterion_main, Bencher, Benchmark, Criterion, Throughput,
     },
-    fixed::{
-        sealed::{Fixed, Int},
-        types::*,
-    },
+    fixed::{traits::Fixed, types::*},
     num_traits::{One, Zero},
     rand::{
         distributions::{Distribution, Standard},
@@ -45,10 +42,10 @@ where
         .collect()
 }
 
-fn fixed_point_op<F, B, O>(bencher: &mut Bencher, op: O)
+fn fixed_point_op<F, O>(bencher: &mut Bencher, op: O)
 where
-    F: Fixed<Bits = B>,
-    B: Int + Zero + One + PartialEq,
+    F: Fixed,
+    F::Bits: Zero + One + PartialEq,
     Standard: Distribution<F::Bits>,
     O: Fn(F, F) -> F,
 {
@@ -104,10 +101,10 @@ macro_rules! create_bench {
                     primitive_op::<i128, _>(b, $op);
                 })
                 .with_function("FixedU128", move |b| {
-                    fixed_point_op::<U64F64, _, _>(b, $op);
+                    fixed_point_op::<U64F64, _>(b, $op);
                 })
                 .with_function("FixedI128", move |b| {
-                    fixed_point_op::<I64F64, _, _>(b, $op);
+                    fixed_point_op::<I64F64, _>(b, $op);
                 })
                 .with_function("f64", move |b| {
                     primitive_op::<f64, _>(b, $op);
@@ -119,10 +116,10 @@ macro_rules! create_bench {
                     primitive_op::<i64, _>(b, $op);
                 })
                 .with_function("FixedU64", move |b| {
-                    fixed_point_op::<U32F32, _, _>(b, $op);
+                    fixed_point_op::<U32F32, _>(b, $op);
                 })
                 .with_function("FixedI64", move |b| {
-                    fixed_point_op::<I32F32, _, _>(b, $op);
+                    fixed_point_op::<I32F32, _>(b, $op);
                 })
                 .with_function("f32", move |b| {
                     primitive_op::<f32, _>(b, $op);
@@ -134,10 +131,10 @@ macro_rules! create_bench {
                     primitive_op::<i32, _>(b, $op);
                 })
                 .with_function("FixedU32", move |b| {
-                    fixed_point_op::<U16F16, _, _>(b, $op);
+                    fixed_point_op::<U16F16, _>(b, $op);
                 })
                 .with_function("FixedI32", move |b| {
-                    fixed_point_op::<I16F16, _, _>(b, $op);
+                    fixed_point_op::<I16F16, _>(b, $op);
                 })
                 .with_function("u16", move |b| {
                     primitive_op::<u16, _>(b, $op);
@@ -146,10 +143,10 @@ macro_rules! create_bench {
                     primitive_op::<i16, _>(b, $op);
                 })
                 .with_function("FixedU16", move |b| {
-                    fixed_point_op::<U8F8, _, _>(b, $op);
+                    fixed_point_op::<U8F8, _>(b, $op);
                 })
                 .with_function("FixedI16", move |b| {
-                    fixed_point_op::<I8F8, _, _>(b, $op);
+                    fixed_point_op::<I8F8, _>(b, $op);
                 })
                 .with_function("u8", move |b| {
                     primitive_op::<u8, _>(b, $op);
@@ -158,10 +155,10 @@ macro_rules! create_bench {
                     primitive_op::<i8, _>(b, $op);
                 })
                 .with_function("FixedU8", move |b| {
-                    fixed_point_op::<U4F4, _, _>(b, $op);
+                    fixed_point_op::<U4F4, _>(b, $op);
                 })
                 .with_function("FixedI8", move |b| {
-                    fixed_point_op::<I4F4, _, _>(b, $op);
+                    fixed_point_op::<I4F4, _>(b, $op);
                 })
                 .throughput(Throughput::Elements(DATASET_SIZE.try_into().unwrap())),
             );

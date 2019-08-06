@@ -146,16 +146,16 @@ macro_rules! sealed_fixed {
             where
                 F: Fixed,
             {
-                let (value, _, overflow) = val.to_bits().to_fixed_dir_overflow(
+                let (value, _, overflow) = val.to_sbits().to_fixed_dir_overflow(
                     F::FRAC_NBITS as i32,
                     Self::FRAC_NBITS,
                     Self::INT_NBITS,
                 );
                 if overflow {
-                    return if val.to_bits().is_negative() {
-                        Fixed::from_bits(Self::SBits::min_value())
+                    return if val.to_sbits().is_negative() {
+                        SealedFixed::from_sbits(Self::SBits::min_value())
                     } else {
-                        Fixed::from_bits(Self::SBits::max_value())
+                        SealedFixed::from_sbits(Self::SBits::max_value())
                     };
                 }
                 let bits = if_signed_unsigned!(
@@ -163,7 +163,7 @@ macro_rules! sealed_fixed {
                     match value {
                         Widest::Unsigned(bits) => {
                             if (bits as Self::SBits) < 0 {
-                                return Fixed::from_bits(Self::SBits::max_value());
+                                return $Fixed::from_bits(Self::SBits::max_value());
                             }
                             bits as Self::SBits
                         }
@@ -172,11 +172,11 @@ macro_rules! sealed_fixed {
                     match value {
                         Widest::Unsigned(bits) => bits as Self::SBits,
                         Widest::Negative(_) => {
-                            return Fixed::from_bits(Self::SBits::min_value());
+                            return $Fixed::from_bits(Self::SBits::min_value());
                         }
                     },
                 );
-                Fixed::from_bits(bits)
+                $Fixed::from_bits(bits)
             }
 
             #[inline]
@@ -184,7 +184,7 @@ macro_rules! sealed_fixed {
             where
                 F: Fixed,
             {
-                let (value, _, mut overflow) = val.to_bits().to_fixed_dir_overflow(
+                let (value, _, mut overflow) = val.to_sbits().to_fixed_dir_overflow(
                     F::FRAC_NBITS as i32,
                     Self::FRAC_NBITS,
                     Self::INT_NBITS,
@@ -208,7 +208,7 @@ macro_rules! sealed_fixed {
                         }
                     },
                 );
-                (Fixed::from_bits(bits), overflow)
+                ($Fixed::from_bits(bits), overflow)
             }
 
             #[inline]
@@ -248,7 +248,7 @@ macro_rules! sealed_fixed {
                         Widest::Negative(_) => return Self::min_value(),
                     },
                 );
-                Fixed::from_bits(bits)
+                $Fixed::from_bits(bits)
             }
             #[inline]
             fn overflowing_from_float<F>(val: F) -> (Self, bool)
@@ -279,7 +279,7 @@ macro_rules! sealed_fixed {
                         }
                     },
                 );
-                (Fixed::from_bits(bits), overflow)
+                ($Fixed::from_bits(bits), overflow)
             }
 
             #[inline]

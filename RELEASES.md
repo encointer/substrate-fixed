@@ -9,13 +9,11 @@ Version 0.4.0 (unreleased)
 ==========================
 
   * The *fixed* crate now requires rustc version 1.31.1 or later.
-  * The `traits` module was added, with its traits `LossyFrom`,
-    `LossyInto`, `FromFixed` and `ToFixed`.
-  * All types implementing the sealed traits `Int`, `Float` and
-    `Fixed` now also implement `FromFixed` and `ToFixed`.
+  * The `traits` module was added, with its traits `Fixed`,
+    `FromFixed`, `ToFixed`, `LossyFrom` and `LossyInto`.
   * Incompatible change: The sealed traits `Int` and `Float` now have
-    no provided methods as they would clash with the methods of their
-    super-traits `FromFixed` and `ToFixed`.
+    no provided methods; the methods in the old implementation are now
+    provided by `FromFixed` and `ToFixed`.
 
 Version 0.3.3 (2019-06-27)
 ==========================

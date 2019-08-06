@@ -33,6 +33,57 @@ use core::{
 };
 #[cfg(feature = "f16")]
 use half::f16;
+#[cfg(feature = "serde")]
+use serde::{de::Deserialize, ser::Serialize};
+
+macro_rules! comment_features {
+    ($comment:expr) => {
+        #[cfg(all(not(feature = "f16"), not(feature = "serde")))]
+        doc_comment! {
+            $comment;
+            pub trait FixedOptionalFeatures {}
+        }
+        #[cfg(all(feature = "f16", not(feature = "serde")))]
+        doc_comment! {
+            $comment;
+            pub trait FixedOptionalFeatures: PartialOrd<f16> {}
+        }
+        #[cfg(all(not(feature = "f16"), feature = "serde"))]
+        doc_comment! {
+            $comment;
+            pub trait FixedOptionalFeatures: Serialize + for<'de> Deserialize<'de> {}
+        }
+        #[cfg(all(feature = "f16", feature = "serde"))]
+        doc_comment! {
+            $comment;
+            pub trait FixedOptionalFeatures
+            where
+                Self: PartialOrd<f16>,
+                Self: Serialize + for<'de> Deserialize<'de>,
+            {
+            }
+        }
+    };
+}
+
+comment_features! {
+    "This trait is used to provide supertraits to the [`Fixed`] trait
+depending on the crate’s [optional features].
+
+ 1. If the `f16` feature is enabled,
+    <code>[PartialOrd][`PartialOrd`]&lt;[f16][`f16`]&gt;</code> is a
+    supertrait of [`Fixed`].
+ 2. If the `serde` feature is enabled, [`Serialize`] and
+    [`Deserialize`] are supertraits of [`Fixed`].
+
+[`Deserialize`]: https://docs.rs/serde/^1/serde/de/trait.Deserialize.html
+[`Fixed`]: trait.Fixed.html
+[`PartialOrd`]: https://doc.rust-lang.org/nightly/std/cmp/trait.PartialOrd.html
+[`Serialize`]: https://docs.rs/serde/^1/serde/ser/trait.Serialize.html
+[`f16`]: https://docs.rs/half/^1/half/struct.f16.html
+[optional features]: ../index.html#optional-features
+"
+}
 
 /// This trait provides common methods to all fixed-point numbers.
 pub trait Fixed
@@ -50,6 +101,7 @@ where
     Self: PartialOrd<u8> + PartialOrd<u16> + PartialOrd<u32>,
     Self: PartialOrd<u64> + PartialOrd<u128> + PartialOrd<usize>,
     Self: PartialOrd<f32> + PartialOrd<f64>,
+    Self: FixedOptionalFeatures,
 {
     /// The primitive integer underlying type.
     type Bits;
@@ -959,6 +1011,13 @@ macro_rules! trait_delegate {
 
 macro_rules! impl_fixed {
     ($Fixed:ident, $NBits:ident, $Bits:ident) => {
+        impl<Frac> FixedOptionalFeatures for $Fixed<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
+        {
+            // this comment to work around rustfmt bug
+        }
+
         impl<Frac> Fixed for $Fixed<Frac>
         where
             Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,

@@ -317,6 +317,44 @@ assert_eq!(Fix::min_value().checked_abs(), None);
         }
 
         comment!(
+            "Saturating negation. Returns the negated value, saturating on overflow.
+
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "Overflow can only occur when negating the minimum value.",
+                "This method always returns zero.",
+            ),
+            "
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "assert_eq!(Fix::from_int(5).saturating_neg(), Fix::from_int(-5));
+assert_eq!(Fix::min_value().saturating_neg(), Fix::max_value());",
+                "assert_eq!(Fix::from_int(0).saturating_neg(), Fix::from_int(0));
+assert_eq!(Fix::from_int(5).saturating_neg(), Fix::from_int(0));",
+            ),
+            "
+```
+";
+            #[inline]
+            pub fn saturating_neg(self) -> $Fixed<Frac> {
+                if_signed_unsigned!(
+                    $Signedness,
+                    self.checked_neg().unwrap_or(Self::max_value()),
+                    Self::from_bits(0),
+                )
+            }
+        );
+
+        comment!(
             "Saturating addition. Returns the sum, saturating on overflow.
 
 # Examples
@@ -432,6 +470,30 @@ assert_eq!(Fix::max_value().saturating_mul_int(2), Fix::max_value());
                 Self::from_bits(<$Inner>::saturating_mul(self.to_bits(), rhs))
             }
         );
+
+        if_signed! {
+            $Signedness;
+            comment!(
+                "Saturating absolute value. Returns the absolute value, saturating on overflow.
+
+Overflow can only occur when trying to find the absolute value of the minimum value.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+                $s_fixed,
+                "<fixed::frac::U4>;
+assert_eq!(Fix::from_int(-5).saturating_abs(), Fix::from_int(5));
+assert_eq!(Fix::min_value().saturating_abs(), Fix::max_value());
+```
+";
+                #[inline]
+                pub fn saturating_abs(self) -> $Fixed<Frac> {
+                    self.checked_abs().unwrap_or(Self::max_value())
+                }
+            );
+        }
 
         comment!(
             "Wrapping negation. Returns the negated value, wrapping on overflow.

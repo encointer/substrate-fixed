@@ -11,6 +11,9 @@ Version 0.4.0 (unreleased)
   * The *fixed* crate now requires rustc version 1.31.1 or later.
   * The `traits` module was added, with its traits `Fixed`,
     `FromFixed`, `ToFixed`, `LossyFrom` and `LossyInto`.
+  * The `saturating_neg` method was added to all fixed-point numbers,
+    and the `saturating_abs` method was added to signed fixed-point
+    numbers.
   * Incompatible change: The sealed traits `Int` and `Float` now have
     no provided methods; the methods in the old implementation are now
     provided by `FromFixed` and `ToFixed`.

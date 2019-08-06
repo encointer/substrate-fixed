@@ -37,14 +37,12 @@ use half::f16;
 /// This trait provides common methods to all fixed-point numbers.
 pub trait Fixed
 where
-    Self: Clone + Copy + Default,
+    Self: Copy + Default + Hash + Ord,
     Self: Debug + Display + Binary + Octal + LowerHex + UpperHex,
-    Self: Eq + Hash + Ord,
     Self: FromFixed + ToFixed + sealed::Fixed,
     Self: Add<Output = Self> + Sub<Output = Self> + Mul<Output = Self> + Div<Output = Self>,
-    Self: Neg<Output = Self> + Not<Output = Self>,
     Self: BitAnd<Output = Self> + BitOr<Output = Self> + BitXor<Output = Self>,
-    Self: Shl<u32, Output = Self> + Shr<u32, Output = Self>,
+    Self: Not<Output = Self> + Shl<u32, Output = Self> + Shr<u32, Output = Self>,
     Self: AddAssign + SubAssign + MulAssign + DivAssign,
     Self: BitAndAssign + BitOrAssign + BitXorAssign + ShlAssign<u32> + ShrAssign<u32>,
 {
@@ -430,7 +428,7 @@ where
 }
 
 /// This trait provides common methods to all signed fixed-point numbers.
-pub trait FixedSigned: Fixed {
+pub trait FixedSigned: Fixed + Neg<Output = Self> {
     /// Returns the absolute value.
     fn abs(self) -> Self;
 

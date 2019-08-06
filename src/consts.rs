@@ -228,11 +228,11 @@ pub const LN_10: FixedU128<U126> = FixedU128 {
 mod tests {
     use crate::{consts::*, traits::FromFixed};
     use core::{f32, f64};
-    use half::{self, f16};
 
     #[cfg(feature = "f16")]
     #[test]
     fn cmp_f16() {
+        use half::{self, f16};
         assert_eq!(f16::from_fixed(TAU), f16::from_f32(f32::consts::PI * 2.0));
         assert_eq!(f16::from_fixed(FRAC_TAU_2), half::consts::PI);
         assert_eq!(

@@ -210,20 +210,18 @@ mod wide_div;
 mod wrapping;
 
 pub use crate::wrapping::Wrapping;
+use crate::{
+    arith::MulDivDir,
+    frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
+    sealed::{Fixed, Float, Int, SealedFixed, SealedFloat, SealedInt},
+};
+use core::{
+    cmp::Ordering,
+    hash::{Hash, Hasher},
+    marker::PhantomData,
+};
 #[cfg(feature = "f16")]
 use half::f16;
-use {
-    crate::{
-        arith::MulDivDir,
-        frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
-        sealed::{Fixed, Float, Int, SealedFixed, SealedFloat, SealedInt},
-    },
-    core::{
-        cmp::Ordering,
-        hash::{Hash, Hasher},
-        marker::PhantomData,
-    },
-};
 
 /// A prelude for users of the *fixed* crate.
 ///

@@ -1,18 +1,16 @@
 #![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
 
-use {
-    criterion::{
-        black_box, criterion_group, criterion_main, Bencher, Benchmark, Criterion, Throughput,
-    },
-    fixed::{traits::Fixed, types::*},
-    num_traits::{One, Zero},
-    rand::{
-        distributions::{Distribution, Standard},
-        Rng,
-    },
-    rand_xoshiro::{rand_core::SeedableRng, Xoshiro256Plus},
-    std::convert::TryInto,
+use criterion::{
+    black_box, criterion_group, criterion_main, Bencher, Benchmark, Criterion, Throughput,
 };
+use fixed::{traits::Fixed, types::*};
+use num_traits::{One, Zero};
+use rand::{
+    distributions::{Distribution, Standard},
+    Rng,
+};
+use rand_xoshiro::{rand_core::SeedableRng, Xoshiro256Plus};
+use std::convert::TryInto;
 
 const SEED: u64 = 42_069;
 const DATASET_SIZE: usize = 10_000;

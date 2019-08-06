@@ -13,18 +13,16 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
+use crate::{
+    frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
+    sealed::{SealedFixed, SealedFloat, SealedInt, Widest},
+    traits::Fixed,
+    FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
+    FixedU8,
+};
+use core::cmp::Ordering;
 #[cfg(feature = "f16")]
 use half::f16;
-use {
-    crate::{
-        frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
-        sealed::{SealedFixed, SealedFloat, SealedInt, Widest},
-        traits::Fixed,
-        FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
-        FixedU8,
-    },
-    core::cmp::Ordering,
-};
 
 macro_rules! fixed_cmp_fixed {
     ($Lhs:ident($LhsNBits:ident), $Rhs:ident($RhsNBits:ident)) => {

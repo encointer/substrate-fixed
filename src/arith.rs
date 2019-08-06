@@ -13,22 +13,20 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-use {
-    crate::{
-        frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
-        sealed::SealedInt,
-        wide_div::WideDivRem,
-        FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
-        FixedU8,
-    },
-    core::{
-        cmp::Ordering,
-        iter::{Product, Sum},
-        ops::{
-            Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div,
-            DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign,
-            Sub, SubAssign,
-        },
+use crate::{
+    frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
+    sealed::SealedInt,
+    wide_div::WideDivRem,
+    FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
+    FixedU8,
+};
+use core::{
+    cmp::Ordering,
+    iter::{Product, Sum},
+    ops::{
+        Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div,
+        DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub,
+        SubAssign,
     },
 };
 

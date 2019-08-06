@@ -13,20 +13,16 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
+use crate::{
+    frac::{IsGreaterOrEqual, IsLessOrEqual, True, Unsigned, U0, U1, U128, U16, U2, U32, U64, U8},
+    sealed::SealedInt,
+    traits::{FromFixed, LossyFrom},
+    FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
+    FixedU8,
+};
+use core::ops::{Add, Sub};
 #[cfg(feature = "f16")]
 use half::f16;
-use {
-    crate::{
-        frac::{
-            IsGreaterOrEqual, IsLessOrEqual, True, Unsigned, U0, U1, U128, U16, U2, U32, U64, U8,
-        },
-        sealed::SealedInt,
-        traits::{FromFixed, LossyFrom},
-        FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
-        FixedU8,
-    },
-    core::ops::{Add, Sub},
-};
 
 macro_rules! convert {
     (($SrcU:ident, $SrcI:ident, $SrcBits:ident) -> ($DstU:ident, $DstI:ident, $DstBits:ident)) => {

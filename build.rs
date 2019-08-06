@@ -9,12 +9,14 @@
 #![allow(unused_variables)]
 #![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
 
-use std::env;
-use std::ffi::OsString;
-use std::fs::{self, File};
-use std::io::{Result as IoResult, Write};
-use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::{
+    env,
+    ffi::OsString,
+    fs::{self, File},
+    io::{Result as IoResult, Write},
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 struct Environment {
     out_dir: PathBuf,

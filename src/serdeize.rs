@@ -13,17 +13,15 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-use {
-    crate::{
-        frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
-        FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
-        FixedU8,
-    },
-    core::fmt::{Formatter, Result as FmtResult},
-    serde::{
-        de::{self, Deserialize, Deserializer, MapAccess, SeqAccess, Visitor},
-        ser::{Serialize, SerializeStruct, Serializer},
-    },
+use crate::{
+    frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
+    FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
+    FixedU8,
+};
+use core::fmt::{Formatter, Result as FmtResult};
+use serde::{
+    de::{self, Deserialize, Deserializer, MapAccess, SeqAccess, Visitor},
+    ser::{Serialize, SerializeStruct, Serializer},
 };
 
 macro_rules! serde_fixed {

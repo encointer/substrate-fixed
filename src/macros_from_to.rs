@@ -89,10 +89,7 @@ assert_eq!(Dst::from_fixed(src >> 4), Dst::from_bits(1));
 [`wrapping_from_fixed`]: #method.wrapping_from_fixed
 ";
             #[inline]
-            pub fn from_fixed<F>(val: F) -> $Fixed<Frac>
-            where
-                F: Fixed,
-            {
+            pub fn from_fixed<F: Fixed>(val: F) -> $Fixed<Frac> {
                 SealedFixed::from_fixed(val)
             }
         );
@@ -127,10 +124,7 @@ assert_eq!((src >> 4u32).to_fixed::<Dst>(), Dst::from_bits(1));
 [`wrapping_to_fixed`]: #method.wrapping_to_fixed
 ";
             #[inline]
-            pub fn to_fixed<F>(self) -> F
-            where
-                F: Fixed,
-            {
+            pub fn to_fixed<F: Fixed>(self) -> F {
                 SealedFixed::from_fixed(self)
             }
         );
@@ -180,10 +174,7 @@ assert_eq!(Fix::from_int(",
 [`wrapping_from_int`]: #method.wrapping_from_int
 ";
             #[inline]
-            pub fn from_int<I>(val: I) -> $Fixed<Frac>
-            where
-                I: Int,
-            {
+            pub fn from_int<I: Int>(val: I) -> $Fixed<Frac> {
                 SealedInt::to_fixed(val)
             }
         );
@@ -236,10 +227,7 @@ assert_eq!(",
 [`wrapping_to_int`]: #method.wrapping_to_int
 ";
             #[inline]
-            pub fn to_int<I>(self) -> I
-            where
-                I: Int,
-            {
+            pub fn to_int<I: Int>(self) -> I {
                 SealedInt::from_fixed(self)
             }
         );
@@ -288,10 +276,7 @@ assert_eq!(Fix::from_float(",
 [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
 ";
             #[inline]
-            pub fn from_float<F>(val: F) -> $Fixed<Frac>
-            where
-                F: Float,
-            {
+            pub fn from_float<F: Float>(val: F) -> $Fixed<Frac> {
                 SealedFloat::to_fixed(val)
             }
         );
@@ -328,10 +313,7 @@ assert_eq!(max_fixed.to_float::<f32>(), std::f32::INFINITY);
 [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
 [`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html
 ";
-            pub fn to_float<F>(self) -> F
-            where
-                F: Float,
-            {
+            pub fn to_float<F: Float>(self) -> F {
                 SealedFixed::to_float(self)
             }
         );
@@ -361,10 +343,7 @@ assert!(Dst::checked_from_fixed(too_large).is_none());
 [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
 ";
             #[inline]
-            pub fn checked_from_fixed<F>(val: F) -> Option<$Fixed<Frac>>
-            where
-                F: Fixed,
-            {
+            pub fn checked_from_fixed<F: Fixed>(val: F) -> Option<$Fixed<Frac>> {
                 SealedFixed::checked_from_fixed(val)
             }
         );
@@ -395,10 +374,7 @@ assert!(Src::max_value().checked_to_fixed::<TooFewIntBits>().is_none());
 [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
 ";
             #[inline]
-            pub fn checked_to_fixed<F>(self) -> Option<F>
-            where
-                F: Fixed,
-            {
+            pub fn checked_to_fixed<F: Fixed>(self) -> Option<F> {
                 SealedFixed::checked_from_fixed(self)
             }
         );
@@ -447,10 +423,7 @@ assert!(Fix::checked_from_int(too_small).is_none());
 [`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
 ";
             #[inline]
-            pub fn checked_from_int<I>(val: I) -> Option<$Fixed<Frac>>
-            where
-                I: Int,
-            {
+            pub fn checked_from_int<I: Int>(val: I) -> Option<$Fixed<Frac>> {
                 SealedInt::checked_to_fixed(val)
             }
         );
@@ -508,10 +481,7 @@ assert!(AllInt::",
 [`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
 ";
             #[inline]
-            pub fn checked_to_int<I>(self) -> Option<I>
-            where
-                I: Int,
-            {
+            pub fn checked_to_int<I: Int>(self) -> Option<I> {
                 SealedInt::checked_from_fixed(self)
             }
         );
@@ -552,10 +522,7 @@ assert!(Fix::checked_from_float(std::f64::NAN).is_none());
 [`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html
 ";
             #[inline]
-            pub fn checked_from_float<F>(val: F) -> Option<$Fixed<Frac>>
-            where
-                F: Float,
-            {
+            pub fn checked_from_float<F: Float>(val: F) -> Option<$Fixed<Frac>> {
                 SealedFloat::checked_to_fixed(val)
             }
         );
@@ -591,10 +558,7 @@ assert_eq!(Dst::saturating_from_fixed(too_small), Dst::min_value());
 ```
 ";
             #[inline]
-            pub fn saturating_from_fixed<F>(val: F) -> $Fixed<Frac>
-            where
-                F: Fixed,
-            {
+            pub fn saturating_from_fixed<F: Fixed>(val: F) -> $Fixed<Frac> {
                 SealedFixed::saturating_from_fixed(val)
             }
         );
@@ -623,10 +587,7 @@ assert_eq!(saturated, TooFewIntBits::max_value());
 ```
 ";
             #[inline]
-            pub fn saturating_to_fixed<F>(self) -> F
-            where
-                F: Fixed,
-            {
+            pub fn saturating_to_fixed<F: Fixed>(self) -> F {
                 SealedFixed::saturating_from_fixed(self)
             }
         );
@@ -674,10 +635,7 @@ assert_eq!(Fix::saturating_from_int(too_small), Fix::min_value());
 [`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
 ";
             #[inline]
-            pub fn saturating_from_int<I>(val: I) -> $Fixed<Frac>
-            where
-                I: Int,
-            {
+            pub fn saturating_from_int<I: Int>(val: I) -> $Fixed<Frac> {
                 SealedInt::saturating_to_fixed(val)
             }
         );
@@ -743,10 +701,7 @@ assert_eq!(",
 [`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
 ";
             #[inline]
-            pub fn saturating_to_int<I>(self) -> I
-            where
-                I: Int,
-            {
+            pub fn saturating_to_int<I: Int>(self) -> I {
                 SealedInt::saturating_from_fixed(self)
             }
         );
@@ -785,10 +740,7 @@ assert_eq!(Fix::saturating_from_float(f64::NEG_INFINITY), Fix::min_value());
 [NaN]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_nan
 ";
             #[inline]
-            pub fn saturating_from_float<F>(val: F) -> $Fixed<Frac>
-            where
-                F: Float,
-            {
+            pub fn saturating_from_float<F: Float>(val: F) -> $Fixed<Frac> {
                 SealedFloat::saturating_to_fixed(val)
             }
         );
@@ -825,10 +777,7 @@ assert_eq!(Dst::wrapping_from_fixed(too_large), wrapped);
 ```
 ";
             #[inline]
-            pub fn wrapping_from_fixed<F>(val: F) -> $Fixed<Frac>
-            where
-                F: Fixed,
-            {
+            pub fn wrapping_from_fixed<F: Fixed>(val: F) -> $Fixed<Frac> {
                 SealedFixed::wrapping_from_fixed(val)
             }
         );
@@ -858,10 +807,7 @@ assert_eq!(Src::max_value().wrapping_to_fixed::<TooFewIntBits>(), wrapped);
 ```
 ";
             #[inline]
-            pub fn wrapping_to_fixed<F>(self) -> F
-            where
-                F: Fixed,
-            {
+            pub fn wrapping_to_fixed<F: Fixed>(self) -> F {
                 SealedFixed::wrapping_from_fixed(self)
             }
         );
@@ -909,10 +855,7 @@ assert_eq!(Fix::wrapping_from_int(large), wrapped);
 [`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
 ";
             #[inline]
-            pub fn wrapping_from_int<I>(val: I) -> $Fixed<Frac>
-            where
-                I: Int,
-            {
+            pub fn wrapping_from_int<I: Int>(val: I) -> $Fixed<Frac> {
                 SealedInt::wrapping_to_fixed(val)
             }
         );
@@ -978,10 +921,7 @@ assert_eq!(",
 [`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
 ";
             #[inline]
-            pub fn wrapping_to_int<I>(self) -> I
-            where
-                I: Int,
-            {
+            pub fn wrapping_to_int<I: Int>(self) -> I {
                 SealedInt::wrapping_from_fixed(self)
             }
         );
@@ -1030,10 +970,7 @@ assert_eq!(Fix::wrapping_from_float(large), wrapped);
 [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
 ";
             #[inline]
-            pub fn wrapping_from_float<F>(val: F) -> $Fixed<Frac>
-            where
-                F: Float,
-            {
+            pub fn wrapping_from_float<F: Float>(val: F) -> $Fixed<Frac> {
                 SealedFloat::wrapping_to_fixed(val)
             }
         );
@@ -1077,10 +1014,7 @@ assert_eq!(Dst::overflowing_from_fixed(too_large), (wrapped, true));
 [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
-            pub fn overflowing_from_fixed<F>(val: F) -> ($Fixed<Frac>, bool)
-            where
-                F: Fixed,
-            {
+            pub fn overflowing_from_fixed<F: Fixed>(val: F) -> ($Fixed<Frac>, bool) {
                 SealedFixed::overflowing_from_fixed(val)
             }
         );
@@ -1114,10 +1048,7 @@ assert_eq!(Src::max_value().overflowing_to_fixed::<TooFewIntBits>(), (wrapped, t
 ```
 ";
             #[inline]
-            pub fn overflowing_to_fixed<F>(self) -> (F, bool)
-            where
-                F: Fixed,
-            {
+            pub fn overflowing_to_fixed<F: Fixed>(self) -> (F, bool) {
                 SealedFixed::overflowing_from_fixed(self)
             }
         );
@@ -1170,10 +1101,7 @@ assert_eq!(Fix::overflowing_from_int(large), (wrapped, true));
 [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
-            pub fn overflowing_from_int<I>(val: I) -> ($Fixed<Frac>, bool)
-            where
-                I: Int,
-            {
+            pub fn overflowing_from_int<I: Int>(val: I) -> ($Fixed<Frac>, bool) {
                 SealedInt::overflowing_to_fixed(val)
             }
         );
@@ -1239,10 +1167,7 @@ assert_eq!(does_not_fit.overflowing_to_int::<",
 [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
-            pub fn overflowing_to_int<I>(self) -> (I, bool)
-            where
-                I: Int,
-            {
+            pub fn overflowing_to_int<I: Int>(self) -> (I, bool) {
                 SealedInt::overflowing_from_fixed(self)
             }
         );
@@ -1296,10 +1221,7 @@ assert_eq!(Fix::overflowing_from_float(large), (wrapped, true));
 [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
             #[inline]
-            pub fn overflowing_from_float<F>(val: F) -> ($Fixed<Frac>, bool)
-            where
-                F: Float,
-            {
+            pub fn overflowing_from_float<F: Float>(val: F) -> ($Fixed<Frac>, bool) {
                 SealedFloat::overflowing_to_fixed(val)
             }
         );

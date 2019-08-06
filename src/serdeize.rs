@@ -30,10 +30,7 @@ macro_rules! serde_fixed {
         where
             Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
         {
-            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-            where
-                S: Serializer,
-            {
+            fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
                 let bits = self.to_bits();
                 let mut state = serializer.serialize_struct($Name, 1)?;
                 state.serialize_field("bits", &bits)?;
@@ -45,10 +42,7 @@ macro_rules! serde_fixed {
         where
             Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
         {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-            where
-                D: Deserializer<'de>,
-            {
+            fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
                 struct FixedVisitor;
 
                 impl<'de> Visitor<'de> for FixedVisitor {
@@ -59,20 +53,14 @@ macro_rules! serde_fixed {
                         formatter.write_str($Name)
                     }
 
-                    fn visit_seq<V>(self, mut seq: V) -> Result<$TBits, V::Error>
-                    where
-                        V: SeqAccess<'de>,
-                    {
+                    fn visit_seq<V: SeqAccess<'de>>(self, mut seq: V) -> Result<$TBits, V::Error> {
                         let bits = seq
                             .next_element()?
                             .ok_or_else(|| de::Error::invalid_length(0, &self))?;
                         Ok(bits)
                     }
 
-                    fn visit_map<V>(self, mut map: V) -> Result<$TBits, V::Error>
-                    where
-                        V: MapAccess<'de>,
-                    {
+                    fn visit_map<V: MapAccess<'de>>(self, mut map: V) -> Result<$TBits, V::Error> {
                         let mut bits = None;
                         while let Some(key) = map.next_key()? {
                             match key {
@@ -114,10 +102,7 @@ enum Field {
 }
 
 impl<'de> Deserialize<'de> for Field {
-    fn deserialize<D>(deserializer: D) -> Result<Field, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Field, D::Error> {
         struct FieldVisitor;
 
         impl<'de> Visitor<'de> for FieldVisitor {
@@ -127,10 +112,7 @@ impl<'de> Deserialize<'de> for Field {
                 formatter.write_str("`bits`")
             }
 
-            fn visit_str<E>(self, value: &str) -> Result<Field, E>
-            where
-                E: de::Error,
-            {
+            fn visit_str<E: de::Error>(self, value: &str) -> Result<Field, E> {
                 match value {
                     "bits" => Ok(Field::Bits),
                     _ => Err(de::Error::unknown_field(value, FIELDS)),

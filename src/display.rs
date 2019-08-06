@@ -95,15 +95,12 @@ macro_rules! fmt_radix2_helper {
 
 fmt_radix2_helper! { u8 u16 u32 u64 u128 }
 
-fn fmt_radix2_helper<F>(
+fn fmt_radix2_helper<F: FmtRadix2Helper>(
     frac_bits: u32,
     (is_neg, mut int, mut frac): (bool, F, F),
     radix: &dyn Radix2,
     fmt: &mut Formatter,
-) -> FmtResult
-where
-    F: FmtRadix2Helper,
-{
+) -> FmtResult {
     let int_bits = F::NBITS - frac_bits;
     let digit_bits: u32 = radix.digit_bits();
     // 128 binary digits, one radix point, one leading zero
@@ -275,14 +272,11 @@ macro_rules! fmt_dec_helper {
 
 fmt_dec_helper! { u8 u16 u32 u64 u128 }
 
-fn fmt_dec_helper<F>(
+fn fmt_dec_helper<F: FmtDecHelper>(
     frac_bits: u32,
     (is_neg, mut int, mut frac): (bool, F, F),
     fmt: &mut Formatter,
-) -> FmtResult
-where
-    F: FmtDecHelper,
-{
+) -> FmtResult {
     let int_bits = F::NBITS - frac_bits;
     // 40 int digits
     // + 128 frac digits

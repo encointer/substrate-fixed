@@ -48,49 +48,30 @@ pub trait SealedFixed: Copy + Debug + Default + Display + Eq + Hash + Ord {
     const INT_LSB: u128 = Self::INT_MASK ^ (Self::INT_MASK << 1);
 
     #[inline]
-    fn from_fixed<F>(val: F) -> Self
-    where
-        F: Fixed,
-    {
+    fn from_fixed<F: Fixed>(val: F) -> Self {
         let (wrapped, overflow) = SealedFixed::overflowing_from_fixed(val);
         debug_assert!(!overflow, "{} overflows", val);
         let _ = overflow;
         wrapped
     }
     #[inline]
-    fn checked_from_fixed<F>(val: F) -> Option<Self>
-    where
-        F: Fixed,
-    {
+    fn checked_from_fixed<F: Fixed>(val: F) -> Option<Self> {
         match SealedFixed::overflowing_from_fixed(val) {
             (_, true) => None,
             (wrapped, false) => Some(wrapped),
         }
     }
-    fn saturating_from_fixed<F>(fixed: F) -> Self
-    where
-        F: Fixed;
+    fn saturating_from_fixed<F: Fixed>(fixed: F) -> Self;
     #[inline]
-    fn wrapping_from_fixed<F>(val: F) -> Self
-    where
-        F: Fixed,
-    {
+    fn wrapping_from_fixed<F: Fixed>(val: F) -> Self {
         let (wrapped, _) = SealedFixed::overflowing_from_fixed(val);
         wrapped
     }
-    fn overflowing_from_fixed<F>(fixed: F) -> (Self, bool)
-    where
-        F: Fixed;
+    fn overflowing_from_fixed<F: Fixed>(fixed: F) -> (Self, bool);
 
-    fn saturating_from_float<F>(float: F) -> Self
-    where
-        F: SealedFloat;
-    fn overflowing_from_float<F>(float: F) -> (Self, bool)
-    where
-        F: SealedFloat;
-    fn to_float<F>(self) -> F
-    where
-        F: SealedFloat;
+    fn saturating_from_float<F: SealedFloat>(float: F) -> Self;
+    fn overflowing_from_float<F: SealedFloat>(float: F) -> (Self, bool);
+    fn to_float<F: SealedFloat>(self) -> F;
 
     fn from_sbits(bits: Self::SBits) -> Self;
     fn to_sbits(self) -> Self::SBits;
@@ -119,10 +100,7 @@ macro_rules! sealed_fixed {
             type SBits = $Bits;
 
             #[inline]
-            fn saturating_from_fixed<F>(val: F) -> Self
-            where
-                F: Fixed,
-            {
+            fn saturating_from_fixed<F: Fixed>(val: F) -> Self {
                 let (value, _, overflow) = val.to_sbits().to_fixed_dir_overflow(
                     F::FRAC_NBITS as i32,
                     Self::FRAC_NBITS,
@@ -157,10 +135,7 @@ macro_rules! sealed_fixed {
             }
 
             #[inline]
-            fn overflowing_from_fixed<F>(val: F) -> (Self, bool)
-            where
-                F: Fixed,
-            {
+            fn overflowing_from_fixed<F: Fixed>(val: F) -> (Self, bool) {
                 let (value, _, mut overflow) = val.to_sbits().to_fixed_dir_overflow(
                     F::FRAC_NBITS as i32,
                     Self::FRAC_NBITS,
@@ -189,10 +164,7 @@ macro_rules! sealed_fixed {
             }
 
             #[inline]
-            fn saturating_from_float<F>(val: F) -> Self
-            where
-                F: SealedFloat,
-            {
+            fn saturating_from_float<F: SealedFloat>(val: F) -> Self {
                 if val.is_nan() {
                     panic!("NaN");
                 }
@@ -228,10 +200,7 @@ macro_rules! sealed_fixed {
                 $Fixed::from_bits(bits)
             }
             #[inline]
-            fn overflowing_from_float<F>(val: F) -> (Self, bool)
-            where
-                F: SealedFloat,
-            {
+            fn overflowing_from_float<F: SealedFloat>(val: F) -> (Self, bool) {
                 if !val.is_finite() {
                     panic!("{} is not finite", val);
                 }
@@ -260,10 +229,7 @@ macro_rules! sealed_fixed {
             }
 
             #[inline]
-            fn to_float<F>(self) -> F
-            where
-                F: SealedFloat,
-            {
+            fn to_float<F: SealedFloat>(self) -> F {
                 let (neg, abs) = self.to_bits().neg_abs();
                 SealedFloat::from_neg_abs(neg, u128::from(abs), Self::FRAC_NBITS, Self::INT_NBITS)
             }

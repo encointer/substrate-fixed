@@ -44,20 +44,14 @@ pub trait SealedFloat: Copy + Debug + Display {
     fn from_parts(sign: bool, exp: i32, mant: Self::Bits) -> Self;
 
     #[inline]
-    fn to_fixed<F>(self) -> F
-    where
-        F: Fixed,
-    {
+    fn to_fixed<F: Fixed>(self) -> F {
         let (wrapped, overflow) = Self::overflowing_to_fixed(self);
         debug_assert!(!overflow, "{} overflows", self);
         let _ = overflow;
         wrapped
     }
     #[inline]
-    fn checked_to_fixed<F>(self) -> Option<F>
-    where
-        F: Fixed,
-    {
+    fn checked_to_fixed<F: Fixed>(self) -> Option<F> {
         if !self.is_finite() {
             return None;
         }
@@ -67,25 +61,16 @@ pub trait SealedFloat: Copy + Debug + Display {
         }
     }
     #[inline]
-    fn saturating_to_fixed<F>(self) -> F
-    where
-        F: Fixed,
-    {
+    fn saturating_to_fixed<F: Fixed>(self) -> F {
         SealedFixed::saturating_from_float(self)
     }
     #[inline]
-    fn wrapping_to_fixed<F>(self) -> F
-    where
-        F: Fixed,
-    {
+    fn wrapping_to_fixed<F: Fixed>(self) -> F {
         let (wrapped, _) = Self::overflowing_to_fixed(self);
         wrapped
     }
     #[inline]
-    fn overflowing_to_fixed<F>(self) -> (F, bool)
-    where
-        F: Fixed,
-    {
+    fn overflowing_to_fixed<F: Fixed>(self) -> (F, bool) {
         SealedFixed::overflowing_from_float(self)
     }
 

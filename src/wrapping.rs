@@ -48,14 +48,9 @@ use core::{
 /// assert_eq!(Fix::min_value(), (max + delta).0);
 /// ```
 #[repr(transparent)]
-pub struct Wrapping<F>(pub F)
-where
-    F: Fixed;
+pub struct Wrapping<F: Fixed>(pub F);
 
-impl<F> Wrapping<F>
-where
-    F: Fixed,
-{
+impl<F: Fixed> Wrapping<F> {
     /// Wrapping ceil. Rounds to the next integer towards +∞, wrapping
     /// on overflow.
     ///
@@ -128,94 +123,64 @@ where
     }
 }
 
-impl<F> Clone for Wrapping<F>
-where
-    F: Fixed,
-{
+impl<F: Fixed> Clone for Wrapping<F> {
     #[inline]
     fn clone(&self) -> Wrapping<F> {
         Wrapping(self.0)
     }
 }
 
-impl<F> Copy for Wrapping<F> where F: Fixed {}
+impl<F: Fixed> Copy for Wrapping<F> {}
 
-impl<F> Default for Wrapping<F>
-where
-    F: Fixed,
-{
+impl<F: Fixed> Default for Wrapping<F> {
     #[inline]
     fn default() -> Wrapping<F> {
         Wrapping(F::default())
     }
 }
 
-impl<F> Hash for Wrapping<F>
-where
-    F: Fixed,
-{
+impl<F: Fixed> Hash for Wrapping<F> {
     #[inline]
-    fn hash<H>(&self, state: &mut H)
-    where
-        H: Hasher,
-    {
+    fn hash<H: Hasher>(&self, state: &mut H) {
         (self.0).hash(state);
     }
 }
 
-impl<F> Debug for Wrapping<F>
-where
-    F: Fixed,
-{
+impl<F: Fixed> Debug for Wrapping<F> {
     #[inline]
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         <F as Debug>::fmt(&self.0, f)
     }
 }
 
-impl<F> Display for Wrapping<F>
-where
-    F: Fixed,
-{
+impl<F: Fixed> Display for Wrapping<F> {
     #[inline]
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         <F as Display>::fmt(&self.0, f)
     }
 }
 
-impl<F> From<F> for Wrapping<F>
-where
-    F: Fixed,
-{
+impl<F: Fixed> From<F> for Wrapping<F> {
     #[inline]
     fn from(src: F) -> Wrapping<F> {
         Wrapping(src)
     }
 }
 
-impl<F> Eq for Wrapping<F> where F: Fixed {}
-impl<F> PartialEq<Wrapping<F>> for Wrapping<F>
-where
-    F: Fixed,
-{
+impl<F: Fixed> Eq for Wrapping<F> {}
+impl<F: Fixed> PartialEq<Wrapping<F>> for Wrapping<F> {
     #[inline]
     fn eq(&self, other: &Wrapping<F>) -> bool {
         (self.0).eq(&other.0)
     }
 }
-impl<F> Ord for Wrapping<F>
-where
-    F: Fixed,
-{
+impl<F: Fixed> Ord for Wrapping<F> {
     #[inline]
     fn cmp(&self, other: &Wrapping<F>) -> Ordering {
         (self.0).cmp(&other.0)
     }
 }
-impl<F> PartialOrd<Wrapping<F>> for Wrapping<F>
-where
-    F: Fixed,
-{
+impl<F: Fixed> PartialOrd<Wrapping<F>> for Wrapping<F> {
     #[inline]
     fn partial_cmp(&self, other: &Wrapping<F>) -> Option<Ordering> {
         (self.0).partial_cmp(&other.0)

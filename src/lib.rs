@@ -339,10 +339,7 @@ assert_eq!(two_point_75.to_string(), \"2.8\");
             Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
         {
             #[inline]
-            fn hash<H>(&self, state: &mut H)
-            where
-                H: Hasher,
-            {
+            fn hash<H: Hasher>(&self, state: &mut H) {
                 self.to_bits().hash(state);
             }
         }

@@ -655,33 +655,26 @@ pub trait FromFixed {
     /// [`wrapping_from_fixed`] instead.
     ///
     /// [`wrapping_from_fixed`]: #method.wrapping_from_fixed
-    fn from_fixed<F>(val: F) -> Self
-    where
-        F: sealed::Fixed;
+    fn from_fixed<F: sealed::Fixed>(val: F) -> Self;
 
     /// Converts from a fixed-point number if it fits, otherwise returns [`None`].
     ///
     /// Any extra fractional bits are truncated.
     ///
     /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
-    fn checked_from_fixed<F>(val: F) -> Option<Self>
+    fn checked_from_fixed<F: sealed::Fixed>(val: F) -> Option<Self>
     where
-        F: sealed::Fixed,
         Self: Sized;
 
     /// Converts from a fixed-point number, saturating if it does not fit.
     ///
     /// Any extra fractional bits are truncated.
-    fn saturating_from_fixed<F>(val: F) -> Self
-    where
-        F: sealed::Fixed;
+    fn saturating_from_fixed<F: sealed::Fixed>(val: F) -> Self;
 
     /// Converts from a fixed-point number, wrapping if it does not fit.
     ///
     /// Any extra fractional bits are truncated.
-    fn wrapping_from_fixed<F>(val: F) -> Self
-    where
-        F: sealed::Fixed;
+    fn wrapping_from_fixed<F: sealed::Fixed>(val: F) -> Self;
 
     /// Converts from a fixed-point number.
     ///
@@ -693,9 +686,8 @@ pub trait FromFixed {
     ///
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
-    fn overflowing_from_fixed<F>(val: F) -> (Self, bool)
+    fn overflowing_from_fixed<F: sealed::Fixed>(val: F) -> (Self, bool)
     where
-        F: sealed::Fixed,
         Self: Sized;
 }
 
@@ -736,32 +728,24 @@ pub trait ToFixed {
     /// [`wrapping_to_fixed`] instead.
     ///
     /// [`wrapping_to_fixed`]: #method.wrapping_to_fixed
-    fn to_fixed<F>(self) -> F
-    where
-        F: sealed::Fixed;
+    fn to_fixed<F: sealed::Fixed>(self) -> F;
 
     /// Converts to a fixed-point number if it fits, otherwise returns [`None`].
     ///
     /// Any extra fractional bits are truncated.
     ///
     /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
-    fn checked_to_fixed<F>(self) -> Option<F>
-    where
-        F: sealed::Fixed;
+    fn checked_to_fixed<F: sealed::Fixed>(self) -> Option<F>;
 
     /// Converts to a fixed-point number, saturating if it does not fit.
     ///
     /// Any extra fractional bits are truncated.
-    fn saturating_to_fixed<F>(self) -> F
-    where
-        F: sealed::Fixed;
+    fn saturating_to_fixed<F: sealed::Fixed>(self) -> F;
 
     /// Converts to a fixed-point number, wrapping if it does not fit.
     ///
     /// Any extra fractional bits are truncated.
-    fn wrapping_to_fixed<F>(self) -> F
-    where
-        F: sealed::Fixed;
+    fn wrapping_to_fixed<F: sealed::Fixed>(self) -> F;
 
     /// Converts from a fixed-point number.
     ///
@@ -773,45 +757,28 @@ pub trait ToFixed {
     ///
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
-    fn overflowing_to_fixed<F>(self) -> (F, bool)
-    where
-        F: sealed::Fixed;
+    fn overflowing_to_fixed<F: sealed::Fixed>(self) -> (F, bool);
 }
 
 impl ToFixed for bool {
     #[inline]
-    fn to_fixed<F>(self) -> F
-    where
-        F: sealed::Fixed,
-    {
+    fn to_fixed<F: sealed::Fixed>(self) -> F {
         ToFixed::to_fixed(u8::from(self))
     }
     #[inline]
-    fn checked_to_fixed<F>(self) -> Option<F>
-    where
-        F: sealed::Fixed,
-    {
+    fn checked_to_fixed<F: sealed::Fixed>(self) -> Option<F> {
         ToFixed::checked_to_fixed(u8::from(self))
     }
     #[inline]
-    fn saturating_to_fixed<F>(self) -> F
-    where
-        F: sealed::Fixed,
-    {
+    fn saturating_to_fixed<F: sealed::Fixed>(self) -> F {
         ToFixed::saturating_to_fixed(u8::from(self))
     }
     #[inline]
-    fn wrapping_to_fixed<F>(self) -> F
-    where
-        F: sealed::Fixed,
-    {
+    fn wrapping_to_fixed<F: sealed::Fixed>(self) -> F {
         ToFixed::wrapping_to_fixed(u8::from(self))
     }
     #[inline]
-    fn overflowing_to_fixed<F>(self) -> (F, bool)
-    where
-        F: sealed::Fixed,
-    {
+    fn overflowing_to_fixed<F: sealed::Fixed>(self) -> (F, bool) {
         ToFixed::overflowing_to_fixed(u8::from(self))
     }
 }
@@ -820,76 +787,46 @@ macro_rules! impl_int {
     ($Int:ident) => {
         impl FromFixed for $Int {
             #[inline]
-            fn from_fixed<F>(val: F) -> Self
-            where
-                F: sealed::Fixed,
-            {
+            fn from_fixed<F: sealed::Fixed>(val: F) -> Self {
                 SealedInt::from_fixed(val)
             }
             #[inline]
-            fn checked_from_fixed<F>(val: F) -> Option<Self>
-            where
-                F: sealed::Fixed,
-            {
+            fn checked_from_fixed<F: sealed::Fixed>(val: F) -> Option<Self> {
                 SealedInt::checked_from_fixed(val)
             }
             #[inline]
-            fn saturating_from_fixed<F>(val: F) -> Self
-            where
-                F: sealed::Fixed,
-            {
+            fn saturating_from_fixed<F: sealed::Fixed>(val: F) -> Self {
                 SealedInt::saturating_from_fixed(val)
             }
             #[inline]
-            fn wrapping_from_fixed<F>(val: F) -> Self
-            where
-                F: sealed::Fixed,
-            {
+            fn wrapping_from_fixed<F: sealed::Fixed>(val: F) -> Self {
                 SealedInt::wrapping_from_fixed(val)
             }
             #[inline]
-            fn overflowing_from_fixed<F>(val: F) -> (Self, bool)
-            where
-                F: sealed::Fixed,
-            {
+            fn overflowing_from_fixed<F: sealed::Fixed>(val: F) -> (Self, bool) {
                 SealedInt::overflowing_from_fixed(val)
             }
         }
 
         impl ToFixed for $Int {
             #[inline]
-            fn to_fixed<F>(self) -> F
-            where
-                F: sealed::Fixed,
-            {
+            fn to_fixed<F: sealed::Fixed>(self) -> F {
                 SealedInt::to_fixed(self)
             }
             #[inline]
-            fn checked_to_fixed<F>(self) -> Option<F>
-            where
-                F: sealed::Fixed,
-            {
+            fn checked_to_fixed<F: sealed::Fixed>(self) -> Option<F> {
                 SealedInt::checked_to_fixed(self)
             }
             #[inline]
-            fn saturating_to_fixed<F>(self) -> F
-            where
-                F: sealed::Fixed,
-            {
+            fn saturating_to_fixed<F: sealed::Fixed>(self) -> F {
                 SealedInt::saturating_to_fixed(self)
             }
             #[inline]
-            fn wrapping_to_fixed<F>(self) -> F
-            where
-                F: sealed::Fixed,
-            {
+            fn wrapping_to_fixed<F: sealed::Fixed>(self) -> F {
                 SealedInt::wrapping_to_fixed(self)
             }
             #[inline]
-            fn overflowing_to_fixed<F>(self) -> (F, bool)
-            where
-                F: sealed::Fixed,
-            {
+            fn overflowing_to_fixed<F: sealed::Fixed>(self) -> (F, bool) {
                 SealedInt::overflowing_to_fixed(self)
             }
         }
@@ -913,76 +850,46 @@ macro_rules! impl_float {
     ($Float:ty) => {
         impl FromFixed for $Float {
             #[inline]
-            fn from_fixed<F>(val: F) -> Self
-            where
-                F: sealed::Fixed,
-            {
+            fn from_fixed<F: sealed::Fixed>(val: F) -> Self {
                 val.to_float()
             }
             #[inline]
-            fn checked_from_fixed<F>(val: F) -> Option<Self>
-            where
-                F: sealed::Fixed,
-            {
+            fn checked_from_fixed<F: sealed::Fixed>(val: F) -> Option<Self> {
                 Some(val.to_float())
             }
             #[inline]
-            fn saturating_from_fixed<F>(val: F) -> Self
-            where
-                F: sealed::Fixed,
-            {
+            fn saturating_from_fixed<F: sealed::Fixed>(val: F) -> Self {
                 val.to_float()
             }
             #[inline]
-            fn wrapping_from_fixed<F>(val: F) -> Self
-            where
-                F: sealed::Fixed,
-            {
+            fn wrapping_from_fixed<F: sealed::Fixed>(val: F) -> Self {
                 val.to_float()
             }
             #[inline]
-            fn overflowing_from_fixed<F>(val: F) -> (Self, bool)
-            where
-                F: sealed::Fixed,
-            {
+            fn overflowing_from_fixed<F: sealed::Fixed>(val: F) -> (Self, bool)             {
                 (val.to_float(), false)
             }
         }
 
         impl ToFixed for $Float {
             #[inline]
-            fn to_fixed<F>(self) -> F
-            where
-                F: sealed::Fixed,
-            {
+            fn to_fixed<F: sealed::Fixed>(self) -> F {
                 SealedFloat::to_fixed(self)
             }
             #[inline]
-            fn checked_to_fixed<F>(self) -> Option<F>
-            where
-                F: sealed::Fixed,
-            {
+            fn checked_to_fixed<F: sealed::Fixed>(self) -> Option<F> {
                 SealedFloat::checked_to_fixed(self)
             }
             #[inline]
-            fn saturating_to_fixed<F>(self) -> F
-            where
-                F: sealed::Fixed,
-            {
+            fn saturating_to_fixed<F: sealed::Fixed>(self) -> F {
                 SealedFloat::saturating_to_fixed(self)
             }
             #[inline]
-            fn wrapping_to_fixed<F>(self) -> F
-            where
-                F: sealed::Fixed,
-            {
+            fn wrapping_to_fixed<F: sealed::Fixed>(self) -> F {
                 SealedFloat::wrapping_to_fixed(self)
             }
             #[inline]
-            fn overflowing_to_fixed<F>(self) -> (F, bool)
-            where
-                F: sealed::Fixed,
-            {
+            fn overflowing_to_fixed<F: sealed::Fixed>(self) -> (F, bool) {
                 SealedFloat::overflowing_to_fixed(self)
             }
         }
@@ -1110,38 +1017,23 @@ macro_rules! impl_fixed {
             Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
         {
             #[inline]
-            fn from_fixed<F>(val: F) -> Self
-            where
-                F: sealed::Fixed,
-            {
+            fn from_fixed<F: sealed::Fixed>(val: F) -> Self {
                 SealedFixed::from_fixed(val)
             }
             #[inline]
-            fn checked_from_fixed<F>(val: F) -> Option<Self>
-            where
-                F: sealed::Fixed,
-            {
+            fn checked_from_fixed<F: sealed::Fixed>(val: F) -> Option<Self> {
                 SealedFixed::checked_from_fixed(val)
             }
             #[inline]
-            fn saturating_from_fixed<F>(val: F) -> Self
-            where
-                F: sealed::Fixed,
-            {
+            fn saturating_from_fixed<F: sealed::Fixed>(val: F) -> Self {
                 SealedFixed::saturating_from_fixed(val)
             }
             #[inline]
-            fn wrapping_from_fixed<F>(val: F) -> Self
-            where
-                F: sealed::Fixed,
-            {
+            fn wrapping_from_fixed<F: sealed::Fixed>(val: F) -> Self {
                 SealedFixed::wrapping_from_fixed(val)
             }
             #[inline]
-            fn overflowing_from_fixed<F>(val: F) -> (Self, bool)
-            where
-                F: sealed::Fixed,
-            {
+            fn overflowing_from_fixed<F: sealed::Fixed>(val: F) -> (Self, bool) {
                 SealedFixed::overflowing_from_fixed(val)
             }
         }
@@ -1151,38 +1043,23 @@ macro_rules! impl_fixed {
             Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
         {
             #[inline]
-            fn to_fixed<F>(self) -> F
-            where
-                F: sealed::Fixed,
-            {
+            fn to_fixed<F: sealed::Fixed>(self) -> F {
                 SealedFixed::from_fixed(self)
             }
             #[inline]
-            fn checked_to_fixed<F>(self) -> Option<F>
-            where
-                F: sealed::Fixed,
-            {
+            fn checked_to_fixed<F: sealed::Fixed>(self) -> Option<F> {
                 SealedFixed::checked_from_fixed(self)
             }
             #[inline]
-            fn saturating_to_fixed<F>(self) -> F
-            where
-                F: sealed::Fixed,
-            {
+            fn saturating_to_fixed<F: sealed::Fixed>(self) -> F {
                 SealedFixed::saturating_from_fixed(self)
             }
             #[inline]
-            fn wrapping_to_fixed<F>(self) -> F
-            where
-                F: sealed::Fixed,
-            {
+            fn wrapping_to_fixed<F: sealed::Fixed>(self) -> F {
                 SealedFixed::wrapping_from_fixed(self)
             }
             #[inline]
-            fn overflowing_to_fixed<F>(self) -> (F, bool)
-            where
-                F: sealed::Fixed,
-            {
+            fn overflowing_to_fixed<F: sealed::Fixed>(self) -> (F, bool) {
                 SealedFixed::overflowing_from_fixed(self)
             }
         }

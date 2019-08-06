@@ -160,31 +160,77 @@ pub const LN_10: FixedU128<U126> = FixedU128 {
     phantom: PhantomData,
 };
 
+#[allow(clippy::float_cmp)]
 #[cfg(test)]
 mod tests {
     use crate::{consts::*, traits::FromFixed};
-    use core::f64::consts as F;
+    use core::{f32, f64};
+    use half::{self, f16};
+
+    #[cfg(feature = "f16")]
+    #[test]
+    fn cmp_f16() {
+        assert_eq!(f16::from_fixed(PI), half::consts::PI);
+        assert_eq!(f16::from_fixed(FRAC_PI_2), half::consts::FRAC_PI_2);
+        assert_eq!(f16::from_fixed(FRAC_PI_3), half::consts::FRAC_PI_3);
+        assert_eq!(f16::from_fixed(FRAC_PI_4), half::consts::FRAC_PI_4);
+        assert_eq!(f16::from_fixed(FRAC_PI_6), half::consts::FRAC_PI_6);
+        assert_eq!(f16::from_fixed(FRAC_PI_8), half::consts::FRAC_PI_8);
+        assert_eq!(f16::from_fixed(FRAC_1_PI), half::consts::FRAC_1_PI);
+        assert_eq!(f16::from_fixed(FRAC_2_PI), half::consts::FRAC_2_PI);
+        assert_eq!(f16::from_fixed(FRAC_2_SQRT_PI), half::consts::FRAC_2_SQRT_PI);
+        assert_eq!(f16::from_fixed(SQRT_2), half::consts::SQRT_2);
+        assert_eq!(f16::from_fixed(FRAC_1_SQRT_2), half::consts::FRAC_1_SQRT_2);
+        assert_eq!(f16::from_fixed(E), half::consts::E);
+        // assert_eq!(f16::from_fixed(LOG2_10), half::consts::LOG2_10);
+        assert_eq!(f16::from_fixed(LOG2_E), half::consts::LOG2_E);
+        // assert_eq!(f16::from_fixed(LOG10_2), half::consts::LOG10_2);
+        assert_eq!(f16::from_fixed(LOG10_E), half::consts::LOG10_E);
+        assert_eq!(f16::from_fixed(LN_2), half::consts::LN_2);
+        assert_eq!(f16::from_fixed(LN_10), half::consts::LN_10);
+    }
 
     #[test]
-    #[allow(clippy::float_cmp)]
-    fn check() {
-        assert_eq!(f64::from_fixed(PI), F::PI);
-        assert_eq!(f64::from_fixed(FRAC_PI_2), F::FRAC_PI_2);
-        assert_eq!(f64::from_fixed(FRAC_PI_3), F::FRAC_PI_3);
-        assert_eq!(f64::from_fixed(FRAC_PI_4), F::FRAC_PI_4);
-        assert_eq!(f64::from_fixed(FRAC_PI_6), F::FRAC_PI_6);
-        assert_eq!(f64::from_fixed(FRAC_PI_8), F::FRAC_PI_8);
-        assert_eq!(f64::from_fixed(FRAC_1_PI), F::FRAC_1_PI);
-        assert_eq!(f64::from_fixed(FRAC_2_PI), F::FRAC_2_PI);
-        assert_eq!(f64::from_fixed(FRAC_2_SQRT_PI), F::FRAC_2_SQRT_PI);
-        assert_eq!(f64::from_fixed(SQRT_2), F::SQRT_2);
-        assert_eq!(f64::from_fixed(FRAC_1_SQRT_2), F::FRAC_1_SQRT_2);
-        assert_eq!(f64::from_fixed(E), F::E);
-        // assert_eq!(f64::from_fixed(LOG2_10), F::LOG2_10);
-        assert_eq!(f64::from_fixed(LOG2_E), F::LOG2_E);
-        // assert_eq!(f64::from_fixed(LOG10_2), F::LOG10_2);
-        assert_eq!(f64::from_fixed(LOG10_E), F::LOG10_E);
-        assert_eq!(f64::from_fixed(LN_2), F::LN_2);
-        assert_eq!(f64::from_fixed(LN_10), F::LN_10);
+    fn cmp_f32() {
+        assert_eq!(f32::from_fixed(PI), f32::consts::PI);
+        assert_eq!(f32::from_fixed(FRAC_PI_2), f32::consts::FRAC_PI_2);
+        assert_eq!(f32::from_fixed(FRAC_PI_3), f32::consts::FRAC_PI_3);
+        assert_eq!(f32::from_fixed(FRAC_PI_4), f32::consts::FRAC_PI_4);
+        assert_eq!(f32::from_fixed(FRAC_PI_6), f32::consts::FRAC_PI_6);
+        assert_eq!(f32::from_fixed(FRAC_PI_8), f32::consts::FRAC_PI_8);
+        assert_eq!(f32::from_fixed(FRAC_1_PI), f32::consts::FRAC_1_PI);
+        assert_eq!(f32::from_fixed(FRAC_2_PI), f32::consts::FRAC_2_PI);
+        assert_eq!(f32::from_fixed(FRAC_2_SQRT_PI), f32::consts::FRAC_2_SQRT_PI);
+        assert_eq!(f32::from_fixed(SQRT_2), f32::consts::SQRT_2);
+        assert_eq!(f32::from_fixed(FRAC_1_SQRT_2), f32::consts::FRAC_1_SQRT_2);
+        assert_eq!(f32::from_fixed(E), f32::consts::E);
+        // assert_eq!(f32::from_fixed(LOG2_10), f32::consts::LOG2_10);
+        assert_eq!(f32::from_fixed(LOG2_E), f32::consts::LOG2_E);
+        // assert_eq!(f32::from_fixed(LOG10_2), f32::consts::LOG10_2);
+        assert_eq!(f32::from_fixed(LOG10_E), f32::consts::LOG10_E);
+        assert_eq!(f32::from_fixed(LN_2), f32::consts::LN_2);
+        assert_eq!(f32::from_fixed(LN_10), f32::consts::LN_10);
+    }
+
+    #[test]
+    fn cmp_f64() {
+        assert_eq!(f64::from_fixed(PI), f64::consts::PI);
+        assert_eq!(f64::from_fixed(FRAC_PI_2), f64::consts::FRAC_PI_2);
+        assert_eq!(f64::from_fixed(FRAC_PI_3), f64::consts::FRAC_PI_3);
+        assert_eq!(f64::from_fixed(FRAC_PI_4), f64::consts::FRAC_PI_4);
+        assert_eq!(f64::from_fixed(FRAC_PI_6), f64::consts::FRAC_PI_6);
+        assert_eq!(f64::from_fixed(FRAC_PI_8), f64::consts::FRAC_PI_8);
+        assert_eq!(f64::from_fixed(FRAC_1_PI), f64::consts::FRAC_1_PI);
+        assert_eq!(f64::from_fixed(FRAC_2_PI), f64::consts::FRAC_2_PI);
+        assert_eq!(f64::from_fixed(FRAC_2_SQRT_PI), f64::consts::FRAC_2_SQRT_PI);
+        assert_eq!(f64::from_fixed(SQRT_2), f64::consts::SQRT_2);
+        assert_eq!(f64::from_fixed(FRAC_1_SQRT_2), f64::consts::FRAC_1_SQRT_2);
+        assert_eq!(f64::from_fixed(E), f64::consts::E);
+        // assert_eq!(f64::from_fixed(LOG2_10), f64::consts::LOG2_10);
+        assert_eq!(f64::from_fixed(LOG2_E), f64::consts::LOG2_E);
+        // assert_eq!(f64::from_fixed(LOG10_2), f64::consts::LOG10_2);
+        assert_eq!(f64::from_fixed(LOG10_E), f64::consts::LOG10_E);
+        assert_eq!(f64::from_fixed(LN_2), f64::consts::LN_2);
+        assert_eq!(f64::from_fixed(LN_10), f64::consts::LN_10);
     }
 }

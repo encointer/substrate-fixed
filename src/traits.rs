@@ -19,7 +19,7 @@ This module contains traits.
 
 use crate::{
     frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
-    sealed::{self, SealedFixed, SealedFloat, SealedInt},
+    sealed::{self, Float, Int, SealedFixed, SealedFloat, SealedInt},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
@@ -125,6 +125,127 @@ where
     /// Creates an integer that has a bitwise representation identical
     /// to the given fixed-point number.
     fn to_bits(self) -> Self::Bits;
+
+    /// Creates a fixed-point number from an integer.
+    ///
+    /// Returns the same value as [`val.to_fixed()`][`to_fixed`].
+    ///
+    /// [`to_fixed`]: trait.ToFixed.html#tymethod.to_fixed
+    fn from_int<I: Int>(val: I) -> Self;
+
+    /// Converts a fixed-point number to an integer.
+    ///
+    /// Returns the same value as [`I::from_fixed(self)`][`from_fixed`].
+    ///
+    /// [`from_fixed`]: trait.FromFixed.html#tymethod.from_fixed
+    fn to_int<I: Int>(self) -> I;
+
+    /// Creates a fixed-point number from a floating-point number.
+    ///
+    /// Returns the same value as [`val.to_fixed()`][`to_fixed`].
+    ///
+    /// [`to_fixed`]: trait.ToFixed.html#tymethod.to_fixed
+    fn from_float<F: Float>(val: F) -> Self;
+
+    /// Converts a fixed-point number to a floating-point number.
+    ///
+    /// Returns the same value as [`F::from_fixed(self)`][`from_fixed`].
+    ///
+    /// [`from_fixed`]: trait.FromFixed.html#tymethod.from_fixed
+    fn to_float<F: Float>(self) -> F;
+
+    /// Creates a fixed-point number from an integer if it fits,
+    /// otherwise returns [`None`].
+    ///
+    /// Returns the same value as [`val.checked_to_fixed()`][`checked_to_fixed`].
+    ///
+    /// [`checked_to_fixed`]: trait.ToFixed.html#tymethod.checked_to_fixed
+    fn checked_from_int<I: Int>(val: I) -> Option<Self>;
+
+    /// Converts a fixed-point number to an integer if it fits,
+    /// otherwise returns [`None`].
+    ///
+    /// Returns the same value as [`I::checked_from_fixed(self)`][`checked_from_fixed`].
+    ///
+    /// [`checked_from_fixed`]: trait.FromFixed.html#tymethod.checked_from_fixed
+    fn checked_to_int<I: Int>(self) -> Option<I>;
+
+    /// Creates a fixed-point number from a floating-point number if
+    /// it fits, otherwise returns [`None`].
+    ///
+    /// Returns the same value as [`val.checked_to_fixed()`][`checked_to_fixed`].
+    ///
+    /// [`checked_to_fixed`]: trait.ToFixed.html#tymethod.checked_to_fixed
+    fn checked_from_float<F: Float>(val: F) -> Option<Self>;
+
+    /// Creates a fixed-point number from an integer, saturating the
+    /// value if it does not fit.
+    ///
+    /// Returns the same value as [`val.saturating_to_fixed()`][`saturating_to_fixed`].
+    ///
+    /// [`saturating_to_fixed`]: trait.ToFixed.html#tymethod.saturating_to_fixed
+    fn saturating_from_int<I: Int>(val: I) -> Self;
+
+    /// Converts a fixed-point number to an integer, saturating the
+    /// value if it does not fit.
+    ///
+    /// Returns the same value as [`I::saturating_from_fixed(self)`][`saturating_from_fixed`].
+    ///
+    /// [`saturating_from_fixed`]: trait.FromFixed.html#tymethod.saturating_from_fixed
+    fn saturating_to_int<I: Int>(self) -> I;
+
+    /// Creates a fixed-point number from a floating-point number,
+    /// saturating the value if it does not fit.
+    ///
+    /// Returns the same value as [`val.saturating_to_fixed()`][`saturating_to_fixed`].
+    ///
+    /// [`saturating_to_fixed`]: trait.ToFixed.html#tymethod.saturating_to_fixed
+    fn saturating_from_float<F: Float>(val: F) -> Self;
+
+    /// Creates a fixed-point number from an integer, wrapping the
+    /// value on overflow.
+    ///
+    /// Returns the same value as [`val.wrapping_to_fixed()`][`wrapping_to_fixed`].
+    ///
+    /// [`wrapping_to_fixed`]: trait.ToFixed.html#tymethod.wrapping_to_fixed
+    fn wrapping_from_int<I: Int>(val: I) -> Self;
+
+    /// Converts a fixed-point number to an integer, wrapping the
+    /// value on overflow.
+    ///
+    /// Returns the same value as [`I::wrapping_from_fixed(self)`][`wrapping_from_fixed`].
+    ///
+    /// [`wrapping_from_fixed`]: trait.FromFixed.html#tymethod.wrapping_from_fixed
+    fn wrapping_to_int<I: Int>(self) -> I;
+
+    /// Creates a fixed-point number from a floating-point number,
+    /// wrapping the value on overflow.
+    ///
+    /// Returns the same value as [`val.wrapping_to_fixed()`][`wrapping_to_fixed`].
+    ///
+    /// [`wrapping_to_fixed`]: trait.ToFixed.html#tymethod.wrapping_to_fixed
+    fn wrapping_from_float<F: Float>(val: F) -> Self;
+
+    /// Creates a fixed-point number from an integer.
+    ///
+    /// Returns the same value as [`val.overflowing_to_fixed()`][`overflowing_to_fixed`].
+    ///
+    /// [`overflowing_to_fixed`]: trait.ToFixed.html#tymethod.overflowing_to_fixed
+    fn overflowing_from_int<I: Int>(val: I) -> (Self, bool);
+
+    /// Converts a fixed-point number to an integer.
+    ///
+    /// Returns the same value as [`I::overflowing_from_fixed(self)`][`overflowing_from_fixed`].
+    ///
+    /// [`overflowing_from_fixed`]: trait.FromFixed.html#tymethod.overflowing_from_fixed
+    fn overflowing_to_int<I: Int>(self) -> (I, bool);
+
+    /// Creates a fixed-point number from a floating-point number.
+    ///
+    /// Returns the same value as [`val.overflowing_to_fixed()`][`overflowing_to_fixed`].
+    ///
+    /// [`overflowing_to_fixed`]: trait.ToFixed.html#tymethod.overflowing_to_fixed
+    fn overflowing_from_float<F: Float>(val: F) -> (Self, bool);
 
     /// Returns the integer part.
     fn int(self) -> Self;
@@ -721,13 +842,16 @@ pub trait ToFixed {
     ///
     /// # Panics
     ///
-    /// When debug assertions are enabled, panics if the value does
-    /// not fit. When debug assertions are not enabled, the wrapped
-    /// value can be returned, but it is not considered a breaking
-    /// change if in the future it panics; if wrapping is required use
-    /// [`wrapping_to_fixed`] instead.
+    /// Panics if `self` is a floating-point number that is not [finite].
+    ///
+    /// When debug assertions are enabled, also panics if the value
+    /// does not fit. When debug assertions are not enabled, the
+    /// wrapped value can be returned, but it is not considered a
+    /// breaking change if in the future it panics; if wrapping is
+    /// required use [`wrapping_to_fixed`] instead.
     ///
     /// [`wrapping_to_fixed`]: #method.wrapping_to_fixed
+    /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
     fn to_fixed<F: sealed::Fixed>(self) -> F;
 
     /// Converts to a fixed-point number if it fits, otherwise returns [`None`].
@@ -740,11 +864,23 @@ pub trait ToFixed {
     /// Converts to a fixed-point number, saturating if it does not fit.
     ///
     /// Any extra fractional bits are truncated.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self` is a floating-point number that is [NaN].
+    ///
+    /// [NaN]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_nan
     fn saturating_to_fixed<F: sealed::Fixed>(self) -> F;
 
     /// Converts to a fixed-point number, wrapping if it does not fit.
     ///
     /// Any extra fractional bits are truncated.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self` is a floating-point number that is not [finite].
+    ///
+    /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
     fn wrapping_to_fixed<F: sealed::Fixed>(self) -> F;
 
     /// Converts from a fixed-point number.
@@ -755,7 +891,12 @@ pub trait ToFixed {
     ///
     /// Any extra fractional bits are truncated.
     ///
+    /// # Panics
+    ///
+    /// Panics if `self` is a floating-point number that is not [finite].
+    ///
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
     fn overflowing_to_fixed<F: sealed::Fixed>(self) -> (F, bool);
 }
@@ -866,7 +1007,7 @@ macro_rules! impl_float {
                 val.to_float()
             }
             #[inline]
-            fn overflowing_from_fixed<F: sealed::Fixed>(val: F) -> (Self, bool)             {
+            fn overflowing_from_fixed<F: sealed::Fixed>(val: F) -> (Self, bool) {
                 (val.to_float(), false)
             }
         }
@@ -914,6 +1055,18 @@ macro_rules! trait_delegate {
             self.$method($($param),*)
         }
     };
+    (fn $method:ident<$Gen:ident: $Trait:ident>($param:ident: $Param:ty) -> $Ret:ty) => {
+        #[inline]
+        fn $method<$Gen: $Trait>($param: $Param) -> $Ret {
+            Self::$method($param)
+        }
+    };
+    (fn $method:ident<$Gen:ident: $Trait:ident>(self $(, $param:ident: $Param:ty)*) -> $Ret:ty) => {
+        #[inline]
+        fn $method<$Gen: $Trait>(self $(, $param: $Param)*) -> $Ret {
+            self.$method($($param),*)
+        }
+    };
 }
 
 macro_rules! impl_fixed {
@@ -939,6 +1092,22 @@ macro_rules! impl_fixed {
                 Self::from_bits(bits)
             }
             trait_delegate! { fn to_bits(self) -> Self::Bits }
+            trait_delegate! { fn from_int<I: Int>(val: I) -> Self }
+            trait_delegate! { fn to_int<I: Int>(self) -> I }
+            trait_delegate! { fn from_float<F: Float>(val: F) -> Self }
+            trait_delegate! { fn to_float<F: Float>(self) -> F }
+            trait_delegate! { fn checked_from_int<I: Int>(val: I) -> Option<Self> }
+            trait_delegate! { fn checked_to_int<I: Int>(self) -> Option<I> }
+            trait_delegate! { fn checked_from_float<F: Float>(val: F) -> Option<Self> }
+            trait_delegate! { fn saturating_from_int<I: Int>(val: I) -> Self }
+            trait_delegate! { fn saturating_to_int<I: Int>(self) -> I }
+            trait_delegate! { fn saturating_from_float<F: Float>(val: F) -> Self }
+            trait_delegate! { fn wrapping_from_int<I: Int>(val: I) -> Self }
+            trait_delegate! { fn wrapping_to_int<I: Int>(self) -> I }
+            trait_delegate! { fn wrapping_from_float<F: Float>(val: F) -> Self }
+            trait_delegate! { fn overflowing_from_int<I: Int>(val: I) -> (Self, bool) }
+            trait_delegate! { fn overflowing_to_int<I: Int>(self) -> (I, bool) }
+            trait_delegate! { fn overflowing_from_float<F: Float>(val: F) -> (Self, bool) }
             trait_delegate! { fn int(self) -> Self }
             trait_delegate! { fn frac(self) -> Self }
             trait_delegate! { fn ceil(self) -> Self }

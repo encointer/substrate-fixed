@@ -180,7 +180,7 @@ assert_eq!(Fix::from_int(",
         );
 
         comment!(
-            "Converts a fixed-point number of type to an integer.
+            "Converts a fixed-point number to an integer.
 
 The integer can be of type [`i8`], [`i16`], [`i32`], [`i64`],
 [`i128`], [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], and

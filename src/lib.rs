@@ -194,6 +194,7 @@ mod macros;
 
 mod arith;
 mod cmp;
+pub mod consts;
 mod convert;
 mod display;
 pub mod frac;

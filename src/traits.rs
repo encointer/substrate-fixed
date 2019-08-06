@@ -15,7 +15,7 @@
 
 /*!
 This module contains traits.
- */
+*/
 
 use crate::{
     frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},

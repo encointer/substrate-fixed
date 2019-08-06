@@ -48,6 +48,7 @@ numeric primitives are implemented. That is, you can use [`From`] or
   * The [`saturating_neg`] method was added to all fixed-point
     numbers, and the [`saturating_abs`] method was added to signed
     fixed-point numbers.
+  * The [`consts`] module was added.
 
 #### Incompatible changes
 
@@ -64,6 +65,7 @@ numeric primitives are implemented. That is, you can use [`From`] or
 [`LossyFrom`]: https://docs.rs/fixed/0.3.4/fixed/traits/trait.LossyFrom.html
 [`LossyInto`]: https://docs.rs/fixed/0.3.4/fixed/traits/trait.LossyInto.html
 [`ToFixed`]: https://docs.rs/fixed/0.3.4/fixed/traits/trait.ToFixed.html
+[`consts`]: https://docs.rs/fixed/0.3.4/fixed/consts/index.html
 [`saturating_abs`]: https://docs.rs/fixed/0.3.4/fixed/struct.FixedI32.html#method.saturating_abs
 [`saturating_neg`]: https://docs.rs/fixed/0.3.4/fixed/struct.FixedI32.html#method.saturating_neg
 [`traits`]: https://docs.rs/fixed/0.3.4/fixed/traits/index.html

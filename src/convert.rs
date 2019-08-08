@@ -463,6 +463,7 @@ macro_rules! fixed_to_int_lossy {
         fixed_to_int_lossy! { ($SrcU, $SrcI, $SrcBits) -> (u32, i32, U32) }
         fixed_to_int_lossy! { ($SrcU, $SrcI, $SrcBits) -> (u64, i64, U64) }
         fixed_to_int_lossy! { ($SrcU, $SrcI, $SrcBits) -> (u128, i128, U128) }
+        fixed_to_int_lossy! { ($SrcU, $SrcI, $SrcBits) -> (usize, isize, U16) }
     };
 }
 

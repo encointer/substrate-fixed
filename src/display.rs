@@ -270,7 +270,7 @@ impl Mul10 for u128 {
         let (lo_lo, lo_hi) = (lo as u64, (lo >> 64) as u64);
         let (wrapped, overflow) = hi_lo.overflowing_add(lo_hi);
         (
-            ((wrapped as u128) << 64) | (lo_lo as u128),
+            (u128::from(wrapped) << 64) | u128::from(lo_lo),
             hi_hi as u8 + u8::from(overflow),
         )
     }

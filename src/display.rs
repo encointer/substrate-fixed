@@ -22,7 +22,7 @@ use crate::{
 use core::{
     cmp::Ordering,
     fmt::{Binary, Debug, Display, Formatter, LowerHex, Octal, Result as FmtResult, UpperHex},
-    str,
+    mem, str,
 };
 
 trait Radix2 {
@@ -238,8 +238,36 @@ fn dec_frac_digits(frac_bits: u32) -> u32 {
     (frac_bits * 3 + i) / 10
 }
 
+trait Mul10: Sized {
+    fn mul10(self) -> (Self, u8);
+}
+macro_rules! mul10_widen {
+    ($Single:ty, $Double:ty) => {
+        impl Mul10 for $Single {
+            #[inline]
+            fn mul10(self) -> ($Single, u8) {
+                const NBITS: usize = 8 * mem::size_of::<$Single>();
+                let prod = <$Double>::from(self) * 10;
+                (prod as $Single, (prod >> NBITS) as u8)
+            }
+        }
+    };
+}
+mul10_widen! { u8, u16 }
+mul10_widen! { u16, u32 }
+mul10_widen! { u32, u64 }
+mul10_widen! { u64, u128 }
+impl Mul10 for u128 {
+    #[inline]
+    fn mul10(self) -> (u128, u8) {
+        const LO_MASK: u128 = !(!0 << 64);
+        let hi = (self >> 64) * 10;
+        let lo = (self & LO_MASK) * 10;
+        ((hi << 64) + lo, (hi >> 64) as u8)
+    }
+}
+
 trait FmtDecHelper: SealedInt {
-    fn cmp_half(&self) -> Ordering;
     fn take_int_digit(&mut self) -> u8;
     fn take_frac_digit(&mut self) -> u8;
 }
@@ -247,11 +275,6 @@ trait FmtDecHelper: SealedInt {
 macro_rules! fmt_dec_helper {
     ($($UInner:ty)*) => { $(
         impl FmtDecHelper for $UInner {
-            #[inline]
-            fn cmp_half(&self) -> Ordering {
-                self.cmp(&<$UInner>::MSB)
-            }
-
             #[inline]
             fn take_int_digit(&mut self) -> u8 {
                 let ret = (*self % 10) as u8;
@@ -261,8 +284,7 @@ macro_rules! fmt_dec_helper {
 
             #[inline]
             fn take_frac_digit(&mut self) -> u8 {
-                let next = self.wrapping_mul(10);
-                let ret = ((*self - next / 10) / (!0 / 10)) as u8;
+                let (next, ret) = self.mul10();
                 *self = next;
                 ret
             }
@@ -460,6 +482,53 @@ mod tests {
             let fix = FixedU32::<Frac>::from_bits(bits);
             assert_eq_fmt!(("{}", fix), ("{:.3}", flt));
         }
+    }
+
+    #[test]
+    fn all_frac() {
+        use crate::types::{I0F128, I0F16, I0F32, I0F64, I0F8, U0F128, U0F16, U0F32, U0F64, U0F8};
+        assert_eq_fmt!(
+            ("{:X}", I0F128::from_bits(!0)),
+            ("{}", "-0.00000000000000000000000000000001")
+        );
+        assert_eq_fmt!(
+            ("{:X}", I0F64::from_bits(!0)),
+            ("{}", "-0.0000000000000001")
+        );
+        assert_eq_fmt!(("{:X}", I0F32::from_bits(!0)), ("{}", "-0.00000001"));
+        assert_eq_fmt!(("{:X}", I0F16::from_bits(!0)), ("{}", "-0.0001"));
+        assert_eq_fmt!(("{:X}", I0F8::from_bits(!0)), ("{}", "-0.01"));
+        assert_eq_fmt!(
+            ("{:X}", U0F128::from_bits(!0)),
+            ("{}", "0.FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+        );
+        assert_eq_fmt!(("{:X}", U0F64::from_bits(!0)), ("{}", "0.FFFFFFFFFFFFFFFF"));
+        assert_eq_fmt!(("{:X}", U0F32::from_bits(!0)), ("{}", "0.FFFFFFFF"));
+        assert_eq_fmt!(("{:X}", U0F16::from_bits(!0)), ("{}", "0.FFFF"));
+        assert_eq_fmt!(("{:X}", U0F8::from_bits(!0)), ("{}", "0.FF"));
+
+        assert_eq_fmt!(
+            ("{}", I0F128::from_bits(!0)),
+            ("{}", "-0.000000000000000000000000000000000000003")
+        );
+        assert_eq_fmt!(
+            ("{}", I0F64::from_bits(!0)),
+            ("{}", "-0.00000000000000000005")
+        );
+        assert_eq_fmt!(("{}", I0F32::from_bits(!0)), ("{}", "-0.0000000002"));
+        assert_eq_fmt!(("{}", I0F16::from_bits(!0)), ("{}", "-0.00002"));
+        assert_eq_fmt!(("{}", I0F8::from_bits(!0)), ("{}", "-0.004"));
+        assert_eq_fmt!(
+            ("{}", U0F128::from_bits(!0)),
+            ("{}", "0.999999999999999999999999999999999999997")
+        );
+        assert_eq_fmt!(
+            ("{}", U0F64::from_bits(!0)),
+            ("{}", "0.99999999999999999995")
+        );
+        assert_eq_fmt!(("{}", U0F32::from_bits(!0)), ("{}", "0.9999999998"));
+        assert_eq_fmt!(("{}", U0F16::from_bits(!0)), ("{}", "0.99998"));
+        assert_eq_fmt!(("{}", U0F8::from_bits(!0)), ("{}", "0.996"));
     }
 
     fn pow(base: u32, mut exp: u32) -> f64 {

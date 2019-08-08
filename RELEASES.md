@@ -5,10 +5,10 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
-Version 0.4.0 (unreleased)
+Version 0.4.0 (2019-08-08)
 ==========================
 
-  * The *fixed* crate now requires rustc version 1.31.1 or later.
+  * The *fixed* crate now requires rustc version 1.31.0 or later.
   * The `traits` module was added, with its traits `Fixed`,
     `FixedSigned`, `FixedUnsigned`, `FromFixed`, `ToFixed`,
     `LossyFrom` and `LossyInto`.
@@ -16,6 +16,7 @@ Version 0.4.0 (unreleased)
     and the `saturating_abs` method was added to signed fixed-point
     numbers.
   * The `consts` module was added.
+  * The `signum` method now wraps instead of panics in release mode.
 
 Incompatible changes
 --------------------
@@ -24,6 +25,12 @@ Incompatible changes
     the methods in the old implementation are now provided by
     `FromFixed` and `ToFixed`.
   * Deprecated methods were removed.
+
+Contributors
+------------
+
+  * @jean-airoldie
+  * @tspiteri
 
 Version 0.3.3 (2019-06-27)
 ==========================

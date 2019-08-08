@@ -7,7 +7,7 @@
 
 [package]
 name = "fixed"
-version = "0.3.3"
+version = "0.4.0"
 authors = ["Trevor Spiteri <tspiteri@ieee.org>"]
 description = "Fixed-point numbers"
 documentation = "https://docs.rs/fixed"
@@ -25,15 +25,8 @@ fail-on-warnings = []
 
 [dependencies]
 typenum = "1.8"
-
-[dependencies.half]
-version = "1.2"
-optional = true
-
-[dependencies.serde]
-version = "1.0.25"
-default-features = false
-optional = true
+half = { version = "1.2", optional = true }
+serde = { version = "1.0.25", default-features = false, optional = true }
 
 [dev-dependencies]
 rand = { version = "0.6", default-features = false }
@@ -47,4 +40,3 @@ features = ["f16", "serde"]
 [[bench]]
 name = "bench_main"
 harness = false
-

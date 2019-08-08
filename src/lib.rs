@@ -42,9 +42,19 @@ fixed-point number lies in the range −0.5 ≤ *x* < 0.5 for signed
 fixed-point numbers, and in the range 0 ≤ *x* < 1 for unsigned
 fixed-point numbers.
 
-All lossless infallible conversions between fixed-point numbers and
-numeric primitives are implemented. That is, you can use [`From`] or
-[`Into`] for the conversions that always work without losing any bits.
+Various conversion methods are available:
+
+  * All lossless infallible conversions between fixed-point numbers
+    and numeric primitives are implemented. That is, you can use
+    [`From`] or [`Into`] for the conversions that always work without
+    losing any bits.
+  * For infallible conversions that are not lossless because the
+    source type may have more fractional bits than the destination
+    type, [`LossyFrom`] and [`LossyInto`] can be used; these will
+    truncate any excess fractional bits in the source value.
+  * Checked conversions are provided between all types using the
+    [`FromFixed`] and [`ToFixed`] traits, or using the inherent methods
+    in the fixed-point types themselves.
 
 ## Quick examples
 
@@ -64,9 +74,10 @@ assert_eq!(six_and_third.ceil(), 7);
 
 The type [`I20F12`] is a 32-bit fixed-point signed number with 20
 integer bits and 12 fractional bits. It is an alias to
-[`FixedI32<frac::U12>`][`FixedI32`]. The unsigned counterpart would be
-[`U20F12`]. Aliases are provided for all combinations of integer and
-fractional bits adding up to a total of eight, 16, 32, 64 or 128 bits.
+<code>[FixedI32][`FixedI32`]&lt;[frac::U12][`frac::U12`]&gt;</code>.
+The unsigned counterpart would be [`U20F12`]. Aliases are provided for
+all combinations of integer and fractional bits adding up to a total
+of eight, 16, 32, 64 or 128 bits.
 
 ```rust
 // −8 ≤ I4F4 < 8 with steps of 1/16 (about 0.06)
@@ -108,7 +119,7 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 
 ```toml
 [dependencies]
-fixed = "0.3.3"
+fixed = "0.4.0"
 ```
 
 If you are using the 2015 Rust edition, you also need to declare it by
@@ -118,7 +129,7 @@ adding this to your crate root (usually *lib.rs* or *main.rs*):
 extern crate fixed;
 ```
 
-The *fixed* crate requires rustc version 1.31.1 or later.
+The *fixed* crate requires rustc version 1.31.0 or later.
 
 ## Optional features
 
@@ -135,7 +146,7 @@ To enable features, you can add the dependency like this to
 
 ```toml
 [dependencies.fixed]
-version = "0.3.3"
+version = "0.4.0"
 features = ["f16", "serde"]
 ```
 
@@ -173,19 +184,24 @@ additional terms or conditions.
 [`FixedU32`]: struct.FixedU32.html
 [`FixedU64`]: struct.FixedU64.html
 [`FixedU8`]: struct.FixedU8.html
+[`FromFixed`]: traits/trait.FromFixed.html
 [`From`]: https://doc.rust-lang.org/nightly/std/convert/trait.From.html
 [`I20F12`]: types/type.I20F12.html
 [`I4F12`]: types/type.I4F12.html
 [`I4F4`]: types/type.I4F4.html
 [`Into`]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
+[`LossyFrom`]: traits/trait.LossyFrom.html
+[`LossyInto`]: traits/trait.LossyInto.html
+[`ToFixed`]: traits/trait.ToFixed.html
 [`U20F12`]: types/type.U20F12.html
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html
+[`frac::U12`]: frac/type.U12.html
 [`from_fixed`]: struct.FixedI8.html#method.from_fixed
 [const generics]: https://github.com/rust-lang/rust/issues/44580
 */
 #![no_std]
 #![warn(missing_docs)]
-#![doc(html_root_url = "https://docs.rs/fixed/0.3.3")]
+#![doc(html_root_url = "https://docs.rs/fixed/0.4.0")]
 #![doc(test(attr(deny(warnings))))]
 #![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
 

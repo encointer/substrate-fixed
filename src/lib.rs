@@ -220,8 +220,6 @@ use core::{
     hash::{Hash, Hasher},
     marker::PhantomData,
 };
-#[cfg(feature = "f16")]
-use half::f16;
 
 /// A prelude for users of the *fixed* crate.
 ///
@@ -248,8 +246,6 @@ mod macros_from_to;
 mod macros_round;
 #[macro_use]
 mod macros_checked_arith;
-#[macro_use]
-mod macros_deprecated;
 
 macro_rules! fixed {
     ($description:expr, $Fixed:ident($Inner:ty, $Len:tt, $s_nbits:expr), $Signedness:tt) => {
@@ -712,8 +708,6 @@ assert!(Fix::from_int(-5).is_negative());
                     $Fixed($Inner) => fn is_negative(self) -> bool
                 );
             }
-
-            fixed_deprecated! { $Fixed($Inner) }
         }
     };
 }

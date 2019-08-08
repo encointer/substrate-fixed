@@ -23,6 +23,7 @@ Incompatible changes
   * The sealed traits `Int` and `Float` now have no provided methods;
     the methods in the old implementation are now provided by
     `FromFixed` and `ToFixed`.
+  * Deprecated methods were removed.
 
 Version 0.3.3 (2019-06-27)
 ==========================

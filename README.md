@@ -55,6 +55,7 @@ numeric primitives are implemented. That is, you can use [`From`] or
   * The sealed traits [`Int`] and [`Float`] now have no provided
     methods; the methods in the old implementation are new provided by
     [`FromFixed`] and [`ToFixed`].
+  * Deprecated methods were removed.
 
 [`Fixed`]: https://docs.rs/fixed/0.3.4/fixed/traits/trait.Fixed.html
 [`FixedSigned`]: https://docs.rs/fixed/0.3.4/fixed/traits/trait.FixedSigned.html

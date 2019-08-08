@@ -263,7 +263,16 @@ impl Mul10 for u128 {
         const LO_MASK: u128 = !(!0 << 64);
         let hi = (self >> 64) * 10;
         let lo = (self & LO_MASK) * 10;
-        ((hi << 64) + lo, (hi >> 64) as u8)
+        // Workaround for https://github.com/rust-lang/rust/issues/63384
+        // let (wrapped, overflow) = (hi << 64).overflowing_add(lo);
+        // ((hi >> 64) as u8 + u8::from(overflow), wrapped)
+        let (hi_lo, hi_hi) = (hi as u64, (hi >> 64) as u64);
+        let (lo_lo, lo_hi) = (lo as u64, (lo >> 64) as u64);
+        let (wrapped, overflow) = hi_lo.overflowing_add(lo_hi);
+        (
+            ((wrapped as u128) << 64) | (lo_lo as u128),
+            hi_hi as u8 + u8::from(overflow),
+        )
     }
 }
 
@@ -485,7 +494,7 @@ mod tests {
     }
 
     #[test]
-    fn all_frac() {
+    fn display_frac() {
         use crate::types::{I0F128, I0F16, I0F32, I0F64, I0F8, U0F128, U0F16, U0F32, U0F64, U0F8};
         assert_eq_fmt!(
             ("{:X}", I0F128::from_bits(!0)),
@@ -529,6 +538,26 @@ mod tests {
         assert_eq_fmt!(("{}", U0F32::from_bits(!0)), ("{}", "0.9999999998"));
         assert_eq_fmt!(("{}", U0F16::from_bits(!0)), ("{}", "0.99998"));
         assert_eq_fmt!(("{}", U0F8::from_bits(!0)), ("{}", "0.996"));
+
+        // check overflow issues in <u128 as Mul10>::mul10
+        let no_internal_overflow_bits = 0xe666_6666_6666_6665_ffff_ffff_ffff_ffffu128;
+        let internal_overflow_bits = 0xe666_6666_6666_6666_ffff_ffff_ffff_ffffu128;
+        assert_eq_fmt!(
+            ("{:X}", U0F128::from_bits(no_internal_overflow_bits)),
+            ("{}", "0.E666666666666665FFFFFFFFFFFFFFFF")
+        );
+        assert_eq_fmt!(
+            ("{:X}", U0F128::from_bits(internal_overflow_bits)),
+            ("{}", "0.E666666666666666FFFFFFFFFFFFFFFF")
+        );
+        assert_eq_fmt!(
+            ("{}", U0F128::from_bits(no_internal_overflow_bits)),
+            ("{}", "0.899999999999999999978315956550289911317")
+        );
+        assert_eq_fmt!(
+            ("{}", U0F128::from_bits(internal_overflow_bits)),
+            ("{}", "0.900000000000000000032526065174565133017")
+        );
     }
 
     fn pow(base: u32, mut exp: u32) -> f64 {

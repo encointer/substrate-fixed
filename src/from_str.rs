@@ -21,7 +21,7 @@ use crate::{
     FixedU8,
 };
 use core::{
-    cmp::Ordering,
+    cmp::{self, Ordering},
     fmt::{Display, Formatter, Result as FmtResult},
     str::FromStr,
 };
@@ -348,7 +348,7 @@ macro_rules! impl_from_str_unsigned {
         impl_from_str! { $Fixed, $NBits, $all }
 
         fn $all(s: &str, int_nbits: u32, frac_nbits: u32) -> Result<$Bits, ParseFixedError> {
-            let Parse { neg: _, int, frac } = parse(s, false)?;
+            let Parse { int, frac, .. } = parse(s, false)?;
             let (frac, whole_frac) = match $frac(frac, frac_nbits) {
                 Some(frac) => (frac, false),
                 None => (0, true),
@@ -525,7 +525,7 @@ fn get_int_i128(
 impl_from_str! { FixedU128, U128, from_str_u128 }
 
 fn from_str_u128(s: &str, int_nbits: u32, frac_nbits: u32) -> Result<u128, ParseFixedError> {
-    let Parse { neg: _, int, frac } = parse(s, false)?;
+    let Parse { int, frac, .. } = parse(s, false)?;
     let (frac, whole_frac) = match get_frac128(frac, frac_nbits) {
         Some(frac) => (frac, false),
         None => (0, true),
@@ -560,31 +560,21 @@ fn get_frac128(frac: &str, nbits: u32) -> Option<u128> {
     if frac.is_empty() {
         return Some(0);
     }
-    let mut digits = 54;
-    let (mut acc_hi, mut acc_lo) = (0, 0);
-    let mut iter = frac.chars();
-    while let Some(c) = iter.next() {
-        if digits == 27 {
-            break;
-        }
-        digits -= 1;
-        acc_hi = acc_hi * 10 + (c as u8 - b'0') as u128;
-    }
-    if digits > 27 {
-        acc_hi *= 10u128.pow(digits - 27);
-        digits = 27;
-    }
-    for c in iter {
-        if digits == 0 {
-            break;
-        }
-        digits -= 1;
-        acc_lo = acc_lo * 10 + (c as u8 - b'0') as u128;
-    }
-    if digits > 0 {
-        acc_lo *= 10u128.pow(digits);
-    }
-    dec27_27_to_bin128(acc_hi, acc_lo, <u128 as SealedInt>::NBITS - nbits)
+    let (hi, lo) = if frac.is_empty() {
+        (0, 0)
+    } else if frac.len() <= 27 {
+        let rem = 27 - frac.len();
+        let hi = frac.parse::<u128>().unwrap() * 10u128.pow(rem as u32);
+        (hi, 0)
+    } else {
+        let hi = frac[..27].parse::<u128>().unwrap();
+        let lo_end = cmp::min(frac.len(), 54);
+        let rem = 54 - lo_end;
+        let lo = frac[27..lo_end].parse::<u128>().unwrap() * 10u128.pow(rem as u32);
+        (hi, lo)
+    };
+
+    dec27_27_to_bin128(hi, lo, <u128 as SealedInt>::NBITS - nbits)
 }
 
 #[cfg(test)]
@@ -598,8 +588,8 @@ mod tests {
         let limit = 1000;
         for i in 0..limit {
             let ans = dec3_to_bin8(i, 0);
-            let approx = two_pow * i as f64 / limit as f64;
-            let error = (ans.map(|x| x as f64).unwrap_or(two_pow) - approx).abs();
+            let approx = two_pow * f64::from(i) / f64::from(limit);
+            let error = (ans.map(f64::from).unwrap_or(two_pow) - approx).abs();
             assert!(
                 error <= 0.5,
                 "i {} ans {:?}  approx {} error {}",
@@ -617,8 +607,8 @@ mod tests {
         let limit = 1_000_000;
         for i in 0..limit {
             let ans = dec6_to_bin16(i, 0);
-            let approx = two_pow * i as f64 / limit as f64;
-            let error = (ans.map(|x| x as f64).unwrap_or(two_pow) - approx).abs();
+            let approx = two_pow * f64::from(i) / f64::from(limit);
+            let error = (ans.map(f64::from).unwrap_or(two_pow) - approx).abs();
             assert!(
                 error <= 0.5,
                 "i {} ans {:?}  approx {} error {}",
@@ -634,7 +624,7 @@ mod tests {
     fn check_dec13() {
         let two_pow = 32f64.exp2();
         let limit = 10_000_000_000_000;
-        for iter in 0..1000000 {
+        for iter in 0..1_000_000 {
             for &i in &[
                 iter,
                 limit / 4 - 1 - iter,
@@ -647,7 +637,7 @@ mod tests {
             ] {
                 let ans = dec13_to_bin32(i, 0);
                 let approx = two_pow * i as f64 / limit as f64;
-                let error = (ans.map(|x| x as f64).unwrap_or(two_pow) - approx).abs();
+                let error = (ans.map(f64::from).unwrap_or(two_pow) - approx).abs();
                 assert!(
                     error <= 0.5,
                     "i {} ans {:?}  approx {} error {}",
@@ -664,7 +654,7 @@ mod tests {
     fn check_dec27() {
         let two_pow = 64f64.exp2();
         let limit = 1_000_000_000_000_000_000_000_000_000;
-        for iter in 0..1000000 {
+        for iter in 0..1_000_000 {
             for &i in &[
                 iter,
                 limit / 4 - 1 - iter,
@@ -692,18 +682,25 @@ mod tests {
 
     #[test]
     fn check_dec27_27() {
-        let ones = 999999999999999999999999999;
+        let nines = 10u128.pow(27) - 1;
         let zeros = 0;
-        let too_big = dec27_27_to_bin128(ones, ones, 0);
+        let too_big = dec27_27_to_bin128(nines, nines, 0);
         assert_eq!(too_big, None);
-        let big = dec27_27_to_bin128(ones, zeros, 0);
-        assert_eq!(big, Some(340282366920938463463374607091485844535));
-        let small = dec27_27_to_bin128(zeros, ones, 0);
-        assert_eq!(small, Some(340282366921));
+        let big = dec27_27_to_bin128(nines, zeros, 0);
+        assert_eq!(
+            big,
+            Some(340_282_366_920_938_463_463_374_607_091_485_844_535)
+        );
+        let small = dec27_27_to_bin128(zeros, nines, 0);
+        assert_eq!(small, Some(340_282_366_921));
         let zero = dec27_27_to_bin128(zeros, zeros, 0);
         assert_eq!(zero, Some(0));
-        let x = dec27_27_to_bin128(123456789012345678901234567, 987654321098765432109876543, 0);
-        assert_eq!(x, Some(42010168377579896403540037811203677112));
+        let x = dec27_27_to_bin128(
+            123_456_789_012_345_678_901_234_567,
+            987_654_321_098_765_432_109_876_543,
+            0,
+        );
+        assert_eq!(x, Some(42_010_168_377_579_896_403_540_037_811_203_677_112));
     }
 
     #[test]
@@ -738,7 +735,7 @@ mod tests {
     {
         match s.parse::<F>() {
             Ok(f) => assert_eq!(f.to_bits(), bits),
-            Err(_) => panic!("could not parse {}", s),
+            Err(ParseFixedError { .. }) => panic!("could not parse {}", s),
         }
     }
     fn assert_err<F>(s: &str, kind: ParseErrorKind)
@@ -896,21 +893,21 @@ mod tests {
         use crate::types::*;
 
         assert_ok::<I0F128>(
-            "0.4999999999999999999999999999999999999998",
+            "0.499999999999999999999999999999999999998",
             0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
         );
         assert_err::<I0F128>(
-            "0.4999999999999999999999999999999999999999",
+            "0.499999999999999999999999999999999999999",
             ParseErrorKind::Overflow,
         );
         assert_err::<I0F128>("1", ParseErrorKind::Overflow);
 
         assert_ok::<I0F128>(
-            "-0.5000000000000000000000000000000000000001",
+            "-0.500000000000000000000000000000000000001",
             -0x8000_0000_0000_0000_0000_0000_0000_0000,
         );
         assert_err::<I0F128>(
-            "-0.5000000000000000000000000000000000000002",
+            "-0.500000000000000000000000000000000000002",
             ParseErrorKind::Overflow,
         );
         assert_err::<I0F128>("-1", ParseErrorKind::Overflow);
@@ -934,19 +931,19 @@ mod tests {
         );
 
         assert_ok::<U0F128>(
-            "0.4999999999999999999999999999999999999998",
+            "0.499999999999999999999999999999999999998",
             0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
         );
         assert_ok::<U0F128>(
-            "0.4999999999999999999999999999999999999999",
+            "0.499999999999999999999999999999999999999",
             0x8000_0000_0000_0000_0000_0000_0000_0000,
         );
         assert_ok::<U0F128>(
-            "0.9999999999999999999999999999999999999998",
+            "0.999999999999999999999999999999999999998",
             0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
         );
         assert_err::<U0F128>(
-            "0.9999999999999999999999999999999999999999",
+            "0.999999999999999999999999999999999999999",
             ParseErrorKind::Overflow,
         );
         assert_err::<U0F128>("1", ParseErrorKind::Overflow);

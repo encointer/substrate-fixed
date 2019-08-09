@@ -226,12 +226,12 @@ pub mod types;
 mod wide_div;
 mod wrapping;
 
-pub use crate::wrapping::Wrapping;
 use crate::{
     arith::MulDivDir,
     frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
     sealed::{Fixed, Float, Int, SealedFixed, SealedFloat, SealedInt},
 };
+pub use crate::{from_str::ParseFixedError, wrapping::Wrapping};
 use core::{
     cmp::Ordering,
     hash::{Hash, Hasher},
@@ -288,10 +288,9 @@ are implemented by the Rust compiler.
 # Examples
 
 ```rust
-use fixed::frac::U3;
-use fixed::",
+use fixed::{frac::U3, ",
             $s_fixed,
-            ";
+            "};
 let eleven = ",
             $s_fixed,
             "::<U3>::from_int(11);

@@ -318,11 +318,13 @@ macro_rules! impl_from_str_signed {
             } else {
                 ($one << (nbits - 1)) - 1
             };
-            let mut acc = 0;
-            for c in int.chars() {
-                acc = acc * 10 + (c as u8 - b'0') as $DoubleBits;
-                err!(acc > max_abs_int, Overflow);
-            }
+            let mut acc = match int.parse::<$DoubleBits>() {
+                Ok(i) => {
+                    err!(i > max_abs_int, Overflow);
+                    i
+                }
+                Err(_) => err!(Overflow),
+            };
             if whole_frac {
                 acc += 1;
                 err!(acc > max_abs_int, Overflow);
@@ -367,11 +369,13 @@ macro_rules! impl_from_str_unsigned {
                 return Ok(0);
             }
             let max_abs_int = ($one << nbits) - 1;
-            let mut acc = 0;
-            for c in int.chars() {
-                acc = acc * 10 + (c as u8 - b'0') as $DoubleBits;
-                err!(acc > max_abs_int, Overflow);
-            }
+            let mut acc = match int.parse::<$DoubleBits>() {
+                Ok(i) => {
+                    err!(i > max_abs_int, Overflow);
+                    i
+                }
+                Err(_) => err!(Overflow),
+            };
             if whole_frac {
                 acc += 1;
                 err!(acc > max_abs_int, Overflow);
@@ -383,19 +387,10 @@ macro_rules! impl_from_str_unsigned {
             if frac.is_empty() {
                 return Some(0);
             }
-            let mut digits = $dec_frac_digits;
-            let mut acc = 0;
-            for c in frac.chars() {
-                if digits == 0 {
-                    break;
-                }
-                digits -= 1;
-                acc = acc * 10 + (c as u8 - b'0') as $DoubleBits;
-            }
-            if digits > 0 {
-                acc *= ($one * 10).pow(digits);
-            }
-            $decode_frac(acc, <$Bits as SealedInt>::NBITS - nbits)
+            let end = cmp::min(frac.len(), $dec_frac_digits);
+            let rem = $dec_frac_digits - end;
+            let i = frac[..end].parse::<$DoubleBits>().unwrap() * ($one * 10).pow(rem as u32);
+            $decode_frac(i, <$Bits as SealedInt>::NBITS - nbits)
         }
     };
 }
@@ -654,7 +649,7 @@ mod tests {
     fn check_dec27() {
         let two_pow = 64f64.exp2();
         let limit = 1_000_000_000_000_000_000_000_000_000;
-        for iter in 0..1_000_000 {
+        for iter in 0..200_000 {
             for &i in &[
                 iter,
                 limit / 4 - 1 - iter,

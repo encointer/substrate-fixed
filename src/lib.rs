@@ -214,6 +214,7 @@ pub mod consts;
 mod convert;
 mod display;
 pub mod frac;
+mod from_str;
 pub mod sealed;
 mod sealed_fixed;
 mod sealed_float;

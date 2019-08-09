@@ -284,9 +284,9 @@ macro_rules! impl_from_str {
 
 macro_rules! impl_from_str_signed {
     (
-        ($Fixed:ident, $NBits:ident, $Bits:ident, $DoubleBits:ident, $one:expr);
+        ($Fixed:ident, $NBits:ident, $Bits:ident, $HalfBits:ident, $DoubleBits:ident, $one:expr);
         fn $all:ident;
-        fn $int:ident;
+        fn $int:ident, $int_half:expr;
         $frac:ident;
     ) => {
         impl_from_str! { $Fixed, $NBits, $all }
@@ -323,6 +323,13 @@ macro_rules! impl_from_str_signed {
             nbits: u32,
             whole_frac: bool,
         ) -> Result<$Bits, ParseFixedError> {
+            let half: Option<fn(bool, &str, u32, bool) -> Result<$HalfBits, ParseFixedError>> =
+                $int_half;
+            if let Some(half) = half {
+                if nbits <= <$Bits as SealedInt>::NBITS / 2 {
+                    return half(neg, int, nbits, whole_frac).map($Bits::from);
+                }
+            }
             let mut int = int;
             while int.starts_with('0') {
                 int = &int[1..];
@@ -359,10 +366,10 @@ macro_rules! impl_from_str_signed {
 
 macro_rules! impl_from_str_unsigned {
     (
-        ($Fixed:ident, $NBits:ident, $Bits:ident, $DoubleBits:ident, $one:expr);
+        ($Fixed:ident, $NBits:ident, $Bits:ident, $HalfBits:ident, $DoubleBits:ident, $one:expr);
         fn $all:ident;
-        fn $int:ident;
-        fn $frac:ident;
+        fn $int:ident, $int_half:expr;
+        fn $frac:ident, $frac_half:expr;
         $decode_frac:ident, $dec_frac_digits:expr;
     ) => {
         impl_from_str! { $Fixed, $NBits, $all }
@@ -378,6 +385,12 @@ macro_rules! impl_from_str_unsigned {
         }
 
         fn $int(int: &str, nbits: u32, whole_frac: bool) -> Result<$Bits, ParseFixedError> {
+            let half: Option<fn(&str, u32, bool) -> Result<$HalfBits, ParseFixedError>> = $int_half;
+            if let Some(half) = half {
+                if nbits <= <$Bits as SealedInt>::NBITS / 2 {
+                    return half(int, nbits, whole_frac).map($Bits::from);
+                }
+            }
             let mut int = int;
             while int.starts_with('0') {
                 int = &int[1..];
@@ -402,6 +415,12 @@ macro_rules! impl_from_str_unsigned {
         }
 
         fn $frac(frac: &str, nbits: u32) -> Option<$Bits> {
+            let half: Option<fn(&str, u32) -> Option<$HalfBits>> = $frac_half;
+            if let Some(half) = half {
+                if nbits <= <$Bits as SealedInt>::NBITS / 2 {
+                    return half(frac, nbits).map($Bits::from);
+                }
+            }
             if frac.is_empty() {
                 return Some(0);
             }
@@ -414,58 +433,58 @@ macro_rules! impl_from_str_unsigned {
 }
 
 impl_from_str_signed! {
-    (FixedI8, U8, i8, u16, 1u16);
+    (FixedI8, U8, i8, bool, u16, 1u16);
     fn from_str_i8;
-    fn get_int_i8;
+    fn get_int_i8, None;
     get_frac8;
 }
 impl_from_str_unsigned! {
-    (FixedU8, U8, u8, u16, 1u16);
+    (FixedU8, U8, u8, bool, u16, 1u16);
     fn from_str_u8;
-    fn get_int_u8;
-    fn get_frac8;
+    fn get_int_u8, None;
+    fn get_frac8, None;
     dec3_to_bin8, 3;
 }
 
 impl_from_str_signed! {
-    (FixedI16, U16, i16, u32, 1u32);
+    (FixedI16, U16, i16, i8, u32, 1u32);
     fn from_str_i16;
-    fn get_int_i16;
+    fn get_int_i16, Some(get_int_i8);
     get_frac16;
 }
 impl_from_str_unsigned! {
-    (FixedU16, U16, u16, u32, 1u32);
+    (FixedU16, U16, u16, u8, u32, 1u32);
     fn from_str_u16;
-    fn get_int_u16;
-    fn get_frac16;
+    fn get_int_u16, Some(get_int_u8);
+    fn get_frac16, Some(get_frac8);
     dec6_to_bin16, 6;
 }
 
 impl_from_str_signed! {
-    (FixedI32, U32, i32, u64, 1u64);
+    (FixedI32, U32, i32, i16, u64, 1u64);
     fn from_str_i32;
-    fn get_int_i32;
+    fn get_int_i32, Some(get_int_i16);
     get_frac32;
 }
 impl_from_str_unsigned! {
-    (FixedU32, U32, u32, u64, 1u64);
+    (FixedU32, U32, u32, u16, u64, 1u64);
     fn from_str_u32;
-    fn get_int_u32;
-    fn get_frac32;
+    fn get_int_u32, Some(get_int_u16);
+    fn get_frac32, Some(get_frac16);
     dec13_to_bin32, 13;
 }
 
 impl_from_str_signed! {
-    (FixedI64, U64, i64, u128, 1u128);
+    (FixedI64, U64, i64, i32, u128, 1u128);
     fn from_str_i64;
-    fn get_int_i64;
+    fn get_int_i64, Some(get_int_i32);
     get_frac64;
 }
 impl_from_str_unsigned! {
-    (FixedU64, U64, u64, u128, 1u128);
+    (FixedU64, U64, u64, u32, u128, 1u128);
     fn from_str_u64;
-    fn get_int_u64;
-    fn get_frac64;
+    fn get_int_u64, Some(get_int_u32);
+    fn get_frac64, Some(get_frac32);
     dec27_to_bin64, 27;
 }
 
@@ -503,6 +522,9 @@ fn get_int_i128(
     nbits: u32,
     whole_frac: bool,
 ) -> Result<i128, ParseFixedError> {
+    if nbits <= 64 {
+        return get_int_i64(neg, int, nbits, whole_frac).map(i128::from);
+    }
     let mut int = int;
     while int.starts_with('0') {
         int = &int[1..];
@@ -548,6 +570,9 @@ fn from_str_u128(s: &str, int_nbits: u32, frac_nbits: u32) -> Result<u128, Parse
 }
 
 fn get_int_u128(int: &str, nbits: u32, whole_frac: bool) -> Result<u128, ParseFixedError> {
+    if nbits <= 64 {
+        return get_int_u64(int, nbits, whole_frac).map(u128::from);
+    }
     let mut int = int;
     while int.starts_with('0') {
         int = &int[1..];
@@ -570,12 +595,13 @@ fn get_int_u128(int: &str, nbits: u32, whole_frac: bool) -> Result<u128, ParseFi
 }
 
 fn get_frac128(frac: &str, nbits: u32) -> Option<u128> {
+    if nbits <= 64 {
+        return get_frac64(frac, nbits).map(u128::from);
+    }
     if frac.is_empty() {
         return Some(0);
     }
-    let (hi, lo) = if frac.is_empty() {
-        (0, 0)
-    } else if frac.len() <= 27 {
+    let (hi, lo) = if frac.len() <= 27 {
         let rem = 27 - frac.len();
         let hi = frac.parse::<u128>().unwrap() * 10u128.pow(rem as u32);
         (hi, 0)

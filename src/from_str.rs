@@ -14,10 +14,10 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
-    frac::{IsLessOrEqual, True, Unsigned, U16, U8},
+    frac::{IsLessOrEqual, True, Unsigned, U16, U32, U64, U8},
     sealed::SealedInt,
     wide_div::WideDivRem,
-    FixedI16, FixedI8, FixedU16, FixedU8,
+    FixedI16, FixedI32, FixedI64, FixedI8, FixedU16, FixedU32, FixedU64, FixedU8,
 };
 use core::{
     cmp::Ordering,
@@ -427,9 +427,38 @@ impl_from_str_unsigned! {
     dec6_to_bin16, 6;
 }
 
+impl_from_str_signed! {
+    (FixedI32, U32, i32, u64, 1u64);
+    fn from_str_i32;
+    fn get_int_i32;
+    get_frac32;
+}
+impl_from_str_unsigned! {
+    (FixedU32, U32, u32, u64, 1u64);
+    fn from_str_u32;
+    fn get_int_u32;
+    fn get_frac32;
+    dec13_to_bin32, 13;
+}
+
+impl_from_str_signed! {
+    (FixedI64, U64, i64, u128, 1u128);
+    fn from_str_i64;
+    fn get_int_i64;
+    get_frac64;
+}
+impl_from_str_unsigned! {
+    (FixedU64, U64, u64, u128, 1u128);
+    fn from_str_u64;
+    fn get_int_u64;
+    fn get_frac64;
+    dec27_to_bin64, 27;
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::from_str::*;
+    use crate::{from_str::*, traits::Fixed};
+    use core::fmt::Debug;
 
     #[test]
     fn check_dec3() {
@@ -570,117 +599,163 @@ mod tests {
         assert_eq!(kind, ParseErrorKind::InvalidDigit);
     }
 
+    fn assert_ok<F>(s: &str, bits: F::Bits)
+    where
+        F: Fixed + FromStr<Err = ParseFixedError>,
+        F::Bits: Eq + Debug,
+    {
+        match s.parse::<F>() {
+            Ok(f) => assert_eq!(f.to_bits(), bits),
+            Err(_) => panic!("could not parse {}", s),
+        }
+    }
+    fn assert_err<F>(s: &str, kind: ParseErrorKind)
+    where
+        F: Fixed + FromStr<Err = ParseFixedError>,
+    {
+        match s.parse::<F>() {
+            Ok(_) => panic!("incorrectly parsed {}", s),
+            Err(ParseFixedError { kind: err }) => assert_eq!(err, kind),
+        }
+    }
+
     #[test]
     fn check_i8_u8_from_str() {
         use crate::types::*;
 
-        assert_eq!("0.498".parse::<I0F8>().unwrap(), I0F8::from_bits(127));
-        let ParseFixedError { kind } = "0.499".parse::<I0F8>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::Overflow);
-        let ParseFixedError { kind } = "1".parse::<I0F8>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::Overflow);
+        assert_ok::<I0F8>("0.498", 0x7F);
+        assert_err::<I0F8>("0.499", ParseErrorKind::Overflow);
+        assert_err::<I0F8>("1", ParseErrorKind::Overflow);
 
-        assert_eq!("-0.501".parse::<I0F8>().unwrap(), I0F8::from_bits(-128));
-        let ParseFixedError { kind } = "-0.502".parse::<I0F8>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::Overflow);
-        let ParseFixedError { kind } = "-1".parse::<I0F8>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::Overflow);
+        assert_ok::<I0F8>("-0.501", -0x80);
+        assert_err::<I0F8>("-0.502", ParseErrorKind::Overflow);
+        assert_err::<I0F8>("-1", ParseErrorKind::Overflow);
 
-        assert_eq!("000127.499".parse::<I8F0>().unwrap(), I8F0::from_bits(127));
-        let ParseFixedError { kind } = "127.5".parse::<I8F0>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::Overflow);
+        assert_ok::<I8F0>("000127.499", 0x7F);
+        assert_err::<I8F0>("127.5", ParseErrorKind::Overflow);
 
-        assert_eq!("-128.499".parse::<I8F0>().unwrap(), I8F0::from_bits(-128));
-        let ParseFixedError { kind } = "-128.5".parse::<I8F0>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::Overflow);
+        assert_ok::<I8F0>("-128.499", -0x80);
+        assert_err::<I8F0>("-128.5", ParseErrorKind::Overflow);
 
-        assert_eq!("0.498".parse::<U0F8>().unwrap(), U0F8::from_bits(127));
-        assert_eq!("0.499".parse::<U0F8>().unwrap(), U0F8::from_bits(128));
-        assert_eq!("0.998".parse::<U0F8>().unwrap(), U0F8::from_bits(255));
-        let ParseFixedError { kind } = "0.999".parse::<U0F8>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::Overflow);
-        let ParseFixedError { kind } = "1".parse::<U0F8>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::Overflow);
+        assert_ok::<U0F8>("0.498", 0x7F);
+        assert_ok::<U0F8>("0.499", 0x80);
+        assert_ok::<U0F8>("0.998", 0xFF);
+        assert_err::<U0F8>("0.999", ParseErrorKind::Overflow);
+        assert_err::<U0F8>("1", ParseErrorKind::Overflow);
 
-        let ParseFixedError { kind } = "-0".parse::<U0F8>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::InvalidDigit);
+        assert_err::<U0F8>("-0", ParseErrorKind::InvalidDigit);
 
-        assert_eq!("000127.499".parse::<U8F0>().unwrap(), U8F0::from_bits(127));
-        assert_eq!("000127.5".parse::<U8F0>().unwrap(), U8F0::from_bits(128));
-        assert_eq!("255.499".parse::<U8F0>().unwrap(), U8F0::from_bits(255));
-        let ParseFixedError { kind } = "255.5".parse::<U8F0>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::Overflow);
+        assert_ok::<U8F0>("000127.499", 0x7F);
+        assert_ok::<U8F0>("000127.5", 0x80);
+        assert_ok::<U8F0>("255.499", 0xFF);
+        assert_err::<U8F0>("255.5", ParseErrorKind::Overflow);
     }
 
     #[test]
     fn check_i16_u16_from_str() {
         use crate::types::*;
 
-        assert_eq!(
-            "0.499992".parse::<I0F16>().unwrap(),
-            I0F16::from_bits(32767)
-        );
-        let ParseFixedError { kind } = "0.499993".parse::<I0F16>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::Overflow);
-        let ParseFixedError { kind } = "1".parse::<I0F16>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::Overflow);
+        assert_ok::<I0F16>("0.499992", 0x7FFF);
+        assert_err::<I0F16>("0.499993", ParseErrorKind::Overflow);
+        assert_err::<I0F16>("1", ParseErrorKind::Overflow);
 
-        assert_eq!(
-            "-0.500007".parse::<I0F16>().unwrap(),
-            I0F16::from_bits(-32768)
-        );
-        let ParseFixedError { kind } = "-0.500008".parse::<I0F16>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::Overflow);
-        let ParseFixedError { kind } = "-1".parse::<I0F16>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::Overflow);
+        assert_ok::<I0F16>("-0.500007", -0x8000);
+        assert_err::<I0F16>("-0.500008", ParseErrorKind::Overflow);
+        assert_err::<I0F16>("-1", ParseErrorKind::Overflow);
 
-        assert_eq!(
-            "00032767.499999".parse::<I16F0>().unwrap(),
-            I16F0::from_bits(32767)
-        );
-        let ParseFixedError { kind } = "32767.5".parse::<I16F0>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::Overflow);
+        assert_ok::<I16F0>("00032767.499999", 0x7FFF);
+        assert_err::<I16F0>("32767.5", ParseErrorKind::Overflow);
 
-        assert_eq!(
-            "-32768.499999".parse::<I16F0>().unwrap(),
-            I16F0::from_bits(-32768)
-        );
-        let ParseFixedError { kind } = "-32768.5".parse::<I16F0>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::Overflow);
+        assert_ok::<I16F0>("-32768.499999", -0x8000);
+        assert_err::<I16F0>("-32768.5", ParseErrorKind::Overflow);
 
-        assert_eq!(
-            "0.499992".parse::<U0F16>().unwrap(),
-            U0F16::from_bits(32767)
-        );
-        assert_eq!(
-            "0.499993".parse::<U0F16>().unwrap(),
-            U0F16::from_bits(32768)
-        );
-        assert_eq!(
-            "0.999992".parse::<U0F16>().unwrap(),
-            U0F16::from_bits(65535)
-        );
-        let ParseFixedError { kind } = "0.999993".parse::<U0F16>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::Overflow);
-        let ParseFixedError { kind } = "1".parse::<U0F16>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::Overflow);
+        assert_ok::<U0F16>("0.499992", 0x7FFF);
+        assert_ok::<U0F16>("0.499993", 0x8000);
+        assert_ok::<U0F16>("0.999992", 0xFFFF);
+        assert_err::<U0F16>("0.999993", ParseErrorKind::Overflow);
+        assert_err::<U0F16>("1", ParseErrorKind::Overflow);
 
-        let ParseFixedError { kind } = "-0".parse::<U0F16>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::InvalidDigit);
+        assert_err::<U0F16>("-0", ParseErrorKind::InvalidDigit);
 
-        assert_eq!(
-            "00032767.499999".parse::<U16F0>().unwrap(),
-            U16F0::from_bits(32767)
+        assert_ok::<U16F0>("00032767.499999", 0x7FFF);
+        assert_ok::<U16F0>("00032767.5", 0x8000);
+        assert_ok::<U16F0>("65535.499999", 0xFFFF);
+        assert_err::<U16F0>("65535.5", ParseErrorKind::Overflow);
+    }
+
+    #[test]
+    fn check_i32_u32_from_str() {
+        use crate::types::*;
+
+        assert_ok::<I0F32>("0.4999999998", 0x7FFF_FFFF);
+        assert_err::<I0F32>("0.4999999999", ParseErrorKind::Overflow);
+        assert_err::<I0F32>("1", ParseErrorKind::Overflow);
+
+        assert_ok::<I0F32>("-0.5000000001", -0x8000_0000);
+        assert_err::<I0F32>("-0.5000000002", ParseErrorKind::Overflow);
+        assert_err::<I0F32>("-1", ParseErrorKind::Overflow);
+
+        assert_ok::<I32F0>("0002147483647.4999999999", 0x7FFF_FFFF);
+        assert_err::<I32F0>("2147483647.5", ParseErrorKind::Overflow);
+
+        assert_ok::<I32F0>("-2147483648.499999", -0x8000_0000);
+        assert_err::<I32F0>("-2147483648.5", ParseErrorKind::Overflow);
+
+        assert_ok::<U0F32>("0.4999999998", 0x7FFF_FFFF);
+        assert_ok::<U0F32>("0.4999999999", 0x8000_0000);
+        assert_ok::<U0F32>("0.9999999998", 0xFFFF_FFFF);
+        assert_err::<U0F32>("0.9999999999", ParseErrorKind::Overflow);
+        assert_err::<U0F32>("1", ParseErrorKind::Overflow);
+
+        assert_err::<U0F32>("-0", ParseErrorKind::InvalidDigit);
+
+        assert_ok::<U32F0>("0002147483647.4999999999", 0x7FFF_FFFF);
+        assert_ok::<U32F0>("0002147483647.5", 0x8000_0000);
+        assert_ok::<U32F0>("4294967295.4999999999", 0xFFFF_FFFF);
+        assert_err::<U32F0>("4294967295.5", ParseErrorKind::Overflow);
+    }
+
+    #[test]
+    fn check_i64_u64_from_str() {
+        use crate::types::*;
+
+        assert_ok::<I0F64>("0.49999999999999999997", 0x7FFF_FFFF_FFFF_FFFF);
+        assert_err::<I0F64>("0.49999999999999999998", ParseErrorKind::Overflow);
+        assert_err::<I0F64>("1", ParseErrorKind::Overflow);
+
+        assert_ok::<I0F64>("-0.50000000000000000002", -0x8000_0000_0000_0000);
+        assert_err::<I0F64>("-0.50000000000000000003", ParseErrorKind::Overflow);
+        assert_err::<I0F64>("-1", ParseErrorKind::Overflow);
+
+        assert_ok::<I64F0>(
+            "0009223372036854775807.49999999999999999999",
+            0x7FFF_FFFF_FFFF_FFFF,
         );
-        assert_eq!(
-            "00032767.5".parse::<U16F0>().unwrap(),
-            U16F0::from_bits(32768)
+        assert_err::<I64F0>("9223372036854775807.5", ParseErrorKind::Overflow);
+
+        assert_ok::<I64F0>(
+            "-9223372036854775808.49999999999999999999",
+            -0x8000_0000_0000_0000,
         );
-        assert_eq!(
-            "65535.499999".parse::<U16F0>().unwrap(),
-            U16F0::from_bits(65535)
+        assert_err::<I64F0>("-9223372036854775808.5", ParseErrorKind::Overflow);
+
+        assert_ok::<U0F64>("0.49999999999999999997", 0x7FFF_FFFF_FFFF_FFFF);
+        assert_ok::<U0F64>("0.49999999999999999998", 0x8000_0000_0000_0000);
+        assert_ok::<U0F64>("0.99999999999999999997", 0xFFFF_FFFF_FFFF_FFFF);
+        assert_err::<U0F64>("0.99999999999999999998", ParseErrorKind::Overflow);
+        assert_err::<U0F64>("1", ParseErrorKind::Overflow);
+
+        assert_err::<U0F64>("-0", ParseErrorKind::InvalidDigit);
+
+        assert_ok::<U64F0>(
+            "0009223372036854775807.49999999999999999999",
+            0x7FFF_FFFF_FFFF_FFFF,
         );
-        let ParseFixedError { kind } = "65535.5".parse::<U16F0>().unwrap_err();
-        assert_eq!(kind, ParseErrorKind::Overflow);
+        assert_ok::<U64F0>("0009223372036854775807.5", 0x8000_0000_0000_0000);
+        assert_ok::<U64F0>(
+            "18446744073709551615.49999999999999999999",
+            0xFFFF_FFFF_FFFF_FFFF,
+        );
+        assert_err::<U64F0>("18446744073709551615.5", ParseErrorKind::Overflow);
     }
 }

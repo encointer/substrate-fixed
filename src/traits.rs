@@ -30,6 +30,7 @@ use core::{
         Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div,
         DivAssign, Mul, MulAssign, Neg, Not, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
     },
+    str::FromStr,
 };
 #[cfg(feature = "f16")]
 use half::f16;
@@ -89,7 +90,7 @@ depending on the crate’s [optional features].
 pub trait Fixed
 where
     Self: Copy + Default + Hash + Ord,
-    Self: Debug + Display + Binary + Octal + LowerHex + UpperHex,
+    Self: Debug + Display + Binary + Octal + LowerHex + UpperHex + FromStr,
     Self: FromFixed + ToFixed + sealed::Fixed,
     Self: Add<Output = Self> + Sub<Output = Self> + Mul<Output = Self> + Div<Output = Self>,
     Self: BitAnd<Output = Self> + BitOr<Output = Self> + BitXor<Output = Self>,

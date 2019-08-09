@@ -5,6 +5,11 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.4.1 (unreleased)
+==========================
+
+  * All fixed-point types now implement `FromStr`.
+
 Version 0.4.0 (2019-08-08)
 ==========================
 

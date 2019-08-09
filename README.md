@@ -49,6 +49,12 @@ Various conversion methods are available:
 
 ## What’s new
 
+### Version 0.4.1 news (unreleased)
+
+  * All fixed-point types now implement [`FromStr`].
+
+[`FromStr`]: https://doc.rust-lang.org/nightly/std/str/trait.FromStr.html
+
 ### Version 0.4.0 news (2019-08-08)
 
   * The [*fixed* crate] now requires rustc version 1.31.0 or later.

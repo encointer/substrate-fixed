@@ -14,10 +14,10 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
-    display,
-    frac::{IsLessOrEqual, True, Unsigned, U8},
+    frac::{IsLessOrEqual, True, Unsigned, U16, U8},
+    sealed::SealedInt,
     wide_div::WideDivRem,
-    FixedI8, FixedU8,
+    FixedI16, FixedI8, FixedU16, FixedU8,
 };
 use core::{
     cmp::Ordering,
@@ -248,135 +248,183 @@ fn parse(s: &str, can_be_neg: bool) -> Result<Parse<'_>, ParseFixedError> {
     })
 }
 
-impl<Frac> FromStr for FixedI8<Frac>
-where
-    Frac: Unsigned + IsLessOrEqual<U8, Output = True>,
-{
-    type Err = ParseFixedError;
-    #[inline]
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        from_str_i8(s, Self::int_nbits(), Self::frac_nbits()).map(Self::from_bits)
-    }
-}
-
-impl<Frac> FromStr for FixedU8<Frac>
-where
-    Frac: Unsigned + IsLessOrEqual<U8, Output = True>,
-{
-    type Err = ParseFixedError;
-    #[inline]
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        from_str_u8(s, Self::int_nbits(), Self::frac_nbits()).map(Self::from_bits)
-    }
-}
-
-fn from_str_i8(s: &str, int_nbits: u32, frac_nbits: u32) -> Result<i8, ParseFixedError> {
-    let Parse { neg, int, frac } = parse(s, true)?;
-    let (frac, whole_frac) = match get_frac8(frac, frac_nbits) {
-        Some(frac) => (frac, false),
-        None => (0, true),
-    };
-    let frac = if frac_nbits == 8 {
-        // special case: no int bits
-        if neg {
-            if frac > 0x80 {
-                err!(Overflow)
+macro_rules! impl_from_str {
+    ($Fixed:ident, $NBits:ident, $method:ident) => {
+        impl<Frac> FromStr for $Fixed<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
+        {
+            type Err = ParseFixedError;
+            #[inline]
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                $method(s, Self::int_nbits(), Self::frac_nbits()).map(Self::from_bits)
             }
-            frac.wrapping_neg() as i8
-        } else {
-            if frac >= 0x80 {
-                err!(Overflow)
+        }
+    };
+}
+
+macro_rules! impl_from_str_signed {
+    (
+        ($Fixed:ident, $NBits:ident, $Bits:ident, $DoubleBits:ident, $one:expr);
+        fn $all:ident;
+        fn $int:ident;
+        $frac:ident;
+    ) => {
+        impl_from_str! { $Fixed, $NBits, $all }
+
+        fn $all(s: &str, int_nbits: u32, frac_nbits: u32) -> Result<$Bits, ParseFixedError> {
+            let Parse { neg, int, frac } = parse(s, true)?;
+            let (frac, whole_frac) = match $frac(frac, frac_nbits) {
+                Some(frac) => (frac, false),
+                None => (0, true),
+            };
+            let frac = if frac_nbits == <$Bits>::NBITS {
+                // special case: no int bits
+                if neg {
+                    if frac > <$Bits as SealedInt>::Unsigned::MSB {
+                        err!(Overflow)
+                    }
+                    frac.wrapping_neg() as $Bits
+                } else {
+                    if frac >= <$Bits as SealedInt>::Unsigned::MSB {
+                        err!(Overflow)
+                    }
+                    frac as $Bits
+                }
+            } else {
+                frac as $Bits
+            };
+            let int = $int(neg, int, int_nbits, whole_frac)?;
+            Ok(int | frac)
+        }
+
+        fn $int(
+            neg: bool,
+            int: &[u8],
+            nbits: u32,
+            whole_frac: bool,
+        ) -> Result<$Bits, ParseFixedError> {
+            let mut int = int;
+            while !int.is_empty() && int[0] == b'0' {
+                int = &int[1..];
             }
-            frac as i8
+            if nbits == 0 {
+                err!(whole_frac || !int.is_empty(), Overflow);
+                return Ok(0);
+            }
+            let max_abs_int = if neg {
+                $one << (nbits - 1)
+            } else {
+                ($one << (nbits - 1)) - 1
+            };
+            let mut acc = 0;
+            for &c in int {
+                acc = acc * 10 + (c - b'0') as $DoubleBits;
+                err!(acc > max_abs_int, Overflow);
+            }
+            if whole_frac {
+                acc += 1;
+                err!(acc > max_abs_int, Overflow);
+            }
+            let signed = if neg {
+                acc.wrapping_neg() as $Bits
+            } else {
+                acc as $Bits
+            };
+            Ok(signed << (<$Bits>::NBITS - nbits))
         }
-    } else {
-        frac as i8
     };
-    let int = get_int_i8(neg, int, int_nbits, whole_frac)?;
-    Ok(int | frac)
 }
 
-fn from_str_u8(s: &str, int_nbits: u32, frac_nbits: u32) -> Result<u8, ParseFixedError> {
-    let Parse { neg: _, int, frac } = parse(s, false)?;
-    let (frac, whole_frac) = match get_frac8(frac, frac_nbits) {
-        Some(frac) => (frac, false),
-        None => (0, true),
-    };
-    let int = get_int_u8(int, int_nbits, whole_frac)?;
-    Ok(int | frac)
-}
+macro_rules! impl_from_str_unsigned {
+    (
+        ($Fixed:ident, $NBits:ident, $Bits:ident, $DoubleBits:ident, $one:expr);
+        fn $all:ident;
+        fn $int:ident;
+        fn $frac:ident;
+        $decode_frac:ident, $dec_frac_digits:expr;
+    ) => {
+        impl_from_str! { $Fixed, $NBits, $all }
 
-fn get_int_i8(neg: bool, int: &[u8], nbits: u32, whole_frac: bool) -> Result<i8, ParseFixedError> {
-    let mut int = int;
-    while !int.is_empty() && int[0] == b'0' {
-        int = &int[1..];
-    }
-    if nbits == 0 {
-        err!(whole_frac || !int.is_empty(), Overflow);
-        return Ok(0);
-    }
-    let max_abs_int = if neg {
-        1u16 << (nbits - 1)
-    } else {
-        (1u16 << (nbits - 1)) - 1
-    };
-    let mut acc = 0;
-    for &c in int {
-        acc = acc * 10 + (c - b'0') as u16;
-        err!(acc > max_abs_int, Overflow);
-    }
-    if whole_frac {
-        acc += 1;
-        err!(acc > max_abs_int, Overflow);
-    }
-    let signed = if neg {
-        acc.wrapping_neg() as i8
-    } else {
-        acc as i8
-    };
-    Ok(signed << (8 - nbits))
-}
-
-fn get_int_u8(int: &[u8], nbits: u32, whole_frac: bool) -> Result<u8, ParseFixedError> {
-    let mut int = int;
-    while !int.is_empty() && int[0] == b'0' {
-        int = &int[1..];
-    }
-    if nbits == 0 {
-        err!(whole_frac || !int.is_empty(), Overflow);
-        return Ok(0);
-    }
-    let max_abs_int = (1u16 << nbits) - 1;
-    let mut acc = 0;
-    for &c in int {
-        acc = acc * 10 + (c - b'0') as u16;
-        err!(acc > max_abs_int, Overflow);
-    }
-    if whole_frac {
-        acc += 1;
-        err!(acc > max_abs_int, Overflow);
-    }
-    Ok((acc as u8) << (8 - nbits))
-}
-
-fn get_frac8(frac: &[u8], nbits: u32) -> Option<u8> {
-    if frac.is_empty() {
-        return Some(0);
-    }
-    let mut digits = display::dec_frac_digits(8);
-    debug_assert!(digits <= 3);
-    let mut acc = 0;
-    for &c in frac {
-        if digits == 0 {
-            break;
+        fn $all(s: &str, int_nbits: u32, frac_nbits: u32) -> Result<$Bits, ParseFixedError> {
+            let Parse { neg: _, int, frac } = parse(s, false)?;
+            let (frac, whole_frac) = match $frac(frac, frac_nbits) {
+                Some(frac) => (frac, false),
+                None => (0, true),
+            };
+            let int = $int(int, int_nbits, whole_frac)?;
+            Ok(int | frac)
         }
-        digits -= 1;
-        acc = acc * 10 + (c - b'0') as u16;
-    }
-    for _ in 0..digits {
-        acc *= 10;
-    }
-    dec3_to_bin8(acc, 8 - nbits)
+
+        fn $int(int: &[u8], nbits: u32, whole_frac: bool) -> Result<$Bits, ParseFixedError> {
+            let mut int = int;
+            while !int.is_empty() && int[0] == b'0' {
+                int = &int[1..];
+            }
+            if nbits == 0 {
+                err!(whole_frac || !int.is_empty(), Overflow);
+                return Ok(0);
+            }
+            let max_abs_int = ($one << nbits) - 1;
+            let mut acc = 0;
+            for &c in int {
+                acc = acc * 10 + (c - b'0') as $DoubleBits;
+                err!(acc > max_abs_int, Overflow);
+            }
+            if whole_frac {
+                acc += 1;
+                err!(acc > max_abs_int, Overflow);
+            }
+            Ok((acc as $Bits) << (<$Bits as SealedInt>::NBITS - nbits))
+        }
+
+        fn $frac(frac: &[u8], nbits: u32) -> Option<$Bits> {
+            if frac.is_empty() {
+                return Some(0);
+            }
+            let mut digits = $dec_frac_digits;
+            let mut acc = 0;
+            for &c in frac {
+                if digits == 0 {
+                    break;
+                }
+                digits -= 1;
+                acc = acc * 10 + (c - b'0') as $DoubleBits;
+            }
+            for _ in 0..digits {
+                acc *= 10;
+            }
+            $decode_frac(acc, <$Bits as SealedInt>::NBITS - nbits)
+        }
+    };
+}
+
+impl_from_str_signed! {
+    (FixedI8, U8, i8, u16, 1u16);
+    fn from_str_i8;
+    fn get_int_i8;
+    get_frac8;
+}
+impl_from_str_unsigned! {
+    (FixedU8, U8, u8, u16, 1u16);
+    fn from_str_u8;
+    fn get_int_u8;
+    fn get_frac8;
+    dec3_to_bin8, 3;
+}
+
+impl_from_str_signed! {
+    (FixedI16, U16, i16, u32, 1u32);
+    fn from_str_i16;
+    fn get_int_i16;
+    get_frac16;
+}
+impl_from_str_unsigned! {
+    (FixedU16, U16, u16, u32, 1u32);
+    fn from_str_u16;
+    fn get_int_u16;
+    fn get_frac16;
+    dec6_to_bin16, 6;
 }
 
 #[cfg(test)]
@@ -523,7 +571,7 @@ mod tests {
     }
 
     #[test]
-    fn check_i8_from_str() {
+    fn check_i8_u8_from_str() {
         use crate::types::*;
 
         assert_eq!("0.498".parse::<I0F8>().unwrap(), I0F8::from_bits(127));
@@ -545,11 +593,6 @@ mod tests {
         assert_eq!("-128.499".parse::<I8F0>().unwrap(), I8F0::from_bits(-128));
         let ParseFixedError { kind } = "-128.5".parse::<I8F0>().unwrap_err();
         assert_eq!(kind, ParseErrorKind::Overflow);
-    }
-
-    #[test]
-    fn check_u8_from_str() {
-        use crate::types::*;
 
         assert_eq!("0.498".parse::<U0F8>().unwrap(), U0F8::from_bits(127));
         assert_eq!("0.499".parse::<U0F8>().unwrap(), U0F8::from_bits(128));
@@ -566,6 +609,78 @@ mod tests {
         assert_eq!("000127.5".parse::<U8F0>().unwrap(), U8F0::from_bits(128));
         assert_eq!("255.499".parse::<U8F0>().unwrap(), U8F0::from_bits(255));
         let ParseFixedError { kind } = "255.5".parse::<U8F0>().unwrap_err();
+        assert_eq!(kind, ParseErrorKind::Overflow);
+    }
+
+    #[test]
+    fn check_i16_u16_from_str() {
+        use crate::types::*;
+
+        assert_eq!(
+            "0.499992".parse::<I0F16>().unwrap(),
+            I0F16::from_bits(32767)
+        );
+        let ParseFixedError { kind } = "0.499993".parse::<I0F16>().unwrap_err();
+        assert_eq!(kind, ParseErrorKind::Overflow);
+        let ParseFixedError { kind } = "1".parse::<I0F16>().unwrap_err();
+        assert_eq!(kind, ParseErrorKind::Overflow);
+
+        assert_eq!(
+            "-0.500007".parse::<I0F16>().unwrap(),
+            I0F16::from_bits(-32768)
+        );
+        let ParseFixedError { kind } = "-0.500008".parse::<I0F16>().unwrap_err();
+        assert_eq!(kind, ParseErrorKind::Overflow);
+        let ParseFixedError { kind } = "-1".parse::<I0F16>().unwrap_err();
+        assert_eq!(kind, ParseErrorKind::Overflow);
+
+        assert_eq!(
+            "00032767.499999".parse::<I16F0>().unwrap(),
+            I16F0::from_bits(32767)
+        );
+        let ParseFixedError { kind } = "32767.5".parse::<I16F0>().unwrap_err();
+        assert_eq!(kind, ParseErrorKind::Overflow);
+
+        assert_eq!(
+            "-32768.499999".parse::<I16F0>().unwrap(),
+            I16F0::from_bits(-32768)
+        );
+        let ParseFixedError { kind } = "-32768.5".parse::<I16F0>().unwrap_err();
+        assert_eq!(kind, ParseErrorKind::Overflow);
+
+        assert_eq!(
+            "0.499992".parse::<U0F16>().unwrap(),
+            U0F16::from_bits(32767)
+        );
+        assert_eq!(
+            "0.499993".parse::<U0F16>().unwrap(),
+            U0F16::from_bits(32768)
+        );
+        assert_eq!(
+            "0.999992".parse::<U0F16>().unwrap(),
+            U0F16::from_bits(65535)
+        );
+        let ParseFixedError { kind } = "0.999993".parse::<U0F16>().unwrap_err();
+        assert_eq!(kind, ParseErrorKind::Overflow);
+        let ParseFixedError { kind } = "1".parse::<U0F16>().unwrap_err();
+        assert_eq!(kind, ParseErrorKind::Overflow);
+
+        let ParseFixedError { kind } = "-0".parse::<U0F16>().unwrap_err();
+        assert_eq!(kind, ParseErrorKind::InvalidDigit);
+
+        assert_eq!(
+            "00032767.499999".parse::<U16F0>().unwrap(),
+            U16F0::from_bits(32767)
+        );
+        assert_eq!(
+            "00032767.5".parse::<U16F0>().unwrap(),
+            U16F0::from_bits(32768)
+        );
+        assert_eq!(
+            "65535.499999".parse::<U16F0>().unwrap(),
+            U16F0::from_bits(65535)
+        );
+        let ParseFixedError { kind } = "65535.5".parse::<U16F0>().unwrap_err();
         assert_eq!(kind, ParseErrorKind::Overflow);
     }
 }

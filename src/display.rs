@@ -226,7 +226,7 @@ fn dec_int_digits(int_bits: u32) -> u32 {
     (int_bits * 3 + i) / 10
 }
 
-pub fn dec_frac_digits(frac_bits: u32) -> u32 {
+fn dec_frac_digits(frac_bits: u32) -> u32 {
     assert!(frac_bits < 299);
     let i = if frac_bits >= 196 {
         12

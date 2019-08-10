@@ -14,7 +14,7 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
-    frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
+    frac::{False, IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
     sealed::SealedInt,
     wide_div::WideDivRem,
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
@@ -23,8 +23,34 @@ use crate::{
 use core::{
     cmp::{self, Ordering},
     fmt::{Display, Formatter, Result as FmtResult},
+    ops::{Add, Shl},
     str::FromStr,
 };
+
+fn bin_str_to_bin<I>(a: &str, dump_bits: u32) -> Option<I>
+where
+    I: SealedInt<IsSigned = False> + Shl<u32, Output = I> + Add<Output = I> + From<u8>,
+{
+    debug_assert!(!a.is_empty());
+    let mut digits = 8 - dump_bits;
+    let mut acc = I::ZERO;
+    let mut bytes = a.as_bytes().iter();
+    while let Some(byte) = bytes.next() {
+        if digits == 0 {
+            break;
+        }
+        acc = (acc << 1) + I::from(byte - b'0');
+        digits -= 1;
+    }
+
+    if digits > 0 {
+        Some(acc << digits)
+    } else if let Some(byte) = bytes.next() {
+        acc.checked_add(I::from(byte - b'0'))
+    } else {
+        Some(acc)
+    }
+}
 
 // 5^3 × 2 < 2^8 => (10^3 - 1) × 2^(8-3+1) < 2^16
 // Returns None for large fractions that are rounded to 1.0
@@ -171,7 +197,7 @@ let error: ParseFixedError = match s.parse::<I16F16>() {
 println!("Parse error: {}", error);
 ```
 */
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ParseFixedError {
     kind: ParseErrorKind,
 }
@@ -210,7 +236,7 @@ impl Display for ParseFixedError {
     }
 }
 
-fn parse(s: &str, can_be_neg: bool, radix: i32) -> Result<Parse<'_>, ParseFixedError> {
+fn parse(s: &str, can_be_neg: bool, radix: u32) -> Result<Parse<'_>, ParseFixedError> {
     let mut int = (0, 0);
     let mut frac = (0, 0);
     let mut has_sign = false;
@@ -272,6 +298,11 @@ fn parse(s: &str, can_be_neg: bool, radix: i32) -> Result<Parse<'_>, ParseFixedE
     })
 }
 
+pub(crate) trait FromStrRadix: Sized {
+    type Err;
+    fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::Err>;
+}
+
 macro_rules! impl_from_str {
     ($Fixed:ident, $NBits:ident, $method:ident) => {
         impl<Frac> FromStr for $Fixed<Frac>
@@ -282,6 +313,16 @@ macro_rules! impl_from_str {
             #[inline]
             fn from_str(s: &str) -> Result<Self, Self::Err> {
                 $method(s, 10, Self::int_nbits(), Self::frac_nbits()).map(Self::from_bits)
+            }
+        }
+        impl<Frac> FromStrRadix for $Fixed<Frac>
+        where
+            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
+        {
+            type Err = ParseFixedError;
+            #[inline]
+            fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::Err> {
+                $method(s, radix, Self::int_nbits(), Self::frac_nbits()).map(Self::from_bits)
             }
         }
     };
@@ -298,39 +339,37 @@ macro_rules! impl_from_str_signed {
 
         fn $all(
             s: &str,
-            radix: i32,
+            radix: u32,
             int_nbits: u32,
             frac_nbits: u32,
         ) -> Result<$Bits, ParseFixedError> {
             let Parse { neg, int, frac } = parse(s, true, 10)?;
-            let (frac, whole_frac) = match $frac(frac, radix, frac_nbits) {
+            let (abs_frac, whole_frac) = match $frac(frac, radix, frac_nbits) {
                 Some(frac) => (frac, false),
                 None => (0, true),
             };
-            let frac = if frac_nbits == <$Bits>::NBITS {
+            if frac_nbits == <$Bits>::NBITS {
                 // special case: no int bits
-                if neg {
-                    if frac > <$Bits as SealedInt>::Unsigned::MSB {
-                        err!(Overflow)
-                    }
-                    frac.wrapping_neg() as $Bits
+                let max_abs = if neg {
+                    <$Bits as SealedInt>::Unsigned::MSB
                 } else {
-                    if frac >= <$Bits as SealedInt>::Unsigned::MSB {
-                        err!(Overflow)
-                    }
-                    frac as $Bits
-                }
+                    <$Bits as SealedInt>::Unsigned::MSB - 1
+                };
+                err!(abs_frac > max_abs, Overflow);
+            }
+            let frac = if neg {
+                abs_frac.wrapping_neg() as $Bits
             } else {
-                frac as $Bits
+                abs_frac as $Bits
             };
             let int = $int(neg, int, radix, int_nbits, whole_frac)?;
-            Ok(int | frac)
+            Ok(int + frac)
         }
 
         fn $int(
             neg: bool,
             int: &str,
-            radix: i32,
+            radix: u32,
             nbits: u32,
             whole_frac: bool,
         ) -> Result<$Bits, ParseFixedError> {
@@ -350,7 +389,7 @@ macro_rules! impl_from_str_signed {
             } else {
                 <$Bits as SealedInt>::Unsigned::MSB - 1
             };
-            let mut acc = match int.parse::<<$Bits as SealedInt>::Unsigned>() {
+            let mut acc = match <$Bits as SealedInt>::Unsigned::from_str_radix(int, radix) {
                 Ok(i) => {
                     err!(i > max_abs_int, Overflow);
                     i
@@ -382,7 +421,7 @@ macro_rules! impl_from_str_unsigned {
 
         fn $all(
             s: &str,
-            radix: i32,
+            radix: u32,
             int_nbits: u32,
             frac_nbits: u32,
         ) -> Result<$Bits, ParseFixedError> {
@@ -397,7 +436,7 @@ macro_rules! impl_from_str_unsigned {
 
         fn $int(
             int: &str,
-            radix: i32,
+            radix: u32,
             nbits: u32,
             whole_frac: bool,
         ) -> Result<$Bits, ParseFixedError> {
@@ -412,7 +451,7 @@ macro_rules! impl_from_str_unsigned {
                 err!(whole_frac || !int.is_empty(), Overflow);
                 return Ok(0);
             }
-            let mut acc = match int.parse::<$Bits>() {
+            let mut acc = match <$Bits>::from_str_radix(int, radix) {
                 Ok(i) => i,
                 Err(_) => err!(Overflow),
             };
@@ -442,18 +481,24 @@ macro_rules! impl_from_str_unsigned_not128 {
             $frac;
         }
 
-        fn $frac(frac: &str, radix: i32, nbits: u32) -> Option<$Bits> {
+        fn $frac(frac: &str, radix: u32, nbits: u32) -> Option<$Bits> {
             if $frac_half_cond && nbits <= <$Bits as SealedInt>::NBITS / 2 {
                 return $frac_half(frac, radix, nbits).map($Bits::from);
             }
             if frac.is_empty() {
                 return Some(0);
             }
-            let end = cmp::min(frac.len(), $dec_frac_digits);
-            let rem = $dec_frac_digits - end;
-            let ten: $DoubleBits = 10;
-            let i = frac[..end].parse::<$DoubleBits>().unwrap() * ten.pow(rem as u32);
-            $decode_frac(i, <$Bits as SealedInt>::NBITS - nbits)
+            match radix {
+                2 => bin_str_to_bin(frac, nbits),
+                10 => {
+                    let end = cmp::min(frac.len(), $dec_frac_digits);
+                    let rem = $dec_frac_digits - end;
+                    let ten: $DoubleBits = 10;
+                    let i = frac[..end].parse::<$DoubleBits>().unwrap() * ten.pow(rem as u32);
+                    $decode_frac(i, <$Bits as SealedInt>::NBITS - nbits)
+                }
+                _ => unreachable!(),
+            }
         }
     };
 }
@@ -527,26 +572,31 @@ impl_from_str_unsigned! {
     get_frac128;
 }
 
-fn get_frac128(frac: &str, radix: i32, nbits: u32) -> Option<u128> {
+fn get_frac128(frac: &str, radix: u32, nbits: u32) -> Option<u128> {
     if nbits <= 64 {
         return get_frac64(frac, radix, nbits).map(u128::from);
     }
     if frac.is_empty() {
         return Some(0);
     }
-    let (hi, lo) = if frac.len() <= 27 {
-        let rem = 27 - frac.len();
-        let hi = frac.parse::<u128>().unwrap() * 10u128.pow(rem as u32);
-        (hi, 0)
-    } else {
-        let hi = frac[..27].parse::<u128>().unwrap();
-        let lo_end = cmp::min(frac.len(), 54);
-        let rem = 54 - lo_end;
-        let lo = frac[27..lo_end].parse::<u128>().unwrap() * 10u128.pow(rem as u32);
-        (hi, lo)
-    };
-
-    dec27_27_to_bin128(hi, lo, <u128 as SealedInt>::NBITS - nbits)
+    match radix {
+        2 => bin_str_to_bin(frac, nbits),
+        10 => {
+            let (hi, lo) = if frac.len() <= 27 {
+                let rem = 27 - frac.len();
+                let hi = frac.parse::<u128>().unwrap() * 10u128.pow(rem as u32);
+                (hi, 0)
+            } else {
+                let hi = frac[..27].parse::<u128>().unwrap();
+                let lo_end = cmp::min(frac.len(), 54);
+                let rem = 54 - lo_end;
+                let lo = frac[27..lo_end].parse::<u128>().unwrap() * 10u128.pow(rem as u32);
+                (hi, lo)
+            };
+            dec27_27_to_bin128(hi, lo, <u128 as SealedInt>::NBITS - nbits)
+        }
+        _ => unreachable!(),
+    }
 }
 
 #[cfg(test)]

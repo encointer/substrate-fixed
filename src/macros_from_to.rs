@@ -1225,5 +1225,33 @@ assert_eq!(Fix::overflowing_from_float(large), (wrapped, true));
                 SealedFloat::overflowing_to_fixed(val)
             }
         );
+
+        comment!(
+            "Converts a string slice in the binary radix.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+// 1.75 is 1.11 in binary
+let f = Fix::from_str_bin(\"01.1100\");
+let check = Fix::from_bits(0b111 << (4 - 2));
+assert_eq!(f, Ok(check));
+",
+            if_signed_else_empty_str!(
+                $Signedness,
+                "let neg = Fix::from_str_bin(\"-1.11\");
+assert_eq!(neg, Ok(-check));
+",
+            ),
+            "```
+";
+            #[inline]
+            pub fn from_str_bin(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
+                FromStrRadix::from_str_radix(src, 2)
+            }
+        );
     };
 }

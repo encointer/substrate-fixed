@@ -229,6 +229,7 @@ mod wrapping;
 use crate::{
     arith::MulDivDir,
     frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
+    from_str::FromStrRadix,
     sealed::{Fixed, Float, Int, SealedFixed, SealedFloat, SealedInt},
 };
 pub use crate::{from_str::ParseFixedError, wrapping::Wrapping};

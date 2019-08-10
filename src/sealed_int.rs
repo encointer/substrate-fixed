@@ -33,6 +33,7 @@ pub trait SealedInt: Copy + Ord + Debug + Display {
     const NBITS: u32 = Self::NBits::U32;
     const IS_SIGNED: bool = Self::IsSigned::BOOL;
     const MSB: Self;
+    const ZERO: Self;
 
     #[inline]
     fn from_fixed<F: Fixed>(val: F) -> Self {
@@ -85,6 +86,7 @@ pub trait SealedInt: Copy + Ord + Debug + Display {
     fn all_ones_shl(shift: u32) -> Self;
     fn is_zero(self) -> bool;
     fn is_negative(self) -> bool;
+    fn checked_add(self, val: Self) -> Option<Self>;
 
     fn to_fixed_dir_overflow(
         self,
@@ -108,6 +110,7 @@ macro_rules! sealed_int {
             type ReprFixed = $ReprFixed<U0>;
 
             const MSB: $Int = 1 << (Self::NBITS - 1);
+            const ZERO: $Int = 0;
 
             #[inline]
             fn min_value() -> $Int {
@@ -152,6 +155,11 @@ macro_rules! sealed_int {
             #[inline]
             fn is_zero(self) -> bool {
                 self == 0
+            }
+
+            #[inline]
+            fn checked_add(self, val: $Int) -> Option<$Int> {
+                <$Int>::checked_add(self, val)
             }
 
             #[inline]

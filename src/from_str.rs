@@ -332,7 +332,7 @@ macro_rules! impl_from_str_signed {
     (
         $Fixed:ident, $NBits:ident, $Bits:ident;
         fn $all:ident;
-        fn $int:ident, ($int_half:ident, $int_half_cond:expr);
+        $int:ident;
         $frac:ident;
     ) => {
         impl_from_str! { $Fixed, $NBits, $all }
@@ -348,64 +348,20 @@ macro_rules! impl_from_str_signed {
                 Some(frac) => (frac, false),
                 None => (0, true),
             };
-            if frac_nbits == <$Bits>::NBITS {
-                // special case: no int bits
-                let max_abs = if neg {
-                    <$Bits as SealedInt>::Unsigned::MSB
-                } else {
-                    <$Bits as SealedInt>::Unsigned::MSB - 1
-                };
-                err!(abs_frac > max_abs, Overflow);
-            }
-            let frac = if neg {
-                abs_frac.wrapping_neg() as $Bits
-            } else {
-                abs_frac as $Bits
-            };
-            let int = $int(neg, int, radix, int_nbits, whole_frac)?;
-            Ok(int + frac)
-        }
-
-        fn $int(
-            neg: bool,
-            int: &str,
-            radix: u32,
-            nbits: u32,
-            whole_frac: bool,
-        ) -> Result<$Bits, ParseFixedError> {
-            if $int_half_cond && nbits <= <$Bits as SealedInt>::NBITS / 2 {
-                return $int_half(neg, int, radix, nbits, whole_frac).map($Bits::from);
-            }
-            let mut int = int;
-            while int.starts_with('0') {
-                int = &int[1..];
-            }
-            if nbits == 0 {
-                err!(whole_frac || !int.is_empty(), Overflow);
-                return Ok(0);
-            }
-            let max_abs_int = if neg {
+            let abs_int = $int(int, radix, int_nbits, whole_frac)?;
+            let abs = abs_int | abs_frac;
+            let max_abs = if neg {
                 <$Bits as SealedInt>::Unsigned::MSB
             } else {
                 <$Bits as SealedInt>::Unsigned::MSB - 1
             };
-            let mut acc = match <$Bits as SealedInt>::Unsigned::from_str_radix(int, radix) {
-                Ok(i) => {
-                    err!(i > max_abs_int, Overflow);
-                    i
-                }
-                Err(_) => err!(Overflow),
-            };
-            if whole_frac {
-                acc += 1;
-                err!(acc > max_abs_int, Overflow);
-            }
-            let signed = if neg {
-                acc.wrapping_neg() as $Bits
+            err!(abs > max_abs, Overflow);
+            let f = if neg {
+                abs.wrapping_neg() as $Bits
             } else {
-                acc as $Bits
+                abs as $Bits
             };
-            Ok(signed << (<$Bits>::NBITS - nbits))
+            Ok(f)
         }
     };
 }
@@ -440,8 +396,9 @@ macro_rules! impl_from_str_unsigned {
             nbits: u32,
             whole_frac: bool,
         ) -> Result<$Bits, ParseFixedError> {
-            if $int_half_cond && nbits <= <$Bits as SealedInt>::NBITS / 2 {
-                return $int_half(int, radix, nbits, whole_frac).map($Bits::from);
+            const HALF: u32 = <$Bits as SealedInt>::NBITS / 2;
+            if $int_half_cond && nbits <= HALF {
+                return $int_half(int, radix, nbits, whole_frac).map(|x| $Bits::from(x) << HALF);
             }
             let mut int = int;
             while int.starts_with('0') {
@@ -461,7 +418,9 @@ macro_rules! impl_from_str_unsigned {
                     (_, true) => err!(Overflow),
                 };
             }
-            Ok(acc << (<$Bits as SealedInt>::NBITS - nbits))
+            let remove_bits = <$Bits as SealedInt>::NBITS - nbits;
+            err!(remove_bits > 0 && (acc >> nbits) != 0, Overflow);
+            Ok(acc << remove_bits)
         }
     };
 }
@@ -506,13 +465,13 @@ macro_rules! impl_from_str_unsigned_not128 {
 impl_from_str_signed! {
     FixedI8, U8, i8;
     fn from_str_i8;
-    fn get_int_i8, (get_int_i8, false);
+    get_int8;
     get_frac8;
 }
 impl_from_str_unsigned_not128! {
     FixedU8, U8, u8;
     fn from_str_u8;
-    fn get_int_u8, (get_int_u8, false);
+    fn get_int8, (get_int8, false);
     fn get_frac8, (get_frac8, false);
     dec3_to_bin8, 3, u16;
 }
@@ -520,13 +479,13 @@ impl_from_str_unsigned_not128! {
 impl_from_str_signed! {
     FixedI16, U16, i16;
     fn from_str_i16;
-    fn get_int_i16, (get_int_i8, true);
+    get_int16;
     get_frac16;
 }
 impl_from_str_unsigned_not128! {
     FixedU16, U16, u16;
     fn from_str_u16;
-    fn get_int_u16, (get_int_u8, true);
+    fn get_int16, (get_int8, true);
     fn get_frac16, (get_frac8, true);
     dec6_to_bin16, 6, u32;
 }
@@ -534,13 +493,13 @@ impl_from_str_unsigned_not128! {
 impl_from_str_signed! {
     FixedI32, U32, i32;
     fn from_str_i32;
-    fn get_int_i32, (get_int_i16, true);
+    get_int32;
     get_frac32;
 }
 impl_from_str_unsigned_not128! {
     FixedU32, U32, u32;
     fn from_str_u32;
-    fn get_int_u32, (get_int_u16, true);
+    fn get_int32, (get_int16, true);
     fn get_frac32, (get_frac16, true);
     dec13_to_bin32, 13, u64;
 }
@@ -548,13 +507,13 @@ impl_from_str_unsigned_not128! {
 impl_from_str_signed! {
     FixedI64, U64, i64;
     fn from_str_i64;
-    fn get_int_i64, (get_int_i32, true);
+    get_int64;
     get_frac64;
 }
 impl_from_str_unsigned_not128! {
     FixedU64, U64, u64;
     fn from_str_u64;
-    fn get_int_u64, (get_int_u32, true);
+    fn get_int64, (get_int32, true);
     fn get_frac64, (get_frac32, true);
     dec27_to_bin64, 27, u128;
 }
@@ -562,13 +521,13 @@ impl_from_str_unsigned_not128! {
 impl_from_str_signed! {
     FixedI128, U128, i128;
     fn from_str_i128;
-    fn get_int_i128, (get_int_i64, true);
+    get_int128;
     get_frac128;
 }
 impl_from_str_unsigned! {
     FixedU128, U128, u128;
     fn from_str_u128;
-    fn get_int_u128, (get_int_u64, true);
+    fn get_int128, (get_int64, true);
     get_frac128;
 }
 
@@ -757,7 +716,7 @@ mod tests {
     {
         match s.parse::<F>() {
             Ok(f) => assert_eq!(f.to_bits(), bits),
-            Err(ParseFixedError { .. }) => panic!("could not parse {}", s),
+            Err(e) => panic!("could not parse {}: {}", s, e),
         }
     }
     fn assert_err<F>(s: &str, kind: ParseErrorKind)
@@ -765,7 +724,7 @@ mod tests {
         F: Fixed + FromStr<Err = ParseFixedError>,
     {
         match s.parse::<F>() {
-            Ok(_) => panic!("incorrectly parsed {}", s),
+            Ok(f) => panic!("incorrectly parsed {} as {}", s, f),
             Err(ParseFixedError { kind: err }) => assert_eq!(err, kind),
         }
     }
@@ -774,30 +733,37 @@ mod tests {
     fn check_i8_u8_from_str() {
         use crate::types::*;
 
+        assert_err::<I0F8>("-1", ParseErrorKind::Overflow);
+        assert_err::<I0F8>("-0.502", ParseErrorKind::Overflow);
+        assert_ok::<I0F8>("-0.501", -0x80);
         assert_ok::<I0F8>("0.498", 0x7F);
         assert_err::<I0F8>("0.499", ParseErrorKind::Overflow);
         assert_err::<I0F8>("1", ParseErrorKind::Overflow);
 
-        assert_ok::<I0F8>("-0.501", -0x80);
-        assert_err::<I0F8>("-0.502", ParseErrorKind::Overflow);
-        assert_err::<I0F8>("-1", ParseErrorKind::Overflow);
+        assert_err::<I4F4>("-8.04", ParseErrorKind::Overflow);
+        assert_ok::<I4F4>("-8.03", -0x80);
+        assert_ok::<I4F4>("7.96", 0x7F);
+        assert_err::<I4F4>("7.97", ParseErrorKind::Overflow);
 
-        assert_ok::<I8F0>("000127.499", 0x7F);
+        assert_err::<I8F0>("-128.5", ParseErrorKind::Overflow);
+        assert_ok::<I8F0>("-128.499", -0x80);
+        assert_ok::<I8F0>("127.499", 0x7F);
         assert_err::<I8F0>("127.5", ParseErrorKind::Overflow);
 
-        assert_ok::<I8F0>("-128.499", -0x80);
-        assert_err::<I8F0>("-128.5", ParseErrorKind::Overflow);
-
+        assert_err::<U0F8>("-0", ParseErrorKind::InvalidDigit);
         assert_ok::<U0F8>("0.498", 0x7F);
         assert_ok::<U0F8>("0.499", 0x80);
         assert_ok::<U0F8>("0.998", 0xFF);
         assert_err::<U0F8>("0.999", ParseErrorKind::Overflow);
         assert_err::<U0F8>("1", ParseErrorKind::Overflow);
 
-        assert_err::<U0F8>("-0", ParseErrorKind::InvalidDigit);
+        assert_ok::<U4F4>("7.96", 0x7F);
+        assert_ok::<U4F4>("7.97", 0x80);
+        assert_ok::<U4F4>("15.96", 0xFF);
+        assert_err::<U4F4>("15.97", ParseErrorKind::Overflow);
 
-        assert_ok::<U8F0>("000127.499", 0x7F);
-        assert_ok::<U8F0>("000127.5", 0x80);
+        assert_ok::<U8F0>("127.499", 0x7F);
+        assert_ok::<U8F0>("127.5", 0x80);
         assert_ok::<U8F0>("255.499", 0xFF);
         assert_err::<U8F0>("255.5", ParseErrorKind::Overflow);
     }
@@ -806,30 +772,37 @@ mod tests {
     fn check_i16_u16_from_str() {
         use crate::types::*;
 
+        assert_err::<I0F16>("-1", ParseErrorKind::Overflow);
+        assert_err::<I0F16>("-0.500008", ParseErrorKind::Overflow);
+        assert_ok::<I0F16>("-0.500007", -0x8000);
         assert_ok::<I0F16>("0.499992", 0x7FFF);
         assert_err::<I0F16>("0.499993", ParseErrorKind::Overflow);
         assert_err::<I0F16>("1", ParseErrorKind::Overflow);
 
-        assert_ok::<I0F16>("-0.500007", -0x8000);
-        assert_err::<I0F16>("-0.500008", ParseErrorKind::Overflow);
-        assert_err::<I0F16>("-1", ParseErrorKind::Overflow);
+        assert_err::<I8F8>("-128.002", ParseErrorKind::Overflow);
+        assert_ok::<I8F8>("-128.001", -0x8000);
+        assert_ok::<I8F8>("127.998", 0x7FFF);
+        assert_err::<I8F8>("127.999", ParseErrorKind::Overflow);
 
-        assert_ok::<I16F0>("00032767.499999", 0x7FFF);
+        assert_err::<I16F0>("-32768.5", ParseErrorKind::Overflow);
+        assert_ok::<I16F0>("-32768.499999", -0x8000);
+        assert_ok::<I16F0>("32767.499999", 0x7FFF);
         assert_err::<I16F0>("32767.5", ParseErrorKind::Overflow);
 
-        assert_ok::<I16F0>("-32768.499999", -0x8000);
-        assert_err::<I16F0>("-32768.5", ParseErrorKind::Overflow);
-
+        assert_err::<U0F16>("-0", ParseErrorKind::InvalidDigit);
         assert_ok::<U0F16>("0.499992", 0x7FFF);
         assert_ok::<U0F16>("0.499993", 0x8000);
         assert_ok::<U0F16>("0.999992", 0xFFFF);
         assert_err::<U0F16>("0.999993", ParseErrorKind::Overflow);
         assert_err::<U0F16>("1", ParseErrorKind::Overflow);
 
-        assert_err::<U0F16>("-0", ParseErrorKind::InvalidDigit);
+        assert_ok::<U8F8>("127.998", 0x7FFF);
+        assert_ok::<U8F8>("127.999", 0x8000);
+        assert_ok::<U8F8>("255.998", 0xFFFF);
+        assert_err::<U8F8>("255.999", ParseErrorKind::Overflow);
 
-        assert_ok::<U16F0>("00032767.499999", 0x7FFF);
-        assert_ok::<U16F0>("00032767.5", 0x8000);
+        assert_ok::<U16F0>("32767.499999", 0x7FFF);
+        assert_ok::<U16F0>("32767.5", 0x8000);
         assert_ok::<U16F0>("65535.499999", 0xFFFF);
         assert_err::<U16F0>("65535.5", ParseErrorKind::Overflow);
     }
@@ -838,30 +811,37 @@ mod tests {
     fn check_i32_u32_from_str() {
         use crate::types::*;
 
+        assert_err::<I0F32>("-1", ParseErrorKind::Overflow);
+        assert_err::<I0F32>("-0.5000000002", ParseErrorKind::Overflow);
+        assert_ok::<I0F32>("-0.5000000001", -0x8000_0000);
         assert_ok::<I0F32>("0.4999999998", 0x7FFF_FFFF);
         assert_err::<I0F32>("0.4999999999", ParseErrorKind::Overflow);
         assert_err::<I0F32>("1", ParseErrorKind::Overflow);
 
-        assert_ok::<I0F32>("-0.5000000001", -0x8000_0000);
-        assert_err::<I0F32>("-0.5000000002", ParseErrorKind::Overflow);
-        assert_err::<I0F32>("-1", ParseErrorKind::Overflow);
+        assert_err::<I16F16>("-32768.000008", ParseErrorKind::Overflow);
+        assert_ok::<I16F16>("-32768.000007", -0x8000_0000);
+        assert_ok::<I16F16>("32767.999992", 0x7FFF_FFFF);
+        assert_err::<I16F16>("32767.999993", ParseErrorKind::Overflow);
 
-        assert_ok::<I32F0>("0002147483647.4999999999", 0x7FFF_FFFF);
+        assert_err::<I32F0>("-2147483648.5", ParseErrorKind::Overflow);
+        assert_ok::<I32F0>("-2147483648.4999999999", -0x8000_0000);
+        assert_ok::<I32F0>("2147483647.4999999999", 0x7FFF_FFFF);
         assert_err::<I32F0>("2147483647.5", ParseErrorKind::Overflow);
 
-        assert_ok::<I32F0>("-2147483648.499999", -0x8000_0000);
-        assert_err::<I32F0>("-2147483648.5", ParseErrorKind::Overflow);
-
+        assert_err::<U0F32>("-0", ParseErrorKind::InvalidDigit);
         assert_ok::<U0F32>("0.4999999998", 0x7FFF_FFFF);
         assert_ok::<U0F32>("0.4999999999", 0x8000_0000);
         assert_ok::<U0F32>("0.9999999998", 0xFFFF_FFFF);
         assert_err::<U0F32>("0.9999999999", ParseErrorKind::Overflow);
         assert_err::<U0F32>("1", ParseErrorKind::Overflow);
 
-        assert_err::<U0F32>("-0", ParseErrorKind::InvalidDigit);
+        assert_ok::<U16F16>("32767.999992", 0x7FFF_FFFF);
+        assert_ok::<U16F16>("32767.999993", 0x8000_0000);
+        assert_ok::<U16F16>("65535.999992", 0xFFFF_FFFF);
+        assert_err::<U16F16>("65535.999993", ParseErrorKind::Overflow);
 
-        assert_ok::<U32F0>("0002147483647.4999999999", 0x7FFF_FFFF);
-        assert_ok::<U32F0>("0002147483647.5", 0x8000_0000);
+        assert_ok::<U32F0>("2147483647.4999999999", 0x7FFF_FFFF);
+        assert_ok::<U32F0>("2147483647.5", 0x8000_0000);
         assert_ok::<U32F0>("4294967295.4999999999", 0xFFFF_FFFF);
         assert_err::<U32F0>("4294967295.5", ParseErrorKind::Overflow);
     }
@@ -870,39 +850,46 @@ mod tests {
     fn check_i64_u64_from_str() {
         use crate::types::*;
 
+        assert_err::<I0F64>("-1", ParseErrorKind::Overflow);
+        assert_err::<I0F64>("-0.50000000000000000003", ParseErrorKind::Overflow);
+        assert_ok::<I0F64>("-0.50000000000000000002", -0x8000_0000_0000_0000);
         assert_ok::<I0F64>("0.49999999999999999997", 0x7FFF_FFFF_FFFF_FFFF);
         assert_err::<I0F64>("0.49999999999999999998", ParseErrorKind::Overflow);
         assert_err::<I0F64>("1", ParseErrorKind::Overflow);
 
-        assert_ok::<I0F64>("-0.50000000000000000002", -0x8000_0000_0000_0000);
-        assert_err::<I0F64>("-0.50000000000000000003", ParseErrorKind::Overflow);
-        assert_err::<I0F64>("-1", ParseErrorKind::Overflow);
+        assert_err::<I32F32>("-2147483648.0000000002", ParseErrorKind::Overflow);
+        assert_ok::<I32F32>("-2147483648.0000000001", -0x8000_0000_0000_0000);
+        assert_ok::<I32F32>("2147483647.9999999998", 0x7FFF_FFFF_FFFF_FFFF);
+        assert_err::<I32F32>("2147483647.9999999999", ParseErrorKind::Overflow);
 
-        assert_ok::<I64F0>(
-            "0009223372036854775807.49999999999999999999",
-            0x7FFF_FFFF_FFFF_FFFF,
-        );
-        assert_err::<I64F0>("9223372036854775807.5", ParseErrorKind::Overflow);
-
+        assert_err::<I64F0>("-9223372036854775808.5", ParseErrorKind::Overflow);
         assert_ok::<I64F0>(
             "-9223372036854775808.49999999999999999999",
             -0x8000_0000_0000_0000,
         );
-        assert_err::<I64F0>("-9223372036854775808.5", ParseErrorKind::Overflow);
+        assert_ok::<I64F0>(
+            "9223372036854775807.49999999999999999999",
+            0x7FFF_FFFF_FFFF_FFFF,
+        );
+        assert_err::<I64F0>("9223372036854775807.5", ParseErrorKind::Overflow);
 
+        assert_err::<U0F64>("-0", ParseErrorKind::InvalidDigit);
         assert_ok::<U0F64>("0.49999999999999999997", 0x7FFF_FFFF_FFFF_FFFF);
         assert_ok::<U0F64>("0.49999999999999999998", 0x8000_0000_0000_0000);
         assert_ok::<U0F64>("0.99999999999999999997", 0xFFFF_FFFF_FFFF_FFFF);
         assert_err::<U0F64>("0.99999999999999999998", ParseErrorKind::Overflow);
         assert_err::<U0F64>("1", ParseErrorKind::Overflow);
 
-        assert_err::<U0F64>("-0", ParseErrorKind::InvalidDigit);
+        assert_ok::<U32F32>("2147483647.9999999998", 0x7FFF_FFFF_FFFF_FFFF);
+        assert_ok::<U32F32>("2147483647.9999999999", 0x8000_0000_0000_0000);
+        assert_ok::<U32F32>("4294967295.9999999998", 0xFFFF_FFFF_FFFF_FFFF);
+        assert_err::<U32F32>("4294967295.9999999999", ParseErrorKind::Overflow);
 
         assert_ok::<U64F0>(
-            "0009223372036854775807.49999999999999999999",
+            "9223372036854775807.49999999999999999999",
             0x7FFF_FFFF_FFFF_FFFF,
         );
-        assert_ok::<U64F0>("0009223372036854775807.5", 0x8000_0000_0000_0000);
+        assert_ok::<U64F0>("9223372036854775807.5", 0x8000_0000_0000_0000);
         assert_ok::<U64F0>(
             "18446744073709551615.49999999999999999999",
             0xFFFF_FFFF_FFFF_FFFF,
@@ -914,6 +901,15 @@ mod tests {
     fn check_i128_u128_from_str() {
         use crate::types::*;
 
+        assert_err::<I0F128>("-1", ParseErrorKind::Overflow);
+        assert_err::<I0F128>(
+            "-0.500000000000000000000000000000000000002",
+            ParseErrorKind::Overflow,
+        );
+        assert_ok::<I0F128>(
+            "-0.500000000000000000000000000000000000001",
+            -0x8000_0000_0000_0000_0000_0000_0000_0000,
+        );
         assert_ok::<I0F128>(
             "0.499999999999999999999999999999999999998",
             0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
@@ -924,18 +920,33 @@ mod tests {
         );
         assert_err::<I0F128>("1", ParseErrorKind::Overflow);
 
-        assert_ok::<I0F128>(
-            "-0.500000000000000000000000000000000000001",
-            -0x8000_0000_0000_0000_0000_0000_0000_0000,
-        );
-        assert_err::<I0F128>(
-            "-0.500000000000000000000000000000000000002",
+        assert_err::<I64F64>(
+            "-9223372036854775808.00000000000000000003",
             ParseErrorKind::Overflow,
         );
-        assert_err::<I0F128>("-1", ParseErrorKind::Overflow);
+        assert_ok::<I64F64>(
+            "-9223372036854775808.00000000000000000002",
+            -0x8000_0000_0000_0000_0000_0000_0000_0000,
+        );
+        assert_ok::<I64F64>(
+            "9223372036854775807.99999999999999999997",
+            0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+        );
+        assert_err::<I64F64>(
+            "9223372036854775807.99999999999999999998",
+            ParseErrorKind::Overflow,
+        );
 
+        assert_err::<I128F0>(
+            "-170141183460469231731687303715884105728.5",
+            ParseErrorKind::Overflow,
+        );
         assert_ok::<I128F0>(
-            "000170141183460469231731687303715884105727.4999999999999999999999999999999999999999",
+            "-170141183460469231731687303715884105728.4999999999999999999999999999999999999999",
+            -0x8000_0000_0000_0000_0000_0000_0000_0000,
+        );
+        assert_ok::<I128F0>(
+            "170141183460469231731687303715884105727.4999999999999999999999999999999999999999",
             0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
         );
         assert_err::<I128F0>(
@@ -943,15 +954,7 @@ mod tests {
             ParseErrorKind::Overflow,
         );
 
-        assert_ok::<I128F0>(
-            "-170141183460469231731687303715884105728.4999999999999999999999999999999999999999",
-            -0x8000_0000_0000_0000_0000_0000_0000_0000,
-        );
-        assert_err::<I128F0>(
-            "-170141183460469231731687303715884105728.5",
-            ParseErrorKind::Overflow,
-        );
-
+        assert_err::<U0F128>("-0", ParseErrorKind::InvalidDigit);
         assert_ok::<U0F128>(
             "0.499999999999999999999999999999999999998",
             0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
@@ -970,14 +973,29 @@ mod tests {
         );
         assert_err::<U0F128>("1", ParseErrorKind::Overflow);
 
-        assert_err::<U0F128>("-0", ParseErrorKind::InvalidDigit);
+        assert_ok::<U64F64>(
+            "9223372036854775807.99999999999999999997",
+            0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+        );
+        assert_ok::<U64F64>(
+            "9223372036854775807.99999999999999999998",
+            0x8000_0000_0000_0000_0000_0000_0000_0000,
+        );
+        assert_ok::<U64F64>(
+            "18446744073709551615.99999999999999999997",
+            0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+        );
+        assert_err::<U64F64>(
+            "18446744073709551615.99999999999999999998",
+            ParseErrorKind::Overflow,
+        );
 
         assert_ok::<U128F0>(
-            "000170141183460469231731687303715884105727.4999999999999999999999999999999999999999",
+            "170141183460469231731687303715884105727.4999999999999999999999999999999999999999",
             0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
         );
         assert_ok::<U128F0>(
-            "000170141183460469231731687303715884105727.5",
+            "170141183460469231731687303715884105727.5",
             0x8000_0000_0000_0000_0000_0000_0000_0000,
         );
         assert_ok::<U128F0>(

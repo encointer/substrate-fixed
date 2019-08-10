@@ -23,55 +23,69 @@ use crate::{
 use core::{
     cmp::{self, Ordering},
     fmt::{Display, Formatter, Result as FmtResult},
-    ops::{Add, Shl},
+    ops::{Add, Shl, Shr},
     str::FromStr,
 };
 
 fn bin_str_to_bin<I>(a: &str, dump_bits: u32) -> Option<I>
 where
-    I: SealedInt<IsSigned = False> + Shl<u32, Output = I> + Add<Output = I> + From<u8>,
+    I: SealedInt<IsSigned = False> + From<u8>,
+    I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
     debug_assert!(!a.is_empty());
-    let mut bits = I::NBITS - dump_bits;
+    let req_bits = I::NBITS - dump_bits;
+    let mut rem_bits = req_bits;
     let mut acc = I::ZERO;
     for &byte in a.as_bytes() {
         let val = byte - b'0';
-        if bits < 1 {
+        if rem_bits < 1 {
             // round
-            return acc.checked_add(I::from(val));
+            acc = acc.checked_add(I::from(val))?;
+            if dump_bits != 0 && !(acc >> req_bits).is_zero() {
+                return None;
+            }
+            return Some(acc);
         }
         acc = (acc << 1) + I::from(val);
-        bits -= 1;
+        rem_bits -= 1;
     }
-    Some(acc << bits)
+    Some(acc << rem_bits)
 }
 
 fn oct_str_to_bin<I>(a: &str, dump_bits: u32) -> Option<I>
 where
-    I: SealedInt<IsSigned = False> + Shl<u32, Output = I> + Add<Output = I> + From<u8>,
+    I: SealedInt<IsSigned = False> + From<u8>,
+    I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
     debug_assert!(!a.is_empty());
-    let mut bits = I::NBITS - dump_bits;
+    let req_bits = I::NBITS - dump_bits;
+    let mut rem_bits = req_bits;
     let mut acc = I::ZERO;
     for &byte in a.as_bytes() {
         let val = byte - b'0';
-        if bits < 3 {
-            acc = (acc << bits) + I::from(val >> (3 - bits));
+        if rem_bits < 3 {
+            acc = (acc << rem_bits) + I::from(val >> (3 - rem_bits));
             // round
-            return acc.checked_add(I::from((val >> (2 - bits)) & 1));
+            acc = acc.checked_add(I::from((val >> (2 - rem_bits)) & 1))?;
+            if dump_bits != 0 && !(acc >> req_bits).is_zero() {
+                return None;
+            }
+            return Some(acc);
         }
         acc = (acc << 3) + I::from(val);
-        bits -= 3;
+        rem_bits -= 3;
     }
-    Some(acc << bits)
+    Some(acc << rem_bits)
 }
 
 fn hex_str_to_bin<I>(a: &str, dump_bits: u32) -> Option<I>
 where
-    I: SealedInt<IsSigned = False> + Shl<u32, Output = I> + Add<Output = I> + From<u8>,
+    I: SealedInt<IsSigned = False> + From<u8>,
+    I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
     debug_assert!(!a.is_empty());
-    let mut bits = I::NBITS - dump_bits;
+    let req_bits = I::NBITS - dump_bits;
+    let mut rem_bits = req_bits;
     let mut acc = I::ZERO;
     for &byte in a.as_bytes() {
         // We know that byte is a valid hex:
@@ -79,15 +93,19 @@ where
         //   * b'A'..=b'F' (0x41..=0x46) => val = byte & 0x0f + 9
         //   * b'a'..=b'f' (0x61..=0x66) => val = byte & 0x0f + 9
         let val = (byte & 0x0f) + if byte >= 0x40 { 9 } else { 0 };
-        if bits < 4 {
-            acc = (acc << bits) + I::from(val >> (4 - bits));
+        if rem_bits < 4 {
+            acc = (acc << rem_bits) + I::from(val >> (4 - rem_bits));
             // round
-            return acc.checked_add(I::from((val >> (3 - bits)) & 1));
+            acc = acc.checked_add(I::from((val >> (3 - rem_bits)) & 1))?;
+            if dump_bits != 0 && !(acc >> req_bits).is_zero() {
+                return None;
+            }
+            return Some(acc);
         }
         acc = (acc << 4) + I::from(val);
-        bits -= 4;
+        rem_bits -= 4;
     }
-    Some(acc << bits)
+    Some(acc << rem_bits)
 }
 
 // 5^3 × 2 < 2^8 => (10^3 - 1) × 2^(8-3+1) < 2^16
@@ -485,16 +503,17 @@ macro_rules! impl_from_str_unsigned_not128 {
             if frac.is_empty() {
                 return Some(0);
             }
+            let int_nbits = <$Bits as SealedInt>::NBITS - nbits;
             match radix {
-                2 => bin_str_to_bin(frac, nbits),
-                8 => oct_str_to_bin(frac, nbits),
-                16 => hex_str_to_bin(frac, nbits),
+                2 => bin_str_to_bin(frac, int_nbits),
+                8 => oct_str_to_bin(frac, int_nbits),
+                16 => hex_str_to_bin(frac, int_nbits),
                 10 => {
                     let end = cmp::min(frac.len(), $dec_frac_digits);
                     let rem = $dec_frac_digits - end;
                     let ten: $DoubleBits = 10;
                     let i = frac[..end].parse::<$DoubleBits>().unwrap() * ten.pow(rem as u32);
-                    $decode_frac(i, <$Bits as SealedInt>::NBITS - nbits)
+                    $decode_frac(i, int_nbits)
                 }
                 _ => unreachable!(),
             }
@@ -578,8 +597,11 @@ fn get_frac128(frac: &str, radix: u32, nbits: u32) -> Option<u128> {
     if frac.is_empty() {
         return Some(0);
     }
+    let int_nbits = <u128 as SealedInt>::NBITS - nbits;
     match radix {
-        2 => bin_str_to_bin(frac, nbits),
+        2 => bin_str_to_bin(frac, int_nbits),
+        8 => oct_str_to_bin(frac, int_nbits),
+        16 => hex_str_to_bin(frac, int_nbits),
         10 => {
             let (hi, lo) = if frac.len() <= 27 {
                 let rem = 27 - frac.len();
@@ -592,7 +614,7 @@ fn get_frac128(frac: &str, radix: u32, nbits: u32) -> Option<u128> {
                 let lo = frac[27..lo_end].parse::<u128>().unwrap() * 10u128.pow(rem as u32);
                 (hi, lo)
             };
-            dec27_27_to_bin128(hi, lo, <u128 as SealedInt>::NBITS - nbits)
+            dec27_27_to_bin128(hi, lo, int_nbits)
         }
         _ => unreachable!(),
     }
@@ -771,6 +793,26 @@ mod tests {
         }
     }
 
+    fn assert_ok_radix<F>(s: &str, radix: u32, bits: F::Bits)
+    where
+        F: Fixed + FromStrRadix<Err = ParseFixedError>,
+        F::Bits: Eq + Debug,
+    {
+        match <F as FromStrRadix>::from_str_radix(s, radix) {
+            Ok(f) => assert_eq!(f.to_bits(), bits),
+            Err(e) => panic!("could not parse {}: {}", s, e),
+        }
+    }
+    fn assert_err_radix<F>(s: &str, radix: u32, kind: ParseErrorKind)
+    where
+        F: Fixed + FromStrRadix<Err = ParseFixedError>,
+    {
+        match <F as FromStrRadix>::from_str_radix(s, radix) {
+            Ok(f) => panic!("incorrectly parsed {} as {}", s, f),
+            Err(ParseFixedError { kind: err }) => assert_eq!(err, kind),
+        }
+    }
+
     #[test]
     fn check_i8_u8_from_str() {
         use crate::types::*;
@@ -886,6 +928,123 @@ mod tests {
         assert_ok::<U32F0>("2147483647.5", 0x8000_0000);
         assert_ok::<U32F0>("4294967295.4999999999", 0xFFFF_FFFF);
         assert_err::<U32F0>("4294967295.5", ParseErrorKind::Overflow);
+    }
+
+    #[test]
+    fn check_i16_u16_from_str_binary() {
+        use crate::types::*;
+
+        assert_err_radix::<I0F16>("-1", 2, ParseErrorKind::Overflow);
+        assert_err_radix::<I0F16>("-0.100000000000000010", 2, ParseErrorKind::Overflow);
+        assert_ok_radix::<I0F16>("-0.100000000000000001", 2, -0x8000);
+        assert_ok_radix::<I0F16>("0.011111111111111101", 2, 0x7FFF);
+        assert_err_radix::<I0F16>("0.011111111111111110", 2, ParseErrorKind::Overflow);
+        assert_err_radix::<I0F16>("1", 2, ParseErrorKind::Overflow);
+
+        assert_err_radix::<I8F8>("-10000000.0000000010", 2, ParseErrorKind::Overflow);
+        assert_ok_radix::<I8F8>("-10000000.0000000001", 2, -0x8000);
+        assert_ok_radix::<I8F8>("1111111.1111111101", 2, 0x7FFF);
+        assert_err_radix::<I8F8>("1111111.1111111110", 2, ParseErrorKind::Overflow);
+
+        assert_err_radix::<I16F0>("-1000000000000000.10", 2, ParseErrorKind::Overflow);
+        assert_ok_radix::<I16F0>("-1000000000000000.01", 2, -0x8000);
+        assert_ok_radix::<I16F0>("111111111111111.01", 2, 0x7FFF);
+        assert_err_radix::<I16F0>("111111111111111.10", 2, ParseErrorKind::Overflow);
+
+        assert_err_radix::<U0F16>("-0", 2, ParseErrorKind::InvalidDigit);
+        assert_ok_radix::<U0F16>("0.011111111111111101", 2, 0x7FFF);
+        assert_ok_radix::<U0F16>("0.011111111111111110", 2, 0x8000);
+        assert_ok_radix::<U0F16>("0.111111111111111101", 2, 0xFFFF);
+        assert_err_radix::<U0F16>("0.111111111111111110", 2, ParseErrorKind::Overflow);
+        assert_err_radix::<U0F16>("1", 2, ParseErrorKind::Overflow);
+
+        assert_ok_radix::<U8F8>("1111111.1111111101", 2, 0x7FFF);
+        assert_ok_radix::<U8F8>("1111111.1111111110", 2, 0x8000);
+        assert_ok_radix::<U8F8>("11111111.1111111101", 2, 0xFFFF);
+        assert_err_radix::<U8F8>("11111111.1111111110", 2, ParseErrorKind::Overflow);
+
+        assert_ok_radix::<U16F0>("111111111111111.01", 2, 0x7FFF);
+        assert_ok_radix::<U16F0>("111111111111111.10", 2, 0x8000);
+        assert_ok_radix::<U16F0>("1111111111111111.01", 2, 0xFFFF);
+        assert_err_radix::<U16F0>("1111111111111111.10", 2, ParseErrorKind::Overflow);
+    }
+
+    #[test]
+    fn check_i16_u16_from_str_octal() {
+        use crate::types::*;
+
+        assert_err_radix::<I0F16>("-1", 8, ParseErrorKind::Overflow);
+        assert_err_radix::<I0F16>("-0.400002", 8, ParseErrorKind::Overflow);
+        assert_ok_radix::<I0F16>("-0.400001", 8, -0x8000);
+        assert_ok_radix::<I0F16>("0.377775", 8, 0x7FFF);
+        assert_err_radix::<I0F16>("0.377776", 8, ParseErrorKind::Overflow);
+        assert_err_radix::<I0F16>("1", 8, ParseErrorKind::Overflow);
+
+        assert_err_radix::<I8F8>("-2000.0010", 8, ParseErrorKind::Overflow);
+        assert_ok_radix::<I8F8>("-200.0007", 8, -0x8000);
+        assert_ok_radix::<I8F8>("177.7767", 8, 0x7FFF);
+        assert_err_radix::<I8F8>("177.7770", 8, ParseErrorKind::Overflow);
+
+        assert_err_radix::<I16F0>("-100000.4", 8, ParseErrorKind::Overflow);
+        assert_ok_radix::<I16F0>("-100000.3", 8, -0x8000);
+        assert_ok_radix::<I16F0>("77777.3", 8, 0x7FFF);
+        assert_err_radix::<I16F0>("77777.4", 8, ParseErrorKind::Overflow);
+
+        assert_err_radix::<U0F16>("-0", 8, ParseErrorKind::InvalidDigit);
+        assert_ok_radix::<U0F16>("0.377775", 8, 0x7FFF);
+        assert_ok_radix::<U0F16>("0.377776", 8, 0x8000);
+        assert_ok_radix::<U0F16>("0.777775", 8, 0xFFFF);
+        assert_err_radix::<U0F16>("0.777776", 8, ParseErrorKind::Overflow);
+        assert_err_radix::<U0F16>("1", 8, ParseErrorKind::Overflow);
+
+        assert_ok_radix::<U8F8>("177.7767", 8, 0x7FFF);
+        assert_ok_radix::<U8F8>("177.7770", 8, 0x8000);
+        assert_ok_radix::<U8F8>("377.7767", 8, 0xFFFF);
+        assert_err_radix::<U8F8>("377.7770", 8, ParseErrorKind::Overflow);
+
+        assert_ok_radix::<U16F0>("77777.3", 8, 0x7FFF);
+        assert_ok_radix::<U16F0>("77777.4", 8, 0x8000);
+        assert_ok_radix::<U16F0>("177777.3", 8, 0xFFFF);
+        assert_err_radix::<U16F0>("177777.4", 8, ParseErrorKind::Overflow);
+    }
+
+    #[test]
+    fn check_i16_u16_from_str_hex() {
+        use crate::types::*;
+
+        assert_err_radix::<I0F16>("-1", 16, ParseErrorKind::Overflow);
+        assert_err_radix::<I0F16>("-0.80008", 16, ParseErrorKind::Overflow);
+        assert_ok_radix::<I0F16>("-0.80007", 16, -0x8000);
+        assert_ok_radix::<I0F16>("0.7FFF7", 16, 0x7FFF);
+        assert_err_radix::<I0F16>("0.7FFF8", 16, ParseErrorKind::Overflow);
+        assert_err_radix::<I0F16>("1", 16, ParseErrorKind::Overflow);
+
+        assert_err_radix::<I8F8>("-80.008", 16, ParseErrorKind::Overflow);
+        assert_ok_radix::<I8F8>("-80.007", 16, -0x8000);
+        assert_ok_radix::<I8F8>("7F.FF7", 16, 0x7FFF);
+        assert_err_radix::<I8F8>("7F.FF8", 16, ParseErrorKind::Overflow);
+
+        assert_err_radix::<I16F0>("-8000.8", 16, ParseErrorKind::Overflow);
+        assert_ok_radix::<I16F0>("-8000.7", 16, -0x8000);
+        assert_ok_radix::<I16F0>("7FFF.7", 16, 0x7FFF);
+        assert_err_radix::<I16F0>("7FFF.8", 16, ParseErrorKind::Overflow);
+
+        assert_err_radix::<U0F16>("-0", 16, ParseErrorKind::InvalidDigit);
+        assert_ok_radix::<U0F16>("0.7FFF7", 16, 0x7FFF);
+        assert_ok_radix::<U0F16>("0.7FFF8", 16, 0x8000);
+        assert_ok_radix::<U0F16>("0.FFFF7", 16, 0xFFFF);
+        assert_err_radix::<U0F16>("0.FFFF8", 16, ParseErrorKind::Overflow);
+        assert_err_radix::<U0F16>("1", 16, ParseErrorKind::Overflow);
+
+        assert_ok_radix::<U8F8>("7F.FF7", 16, 0x7FFF);
+        assert_ok_radix::<U8F8>("7F.FF8", 16, 0x8000);
+        assert_ok_radix::<U8F8>("FF.FF7", 16, 0xFFFF);
+        assert_err_radix::<U8F8>("FF.FF8", 16, ParseErrorKind::Overflow);
+
+        assert_ok_radix::<U16F0>("7FFF.7", 16, 0x7FFF);
+        assert_ok_radix::<U16F0>("7FFF.8", 16, 0x8000);
+        assert_ok_radix::<U16F0>("FFFF.7", 16, 0xFFFF);
+        assert_err_radix::<U16F0>("FFFF.8", 16, ParseErrorKind::Overflow);
     }
 
     #[test]
@@ -1046,6 +1205,141 @@ mod tests {
         );
         assert_err::<U128F0>(
             "340282366920938463463374607431768211455.5",
+            ParseErrorKind::Overflow,
+        );
+    }
+
+    #[test]
+    fn check_i128_u128_from_str_hex() {
+        use crate::types::*;
+
+        assert_err_radix::<I0F128>("-1", 16, ParseErrorKind::Overflow);
+        assert_err_radix::<I0F128>(
+            "-0.800000000000000000000000000000008",
+            16,
+            ParseErrorKind::Overflow,
+        );
+        assert_ok_radix::<I0F128>(
+            "-0.800000000000000000000000000000007",
+            16,
+            -0x8000_0000_0000_0000_0000_0000_0000_0000,
+        );
+        assert_ok_radix::<I0F128>(
+            "0.7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7",
+            16,
+            0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+        );
+        assert_err_radix::<I0F128>(
+            "0.7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF8",
+            16,
+            ParseErrorKind::Overflow,
+        );
+        assert_err_radix::<I0F128>("1", 16, ParseErrorKind::Overflow);
+
+        assert_err_radix::<I64F64>(
+            "-8000000000000000.00000000000000008",
+            16,
+            ParseErrorKind::Overflow,
+        );
+        assert_ok_radix::<I64F64>(
+            "-8000000000000000.00000000000000007",
+            16,
+            -0x8000_0000_0000_0000_0000_0000_0000_0000,
+        );
+        assert_ok_radix::<I64F64>(
+            "7FFFFFFFFFFFFFFF.FFFFFFFFFFFFFFFF7",
+            16,
+            0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+        );
+        assert_err_radix::<I64F64>(
+            "7FFFFFFFFFFFFFFF.FFFFFFFFFFFFFFFF8",
+            16,
+            ParseErrorKind::Overflow,
+        );
+
+        assert_err_radix::<I128F0>(
+            "-80000000000000000000000000000000.8",
+            16,
+            ParseErrorKind::Overflow,
+        );
+        assert_ok_radix::<I128F0>(
+            "-80000000000000000000000000000000.7",
+            16,
+            -0x8000_0000_0000_0000_0000_0000_0000_0000,
+        );
+        assert_ok_radix::<I128F0>(
+            "7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.7",
+            16,
+            0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+        );
+        assert_err_radix::<I128F0>(
+            "7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.8",
+            16,
+            ParseErrorKind::Overflow,
+        );
+
+        assert_err_radix::<U0F128>("-0", 16, ParseErrorKind::InvalidDigit);
+        assert_ok_radix::<U0F128>(
+            "0.7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7",
+            16,
+            0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+        );
+        assert_ok_radix::<U0F128>(
+            "0.7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF8",
+            16,
+            0x8000_0000_0000_0000_0000_0000_0000_0000,
+        );
+        assert_ok_radix::<U0F128>(
+            "0.FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7",
+            16,
+            0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+        );
+        assert_err_radix::<U0F128>(
+            "0.FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF8",
+            16,
+            ParseErrorKind::Overflow,
+        );
+        assert_err_radix::<U0F128>("1", 16, ParseErrorKind::Overflow);
+
+        assert_ok_radix::<U64F64>(
+            "7FFFFFFFFFFFFFFF.FFFFFFFFFFFFFFFF7",
+            16,
+            0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+        );
+        assert_ok_radix::<U64F64>(
+            "7FFFFFFFFFFFFFFF.FFFFFFFFFFFFFFFF8",
+            16,
+            0x8000_0000_0000_0000_0000_0000_0000_0000,
+        );
+        assert_ok_radix::<U64F64>(
+            "FFFFFFFFFFFFFFFF.FFFFFFFFFFFFFFFF7",
+            16,
+            0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+        );
+        assert_err_radix::<U64F64>(
+            "FFFFFFFFFFFFFFFF.FFFFFFFFFFFFFFFF8",
+            16,
+            ParseErrorKind::Overflow,
+        );
+
+        assert_ok_radix::<U128F0>(
+            "7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.7",
+            16,
+            0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+        );
+        assert_ok_radix::<U128F0>(
+            "7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.8",
+            16,
+            0x8000_0000_0000_0000_0000_0000_0000_0000,
+        );
+        assert_ok_radix::<U128F0>(
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.7",
+            16,
+            0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+        );
+        assert_err_radix::<U128F0>(
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.8",
+            16,
             ParseErrorKind::Overflow,
         );
     }

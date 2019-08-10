@@ -32,24 +32,63 @@ where
     I: SealedInt<IsSigned = False> + Shl<u32, Output = I> + Add<Output = I> + From<u8>,
 {
     debug_assert!(!a.is_empty());
-    let mut digits = 8 - dump_bits;
+    let mut bits = I::NBITS - dump_bits;
     let mut acc = I::ZERO;
-    let mut bytes = a.as_bytes().iter();
-    while let Some(byte) = bytes.next() {
-        if digits == 0 {
-            break;
+    for byte in a.as_bytes() {
+        let val = byte - b'0';
+        if bits < 1 {
+            // round
+            return acc.checked_add(I::from(val));
         }
-        acc = (acc << 1) + I::from(byte - b'0');
-        digits -= 1;
+        acc = (acc << 1) + I::from(val);
+        bits -= 1;
     }
+    Some(acc << bits)
+}
 
-    if digits > 0 {
-        Some(acc << digits)
-    } else if let Some(byte) = bytes.next() {
-        acc.checked_add(I::from(byte - b'0'))
-    } else {
-        Some(acc)
+fn oct_str_to_bin<I>(a: &str, dump_bits: u32) -> Option<I>
+where
+    I: SealedInt<IsSigned = False> + Shl<u32, Output = I> + Add<Output = I> + From<u8>,
+{
+    debug_assert!(!a.is_empty());
+    let mut bits = I::NBITS - dump_bits;
+    let mut acc = I::ZERO;
+    for byte in a.as_bytes() {
+        let val = byte - b'0';
+        if bits < 3 {
+            acc = (acc << bits) + I::from(val >> (3 - bits));
+            // round
+            return acc.checked_add(I::from((val >> (2 - bits)) & 1));
+        }
+        acc = (acc << 3) + I::from(val);
+        bits -= 3;
     }
+    Some(acc << bits)
+}
+
+fn hex_str_to_bin<I>(a: &str, dump_bits: u32) -> Option<I>
+where
+    I: SealedInt<IsSigned = False> + Shl<u32, Output = I> + Add<Output = I> + From<u8>,
+{
+    debug_assert!(!a.is_empty());
+    let mut bits = I::NBITS - dump_bits;
+    let mut acc = I::ZERO;
+    for byte in a.as_bytes() {
+        let val = match byte {
+            b @ b'0'..=b'9' => b - b'0',
+            b @ b'A'..=b'F' => b - b'A' + 10,
+            b @ b'a'..=b'f' => b - b'a' + 10,
+            _ => 0,
+        };
+        if bits < 4 {
+            acc = (acc << bits) + I::from(val >> (4 - bits));
+            // round
+            return acc.checked_add(I::from((val >> (3 - bits)) & 1));
+        }
+        acc = (acc << 4) + I::from(val);
+        bits -= 4;
+    }
+    Some(acc << bits)
 }
 
 // 5^3 × 2 < 2^8 => (10^3 - 1) × 2^(8-3+1) < 2^16
@@ -343,7 +382,7 @@ macro_rules! impl_from_str_signed {
             int_nbits: u32,
             frac_nbits: u32,
         ) -> Result<$Bits, ParseFixedError> {
-            let Parse { neg, int, frac } = parse(s, true, 10)?;
+            let Parse { neg, int, frac } = parse(s, true, radix)?;
             let (abs_frac, whole_frac) = match $frac(frac, radix, frac_nbits) {
                 Some(frac) => (frac, false),
                 None => (0, true),
@@ -381,7 +420,7 @@ macro_rules! impl_from_str_unsigned {
             int_nbits: u32,
             frac_nbits: u32,
         ) -> Result<$Bits, ParseFixedError> {
-            let Parse { int, frac, .. } = parse(s, false, 10)?;
+            let Parse { int, frac, .. } = parse(s, false, radix)?;
             let (frac, whole_frac) = match $frac(frac, radix, frac_nbits) {
                 Some(frac) => (frac, false),
                 None => (0, true),
@@ -449,6 +488,8 @@ macro_rules! impl_from_str_unsigned_not128 {
             }
             match radix {
                 2 => bin_str_to_bin(frac, nbits),
+                8 => oct_str_to_bin(frac, nbits),
+                16 => hex_str_to_bin(frac, nbits),
                 10 => {
                     let end = cmp::min(frac.len(), $dec_frac_digits);
                     let rem = $dec_frac_digits - end;
@@ -694,6 +735,8 @@ mod tests {
         assert_eq!((neg, int, frac), (false, "", "34"));
         let Parse { neg, int, frac } = parse("0", false, 10).unwrap();
         assert_eq!((neg, int, frac), (false, "0", ""));
+        let Parse { neg, int, frac } = parse("-.C1A0", true, 16).unwrap();
+        assert_eq!((neg, int, frac), (true, "", "C1A0"));
 
         let ParseFixedError { kind } = parse("0 ", true, 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::InvalidDigit);

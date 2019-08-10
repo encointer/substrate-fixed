@@ -1227,7 +1227,7 @@ assert_eq!(Fix::overflowing_from_float(large), (wrapped, true));
         );
 
         comment!(
-            "Converts a string slice in the binary radix.
+            "Converts a string slice containing binary digits to a fixed-point number.
 
 # Examples
 
@@ -1236,7 +1236,7 @@ type Fix = fixed::",
             $s_fixed,
             "<fixed::frac::U4>;
 // 1.75 is 1.11 in binary
-let f = Fix::from_str_bin(\"01.1100\");
+let f = Fix::from_str_bin(\"1.11\");
 let check = Fix::from_bits(0b111 << (4 - 2));
 assert_eq!(f, Ok(check));
 ",
@@ -1251,6 +1251,62 @@ assert_eq!(neg, Ok(-check));
             #[inline]
             pub fn from_str_bin(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
                 FromStrRadix::from_str_radix(src, 2)
+            }
+        );
+
+        comment!(
+            "Converts a string slice containing octal digits to a fixed-point number.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+// 1.75 is 1.11 in binary, 1.6 in octal
+let f = Fix::from_str_octal(\"1.6\");
+let check = Fix::from_bits(0b111 << (4 - 2));
+assert_eq!(f, Ok(check));
+",
+            if_signed_else_empty_str!(
+                $Signedness,
+                "let neg = Fix::from_str_octal(\"-1.6\");
+assert_eq!(neg, Ok(-check));
+",
+            ),
+            "```
+";
+            #[inline]
+            pub fn from_str_octal(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
+                FromStrRadix::from_str_radix(src, 8)
+            }
+        );
+
+        comment!(
+            "Converts a string slice containing hexadecimal digits to a fixed-point number.
+
+# Examples
+
+```rust
+type Fix = fixed::",
+            $s_fixed,
+            "<fixed::frac::U4>;
+// 1.75 is 1.11 in binary, 1.C in hexadecimal
+let f = Fix::from_str_hex(\"1.C\");
+let check = Fix::from_bits(0b111 << (4 - 2));
+assert_eq!(f, Ok(check));
+",
+            if_signed_else_empty_str!(
+                $Signedness,
+                "let neg = Fix::from_str_hex(\"-1.C\");
+assert_eq!(neg, Ok(-check));
+",
+            ),
+            "```
+";
+            #[inline]
+            pub fn from_str_hex(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
+                FromStrRadix::from_str_radix(src, 16)
             }
         );
     };

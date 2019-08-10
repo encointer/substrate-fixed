@@ -74,12 +74,11 @@ where
     let mut bits = I::NBITS - dump_bits;
     let mut acc = I::ZERO;
     for byte in a.as_bytes() {
-        let val = match byte {
-            b @ b'0'..=b'9' => b - b'0',
-            b @ b'A'..=b'F' => b - b'A' + 10,
-            b @ b'a'..=b'f' => b - b'a' + 10,
-            _ => 0,
-        };
+        // We know that byte is a valid hex:
+        //   * b'0'..=b'9' (0x30..=0x39) => val = byte & 0x0f
+        //   * b'A'..=b'F' (0x41..=0x46) => val = byte & 0x0f + 9
+        //   * b'a'..=b'f' (0x61..=0x66) => val = byte & 0x0f + 9
+        let val = (byte & 0x0f) + if byte >= 0x40 { 9 } else { 0 };
         if bits < 4 {
             acc = (acc << bits) + I::from(val >> (4 - bits));
             // round

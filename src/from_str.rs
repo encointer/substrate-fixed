@@ -27,7 +27,25 @@ use core::{
     str::FromStr,
 };
 
-fn bin_str_to_bin<I>(a: &str, dump_bits: u32) -> Option<I>
+fn bin_str_int_to_bin<I>(a: &str) -> Option<I>
+where
+    I: SealedInt<IsSigned = False> + From<u8>,
+    I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
+{
+    debug_assert!(!a.is_empty());
+    let mut bytes = a.as_bytes().iter();
+    let first_val = *bytes.next().unwrap() - b'0';
+    let mut acc = I::from(first_val);
+    let mut leading_zeros = acc.leading_zeros();
+    for &byte in bytes {
+        let val = byte - b'0';
+        leading_zeros = leading_zeros.checked_sub(1)?;
+        acc = (acc << 1) + I::from(val);
+    }
+    Some(acc)
+}
+
+fn bin_str_frac_to_bin<I>(a: &str, dump_bits: u32) -> Option<I>
 where
     I: SealedInt<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
@@ -52,7 +70,25 @@ where
     Some(acc << rem_bits)
 }
 
-fn oct_str_to_bin<I>(a: &str, dump_bits: u32) -> Option<I>
+fn oct_str_int_to_bin<I>(a: &str) -> Option<I>
+where
+    I: SealedInt<IsSigned = False> + From<u8>,
+    I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
+{
+    debug_assert!(!a.is_empty());
+    let mut bytes = a.as_bytes().iter();
+    let first_val = *bytes.next().unwrap() - b'0';
+    let mut acc = I::from(first_val);
+    let mut leading_zeros = acc.leading_zeros();
+    for &byte in bytes {
+        let val = byte - b'0';
+        leading_zeros = leading_zeros.checked_sub(3)?;
+        acc = (acc << 3) + I::from(val);
+    }
+    Some(acc)
+}
+
+fn oct_str_frac_to_bin<I>(a: &str, dump_bits: u32) -> Option<I>
 where
     I: SealedInt<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
@@ -78,7 +114,34 @@ where
     Some(acc << rem_bits)
 }
 
-fn hex_str_to_bin<I>(a: &str, dump_bits: u32) -> Option<I>
+#[inline]
+fn unchecked_hex_digit(byte: u8) -> u8 {
+    // We know that byte is a valid hex:
+    //   * b'0'..=b'9' (0x30..=0x39) => byte & 0x0f
+    //   * b'A'..=b'F' (0x41..=0x46) => byte & 0x0f + 9
+    //   * b'a'..=b'f' (0x61..=0x66) => byte & 0x0f + 9
+    (byte & 0x0f) + if byte >= 0x40 { 9 } else { 0 }
+}
+
+fn hex_str_int_to_bin<I>(a: &str) -> Option<I>
+where
+    I: SealedInt<IsSigned = False> + From<u8>,
+    I: Shl<u32, Output = I> + Add<Output = I>,
+{
+    debug_assert!(!a.is_empty());
+    let mut bytes = a.as_bytes().iter();
+    let first_val = unchecked_hex_digit(*bytes.next().unwrap());
+    let mut acc = I::from(first_val);
+    let mut leading_zeros = acc.leading_zeros();
+    for &byte in bytes {
+        let val = unchecked_hex_digit(byte);
+        leading_zeros = leading_zeros.checked_sub(4)?;
+        acc = (acc << 4) + I::from(val);
+    }
+    Some(acc)
+}
+
+fn hex_str_frac_to_bin<I>(a: &str, dump_bits: u32) -> Option<I>
 where
     I: SealedInt<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
@@ -88,11 +151,7 @@ where
     let mut rem_bits = req_bits;
     let mut acc = I::ZERO;
     for &byte in a.as_bytes() {
-        // We know that byte is a valid hex:
-        //   * b'0'..=b'9' (0x30..=0x39) => val = byte & 0x0f
-        //   * b'A'..=b'F' (0x41..=0x46) => val = byte & 0x0f + 9
-        //   * b'a'..=b'f' (0x61..=0x66) => val = byte & 0x0f + 9
-        let val = (byte & 0x0f) + if byte >= 0x40 { 9 } else { 0 };
+        let val = unchecked_hex_digit(byte);
         if rem_bits < 4 {
             acc = (acc << rem_bits) + I::from(val >> (4 - rem_bits));
             // round
@@ -404,7 +463,10 @@ macro_rules! impl_from_str_signed {
                 Some(frac) => (frac, false),
                 None => (0, true),
             };
-            let abs_int = $int(int, radix, int_nbits, whole_frac)?;
+            let abs_int = match $int(int, radix, int_nbits, whole_frac) {
+                Some(i) => i,
+                None => err!(Overflow),
+            };
             let abs = abs_int | abs_frac;
             let max_abs = if neg {
                 <$Bits as SealedInt>::Unsigned::MSB
@@ -442,16 +504,14 @@ macro_rules! impl_from_str_unsigned {
                 Some(frac) => (frac, false),
                 None => (0, true),
             };
-            let int = $int(int, radix, int_nbits, whole_frac)?;
+            let int = match $int(int, radix, int_nbits, whole_frac) {
+                Some(i) => i,
+                None => err!(Overflow),
+            };
             Ok(int | frac)
         }
 
-        fn $int(
-            int: &str,
-            radix: u32,
-            nbits: u32,
-            whole_frac: bool,
-        ) -> Result<$Bits, ParseFixedError> {
+        fn $int(int: &str, radix: u32, nbits: u32, whole_frac: bool) -> Option<$Bits> {
             const HALF: u32 = <$Bits as SealedInt>::NBITS / 2;
             if $int_half_cond && nbits <= HALF {
                 return $int_half(int, radix, nbits, whole_frac).map(|x| $Bits::from(x) << HALF);
@@ -460,23 +520,27 @@ macro_rules! impl_from_str_unsigned {
             while int.starts_with('0') {
                 int = &int[1..];
             }
-            if nbits == 0 {
-                err!(whole_frac || !int.is_empty(), Overflow);
-                return Ok(0);
+            if int.is_empty() && !whole_frac {
+                return Some(0);
+            } else if int.is_empty() || nbits == 0 {
+                return None;
             }
-            let mut acc = match <$Bits>::from_str_radix(int, radix) {
-                Ok(i) => i,
-                Err(_) => err!(Overflow),
-            };
+            let mut parsed_int = match radix {
+                2 => bin_str_int_to_bin(int),
+                8 => oct_str_int_to_bin(int),
+                16 => hex_str_int_to_bin(int),
+                10 => int.parse::<$Bits>().ok(),
+                _ => unreachable!(),
+            }?;
             if whole_frac {
-                acc = match acc.overflowing_add(1) {
-                    (acc, false) => acc,
-                    (_, true) => err!(Overflow),
-                };
+                parsed_int = parsed_int.checked_add(1)?;
             }
             let remove_bits = <$Bits as SealedInt>::NBITS - nbits;
-            err!(remove_bits > 0 && (acc >> nbits) != 0, Overflow);
-            Ok(acc << remove_bits)
+            if remove_bits > 0 && (parsed_int >> nbits) != 0 {
+                None
+            } else {
+                Some(parsed_int << remove_bits)
+            }
         }
     };
 }
@@ -505,9 +569,9 @@ macro_rules! impl_from_str_unsigned_not128 {
             }
             let int_nbits = <$Bits as SealedInt>::NBITS - nbits;
             match radix {
-                2 => bin_str_to_bin(frac, int_nbits),
-                8 => oct_str_to_bin(frac, int_nbits),
-                16 => hex_str_to_bin(frac, int_nbits),
+                2 => bin_str_frac_to_bin(frac, int_nbits),
+                8 => oct_str_frac_to_bin(frac, int_nbits),
+                16 => hex_str_frac_to_bin(frac, int_nbits),
                 10 => {
                     let end = cmp::min(frac.len(), $dec_frac_digits);
                     let rem = $dec_frac_digits - end;
@@ -599,9 +663,9 @@ fn get_frac128(frac: &str, radix: u32, nbits: u32) -> Option<u128> {
     }
     let int_nbits = <u128 as SealedInt>::NBITS - nbits;
     match radix {
-        2 => bin_str_to_bin(frac, int_nbits),
-        8 => oct_str_to_bin(frac, int_nbits),
-        16 => hex_str_to_bin(frac, int_nbits),
+        2 => bin_str_frac_to_bin(frac, int_nbits),
+        8 => oct_str_frac_to_bin(frac, int_nbits),
+        16 => hex_str_frac_to_bin(frac, int_nbits),
         10 => {
             let (hi, lo) = if frac.len() <= 27 {
                 let rem = 27 - frac.len();

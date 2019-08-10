@@ -34,7 +34,7 @@ where
     debug_assert!(!a.is_empty());
     let mut bits = I::NBITS - dump_bits;
     let mut acc = I::ZERO;
-    for byte in a.as_bytes() {
+    for &byte in a.as_bytes() {
         let val = byte - b'0';
         if bits < 1 {
             // round
@@ -53,7 +53,7 @@ where
     debug_assert!(!a.is_empty());
     let mut bits = I::NBITS - dump_bits;
     let mut acc = I::ZERO;
-    for byte in a.as_bytes() {
+    for &byte in a.as_bytes() {
         let val = byte - b'0';
         if bits < 3 {
             acc = (acc << bits) + I::from(val >> (3 - bits));
@@ -73,7 +73,7 @@ where
     debug_assert!(!a.is_empty());
     let mut bits = I::NBITS - dump_bits;
     let mut acc = I::ZERO;
-    for byte in a.as_bytes() {
+    for &byte in a.as_bytes() {
         // We know that byte is a valid hex:
         //   * b'0'..=b'9' (0x30..=0x39) => val = byte & 0x0f
         //   * b'A'..=b'F' (0x41..=0x46) => val = byte & 0x0f + 9

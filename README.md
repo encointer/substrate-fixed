@@ -52,8 +52,13 @@ Various conversion methods are available:
 ### Version 0.4.1 news (unreleased)
 
   * All fixed-point types now implement [`FromStr`].
+  * The methods [`from_str_binary`], [`from_str_octal`] and
+    [`from_str_hex`] were added.
 
 [`FromStr`]: https://doc.rust-lang.org/nightly/std/str/trait.FromStr.html
+[`from_str_binary`]: https://docs.rs/fixed/0.4.0/fixed/struct.FixedI32.html#method.from_str_binary
+[`from_str_octal`]: https://docs.rs/fixed/0.4.0/fixed/struct.FixedI32.html#method.from_str_octal
+[`from_str_hex`]: https://docs.rs/fixed/0.4.0/fixed/struct.FixedI32.html#method.from_str_hex
 
 ### Version 0.4.0 news (2019-08-08)
 

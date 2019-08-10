@@ -9,6 +9,8 @@ Version 0.4.1 (unreleased)
 ==========================
 
   * All fixed-point types now implement `FromStr`.
+  * The methods `from_str_binary`, `from_str_octal` and `from_str_hex`
+    were added.
 
 Version 0.4.0 (2019-08-08)
 ==========================

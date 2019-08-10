@@ -21,7 +21,7 @@ use crate::{
     frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
     sealed::{self, Float, Int, SealedFixed, SealedFloat, SealedInt},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
-    FixedU8,
+    FixedU8, ParseFixedError,
 };
 use core::{
     fmt::{Binary, Debug, Display, LowerHex, Octal, UpperHex},
@@ -247,6 +247,15 @@ where
     ///
     /// [`overflowing_to_fixed`]: trait.ToFixed.html#tymethod.overflowing_to_fixed
     fn overflowing_from_float<F: Float>(val: F) -> (Self, bool);
+
+    /// Converts a string slice containing binary digits to a fixed-point number.
+    fn from_str_binary(src: &str) -> Result<Self, ParseFixedError>;
+
+    /// Converts a string slice containing octal digits to a fixed-point number.
+    fn from_str_octal(src: &str) -> Result<Self, ParseFixedError>;
+
+    /// Converts a string slice containing hexadecimal digits to a fixed-point number.
+    fn from_str_hex(src: &str) -> Result<Self, ParseFixedError>;
 
     /// Returns the integer part.
     fn int(self) -> Self;
@@ -1044,10 +1053,10 @@ impl_float! { f32 }
 impl_float! { f64 }
 
 macro_rules! trait_delegate {
-    (fn $method:ident() -> $Ret:ty) => {
+    (fn $method:ident($($param:ident: $Param:ty),*) -> $Ret:ty) => {
         #[inline]
-        fn $method() -> $Ret {
-            Self::$method()
+        fn $method($($param: $Param),*) -> $Ret {
+            Self::$method($($param),*)
         }
     };
     (fn $method:ident(self $(, $param:ident: $Param:ty)*) -> $Ret:ty) => {
@@ -1056,10 +1065,10 @@ macro_rules! trait_delegate {
             self.$method($($param),*)
         }
     };
-    (fn $method:ident<$Gen:ident: $Trait:ident>($param:ident: $Param:ty) -> $Ret:ty) => {
+    (fn $method:ident<$Gen:ident: $Trait:ident>($($param:ident: $Param:ty),*) -> $Ret:ty) => {
         #[inline]
-        fn $method<$Gen: $Trait>($param: $Param) -> $Ret {
-            Self::$method($param)
+        fn $method<$Gen: $Trait>($($param: $Param),*) -> $Ret {
+            Self::$method($($param),*)
         }
     };
     (fn $method:ident<$Gen:ident: $Trait:ident>(self $(, $param:ident: $Param:ty)*) -> $Ret:ty) => {
@@ -1109,6 +1118,9 @@ macro_rules! impl_fixed {
             trait_delegate! { fn overflowing_from_int<I: Int>(val: I) -> (Self, bool) }
             trait_delegate! { fn overflowing_to_int<I: Int>(self) -> (I, bool) }
             trait_delegate! { fn overflowing_from_float<F: Float>(val: F) -> (Self, bool) }
+            trait_delegate! { fn from_str_binary(src: &str) -> Result<Self, ParseFixedError> }
+            trait_delegate! { fn from_str_octal(src: &str) -> Result<Self, ParseFixedError> }
+            trait_delegate! { fn from_str_hex(src: &str) -> Result<Self, ParseFixedError> }
             trait_delegate! { fn int(self) -> Self }
             trait_delegate! { fn frac(self) -> Self }
             trait_delegate! { fn ceil(self) -> Self }

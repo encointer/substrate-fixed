@@ -584,6 +584,70 @@ impl LossyFrom<f64> for f64 {
     }
 }
 
+/// These are doc tests that should not appear in the docs, but are
+/// useful as doc tests can check to ensure compilation failure.
+///
+/// The first snippet succeeds, and acts as a control.
+///
+/// ```rust
+/// use fixed::{traits::LossyFrom, types::*};
+/// let _ = I8F8::from(I4F4::default());
+/// let _ = I8F8::from(U7F1::default());
+/// let _ = U8F8::from(U4F4::default());
+/// let _ = I8F8::lossy_from(I8F56::default());
+/// let _ = I8F8::lossy_from(U7F57::default());
+/// let _ = U8F8::lossy_from(U8F56::default());
+/// ```
+///
+/// The rest of the tests should all fail compilation.
+///
+/// ```compile_fail
+/// use fixed::types::*;
+/// let _ = I8F8::from(I7F9::default());
+/// ```
+/// ```compile_fail
+/// use fixed::types::*;
+/// let _ = I8F8::from(I9F7::default());
+/// ```
+///
+/// ```compile_fail
+/// use fixed::types::*;
+/// let _ = I8F8::from(U8F0::default());
+/// ```
+///
+/// ```compile_fail
+/// use fixed::types::*;
+/// let _ = U8F8::from(U7F9::default());
+/// ```
+/// ```compile_fail
+/// use fixed::types::*;
+/// let _ = U8F8::from(U9F7::default());
+/// ```
+/// ```compile_fail
+/// use fixed::types::*;
+/// let _ = U8F8::from(I4F4::default());
+/// ```
+///
+/// ```compile_fail
+/// use fixed::{traits::LossyFrom, types::*};
+/// let _ = I8F8::lossy_from(I9F55::default());
+/// ```
+///
+/// ```compile_fail
+/// use fixed::{traits::LossyFrom, types::*};
+/// let _ = I8F8::lossy_from(U8F56::default());
+/// ```
+///
+/// ```compile_fail
+/// use fixed::{traits::LossyFrom, types::*};
+/// let _ = U8F8::lossy_from(U9F55::default());
+/// ```
+/// ```compile_fail
+/// use fixed::{traits::LossyFrom, types::*};
+/// let _ = U8F8::lossy_from(I4F4::default());
+/// ```
+fn _compile_fail_tests() {}
+
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::float_cmp))]
 #[cfg(test)]
 mod tests {

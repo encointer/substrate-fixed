@@ -21,8 +21,9 @@ use core::{
 #[cfg(feature = "f16")]
 use half::f16;
 
-pub trait SealedFloat: Copy + Debug + Display {
+pub trait SealedFloat: Copy {
     type Bits: SealedInt;
+    type Traits: Copy + Debug + Display;
 
     const PREC: u32;
     const EXP_BIAS: i32 = (1 << (Self::Bits::NBITS - Self::PREC - 1)) - 1;
@@ -31,6 +32,8 @@ pub trait SealedFloat: Copy + Debug + Display {
     const SIGN_MASK: Self::Bits;
     const EXP_MASK: Self::Bits;
     const MANT_MASK: Self::Bits;
+
+    fn traits(self) -> Self::Traits;
 
     fn zero(neg: bool) -> Self;
     fn infinity(neg: bool) -> Self;
@@ -46,7 +49,7 @@ pub trait SealedFloat: Copy + Debug + Display {
     #[inline]
     fn to_fixed<F: Fixed>(self) -> F {
         let (wrapped, overflow) = Self::overflowing_to_fixed(self);
-        debug_assert!(!overflow, "{} overflows", self);
+        debug_assert!(!overflow, "{} overflows", self.traits());
         let _ = overflow;
         wrapped
     }
@@ -83,11 +86,17 @@ macro_rules! sealed_float {
     ($Float:ident($Bits:ty, $IBits:ty, $prec:expr)) => {
         impl SealedFloat for $Float {
             type Bits = $Bits;
+            type Traits = $Float;
 
             const PREC: u32 = $prec;
             const SIGN_MASK: Self::Bits = Self::Bits::MSB;
             const EXP_MASK: Self::Bits = Self::SIGN_MASK - (1 << (Self::PREC - 1));
             const MANT_MASK: Self::Bits = (1 << (Self::PREC - 1)) - 1;
+
+            #[inline]
+            fn traits(self) -> Self::Traits {
+                self
+            }
 
             #[inline]
             fn zero(neg: bool) -> $Float {

@@ -49,7 +49,7 @@ use half::f16;
 /// [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
 /// [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
 /// [`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
-pub trait Int: SealedInt {}
+pub trait Int: Copy + SealedInt {}
 
 /// This trait is implemented for the primitive floating-point types,
 /// and for [`f16`] if the [`f16` feature] is enabled.
@@ -62,7 +62,7 @@ pub trait Int: SealedInt {}
 /// [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
 /// [`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html
 /// [`f16` feature]: ../index.html#optional-features
-pub trait Float: SealedFloat {}
+pub trait Float: Copy + SealedFloat {}
 
 /// This trait is implemented for all the fixed-point types.
 ///
@@ -81,7 +81,7 @@ pub trait Float: SealedFloat {}
 /// [`FixedU32`]: ../struct.FixedU32.html
 /// [`FixedU64`]: ../struct.FixedU64.html
 /// [`FixedU8`]: ../struct.FixedU8.html
-pub trait Fixed: SealedFixed {}
+pub trait Fixed: Copy + SealedFixed {}
 
 impl Int for i8 {}
 impl Int for i16 {}

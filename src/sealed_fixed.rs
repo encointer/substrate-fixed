@@ -31,9 +31,10 @@ pub enum Widest {
     Negative(i128),
 }
 
-pub trait SealedFixed: Copy + Debug + Default + Display + Eq + Hash + Ord {
+pub trait SealedFixed: Copy {
     type FracNBits: Unsigned;
     type SBits: SealedInt;
+    type Traits: Copy + Debug + Default + Into<Self> + Display + Eq + Hash + Ord;
 
     const FRAC_NBITS: u32 = Self::FracNBits::U32;
     const INT_NBITS: u32 = Self::SBits::NBITS - Self::FRAC_NBITS;
@@ -47,10 +48,12 @@ pub trait SealedFixed: Copy + Debug + Default + Display + Eq + Hash + Ord {
     // 0 for no int bits
     const INT_LSB: u128 = Self::INT_MASK ^ (Self::INT_MASK << 1);
 
+    fn traits(self) -> Self::Traits;
+
     #[inline]
     fn from_fixed<F: Fixed>(val: F) -> Self {
         let (wrapped, overflow) = SealedFixed::overflowing_from_fixed(val);
-        debug_assert!(!overflow, "{} overflows", val);
+        debug_assert!(!overflow, "{} overflows", val.traits());
         let _ = overflow;
         wrapped
     }
@@ -98,6 +101,12 @@ macro_rules! sealed_fixed {
         {
             type FracNBits = Frac;
             type SBits = $Bits;
+            type Traits = $Fixed<Frac>;
+
+            #[inline]
+            fn traits(self) -> Self::Traits {
+                self
+            }
 
             #[inline]
             fn saturating_from_fixed<F: Fixed>(val: F) -> Self {
@@ -202,7 +211,7 @@ macro_rules! sealed_fixed {
             #[inline]
             fn overflowing_from_float<F: SealedFloat>(val: F) -> (Self, bool) {
                 if !val.is_finite() {
-                    panic!("{} is not finite", val);
+                    panic!("{} is not finite", val.traits());
                 }
                 let (value, _, mut overflow) =
                     val.to_fixed_dir_overflow(Self::FRAC_NBITS, Self::INT_NBITS);

@@ -24,21 +24,24 @@ use core::{
     fmt::{Debug, Display},
 };
 
-pub trait SealedInt: Copy + Ord + Debug + Display {
+pub trait SealedInt: Copy {
     type NBits: Unsigned;
     type IsSigned: Bit;
     type Unsigned: SealedInt;
     type ReprFixed: Fixed;
+    type Traits: Copy + Ord + Debug + Display;
 
     const NBITS: u32 = Self::NBits::U32;
     const IS_SIGNED: bool = Self::IsSigned::BOOL;
     const MSB: Self;
     const ZERO: Self;
 
+    fn traits(self) -> Self::Traits;
+
     #[inline]
     fn from_fixed<F: Fixed>(val: F) -> Self {
         let (wrapped, overflow) = Self::overflowing_from_fixed(val);
-        debug_assert!(!overflow, "{} overflows", val);
+        debug_assert!(!overflow, "{} overflows", val.traits());
         let _ = overflow;
         wrapped
     }
@@ -60,7 +63,7 @@ pub trait SealedInt: Copy + Ord + Debug + Display {
     #[inline]
     fn to_fixed<F: Fixed>(self) -> F {
         let (wrapped, overflow) = Self::overflowing_to_fixed(self);
-        debug_assert!(!overflow, "{} overflows", self);
+        debug_assert!(!overflow, "{} overflows", self.traits());
         let _ = overflow;
         wrapped
     }
@@ -109,9 +112,15 @@ macro_rules! sealed_int {
             type IsSigned = $IsSigned;
             type Unsigned = $Unsigned;
             type ReprFixed = $ReprFixed<U0>;
+            type Traits = $Int;
 
             const MSB: $Int = 1 << (Self::NBITS - 1);
             const ZERO: $Int = 0;
+
+            #[inline]
+            fn traits(self) -> Self::Traits {
+                self
+            }
 
             #[inline]
             fn min_value() -> $Int {

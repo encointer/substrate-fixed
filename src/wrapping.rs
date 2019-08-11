@@ -135,28 +135,28 @@ impl<F: Fixed> Copy for Wrapping<F> {}
 impl<F: Fixed> Default for Wrapping<F> {
     #[inline]
     fn default() -> Wrapping<F> {
-        Wrapping(F::default())
+        Wrapping(F::Traits::default().into())
     }
 }
 
 impl<F: Fixed> Hash for Wrapping<F> {
     #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
-        (self.0).hash(state);
+        self.0.traits().hash(state);
     }
 }
 
 impl<F: Fixed> Debug for Wrapping<F> {
     #[inline]
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        <F as Debug>::fmt(&self.0, f)
+        <F::Traits as Debug>::fmt(&self.0.traits(), f)
     }
 }
 
 impl<F: Fixed> Display for Wrapping<F> {
     #[inline]
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        <F as Display>::fmt(&self.0, f)
+        <F::Traits as Display>::fmt(&self.0.traits(), f)
     }
 }
 
@@ -171,35 +171,35 @@ impl<F: Fixed> Eq for Wrapping<F> {}
 impl<F: Fixed> PartialEq<Wrapping<F>> for Wrapping<F> {
     #[inline]
     fn eq(&self, other: &Wrapping<F>) -> bool {
-        (self.0).eq(&other.0)
+        self.0.traits().eq(&other.0.traits())
     }
 }
 impl<F: Fixed> Ord for Wrapping<F> {
     #[inline]
     fn cmp(&self, other: &Wrapping<F>) -> Ordering {
-        (self.0).cmp(&other.0)
+        self.0.traits().cmp(&other.0.traits())
     }
 }
 impl<F: Fixed> PartialOrd<Wrapping<F>> for Wrapping<F> {
     #[inline]
     fn partial_cmp(&self, other: &Wrapping<F>) -> Option<Ordering> {
-        (self.0).partial_cmp(&other.0)
+        self.0.traits().partial_cmp(&other.0.traits())
     }
     #[inline]
     fn lt(&self, other: &Wrapping<F>) -> bool {
-        (self.0).lt(&other.0)
+        self.0.traits().lt(&other.0.traits())
     }
     #[inline]
     fn le(&self, other: &Wrapping<F>) -> bool {
-        (self.0).le(&other.0)
+        self.0.traits().le(&other.0.traits())
     }
     #[inline]
     fn gt(&self, other: &Wrapping<F>) -> bool {
-        (self.0).gt(&other.0)
+        self.0.traits().gt(&other.0.traits())
     }
     #[inline]
     fn ge(&self, other: &Wrapping<F>) -> bool {
-        (self.0).ge(&other.0)
+        self.0.traits().ge(&other.0.traits())
     }
 }
 

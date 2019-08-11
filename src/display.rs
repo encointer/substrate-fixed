@@ -357,7 +357,7 @@ fn fmt_dec_helper<F: FmtDecHelper>(
             *r = b'0' + frac.take_frac_digit();
         }
         // check for rounding up
-        let round_up = match frac.cmp(&F::MSB) {
+        let round_up = match frac.traits().cmp(&F::MSB.traits()) {
             Ordering::Less => false,
             Ordering::Greater => true,
             Ordering::Equal => {

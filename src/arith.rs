@@ -717,7 +717,7 @@ mul_div_fallback! { i128, u128, Signed }
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use crate::{frac::Unsigned, *};
 
     #[test]
     fn fixed_u16() {

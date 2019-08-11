@@ -390,9 +390,11 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
-    use core::fmt::{Debug, Error as FmtError, Formatter, Result as FmtResult, Write};
-    use core::mem;
+    use crate::{frac::Unsigned, *};
+    use core::{
+        fmt::{Debug, Error as FmtError, Formatter, Result as FmtResult, Write},
+        mem,
+    };
 
     struct Buf([u8; 256]);
     impl Buf {

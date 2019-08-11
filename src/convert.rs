@@ -14,30 +14,28 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
-    frac::{IsGreaterOrEqual, IsLessOrEqual, True, Unsigned, U0, U1, U128, U16, U2, U32, U64, U8},
+    frac::{Diff, IsLessOrEqual, True, U0, U1, U127, U128, U15, U16, U31, U32, U63, U64, U7, U8},
     sealed::SealedInt,
     traits::{FromFixed, LossyFrom},
     types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
-use core::ops::{Add, Sub};
+use core::ops::Sub;
 #[cfg(feature = "f16")]
 use half::f16;
 
 macro_rules! convert {
-    (($SrcU:ident, $SrcI:ident, $SrcBits:ident) -> ($DstU:ident, $DstI:ident, $DstBits:ident)) => {
-        // Conditions: FracSrc <= FracDst <= FracSrc + ($DstBits - $SrcBits)
-        impl<FracSrc, FracDst, FracMax> From<$SrcU<FracSrc>> for $DstU<FracDst>
+    (
+        ($SrcU:ident, $SrcI:ident, $SrcBits:ident, $SrcLeEqU:ident) ->
+            ($DstU:ident, $DstI:ident, $DstBits:ident, $DstBitsM1:ident, $DstLeEqU:ident)
+    ) => {
+        impl<FracSrc: $SrcLeEqU, FracDst: $DstLeEqU> From<$SrcU<FracSrc>> for $DstU<FracDst>
         where
-            FracSrc: Unsigned
-                + IsLessOrEqual<$SrcBits, Output = True>
-                + Add<<$DstBits as Sub<$SrcBits>>::Output, Output = FracMax>,
-            FracDst: Unsigned
-                + IsLessOrEqual<$DstBits, Output = True>
-                + IsGreaterOrEqual<FracSrc, Output = True>
-                + IsLessOrEqual<FracMax, Output = True>,
-            FracMax: Unsigned,
+            FracSrc: IsLessOrEqual<FracDst, Output = True>,
+            $SrcBits: Sub<FracSrc>,
+            $DstBits: Sub<FracDst>,
+            Diff<$SrcBits, FracSrc>: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
             #[inline]
             fn from(src: $SrcU<FracSrc>) -> $DstU<FracDst> {
@@ -47,17 +45,12 @@ macro_rules! convert {
             }
         }
 
-        // Conditions: FracSrc <= FracDst <= FracSrc + ($DstBits - $SrcBits)
-        impl<FracSrc, FracDst, FracMax> From<$SrcI<FracSrc>> for $DstI<FracDst>
+        impl<FracSrc: $SrcLeEqU, FracDst: $DstLeEqU> From<$SrcI<FracSrc>> for $DstI<FracDst>
         where
-            FracSrc: Unsigned
-                + IsLessOrEqual<$SrcBits, Output = True>
-                + Add<<$DstBits as Sub<$SrcBits>>::Output, Output = FracMax>,
-            FracDst: Unsigned
-                + IsLessOrEqual<$DstBits, Output = True>
-                + IsGreaterOrEqual<FracSrc, Output = True>
-                + IsLessOrEqual<FracMax, Output = True>,
-            FracMax: Unsigned,
+            FracSrc: IsLessOrEqual<FracDst, Output = True>,
+            $SrcBits: Sub<FracSrc>,
+            $DstBits: Sub<FracDst>,
+            Diff<$SrcBits, FracSrc>: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
             #[inline]
             fn from(src: $SrcI<FracSrc>) -> $DstI<FracDst> {
@@ -67,20 +60,12 @@ macro_rules! convert {
             }
         }
 
-        // Conditions: FracSrc <= FracDst <= FracSrc + ($DstBits - $SrcBits - 1)
-        impl<FracSrc, FracDst, FracMax> From<$SrcU<FracSrc>> for $DstI<FracDst>
+        impl<FracSrc: $SrcLeEqU, FracDst: $DstLeEqU> From<$SrcU<FracSrc>> for $DstI<FracDst>
         where
-            FracSrc: Unsigned
-                + IsLessOrEqual<$SrcBits, Output = True>
-                + Add<
-                    <<$DstBits as Sub<$SrcBits>>::Output as Sub<U1>>::Output,
-                    Output = FracMax,
-                >,
-            FracDst: Unsigned
-                + IsLessOrEqual<$DstBits, Output = True>
-                + IsGreaterOrEqual<FracSrc, Output = True>
-                + IsLessOrEqual<FracMax, Output = True>,
-            FracMax: Unsigned,
+            FracSrc: IsLessOrEqual<FracDst, Output = True>,
+            $SrcBits: Sub<FracSrc>,
+            $DstBitsM1: Sub<FracDst>,
+            Diff<$SrcBits, FracSrc>: IsLessOrEqual<Diff<$DstBitsM1, FracDst>, Output = True>,
         {
             #[inline]
             fn from(src: $SrcU<FracSrc>) -> $DstI<FracDst> {
@@ -93,18 +78,14 @@ macro_rules! convert {
 }
 
 macro_rules! convert_lossy {
-    (($SrcU:ident, $SrcI:ident, $SrcBits:ident) -> ($DstU:ident, $DstI:ident, $DstBits:ident)) => {
-        // Conditions: FracDst + $SrcBits <= FracSrc + $DstBits
-        impl<FracSrc, FracDst, FracSrcP, FracDstP> LossyFrom<$SrcU<FracSrc>> for $DstU<FracDst>
+    (
+        ($SrcU:ident, $SrcI:ident, $SrcBits:ident, $SrcLeEqU:ident) ->
+            ($DstU:ident, $DstI:ident, $DstBits:ident, $DstBitsM1:ident, $DstLeEqU:ident)) => {
+        impl<FracSrc: $SrcLeEqU, FracDst: $DstLeEqU> LossyFrom<$SrcU<FracSrc>> for $DstU<FracDst>
         where
-            FracSrc: Unsigned
-                + IsLessOrEqual<$SrcBits, Output = True>
-                + Add<$DstBits, Output = FracSrcP>,
-            FracDst: Unsigned
-                + IsLessOrEqual<$DstBits, Output = True>
-                + Add<$SrcBits, Output = FracDstP>,
-            FracSrcP: Unsigned,
-            FracDstP: Unsigned + IsLessOrEqual<FracSrcP, Output = True>,
+            $SrcBits: Sub<FracSrc>,
+            $DstBits: Sub<FracDst>,
+            Diff<$SrcBits, FracSrc>: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
             #[inline]
             fn lossy_from(src: $SrcU<FracSrc>) -> $DstU<FracDst> {
@@ -112,17 +93,11 @@ macro_rules! convert_lossy {
             }
         }
 
-        // Conditions: FracDst + $SrcBits <= FracSrc + $DstBits
-        impl<FracSrc, FracDst, FracSrcP, FracDstP> LossyFrom<$SrcI<FracSrc>> for $DstI<FracDst>
+        impl<FracSrc: $SrcLeEqU, FracDst: $DstLeEqU> LossyFrom<$SrcI<FracSrc>> for $DstI<FracDst>
         where
-            FracSrc: Unsigned
-                + IsLessOrEqual<$SrcBits, Output = True>
-                + Add<$DstBits, Output = FracSrcP>,
-            FracDst: Unsigned
-                + IsLessOrEqual<$DstBits, Output = True>
-                + Add<$SrcBits, Output = FracDstP>,
-            FracSrcP: Unsigned,
-            FracDstP: Unsigned + IsLessOrEqual<FracSrcP, Output = True>,
+            $SrcBits: Sub<FracSrc>,
+            $DstBits: Sub<FracDst>,
+            Diff<$SrcBits, FracSrc>: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
             #[inline]
             fn lossy_from(src: $SrcI<FracSrc>) -> $DstI<FracDst> {
@@ -130,17 +105,11 @@ macro_rules! convert_lossy {
             }
         }
 
-        // Conditions: FracDst + $SrcBits + 1 <= FracSrc + $DstBits
-        impl<FracSrc, FracDst, FracSrcP, FracDstP> LossyFrom<$SrcU<FracSrc>> for $DstI<FracDst>
+        impl<FracSrc: $SrcLeEqU, FracDst: $DstLeEqU> LossyFrom<$SrcU<FracSrc>> for $DstI<FracDst>
         where
-            FracSrc: Unsigned
-                + IsLessOrEqual<$SrcBits, Output = True>
-                + Add<$DstBits, Output = FracSrcP>,
-            FracDst: Unsigned
-                + IsLessOrEqual<$DstBits, Output = True>
-                + Add<<$SrcBits as Add<U1>>::Output, Output = FracDstP>,
-            FracSrcP: Unsigned,
-            FracDstP: Unsigned + IsLessOrEqual<FracSrcP, Output = True>,
+            $SrcBits: Sub<FracSrc>,
+            $DstBitsM1: Sub<FracDst>,
+            Diff<$SrcBits, FracSrc>: IsLessOrEqual<Diff<$DstBitsM1, FracDst>, Output = True>,
         {
             #[inline]
             fn lossy_from(src: $SrcU<FracSrc>) -> $DstI<FracDst> {
@@ -148,43 +117,54 @@ macro_rules! convert_lossy {
             }
         }
     };
-    ($SrcU:ident, $SrcI:ident, $SrcBits:ident) => {
-        convert_lossy! { ($SrcU, $SrcI, $SrcBits) -> (FixedU8, FixedI8, U8) }
-        convert_lossy! { ($SrcU, $SrcI, $SrcBits) -> (FixedU16, FixedI16, U16) }
-        convert_lossy! { ($SrcU, $SrcI, $SrcBits) -> (FixedU32, FixedI32, U32) }
-        convert_lossy! { ($SrcU, $SrcI, $SrcBits) -> (FixedU64, FixedI64, U64) }
-        convert_lossy! { ($SrcU, $SrcI, $SrcBits) -> (FixedU128, FixedI128, U128) }
+    ($SrcU:ident, $SrcI:ident, $SrcBits:ident, $SrcLeEqU:ident) => {
+        convert_lossy! {
+            ($SrcU, $SrcI, $SrcBits, $SrcLeEqU) -> (FixedU8, FixedI8, U8, U7, LeEqU8)
+        }
+        convert_lossy! {
+            ($SrcU, $SrcI, $SrcBits, $SrcLeEqU) -> (FixedU16, FixedI16, U16, U15, LeEqU16)
+        }
+        convert_lossy! {
+            ($SrcU, $SrcI, $SrcBits, $SrcLeEqU) -> (FixedU32, FixedI32, U32, U31, LeEqU32)
+        }
+        convert_lossy! {
+            ($SrcU, $SrcI, $SrcBits, $SrcLeEqU) -> (FixedU64, FixedI64, U64, U63, LeEqU64)
+        }
+        convert_lossy! {
+            ($SrcU, $SrcI, $SrcBits, $SrcLeEqU) -> (FixedU128, FixedI128, U128, U127, LeEqU128)
+        }
     };
 }
 
-convert! { (FixedU8, FixedI8, U8) -> (FixedU16, FixedI16, U16) }
-convert! { (FixedU8, FixedI8, U8) -> (FixedU32, FixedI32, U32) }
-convert! { (FixedU8, FixedI8, U8) -> (FixedU64, FixedI64, U64) }
-convert! { (FixedU8, FixedI8, U8) -> (FixedU128, FixedI128, U128) }
+convert! { (FixedU8, FixedI8, U8, LeEqU8) -> (FixedU16, FixedI16, U16, U15, LeEqU16) }
+convert! { (FixedU8, FixedI8, U8, LeEqU8) -> (FixedU32, FixedI32, U32, U31, LeEqU32) }
+convert! { (FixedU8, FixedI8, U8, LeEqU8) -> (FixedU64, FixedI64, U64, U63, LeEqU64) }
+convert! { (FixedU8, FixedI8, U8, LeEqU8) -> (FixedU128, FixedI128, U128, U127, LeEqU128) }
 
-convert! { (FixedU16, FixedI16, U16) -> (FixedU32, FixedI32, U32) }
-convert! { (FixedU16, FixedI16, U16) -> (FixedU64, FixedI64, U64) }
-convert! { (FixedU16, FixedI16, U16) -> (FixedU128, FixedI128, U128) }
+convert! { (FixedU16, FixedI16, U16, LeEqU16) -> (FixedU32, FixedI32, U32, U31, LeEqU32) }
+convert! { (FixedU16, FixedI16, U16, LeEqU16) -> (FixedU64, FixedI64, U64, U63, LeEqU64) }
+convert! { (FixedU16, FixedI16, U16, LeEqU16) -> (FixedU128, FixedI128, U128, U127, LeEqU128) }
 
-convert! { (FixedU32, FixedI32, U32) -> (FixedU64, FixedI64, U64) }
-convert! { (FixedU32, FixedI32, U32) -> (FixedU128, FixedI128, U128) }
+convert! { (FixedU32, FixedI32, U32, LeEqU32) -> (FixedU64, FixedI64, U64, U63, LeEqU64) }
+convert! { (FixedU32, FixedI32, U32, LeEqU32) -> (FixedU128, FixedI128, U128, U127, LeEqU128) }
 
-convert! { (FixedU64, FixedI64, U64) -> (FixedU128, FixedI128, U128) }
+convert! { (FixedU64, FixedI64, U64, LeEqU64) -> (FixedU128, FixedI128, U128, U127, LeEqU128) }
 
-convert_lossy! { FixedU8, FixedI8, U8 }
-convert_lossy! { FixedU16, FixedI16, U16 }
-convert_lossy! { FixedU32, FixedI32, U32 }
-convert_lossy! { FixedU64, FixedI64, U64 }
-convert_lossy! { FixedU128, FixedI128, U128 }
+convert_lossy! { FixedU8, FixedI8, U8, LeEqU8 }
+convert_lossy! { FixedU16, FixedI16, U16, LeEqU16 }
+convert_lossy! { FixedU32, FixedI32, U32, LeEqU32 }
+convert_lossy! { FixedU64, FixedI64, U64, LeEqU64 }
+convert_lossy! { FixedU128, FixedI128, U128, LeEqU128 }
 
 macro_rules! int_to_fixed {
-    (($SrcU:ident, $SrcI:ident, $SrcBits:ident) -> ($DstU:ident, $DstI:ident, $DstBits:ident)) => {
-        // Condition: FracDst <= $DstBits - $SrcBits
-        impl<FracDst> From<$SrcU> for $DstU<FracDst>
+    (
+        ($SrcU:ident, $SrcI:ident, $SrcBits:ident, $SrcLeEqU:ident) ->
+            ($DstU:ident, $DstI:ident, $DstBits:ident, $DstBitsM1:ident, $DstLeEqU:ident)
+    ) => {
+        impl<FracDst: $DstLeEqU> From<$SrcU> for $DstU<FracDst>
         where
-            FracDst: Unsigned
-                + IsLessOrEqual<$DstBits, Output = True>
-                + IsLessOrEqual<<$DstBits as Sub<$SrcBits>>::Output, Output = True>,
+            $DstBits: Sub<FracDst>,
+            $SrcBits: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
             #[inline]
             fn from(src: $SrcU) -> $DstU<FracDst> {
@@ -194,12 +174,10 @@ macro_rules! int_to_fixed {
             }
         }
 
-        // Condition: FracDst <= $DstBits - $SrcBits
-        impl<FracDst> From<$SrcI> for $DstI<FracDst>
+        impl<FracDst: $DstLeEqU> From<$SrcI> for $DstI<FracDst>
         where
-            FracDst: Unsigned
-                + IsLessOrEqual<$DstBits, Output = True>
-                + IsLessOrEqual<<$DstBits as Sub<$SrcBits>>::Output, Output = True>,
+            $DstBits: Sub<FracDst>,
+            $SrcBits: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
             #[inline]
             fn from(src: $SrcI) -> $DstI<FracDst> {
@@ -209,15 +187,10 @@ macro_rules! int_to_fixed {
             }
         }
 
-        // Condition: FracDst <= $DstBits - $SrcBits - 1
-        impl<FracDst> From<$SrcU> for $DstI<FracDst>
+        impl<FracDst: $DstLeEqU> From<$SrcU> for $DstI<FracDst>
         where
-            FracDst: Unsigned
-                + IsLessOrEqual<$DstBits, Output = True>
-                + IsLessOrEqual<
-                    <<$DstBits as Sub<$SrcBits>>::Output as Sub<U1>>::Output,
-                    Output = True,
-                >,
+            $DstBitsM1: Sub<FracDst>,
+            $SrcBits: IsLessOrEqual<Diff<$DstBitsM1, FracDst>, Output = True>,
         {
             #[inline]
             fn from(src: $SrcU) -> $DstI<FracDst> {
@@ -227,12 +200,10 @@ macro_rules! int_to_fixed {
             }
         }
 
-        // Condition: FracDst <= $DstBits - $SrcBits
-        impl<FracDst> LossyFrom<$SrcU> for $DstU<FracDst>
+        impl<FracDst: $DstLeEqU> LossyFrom<$SrcU> for $DstU<FracDst>
         where
-            FracDst: Unsigned
-                + IsLessOrEqual<$DstBits, Output = True>
-                + IsLessOrEqual<<$DstBits as Sub<$SrcBits>>::Output, Output = True>,
+            $DstBits: Sub<FracDst>,
+            $SrcBits: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
             #[inline]
             fn lossy_from(src: $SrcU) -> $DstU<FracDst> {
@@ -240,12 +211,10 @@ macro_rules! int_to_fixed {
             }
         }
 
-        // Condition: FracDst <= $DstBits - $SrcBits
-        impl<FracDst> LossyFrom<$SrcI> for $DstI<FracDst>
+        impl<FracDst: $DstLeEqU> LossyFrom<$SrcI> for $DstI<FracDst>
         where
-            FracDst: Unsigned
-                + IsLessOrEqual<$DstBits, Output = True>
-                + IsLessOrEqual<<$DstBits as Sub<$SrcBits>>::Output, Output = True>,
+            $DstBits: Sub<FracDst>,
+            $SrcBits: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
             #[inline]
             fn lossy_from(src: $SrcI) -> $DstI<FracDst> {
@@ -253,15 +222,10 @@ macro_rules! int_to_fixed {
             }
         }
 
-        // Condition: FracDst <= $DstBits - $SrcBits - 1
-        impl<FracDst> LossyFrom<$SrcU> for $DstI<FracDst>
+        impl<FracDst: $DstLeEqU> LossyFrom<$SrcU> for $DstI<FracDst>
         where
-            FracDst: Unsigned
-                + IsLessOrEqual<$DstBits, Output = True>
-                + IsLessOrEqual<
-                    <<$DstBits as Sub<$SrcBits>>::Output as Sub<U1>>::Output,
-                    Output = True,
-                >,
+            $DstBitsM1: Sub<FracDst>,
+            $SrcBits: IsLessOrEqual<Diff<$DstBitsM1, FracDst>, Output = True>,
         {
             #[inline]
             fn lossy_from(src: $SrcU) -> $DstI<FracDst> {
@@ -302,33 +266,31 @@ macro_rules! int_to_fixed {
 }
 
 int_to_fixed! { (u8, i8) -> (FixedU8, FixedI8) }
-int_to_fixed! { (u8, i8, U8) -> (FixedU16, FixedI16, U16) }
-int_to_fixed! { (u8, i8, U8) -> (FixedU32, FixedI32, U32) }
-int_to_fixed! { (u8, i8, U8) -> (FixedU64, FixedI64, U64) }
-int_to_fixed! { (u8, i8, U8) -> (FixedU128, FixedI128, U128) }
+int_to_fixed! { (u8, i8, U8, LeEqU8) -> (FixedU16, FixedI16, U16, U15, LeEqU16) }
+int_to_fixed! { (u8, i8, U8, LeEqU8) -> (FixedU32, FixedI32, U32, U31, LeEqU32) }
+int_to_fixed! { (u8, i8, U8, LeEqU8) -> (FixedU64, FixedI64, U64, U63, LeEqU64) }
+int_to_fixed! { (u8, i8, U8, LeEqU8) -> (FixedU128, FixedI128, U128, U127, LeEqU128) }
 
 int_to_fixed! { (u16, i16) -> (FixedU16, FixedI16) }
-int_to_fixed! { (u16, i16, U16) -> (FixedU32, FixedI32, U32) }
-int_to_fixed! { (u16, i16, U16) -> (FixedU64, FixedI64, U64) }
-int_to_fixed! { (u16, i16, U16) -> (FixedU128, FixedI128, U128) }
+int_to_fixed! { (u16, i16, U16, LeEqU16) -> (FixedU32, FixedI32, U32, U31, LeEqU32) }
+int_to_fixed! { (u16, i16, U16, LeEqU16) -> (FixedU64, FixedI64, U64, U63, LeEqU64) }
+int_to_fixed! { (u16, i16, U16, LeEqU16) -> (FixedU128, FixedI128, U128, U127, LeEqU128) }
 
 int_to_fixed! { (u32, i32) -> (FixedU32, FixedI32) }
-int_to_fixed! { (u32, i32, U32) -> (FixedU64, FixedI64, U64) }
-int_to_fixed! { (u32, i32, U32) -> (FixedU128, FixedI128, U128) }
+int_to_fixed! { (u32, i32, U32, LeEqU32) -> (FixedU64, FixedI64, U64, U63, LeEqU64) }
+int_to_fixed! { (u32, i32, U32, LeEqU32) -> (FixedU128, FixedI128, U128, U127, LeEqU128) }
 
 int_to_fixed! { (u64, i64) -> (FixedU64, FixedI64) }
-int_to_fixed! { (u64, i64, U64) -> (FixedU128, FixedI128, U128) }
+int_to_fixed! { (u64, i64, U64, LeEqU64) -> (FixedU128, FixedI128, U128, U127, LeEqU128) }
 
 int_to_fixed! { (u128, i128) -> (FixedU128, FixedI128) }
 
 macro_rules! bool_to_fixed {
-    ($DstU:ident, $DstI:ident, $DstBits:ident) => {
-        // Condition: FracDst <= $DstBits - 1
-        impl<FracDst> From<bool> for $DstU<FracDst>
+    ($DstU:ident, $DstI:ident, $DstBits:ident, $DstBitsM1:ident, $DstLeEqU:ident) => {
+        impl<FracDst: $DstLeEqU> From<bool> for $DstU<FracDst>
         where
-            FracDst: Unsigned
-                + IsLessOrEqual<$DstBits, Output = True>
-                + IsLessOrEqual<<$DstBits as Sub<U1>>::Output, Output = True>,
+            $DstBits: Sub<FracDst>,
+            U1: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
             #[inline]
             fn from(src: bool) -> $DstU<FracDst> {
@@ -338,12 +300,10 @@ macro_rules! bool_to_fixed {
             }
         }
 
-        // Condition: FracDst <= $DstBits - 2
-        impl<FracDst> From<bool> for $DstI<FracDst>
+        impl<FracDst: $DstLeEqU> From<bool> for $DstI<FracDst>
         where
-            FracDst: Unsigned
-                + IsLessOrEqual<$DstBits, Output = True>
-                + IsLessOrEqual<<$DstBits as Sub<U2>>::Output, Output = True>,
+            $DstBitsM1: Sub<FracDst>,
+            U1: IsLessOrEqual<Diff<$DstBitsM1, FracDst>, Output = True>,
         {
             #[inline]
             fn from(src: bool) -> $DstI<FracDst> {
@@ -355,11 +315,11 @@ macro_rules! bool_to_fixed {
     };
 }
 
-bool_to_fixed! { FixedU8, FixedI8, U8 }
-bool_to_fixed! { FixedU16, FixedI16, U16 }
-bool_to_fixed! { FixedU32, FixedI32, U32 }
-bool_to_fixed! { FixedU64, FixedI64, U64 }
-bool_to_fixed! { FixedU128, FixedI128, U128 }
+bool_to_fixed! { FixedU8, FixedI8, U8, U7, LeEqU8 }
+bool_to_fixed! { FixedU16, FixedI16, U16, U15, LeEqU16 }
+bool_to_fixed! { FixedU32, FixedI32, U32, U31, LeEqU32 }
+bool_to_fixed! { FixedU64, FixedI64, U64, U63, LeEqU64 }
+bool_to_fixed! { FixedU128, FixedI128, U128, U127, LeEqU128 }
 
 macro_rules! fixed_to_int {
     (($SrcU:ident, $SrcI:ident) -> ($DstU:ident, $DstI:ident)) => {
@@ -412,15 +372,14 @@ fixed_to_int! { (FixedU64, FixedI64) -> wider (u128, i128) }
 fixed_to_int! { (FixedU128, FixedI128) -> (u128, i128) }
 
 macro_rules! fixed_to_int_lossy {
-    (($SrcU:ident, $SrcI:ident, $SrcBits:ident) -> ($DstU:ident, $DstI:ident, $DstBits:ident)) => {
-        // Conditions: $SrcBits <= FracSrc + $DstBits
-        impl<FracSrc, FracSrcP> LossyFrom<$SrcU<FracSrc>> for $DstU
+    (
+        ($SrcU:ident, $SrcI:ident, $SrcBits:ident, $SrcLeEqU:ident) ->
+            ($DstU:ident, $DstI:ident, $DstBits:ident, $DstBitsM1:ident, $DstLeEqU:ident)
+    ) => {
+        impl<FracSrc: $SrcLeEqU> LossyFrom<$SrcU<FracSrc>> for $DstU
         where
-            FracSrc: Unsigned
-                + IsLessOrEqual<$SrcBits, Output = True>
-                + Add<$DstBits, Output = FracSrcP>,
-            FracSrcP: Unsigned,
-            $SrcBits: IsLessOrEqual<FracSrcP, Output = True>,
+            $SrcBits: Sub<FracSrc>,
+            Diff<$SrcBits, FracSrc>: IsLessOrEqual<$DstBits, Output = True>,
         {
             #[inline]
             fn lossy_from(src: $SrcU<FracSrc>) -> $DstU {
@@ -428,14 +387,10 @@ macro_rules! fixed_to_int_lossy {
             }
         }
 
-        // Conditions: $SrcBits <= FracSrc + $DstBits
-        impl<FracSrc, FracSrcP> LossyFrom<$SrcI<FracSrc>> for $DstI
+        impl<FracSrc: $SrcLeEqU> LossyFrom<$SrcI<FracSrc>> for $DstI
         where
-            FracSrc: Unsigned
-                + IsLessOrEqual<$SrcBits, Output = True>
-                + Add<$DstBits, Output = FracSrcP>,
-            FracSrcP: Unsigned,
-            $SrcBits: IsLessOrEqual<FracSrcP, Output = True>,
+            $SrcBits: Sub<FracSrc>,
+            Diff<$SrcBits, FracSrc>: IsLessOrEqual<$DstBits, Output = True>,
         {
             #[inline]
             fn lossy_from(src: $SrcI<FracSrc>) -> $DstI {
@@ -443,14 +398,11 @@ macro_rules! fixed_to_int_lossy {
             }
         }
 
-        // Conditions: $SrcBits + 1 <= FracSrc + $DstBits
-        impl<FracSrc, FracSrcP> LossyFrom<$SrcU<FracSrc>> for $DstI
+        // Conditions: $SrcBits - FracSrc <= $DstBitsM1
+        impl<FracSrc: $SrcLeEqU> LossyFrom<$SrcU<FracSrc>> for $DstI
         where
-            FracSrc: Unsigned
-                + IsLessOrEqual<$SrcBits, Output = True>
-                + Add<$DstBits, Output = FracSrcP>,
-            FracSrcP: Unsigned,
-            <$SrcBits as Add<U1>>::Output: IsLessOrEqual<FracSrcP, Output = True>,
+            $SrcBits: Sub<FracSrc>,
+            Diff<$SrcBits, FracSrc>: IsLessOrEqual<$DstBitsM1, Output = True>,
         {
             #[inline]
             fn lossy_from(src: $SrcU<FracSrc>) -> $DstI {
@@ -458,21 +410,33 @@ macro_rules! fixed_to_int_lossy {
             }
         }
     };
-    ($SrcU:ident, $SrcI:ident, $SrcBits:ident) => {
-        fixed_to_int_lossy! { ($SrcU, $SrcI, $SrcBits) -> (u8, i8, U8) }
-        fixed_to_int_lossy! { ($SrcU, $SrcI, $SrcBits) -> (u16, i16, U16) }
-        fixed_to_int_lossy! { ($SrcU, $SrcI, $SrcBits) -> (u32, i32, U32) }
-        fixed_to_int_lossy! { ($SrcU, $SrcI, $SrcBits) -> (u64, i64, U64) }
-        fixed_to_int_lossy! { ($SrcU, $SrcI, $SrcBits) -> (u128, i128, U128) }
-        fixed_to_int_lossy! { ($SrcU, $SrcI, $SrcBits) -> (usize, isize, U16) }
+    ($SrcU:ident, $SrcI:ident, $SrcBits:ident, $SrcLeEqU:ident) => {
+        fixed_to_int_lossy! {
+            ($SrcU, $SrcI, $SrcBits, $SrcLeEqU) -> (u8, i8, U8, U7, LeEqU8)
+        }
+        fixed_to_int_lossy! {
+            ($SrcU, $SrcI, $SrcBits, $SrcLeEqU) -> (u16, i16, U16, U15, LeEqU16)
+        }
+        fixed_to_int_lossy! {
+            ($SrcU, $SrcI, $SrcBits, $SrcLeEqU) -> (u32, i32, U32, U31, LeEqU32)
+        }
+        fixed_to_int_lossy! {
+            ($SrcU, $SrcI, $SrcBits, $SrcLeEqU) -> (u64, i64, U64, U63, LeEqU64)
+        }
+        fixed_to_int_lossy! {
+            ($SrcU, $SrcI, $SrcBits, $SrcLeEqU) -> (u128, i128, U128, U127, LeEqU128)
+        }
+        fixed_to_int_lossy! {
+            ($SrcU, $SrcI, $SrcBits, $SrcLeEqU) -> (usize, isize, U16, U15, LeEqU16)
+        }
     };
 }
 
-fixed_to_int_lossy! { FixedU8, FixedI8, U8 }
-fixed_to_int_lossy! { FixedU16, FixedI16, U16 }
-fixed_to_int_lossy! { FixedU32, FixedI32, U32 }
-fixed_to_int_lossy! { FixedU64, FixedI64, U64 }
-fixed_to_int_lossy! { FixedU128, FixedI128, U128 }
+fixed_to_int_lossy! { FixedU8, FixedI8, U8, LeEqU8 }
+fixed_to_int_lossy! { FixedU16, FixedI16, U16, LeEqU16 }
+fixed_to_int_lossy! { FixedU32, FixedI32, U32, LeEqU32 }
+fixed_to_int_lossy! { FixedU64, FixedI64, U64, LeEqU64 }
+fixed_to_int_lossy! { FixedU128, FixedI128, U128, LeEqU128 }
 
 macro_rules! fixed_to_float {
     ($Fixed:ident($LeEqU:ident) -> $Float:ident) => {

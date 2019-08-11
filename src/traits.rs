@@ -28,7 +28,8 @@ use core::{
     hash::Hash,
     ops::{
         Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div,
-        DivAssign, Mul, MulAssign, Neg, Not, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
+        DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub,
+        SubAssign,
     },
     str::FromStr,
 };
@@ -91,18 +92,20 @@ pub trait Fixed
 where
     Self: Copy + Default + Hash + Ord,
     Self: Debug + Display + Binary + Octal + LowerHex + UpperHex + FromStr,
-    Self: FromFixed + ToFixed + sealed::Fixed,
-    Self: Add<Output = Self> + Sub<Output = Self> + Mul<Output = Self> + Div<Output = Self>,
-    Self: BitAnd<Output = Self> + BitOr<Output = Self> + BitXor<Output = Self>,
-    Self: Not<Output = Self> + Shl<u32, Output = Self> + Shr<u32, Output = Self>,
-    Self: AddAssign + SubAssign + MulAssign + DivAssign,
-    Self: BitAndAssign + BitOrAssign + BitXorAssign + ShlAssign<u32> + ShrAssign<u32>,
+    Self: FromFixed + ToFixed + sealed::Fixed + FixedOptionalFeatures,
+    Self: Add<Output = Self> + AddAssign + Sub<Output = Self> + SubAssign,
+    Self: Mul<Output = Self> + MulAssign + Div<Output = Self> + DivAssign,
+    Self: Mul<<Self as Fixed>::Bits, Output = Self> + MulAssign<<Self as Fixed>::Bits>,
+    Self: Div<<Self as Fixed>::Bits, Output = Self> + DivAssign<<Self as Fixed>::Bits>,
+    Self: Rem<<Self as Fixed>::Bits, Output = Self> + RemAssign<<Self as Fixed>::Bits>,
+    Self: Not<Output = Self> + BitAnd<Output = Self> + BitAndAssign,
+    Self: BitOr<Output = Self> + BitOrAssign + BitXor<Output = Self> + BitXorAssign,
+    Self: Shl<u32, Output = Self> + ShlAssign<u32> + Shr<u32, Output = Self> + ShrAssign<u32>,
     Self: PartialOrd<i8> + PartialOrd<i16> + PartialOrd<i32>,
     Self: PartialOrd<i64> + PartialOrd<i128> + PartialOrd<isize>,
     Self: PartialOrd<u8> + PartialOrd<u16> + PartialOrd<u32>,
     Self: PartialOrd<u64> + PartialOrd<u128> + PartialOrd<usize>,
     Self: PartialOrd<f32> + PartialOrd<f64>,
-    Self: FixedOptionalFeatures,
 {
     /// The primitive integer underlying type.
     type Bits;
@@ -363,15 +366,6 @@ where
     /// Shifts to the right by *n* bits, wrapping the truncated bits to the left end.
     fn rotate_right(self, n: u32) -> Self;
 
-    /// Multiplication by an integer.
-    fn mul_int(self, rhs: Self::Bits) -> Self;
-
-    /// Division by an integer.
-    fn div_int(self, rhs: Self::Bits) -> Self;
-
-    /// Remainder for division by an integer.
-    fn rem_int(self, rhs: Self::Bits) -> Self;
-
     /// Checked negation. Returns the negated value, or [`None`] on overflow.
     ///
     /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
@@ -613,6 +607,27 @@ where
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
     fn overflowing_shr(self, rhs: u32) -> (Self, bool);
+
+    /// Multiplication by an integer.
+    #[deprecated(since = "0.4.1", note = "use `Mul<Self::Bits>` trait instead")]
+    #[inline]
+    fn mul_int(self, rhs: Self::Bits) -> Self {
+        self * rhs
+    }
+
+    /// Division by an integer.
+    #[deprecated(since = "0.4.1", note = "use `Div<Self::Bits>` trait instead")]
+    #[inline]
+    fn div_int(self, rhs: Self::Bits) -> Self {
+        self / rhs
+    }
+
+    /// Remainder for division by an integer.
+    #[deprecated(since = "0.4.1", note = "use `Rem<Self::Bits>` trait instead")]
+    #[inline]
+    fn rem_int(self, rhs: Self::Bits) -> Self {
+        self % rhs
+    }
 }
 
 /// This trait provides common methods to all signed fixed-point numbers.
@@ -1144,18 +1159,6 @@ macro_rules! impl_fixed {
             trait_delegate! { fn trailing_zeros(self) -> u32 }
             trait_delegate! { fn rotate_left(self, n: u32) -> Self }
             trait_delegate! { fn rotate_right(self, n: u32) -> Self }
-            #[inline]
-            fn mul_int(self, rhs: Self::Bits) -> Self {
-                self * rhs
-            }
-            #[inline]
-            fn div_int(self, rhs: Self::Bits) -> Self {
-                self / rhs
-            }
-            #[inline]
-            fn rem_int(self, rhs: Self::Bits) -> Self {
-                self % rhs
-            }
             trait_delegate! { fn checked_neg(self) -> Option<Self> }
             trait_delegate! { fn checked_add(self, rhs: Self) -> Option<Self> }
             trait_delegate! { fn checked_sub(self, rhs: Self) -> Option<Self> }

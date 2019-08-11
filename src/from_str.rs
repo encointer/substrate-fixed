@@ -511,22 +511,19 @@ macro_rules! impl_from_str_unsigned {
             if $int_half_cond && nbits <= HALF {
                 return $int_half(int, radix, nbits, whole_frac).map(|x| $Bits::from(x) << HALF);
             }
-            let mut int = int;
-            while int.starts_with('0') {
-                int = &int[1..];
-            }
+            let int = int.trim_start_matches(|x| x == '0');
             if int.is_empty() && !whole_frac {
                 return Some(0);
             } else if int.is_empty() || nbits == 0 {
                 return None;
             }
             let mut parsed_int = match radix {
-                2 => bin_str_int_to_bin(int),
-                8 => oct_str_int_to_bin(int),
-                16 => hex_str_int_to_bin(int),
-                10 => int.parse::<$Bits>().ok(),
+                2 => bin_str_int_to_bin(int)?,
+                8 => oct_str_int_to_bin(int)?,
+                16 => hex_str_int_to_bin(int)?,
+                10 => int.parse::<$Bits>().ok()?,
                 _ => unreachable!(),
-            }?;
+            };
             if whole_frac {
                 parsed_int = parsed_int.checked_add(1)?;
             }

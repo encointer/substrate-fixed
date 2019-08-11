@@ -14,8 +14,9 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
-    frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
+    frac::Unsigned,
     sealed::{Fixed, SealedFloat, SealedInt},
+    types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
@@ -94,11 +95,8 @@ pub trait SealedFixed: Copy {
 }
 
 macro_rules! sealed_fixed {
-    ($Fixed:ident($Bits:ty, $Len:ty, $Signedness:tt)) => {
-        impl<Frac> SealedFixed for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
-        {
+    ($Fixed:ident($Bits:ty, $LenEqU:ident, $Signedness:tt)) => {
+        impl<Frac: $LenEqU> SealedFixed for $Fixed<Frac> {
             type FracNBits = Frac;
             type SBits = $Bits;
             type Traits = $Fixed<Frac>;
@@ -304,13 +302,13 @@ macro_rules! sealed_fixed {
     };
 }
 
-sealed_fixed! { FixedI8(i8, U8, Signed) }
-sealed_fixed! { FixedI16(i16, U16, Signed) }
-sealed_fixed! { FixedI32(i32, U32, Signed) }
-sealed_fixed! { FixedI64(i64, U64, Signed) }
-sealed_fixed! { FixedI128(i128, U128, Signed) }
-sealed_fixed! { FixedU8(u8, U8, Unsigned) }
-sealed_fixed! { FixedU16(u16, U16, Unsigned) }
-sealed_fixed! { FixedU32(u32, U32, Unsigned) }
-sealed_fixed! { FixedU64(u64, U64, Unsigned) }
-sealed_fixed! { FixedU128(u128, U128, Unsigned) }
+sealed_fixed! { FixedI8(i8, LeEqU8, Signed) }
+sealed_fixed! { FixedI16(i16, LeEqU16, Signed) }
+sealed_fixed! { FixedI32(i32, LeEqU32, Signed) }
+sealed_fixed! { FixedI64(i64, LeEqU64, Signed) }
+sealed_fixed! { FixedI128(i128, LeEqU128, Signed) }
+sealed_fixed! { FixedU8(u8, LeEqU8, Unsigned) }
+sealed_fixed! { FixedU16(u16, LeEqU16, Unsigned) }
+sealed_fixed! { FixedU32(u32, LeEqU32, Unsigned) }
+sealed_fixed! { FixedU64(u64, LeEqU64, Unsigned) }
+sealed_fixed! { FixedU128(u128, LeEqU128, Unsigned) }

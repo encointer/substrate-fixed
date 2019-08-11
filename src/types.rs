@@ -19,8 +19,9 @@ numbers.
 */
 
 use crate::{
-    frac, FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32,
-    FixedU64, FixedU8,
+    frac::{self, IsLessOrEqual, True, Unsigned},
+    FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
+    FixedU8,
 };
 
 /*
@@ -64,6 +65,17 @@ fn main() {
                 );
             }
         }
+    }
+    println!();
+    for &prim_bits in &[8, 16, 32, 64, 128] {
+        let name = format!("LeEqU{}", prim_bits);
+        let bound = format!("Unsigned + IsLessOrEqual<frac::U{}, Output = True>", prim_bits);
+        println!(
+            "/// Implemented for all [`Unsigned`](../frac/trait.Unsigned.html) integers ≤ {}.",
+            prim_bits
+        );
+        println!("pub trait {}: {} {{}}", name, bound);
+        println!("impl<T: {}> {} for T {{}}", bound, name);
     }
 }
 ```
@@ -1081,3 +1093,19 @@ pub type U2F126 = FixedU128<frac::U126>;
 pub type U1F127 = FixedU128<frac::U127>;
 /// [`FixedU128`](../struct.FixedU128.html) with no integer bits and 128 fractional bits.
 pub type U0F128 = FixedU128<frac::U128>;
+
+/// Implemented for all [`Unsigned`](../frac/trait.Unsigned.html) integers ≤ 8.
+pub trait LeEqU8: Unsigned + IsLessOrEqual<frac::U8, Output = True> {}
+impl<T: Unsigned + IsLessOrEqual<frac::U8, Output = True>> LeEqU8 for T {}
+/// Implemented for all [`Unsigned`](../frac/trait.Unsigned.html) integers ≤ 16.
+pub trait LeEqU16: Unsigned + IsLessOrEqual<frac::U16, Output = True> {}
+impl<T: Unsigned + IsLessOrEqual<frac::U16, Output = True>> LeEqU16 for T {}
+/// Implemented for all [`Unsigned`](../frac/trait.Unsigned.html) integers ≤ 32.
+pub trait LeEqU32: Unsigned + IsLessOrEqual<frac::U32, Output = True> {}
+impl<T: Unsigned + IsLessOrEqual<frac::U32, Output = True>> LeEqU32 for T {}
+/// Implemented for all [`Unsigned`](../frac/trait.Unsigned.html) integers ≤ 64.
+pub trait LeEqU64: Unsigned + IsLessOrEqual<frac::U64, Output = True> {}
+impl<T: Unsigned + IsLessOrEqual<frac::U64, Output = True>> LeEqU64 for T {}
+/// Implemented for all [`Unsigned`](../frac/trait.Unsigned.html) integers ≤ 128.
+pub trait LeEqU128: Unsigned + IsLessOrEqual<frac::U128, Output = True> {}
+impl<T: Unsigned + IsLessOrEqual<frac::U128, Output = True>> LeEqU128 for T {}

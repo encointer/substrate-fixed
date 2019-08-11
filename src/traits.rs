@@ -18,8 +18,8 @@ This module contains traits.
 */
 
 use crate::{
-    frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
     sealed::{self, Float, Int, SealedFixed, SealedFloat, SealedInt},
+    types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8, ParseFixedError,
 };
@@ -1095,18 +1095,10 @@ macro_rules! trait_delegate {
 }
 
 macro_rules! impl_fixed {
-    ($Fixed:ident, $NBits:ident, $Bits:ident) => {
-        impl<Frac> FixedOptionalFeatures for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
-            // this comment to work around rustfmt bug
-        }
+    ($Fixed:ident, $LeEqU:ident, $Bits:ident) => {
+        impl<Frac: $LeEqU> FixedOptionalFeatures for $Fixed<Frac> {}
 
-        impl<Frac> Fixed for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
+        impl<Frac: $LeEqU> Fixed for $Fixed<Frac> {
             type Bits = $Bits;
             trait_delegate! { fn min_value() -> Self }
             trait_delegate! { fn max_value() -> Self }
@@ -1197,10 +1189,7 @@ macro_rules! impl_fixed {
             trait_delegate! { fn overflowing_shr(self, rhs: u32) -> (Self, bool) }
         }
 
-        impl<Frac> FromFixed for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
+        impl<Frac: $LeEqU> FromFixed for $Fixed<Frac> {
             #[inline]
             fn from_fixed<F: sealed::Fixed>(val: F) -> Self {
                 SealedFixed::from_fixed(val)
@@ -1223,10 +1212,7 @@ macro_rules! impl_fixed {
             }
         }
 
-        impl<Frac> ToFixed for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
+        impl<Frac: $LeEqU> ToFixed for $Fixed<Frac> {
             #[inline]
             fn to_fixed<F: sealed::Fixed>(self) -> F {
                 SealedFixed::from_fixed(self)
@@ -1252,13 +1238,10 @@ macro_rules! impl_fixed {
 }
 
 macro_rules! impl_fixed_signed {
-    ($Fixed:ident, $NBits:ident, $Bits:ident) => {
-        impl_fixed! { $Fixed, $NBits, $Bits }
+    ($Fixed:ident, $LeEqU:ident, $Bits:ident) => {
+        impl_fixed! { $Fixed, $LeEqU, $Bits }
 
-        impl<Frac> FixedSigned for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
+        impl<Frac: $LeEqU> FixedSigned for $Fixed<Frac> {
             trait_delegate! { fn abs(self) -> Self }
             trait_delegate! { fn signum(self) -> Self }
             trait_delegate! { fn checked_abs(self) -> Option<Self> }
@@ -1272,13 +1255,10 @@ macro_rules! impl_fixed_signed {
 }
 
 macro_rules! impl_fixed_unsigned {
-    ($Fixed:ident, $NBits:ident, $Bits:ident) => {
-        impl_fixed! { $Fixed, $NBits, $Bits }
+    ($Fixed:ident, $LeEqU:ident, $Bits:ident) => {
+        impl_fixed! { $Fixed, $LeEqU, $Bits }
 
-        impl<Frac> FixedUnsigned for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
+        impl<Frac: $LeEqU> FixedUnsigned for $Fixed<Frac> {
             trait_delegate! { fn is_power_of_two(self) -> bool }
             trait_delegate! { fn next_power_of_two(self) -> Self }
             trait_delegate! { fn checked_next_power_of_two(self) -> Option<Self> }
@@ -1286,13 +1266,13 @@ macro_rules! impl_fixed_unsigned {
     };
 }
 
-impl_fixed_signed! { FixedI8, U8, i8 }
-impl_fixed_signed! { FixedI16, U16, i16 }
-impl_fixed_signed! { FixedI32, U32, i32 }
-impl_fixed_signed! { FixedI64, U64, i64 }
-impl_fixed_signed! { FixedI128, U128, i128 }
-impl_fixed_unsigned! { FixedU8, U8, u8 }
-impl_fixed_unsigned! { FixedU16, U16, u16 }
-impl_fixed_unsigned! { FixedU32, U32, u32 }
-impl_fixed_unsigned! { FixedU64, U64, u64 }
-impl_fixed_unsigned! { FixedU128, U128, u128 }
+impl_fixed_signed! { FixedI8, LeEqU8, i8 }
+impl_fixed_signed! { FixedI16, LeEqU16, i16 }
+impl_fixed_signed! { FixedI32, LeEqU32, i32 }
+impl_fixed_signed! { FixedI64, LeEqU64, i64 }
+impl_fixed_signed! { FixedI128, LeEqU128, i128 }
+impl_fixed_unsigned! { FixedU8, LeEqU8, u8 }
+impl_fixed_unsigned! { FixedU16, LeEqU16, u16 }
+impl_fixed_unsigned! { FixedU32, LeEqU32, u32 }
+impl_fixed_unsigned! { FixedU64, LeEqU64, u64 }
+impl_fixed_unsigned! { FixedU128, LeEqU128, u128 }

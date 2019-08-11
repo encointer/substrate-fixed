@@ -14,8 +14,8 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
-    frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
     sealed::{SealedFixed, SealedInt},
+    types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
@@ -151,65 +151,55 @@ where
 }
 
 macro_rules! impl_fmt {
-    ($($Fixed:ident($Len:ty))*) => { $(
-        impl<Frac> Display for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
-        {
+    ($Fixed:ident($LeEqU:ident)) => {
+        impl<Frac: $LeEqU> Display for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
                 fmt_dec(*self, f)
             }
         }
 
-        impl<Frac> Debug for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
-        {
+        impl<Frac: $LeEqU> Debug for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
                 fmt_dec(*self, f)
             }
         }
 
-        impl<Frac> Binary for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
-        {
+        impl<Frac: $LeEqU> Binary for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
                 fmt_radix2(*self, &Bin, f)
             }
         }
 
-        impl<Frac> Octal for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
-        {
+        impl<Frac: $LeEqU> Octal for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
                 fmt_radix2(*self, &Oct, f)
             }
         }
 
-        impl<Frac> LowerHex for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
-        {
+        impl<Frac: $LeEqU> LowerHex for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
                 fmt_radix2(*self, &LowHex, f)
             }
         }
 
-        impl<Frac> UpperHex for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
-        {
+        impl<Frac: $LeEqU> UpperHex for $Fixed<Frac> {
             fn fmt(&self, f: &mut Formatter) -> FmtResult {
                 fmt_radix2(*self, &UpHex, f)
             }
         }
-    )* };
+    };
 }
 
-impl_fmt! { FixedU8(U8) FixedU16(U16) FixedU32(U32) FixedU64(U64) FixedU128(U128) }
-impl_fmt! { FixedI8(U8) FixedI16(U16) FixedI32(U32) FixedI64(U64) FixedI128(U128) }
+impl_fmt! { FixedU8(LeEqU8) }
+impl_fmt! { FixedU16(LeEqU16) }
+impl_fmt! { FixedU32(LeEqU32) }
+impl_fmt! { FixedU64(LeEqU64) }
+impl_fmt! { FixedU128(LeEqU128) }
+impl_fmt! { FixedI8(LeEqU8) }
+impl_fmt! { FixedI16(LeEqU16) }
+impl_fmt! { FixedI32(LeEqU32) }
+impl_fmt! { FixedI64(LeEqU64) }
+impl_fmt! { FixedI128(LeEqU128) }
 
 fn dec_int_digits(int_bits: u32) -> u32 {
     assert!(int_bits < 299);

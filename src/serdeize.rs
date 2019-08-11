@@ -14,7 +14,7 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
-    frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
+    types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
@@ -25,11 +25,8 @@ use serde::{
 };
 
 macro_rules! serde_fixed {
-    ($Fixed:ident($NBits:ident) is $TBits:ident name $Name:expr) => {
-        impl<Frac> Serialize for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
+    ($Fixed:ident($LeEqU:ident) is $TBits:ident name $Name:expr) => {
+        impl<Frac: $LeEqU> Serialize for $Fixed<Frac> {
             fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
                 let bits = self.to_bits();
                 let mut state = serializer.serialize_struct($Name, 1)?;
@@ -38,10 +35,7 @@ macro_rules! serde_fixed {
             }
         }
 
-        impl<'de, Frac> Deserialize<'de> for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
+        impl<'de, Frac: $LeEqU> Deserialize<'de> for $Fixed<Frac> {
             fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
                 struct FixedVisitor;
 
@@ -84,16 +78,16 @@ macro_rules! serde_fixed {
     };
 }
 
-serde_fixed! { FixedI8(U8) is i8 name "FixedI8" }
-serde_fixed! { FixedI16(U16) is i16 name "FixedI16" }
-serde_fixed! { FixedI32(U32) is i32 name "FixedI32" }
-serde_fixed! { FixedI64(U64) is i64 name "FixedI64" }
-serde_fixed! { FixedI128(U128) is i128 name "FixedI128" }
-serde_fixed! { FixedU8(U8) is u8 name "FixedU8" }
-serde_fixed! { FixedU16(U16) is u16 name "FixedU16" }
-serde_fixed! { FixedU32(U32) is u32 name "FixedU32" }
-serde_fixed! { FixedU64(U64) is u64 name "FixedU64" }
-serde_fixed! { FixedU128(U128) is u128 name "FixedU128" }
+serde_fixed! { FixedI8(LeEqU8) is i8 name "FixedI8" }
+serde_fixed! { FixedI16(LeEqU16) is i16 name "FixedI16" }
+serde_fixed! { FixedI32(LeEqU32) is i32 name "FixedI32" }
+serde_fixed! { FixedI64(LeEqU64) is i64 name "FixedI64" }
+serde_fixed! { FixedI128(LeEqU128) is i128 name "FixedI128" }
+serde_fixed! { FixedU8(LeEqU8) is u8 name "FixedU8" }
+serde_fixed! { FixedU16(LeEqU16) is u16 name "FixedU16" }
+serde_fixed! { FixedU32(LeEqU32) is u32 name "FixedU32" }
+serde_fixed! { FixedU64(LeEqU64) is u64 name "FixedU64" }
+serde_fixed! { FixedU128(LeEqU128) is u128 name "FixedU128" }
 
 const FIELDS: &[&str] = &["bits"];
 

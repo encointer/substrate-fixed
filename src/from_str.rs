@@ -14,8 +14,9 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
-    frac::{False, IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
+    frac::False,
     sealed::SealedInt,
+    types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     wide_div::WideDivRem,
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
@@ -419,21 +420,15 @@ pub(crate) trait FromStrRadix: Sized {
 }
 
 macro_rules! impl_from_str {
-    ($Fixed:ident, $NBits:ident, $method:ident) => {
-        impl<Frac> FromStr for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
+    ($Fixed:ident, $LeEqU:ident, $method:ident) => {
+        impl<Frac: $LeEqU> FromStr for $Fixed<Frac> {
             type Err = ParseFixedError;
             #[inline]
             fn from_str(s: &str) -> Result<Self, Self::Err> {
                 $method(s, 10, Self::int_nbits(), Self::frac_nbits()).map(Self::from_bits)
             }
         }
-        impl<Frac> FromStrRadix for $Fixed<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
+        impl<Frac: $LeEqU> FromStrRadix for $Fixed<Frac> {
             type Err = ParseFixedError;
             #[inline]
             fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::Err> {
@@ -445,12 +440,12 @@ macro_rules! impl_from_str {
 
 macro_rules! impl_from_str_signed {
     (
-        $Fixed:ident, $NBits:ident, $Bits:ident;
+        $Fixed:ident, $LeEqU:ident, $Bits:ident;
         fn $all:ident;
         $int:ident;
         $frac:ident;
     ) => {
-        impl_from_str! { $Fixed, $NBits, $all }
+        impl_from_str! { $Fixed, $LeEqU, $all }
 
         fn $all(
             s: &str,
@@ -486,12 +481,12 @@ macro_rules! impl_from_str_signed {
 
 macro_rules! impl_from_str_unsigned {
     (
-        $Fixed:ident, $NBits:ident, $Bits:ident;
+        $Fixed:ident, $LeEqU:ident, $Bits:ident;
         fn $all:ident;
         fn $int:ident, ($int_half:ident, $int_half_cond:expr);
         $frac:ident;
     ) => {
-        impl_from_str! { $Fixed, $NBits, $all }
+        impl_from_str! { $Fixed, $LeEqU, $all }
 
         fn $all(
             s: &str,
@@ -547,14 +542,14 @@ macro_rules! impl_from_str_unsigned {
 
 macro_rules! impl_from_str_unsigned_not128 {
     (
-        $Fixed:ident, $NBits:ident, $Bits:ident;
+        $Fixed:ident, $LeEqU:ident, $Bits:ident;
         fn $all:ident;
         fn $int:ident, ($int_half:ident, $int_half_cond:expr);
         fn $frac:ident, ($frac_half:ident, $frac_half_cond:expr);
         $decode_frac:ident, $dec_frac_digits:expr, $DoubleBits:ident;
     ) => {
         impl_from_str_unsigned! {
-            $Fixed, $NBits, $Bits;
+            $Fixed, $LeEqU, $Bits;
             fn $all;
             fn $int, ($int_half, $int_half_cond);
             $frac;
@@ -586,13 +581,13 @@ macro_rules! impl_from_str_unsigned_not128 {
 }
 
 impl_from_str_signed! {
-    FixedI8, U8, i8;
+    FixedI8, LeEqU8, i8;
     fn from_str_i8;
     get_int8;
     get_frac8;
 }
 impl_from_str_unsigned_not128! {
-    FixedU8, U8, u8;
+    FixedU8, LeEqU8, u8;
     fn from_str_u8;
     fn get_int8, (get_int8, false);
     fn get_frac8, (get_frac8, false);
@@ -600,13 +595,13 @@ impl_from_str_unsigned_not128! {
 }
 
 impl_from_str_signed! {
-    FixedI16, U16, i16;
+    FixedI16, LeEqU16, i16;
     fn from_str_i16;
     get_int16;
     get_frac16;
 }
 impl_from_str_unsigned_not128! {
-    FixedU16, U16, u16;
+    FixedU16, LeEqU16, u16;
     fn from_str_u16;
     fn get_int16, (get_int8, true);
     fn get_frac16, (get_frac8, true);
@@ -614,13 +609,13 @@ impl_from_str_unsigned_not128! {
 }
 
 impl_from_str_signed! {
-    FixedI32, U32, i32;
+    FixedI32, LeEqU32, i32;
     fn from_str_i32;
     get_int32;
     get_frac32;
 }
 impl_from_str_unsigned_not128! {
-    FixedU32, U32, u32;
+    FixedU32, LeEqU32, u32;
     fn from_str_u32;
     fn get_int32, (get_int16, true);
     fn get_frac32, (get_frac16, true);
@@ -628,13 +623,13 @@ impl_from_str_unsigned_not128! {
 }
 
 impl_from_str_signed! {
-    FixedI64, U64, i64;
+    FixedI64, LeEqU64, i64;
     fn from_str_i64;
     get_int64;
     get_frac64;
 }
 impl_from_str_unsigned_not128! {
-    FixedU64, U64, u64;
+    FixedU64, LeEqU64, u64;
     fn from_str_u64;
     fn get_int64, (get_int32, true);
     fn get_frac64, (get_frac32, true);
@@ -642,13 +637,13 @@ impl_from_str_unsigned_not128! {
 }
 
 impl_from_str_signed! {
-    FixedI128, U128, i128;
+    FixedI128, LeEqU128, i128;
     fn from_str_i128;
     get_int128;
     get_frac128;
 }
 impl_from_str_unsigned! {
-    FixedU128, U128, u128;
+    FixedU128, LeEqU128, u128;
     fn from_str_u128;
     fn get_int128, (get_int64, true);
     get_frac128;

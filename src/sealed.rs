@@ -17,15 +17,15 @@
 This module contains sealed traits.
 */
 
-use crate::{
-    frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
-    FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
-    FixedU8,
-};
 pub(crate) use crate::{
     sealed_fixed::{SealedFixed, Widest},
     sealed_float::SealedFloat,
     sealed_int::SealedInt,
+};
+use crate::{
+    types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
+    FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
+    FixedU8,
 };
 #[cfg(feature = "f16")]
 use half::f16;
@@ -101,13 +101,13 @@ impl Float for f16 {}
 impl Float for f32 {}
 impl Float for f64 {}
 
-impl<Frac> Fixed for FixedI8<Frac> where Frac: Unsigned + IsLessOrEqual<U8, Output = True> {}
-impl<Frac> Fixed for FixedI16<Frac> where Frac: Unsigned + IsLessOrEqual<U16, Output = True> {}
-impl<Frac> Fixed for FixedI32<Frac> where Frac: Unsigned + IsLessOrEqual<U32, Output = True> {}
-impl<Frac> Fixed for FixedI64<Frac> where Frac: Unsigned + IsLessOrEqual<U64, Output = True> {}
-impl<Frac> Fixed for FixedI128<Frac> where Frac: Unsigned + IsLessOrEqual<U128, Output = True> {}
-impl<Frac> Fixed for FixedU8<Frac> where Frac: Unsigned + IsLessOrEqual<U8, Output = True> {}
-impl<Frac> Fixed for FixedU16<Frac> where Frac: Unsigned + IsLessOrEqual<U16, Output = True> {}
-impl<Frac> Fixed for FixedU32<Frac> where Frac: Unsigned + IsLessOrEqual<U32, Output = True> {}
-impl<Frac> Fixed for FixedU64<Frac> where Frac: Unsigned + IsLessOrEqual<U64, Output = True> {}
-impl<Frac> Fixed for FixedU128<Frac> where Frac: Unsigned + IsLessOrEqual<U128, Output = True> {}
+impl<Frac: LeEqU8> Fixed for FixedI8<Frac> {}
+impl<Frac: LeEqU16> Fixed for FixedI16<Frac> {}
+impl<Frac: LeEqU32> Fixed for FixedI32<Frac> {}
+impl<Frac: LeEqU64> Fixed for FixedI64<Frac> {}
+impl<Frac: LeEqU128> Fixed for FixedI128<Frac> {}
+impl<Frac: LeEqU8> Fixed for FixedU8<Frac> {}
+impl<Frac: LeEqU16> Fixed for FixedU16<Frac> {}
+impl<Frac: LeEqU32> Fixed for FixedU32<Frac> {}
+impl<Frac: LeEqU64> Fixed for FixedU64<Frac> {}
+impl<Frac: LeEqU128> Fixed for FixedU128<Frac> {}

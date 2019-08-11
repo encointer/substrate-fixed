@@ -14,9 +14,9 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
-    frac::{IsLessOrEqual, True, Unsigned, U128, U16, U32, U64, U8},
     sealed::{SealedFixed, SealedFloat, SealedInt, Widest},
     traits::Fixed,
+    types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
@@ -25,12 +25,8 @@ use core::cmp::Ordering;
 use half::f16;
 
 macro_rules! fixed_cmp_fixed {
-    ($Lhs:ident($LhsNBits:ident), $Rhs:ident($RhsNBits:ident)) => {
-        impl<FracLhs, FracRhs> PartialEq<$Rhs<FracRhs>> for $Lhs<FracLhs>
-        where
-            FracLhs: Unsigned + IsLessOrEqual<$LhsNBits, Output = True>,
-            FracRhs: Unsigned + IsLessOrEqual<$RhsNBits, Output = True>,
-        {
+    ($Lhs:ident($LhsLeEqU:ident), $Rhs:ident($RhsLeEqU:ident)) => {
+        impl<FracLhs: $LhsLeEqU, FracRhs: $RhsLeEqU> PartialEq<$Rhs<FracRhs>> for $Lhs<FracLhs> {
             #[inline]
             fn eq(&self, rhs: &$Rhs<FracRhs>) -> bool {
                 let (rhs_128, dir, overflow) = rhs.to_bits().to_fixed_dir_overflow(
@@ -46,11 +42,7 @@ macro_rules! fixed_cmp_fixed {
             }
         }
 
-        impl<FracLhs, FracRhs> PartialOrd<$Rhs<FracRhs>> for $Lhs<FracLhs>
-        where
-            FracLhs: Unsigned + IsLessOrEqual<$LhsNBits, Output = True>,
-            FracRhs: Unsigned + IsLessOrEqual<$RhsNBits, Output = True>,
-        {
+        impl<FracLhs: $LhsLeEqU, FracRhs: $RhsLeEqU> PartialOrd<$Rhs<FracRhs>> for $Lhs<FracLhs> {
             #[inline]
             fn partial_cmp(&self, rhs: &$Rhs<FracRhs>) -> Option<Ordering> {
                 match (self.to_bits().is_negative(), rhs.to_bits().is_negative()) {
@@ -118,31 +110,22 @@ macro_rules! fixed_cmp_fixed {
 }
 
 macro_rules! fixed_cmp_int {
-    ($Fix:ident($NBits:ident), $Int:ident) => {
-        impl<Frac> PartialEq<$Int> for $Fix<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
+    ($Fix:ident($LeEqU:ident), $Int:ident) => {
+        impl<Frac: $LeEqU> PartialEq<$Int> for $Fix<Frac> {
             #[inline]
             fn eq(&self, rhs: &$Int) -> bool {
                 self.eq(&rhs.to_repr_fixed())
             }
         }
 
-        impl<Frac> PartialEq<$Fix<Frac>> for $Int
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
+        impl<Frac: $LeEqU> PartialEq<$Fix<Frac>> for $Int {
             #[inline]
             fn eq(&self, rhs: &$Fix<Frac>) -> bool {
                 self.to_repr_fixed().eq(rhs)
             }
         }
 
-        impl<Frac> PartialOrd<$Int> for $Fix<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
+        impl<Frac: $LeEqU> PartialOrd<$Int> for $Fix<Frac> {
             #[inline]
             fn partial_cmp(&self, rhs: &$Int) -> Option<Ordering> {
                 self.partial_cmp(&rhs.to_repr_fixed())
@@ -169,10 +152,7 @@ macro_rules! fixed_cmp_int {
             }
         }
 
-        impl<Frac> PartialOrd<$Fix<Frac>> for $Int
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
+        impl<Frac: $LeEqU> PartialOrd<$Fix<Frac>> for $Int {
             #[inline]
             fn partial_cmp(&self, rhs: &$Fix<Frac>) -> Option<Ordering> {
                 self.to_repr_fixed().partial_cmp(rhs)
@@ -202,11 +182,8 @@ macro_rules! fixed_cmp_int {
 }
 
 macro_rules! fixed_cmp_float {
-    ($Fix:ident($NBits:ident), $Float:ident) => {
-        impl<Frac> PartialEq<$Float> for $Fix<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
+    ($Fix:ident($LeEqU:ident), $Float:ident) => {
+        impl<Frac: $LeEqU> PartialEq<$Float> for $Fix<Frac> {
             #[inline]
             fn eq(&self, rhs: &$Float) -> bool {
                 if !SealedFloat::is_finite(*rhs) {
@@ -222,20 +199,14 @@ macro_rules! fixed_cmp_float {
             }
         }
 
-        impl<Frac> PartialEq<$Fix<Frac>> for $Float
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
+        impl<Frac: $LeEqU> PartialEq<$Fix<Frac>> for $Float {
             #[inline]
             fn eq(&self, rhs: &$Fix<Frac>) -> bool {
                 rhs.eq(self)
             }
         }
 
-        impl<Frac> PartialOrd<$Float> for $Fix<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
+        impl<Frac: $LeEqU> PartialOrd<$Float> for $Fix<Frac> {
             #[inline]
             fn partial_cmp(&self, rhs: &$Float) -> Option<Ordering> {
                 if SealedFloat::is_nan(*rhs) {
@@ -313,10 +284,7 @@ macro_rules! fixed_cmp_float {
             }
         }
 
-        impl<Frac> PartialOrd<$Fix<Frac>> for $Float
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
+        impl<Frac: $LeEqU> PartialOrd<$Fix<Frac>> for $Float {
             #[inline]
             fn partial_cmp(&self, rhs: &$Fix<Frac>) -> Option<Ordering> {
                 rhs.partial_cmp(self).map(Ordering::reverse)
@@ -368,73 +336,70 @@ macro_rules! fixed_cmp_float {
 }
 
 macro_rules! fixed_cmp_all {
-    ($Fix:ident($NBits:ident)) => {
-        impl<Frac> Eq for $Fix<Frac> where Frac: Unsigned + IsLessOrEqual<$NBits, Output = True> {}
+    ($Fix:ident($LeEqU:ident)) => {
+        impl<Frac: $LeEqU> Eq for $Fix<Frac> {}
 
-        impl<Frac> Ord for $Fix<Frac>
-        where
-            Frac: Unsigned + IsLessOrEqual<$NBits, Output = True>,
-        {
+        impl<Frac: $LeEqU> Ord for $Fix<Frac> {
             #[inline]
             fn cmp(&self, rhs: &$Fix<Frac>) -> Ordering {
                 self.to_bits().cmp(&rhs.to_bits())
             }
         }
 
-        fixed_cmp_fixed! { $Fix($NBits), FixedI8(U8) }
-        fixed_cmp_fixed! { $Fix($NBits), FixedI16(U16) }
-        fixed_cmp_fixed! { $Fix($NBits), FixedI32(U32) }
-        fixed_cmp_fixed! { $Fix($NBits), FixedI64(U64) }
-        fixed_cmp_fixed! { $Fix($NBits), FixedI128(U128) }
-        fixed_cmp_fixed! { $Fix($NBits), FixedU8(U8) }
-        fixed_cmp_fixed! { $Fix($NBits), FixedU16(U16) }
-        fixed_cmp_fixed! { $Fix($NBits), FixedU32(U32) }
-        fixed_cmp_fixed! { $Fix($NBits), FixedU64(U64) }
-        fixed_cmp_fixed! { $Fix($NBits), FixedU128(U128) }
-        fixed_cmp_int! { $Fix($NBits), i8 }
-        fixed_cmp_int! { $Fix($NBits), i16 }
-        fixed_cmp_int! { $Fix($NBits), i32 }
-        fixed_cmp_int! { $Fix($NBits), i64 }
-        fixed_cmp_int! { $Fix($NBits), i128 }
-        fixed_cmp_int! { $Fix($NBits), isize }
-        fixed_cmp_int! { $Fix($NBits), u8 }
-        fixed_cmp_int! { $Fix($NBits), u16 }
-        fixed_cmp_int! { $Fix($NBits), u32 }
-        fixed_cmp_int! { $Fix($NBits), u64 }
-        fixed_cmp_int! { $Fix($NBits), u128 }
-        fixed_cmp_int! { $Fix($NBits), usize }
+        fixed_cmp_fixed! { $Fix($LeEqU), FixedI8(LeEqU8) }
+        fixed_cmp_fixed! { $Fix($LeEqU), FixedI16(LeEqU16) }
+        fixed_cmp_fixed! { $Fix($LeEqU), FixedI32(LeEqU32) }
+        fixed_cmp_fixed! { $Fix($LeEqU), FixedI64(LeEqU64) }
+        fixed_cmp_fixed! { $Fix($LeEqU), FixedI128(LeEqU128) }
+        fixed_cmp_fixed! { $Fix($LeEqU), FixedU8(LeEqU8) }
+        fixed_cmp_fixed! { $Fix($LeEqU), FixedU16(LeEqU16) }
+        fixed_cmp_fixed! { $Fix($LeEqU), FixedU32(LeEqU32) }
+        fixed_cmp_fixed! { $Fix($LeEqU), FixedU64(LeEqU64) }
+        fixed_cmp_fixed! { $Fix($LeEqU), FixedU128(LeEqU128) }
+        fixed_cmp_int! { $Fix($LeEqU), i8 }
+        fixed_cmp_int! { $Fix($LeEqU), i16 }
+        fixed_cmp_int! { $Fix($LeEqU), i32 }
+        fixed_cmp_int! { $Fix($LeEqU), i64 }
+        fixed_cmp_int! { $Fix($LeEqU), i128 }
+        fixed_cmp_int! { $Fix($LeEqU), isize }
+        fixed_cmp_int! { $Fix($LeEqU), u8 }
+        fixed_cmp_int! { $Fix($LeEqU), u16 }
+        fixed_cmp_int! { $Fix($LeEqU), u32 }
+        fixed_cmp_int! { $Fix($LeEqU), u64 }
+        fixed_cmp_int! { $Fix($LeEqU), u128 }
+        fixed_cmp_int! { $Fix($LeEqU), usize }
         #[cfg(feature = "f16")]
-        fixed_cmp_float! { $Fix($NBits), f16 }
-        fixed_cmp_float! { $Fix($NBits), f32 }
-        fixed_cmp_float! { $Fix($NBits), f64 }
+        fixed_cmp_float! { $Fix($LeEqU), f16 }
+        fixed_cmp_float! { $Fix($LeEqU), f32 }
+        fixed_cmp_float! { $Fix($LeEqU), f64 }
     };
 }
 
-fixed_cmp_all! { FixedI8(U8) }
-fixed_cmp_all! { FixedI16(U16) }
-fixed_cmp_all! { FixedI32(U32) }
-fixed_cmp_all! { FixedI64(U64) }
-fixed_cmp_all! { FixedI128(U128) }
-fixed_cmp_all! { FixedU8(U8) }
-fixed_cmp_all! { FixedU16(U16) }
-fixed_cmp_all! { FixedU32(U32) }
-fixed_cmp_all! { FixedU64(U64) }
-fixed_cmp_all! { FixedU128(U128) }
+fixed_cmp_all! { FixedI8(LeEqU8) }
+fixed_cmp_all! { FixedI16(LeEqU16) }
+fixed_cmp_all! { FixedI32(LeEqU32) }
+fixed_cmp_all! { FixedI64(LeEqU64) }
+fixed_cmp_all! { FixedI128(LeEqU128) }
+fixed_cmp_all! { FixedU8(LeEqU8) }
+fixed_cmp_all! { FixedU16(LeEqU16) }
+fixed_cmp_all! { FixedU32(LeEqU32) }
+fixed_cmp_all! { FixedU64(LeEqU64) }
+fixed_cmp_all! { FixedU128(LeEqU128) }
 
 macro_rules! fixed_cmp {
     ($Fixed:ident($Inner:ty, $Len:ty, $bits_count:expr)) => {};
 }
 
-fixed_cmp! { FixedU8(u8, U8, 8) }
-fixed_cmp! { FixedU16(u16, U16, 16) }
-fixed_cmp! { FixedU32(u32, U32, 32) }
-fixed_cmp! { FixedU64(u64, U64, 64) }
-fixed_cmp! { FixedU128(u128, U128, 128) }
-fixed_cmp! { FixedI8(i8, U8, 8) }
-fixed_cmp! { FixedI16(i16, U16, 16) }
-fixed_cmp! { FixedI32(i32, U32, 32) }
-fixed_cmp! { FixedI64(i64, U64, 64) }
-fixed_cmp! { FixedI128(i128, U128, 128) }
+fixed_cmp! { FixedU8(u8, LeEqU8, 8) }
+fixed_cmp! { FixedU16(u16, LeEqU16, 16) }
+fixed_cmp! { FixedU32(u32, LeEqU32, 32) }
+fixed_cmp! { FixedU64(u64, LeEqU64, 64) }
+fixed_cmp! { FixedU128(u128, LeEqU128, 128) }
+fixed_cmp! { FixedI8(i8, LeEqU8, 8) }
+fixed_cmp! { FixedI16(i16, LeEqU16, 16) }
+fixed_cmp! { FixedI32(i32, LeEqU32, 32) }
+fixed_cmp! { FixedI64(i64, LeEqU64, 64) }
+fixed_cmp! { FixedI128(i128, LeEqU128, 128) }
 
 #[cfg(test)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::float_cmp))]

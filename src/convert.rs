@@ -17,6 +17,7 @@ use crate::{
     frac::{IsGreaterOrEqual, IsLessOrEqual, True, Unsigned, U0, U1, U128, U16, U2, U32, U64, U8},
     sealed::SealedInt,
     traits::{FromFixed, LossyFrom},
+    types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
@@ -474,11 +475,8 @@ fixed_to_int_lossy! { FixedU64, FixedI64, U64 }
 fixed_to_int_lossy! { FixedU128, FixedI128, U128 }
 
 macro_rules! fixed_to_float {
-    ($Fixed:ident($Len:ty) -> $Float:ident) => {
-        impl<Frac> From<$Fixed<Frac>> for $Float
-        where
-            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
-        {
+    ($Fixed:ident($LeEqU:ident) -> $Float:ident) => {
+        impl<Frac: $LeEqU> From<$Fixed<Frac>> for $Float {
             #[inline]
             fn from(src: $Fixed<Frac>) -> $Float {
                 src.to_float()
@@ -488,50 +486,47 @@ macro_rules! fixed_to_float {
 }
 
 #[cfg(feature = "f16")]
-fixed_to_float! { FixedI8(U8) -> f16 }
+fixed_to_float! { FixedI8(LeEqU8) -> f16 }
 #[cfg(feature = "f16")]
-fixed_to_float! { FixedU8(U8) -> f16 }
-fixed_to_float! { FixedI8(U8) -> f32 }
-fixed_to_float! { FixedI16(U16) -> f32 }
-fixed_to_float! { FixedU8(U8) -> f32 }
-fixed_to_float! { FixedU16(U16) -> f32 }
-fixed_to_float! { FixedI8(U8) -> f64 }
-fixed_to_float! { FixedI16(U16) -> f64 }
-fixed_to_float! { FixedI32(U32) -> f64 }
-fixed_to_float! { FixedU8(U8) -> f64 }
-fixed_to_float! { FixedU16(U16) -> f64 }
-fixed_to_float! { FixedU32(U32) -> f64 }
+fixed_to_float! { FixedU8(LeEqU8) -> f16 }
+fixed_to_float! { FixedI8(LeEqU8) -> f32 }
+fixed_to_float! { FixedI16(LeEqU16) -> f32 }
+fixed_to_float! { FixedU8(LeEqU8) -> f32 }
+fixed_to_float! { FixedU16(LeEqU16) -> f32 }
+fixed_to_float! { FixedI8(LeEqU8) -> f64 }
+fixed_to_float! { FixedI16(LeEqU16) -> f64 }
+fixed_to_float! { FixedI32(LeEqU32) -> f64 }
+fixed_to_float! { FixedU8(LeEqU8) -> f64 }
+fixed_to_float! { FixedU16(LeEqU16) -> f64 }
+fixed_to_float! { FixedU32(LeEqU32) -> f64 }
 
 macro_rules! fixed_to_float_lossy {
-    ($Fixed:ident($Len:ty) -> $Float:ident) => {
-        impl<Frac> LossyFrom<$Fixed<Frac>> for $Float
-        where
-            Frac: Unsigned + IsLessOrEqual<$Len, Output = True>,
-        {
+    ($Fixed:ident($LeEqU:ident) -> $Float:ident) => {
+        impl<Frac: $LeEqU> LossyFrom<$Fixed<Frac>> for $Float {
             #[inline]
             fn lossy_from(src: $Fixed<Frac>) -> $Float {
                 src.to_float()
             }
         }
     };
-    ($Fixed:ident($Len:ty)) => {
+    ($Fixed:ident($LeEqU:ident)) => {
         #[cfg(feature = "f16")]
-        fixed_to_float_lossy! { $Fixed($Len) -> f16 }
-        fixed_to_float_lossy! { $Fixed($Len) -> f32 }
-        fixed_to_float_lossy! { $Fixed($Len) -> f64 }
+        fixed_to_float_lossy! { $Fixed($LeEqU) -> f16 }
+        fixed_to_float_lossy! { $Fixed($LeEqU) -> f32 }
+        fixed_to_float_lossy! { $Fixed($LeEqU) -> f64 }
     };
 }
 
-fixed_to_float_lossy! { FixedI8(U8) }
-fixed_to_float_lossy! { FixedI16(U16) }
-fixed_to_float_lossy! { FixedI32(U32) }
-fixed_to_float_lossy! { FixedI64(U64) }
-fixed_to_float_lossy! { FixedI128(U128) }
-fixed_to_float_lossy! { FixedU8(U8) }
-fixed_to_float_lossy! { FixedU16(U16) }
-fixed_to_float_lossy! { FixedU32(U32) }
-fixed_to_float_lossy! { FixedU64(U64) }
-fixed_to_float_lossy! { FixedU128(U128) }
+fixed_to_float_lossy! { FixedI8(LeEqU8) }
+fixed_to_float_lossy! { FixedI16(LeEqU16) }
+fixed_to_float_lossy! { FixedI32(LeEqU32) }
+fixed_to_float_lossy! { FixedI64(LeEqU64) }
+fixed_to_float_lossy! { FixedI128(LeEqU128) }
+fixed_to_float_lossy! { FixedU8(LeEqU8) }
+fixed_to_float_lossy! { FixedU16(LeEqU16) }
+fixed_to_float_lossy! { FixedU32(LeEqU32) }
+fixed_to_float_lossy! { FixedU64(LeEqU64) }
+fixed_to_float_lossy! { FixedU128(LeEqU128) }
 
 macro_rules! int_to_float_lossy {
     ($Int:ident -> $Float:ident) => {

@@ -597,6 +597,9 @@ impl LossyFrom<f64> for f64 {
 /// let _ = I8F8::lossy_from(I8F56::default());
 /// let _ = I8F8::lossy_from(U7F57::default());
 /// let _ = U8F8::lossy_from(U8F56::default());
+/// let _ = usize::from(U16F0::default());
+/// let _ = isize::from(I16F0::default());
+/// let _ = isize::from(U8F0::default());
 /// ```
 ///
 /// The rest of the tests should all fail compilation.
@@ -645,6 +648,27 @@ impl LossyFrom<f64> for f64 {
 /// ```compile_fail
 /// use fixed::{traits::LossyFrom, types::*};
 /// let _ = U8F8::lossy_from(I4F4::default());
+/// ```
+///
+/// ```compile_fail
+/// use fixed::types::*;
+/// let _ = usize::from(U16F16::default());
+/// ```
+/// ```compile_fail
+/// use fixed::types::*;
+/// let _ = usize::from(I16F0::default());
+/// ```
+/// ```compile_fail
+/// use fixed::types::*;
+/// let _ = isize::from(I16F16::default());
+/// ```
+/// ```compile_fail
+/// use fixed::types::*;
+/// let _ = isize::from(U16F0::default());
+/// ```
+/// ```compile_fail
+/// use fixed::types::*;
+/// let _ = usize::from(I8F0::default());
 /// ```
 fn _compile_fail_tests() {}
 

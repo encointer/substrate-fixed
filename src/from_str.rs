@@ -352,66 +352,69 @@ impl Display for ParseFixedError {
     }
 }
 
-fn parse(s: &str, can_be_neg: bool, radix: u32) -> Result<Parse<'_>, ParseFixedError> {
-    let mut int = (0, 0);
-    let mut frac = (0, 0);
-    let mut has_sign = false;
-    let mut is_negative = false;
-    let mut has_digits = false;
-    let mut has_point = false;
-    for (index, c) in s.char_indices() {
-        match (radix, c) {
-            (_, '.') => {
-                err!(has_point, TooManyPoints);
-                has_digits = false;
-                has_point = true;
-                frac.0 = index + c.len_utf8();
-                continue;
-            }
-            (_, '+') => {
-                err!(has_point || has_sign || has_digits, InvalidDigit);
-                has_sign = true;
-                continue;
-            }
-            (_, '-') => {
+// also trims zeros at start of int and at end of frac
+fn parse_bounds(s: &str, can_be_neg: bool, radix: u32) -> Result<Parse<'_>, ParseFixedError> {
+    let mut sign: Option<bool> = None;
+    let mut trimmed_int_start: Option<usize> = None;
+    let mut point: Option<usize> = None;
+    let mut trimmed_frac_end: Option<usize> = None;
+    let mut has_any_digit = false;
+
+    for (index, &byte) in s.as_bytes().iter().enumerate() {
+        match (byte, radix) {
+            (b'+', _) => {
                 err!(
-                    has_point || has_sign || has_digits || !can_be_neg,
+                    sign.is_some() || point.is_some() || has_any_digit,
                     InvalidDigit
                 );
-                has_sign = true;
-                is_negative = true;
+                sign = Some(false);
                 continue;
             }
-            (2, '0'..='1')
-            | (8, '0'..='7')
-            | (10, '0'..='9')
-            | (16, '0'..='9')
-            | (16, 'a'..='f')
-            | (16, 'A'..='F') => {
-                if !has_point && !has_digits {
-                    int.0 = index;
+            (b'-', _) => {
+                err!(
+                    !can_be_neg || sign.is_some() || point.is_some() || has_any_digit,
+                    InvalidDigit
+                );
+                sign = Some(true);
+                continue;
+            }
+            (b'.', _) => {
+                err!(point.is_some(), TooManyPoints);
+                point = Some(index);
+                trimmed_frac_end = Some(index + 1);
+                continue;
+            }
+            (b'0'..=b'1', 2)
+            | (b'0'..=b'7', 8)
+            | (b'0'..=b'9', 10)
+            | (b'0'..=b'9', 16)
+            | (b'a'..=b'f', 16)
+            | (b'A'..=b'F', 16) => {
+                if trimmed_int_start.is_none() && point.is_none() && byte != b'0' {
+                    trimmed_int_start = Some(index);
                 }
-                has_digits = true;
-                if !has_point {
-                    int.1 = index + c.len_utf8();
-                } else {
-                    frac.1 = index + c.len_utf8();
+                if trimmed_frac_end.is_some() && byte != b'0' {
+                    trimmed_frac_end = Some(index + 1);
                 }
+                has_any_digit = true;
             }
             _ => {
                 err!(InvalidDigit);
             }
         }
     }
-    if frac.1 < frac.0 {
-        frac.1 = frac.0;
-    }
-    err!(int.0 == int.1 && frac.0 == frac.1, NoDigits);
-    Ok(Parse {
-        neg: is_negative,
-        int: &s[int.0..int.1],
-        frac: &s[frac.0..frac.1],
-    })
+    err!(!has_any_digit, NoDigits);
+    let neg = sign.unwrap_or(false);
+    let int = match (trimmed_int_start, point) {
+        (Some(start), Some(point)) => &s[start..point],
+        (Some(start), None) => &s[start..],
+        (None, _) => "",
+    };
+    let frac = match (point, trimmed_frac_end) {
+        (Some(point), Some(end)) => &s[(point + 1)..end],
+        _ => "",
+    };
+    Ok(Parse { neg, int, frac })
 }
 
 pub(crate) trait FromStrRadix: Sized {
@@ -453,7 +456,7 @@ macro_rules! impl_from_str_signed {
             int_nbits: u32,
             frac_nbits: u32,
         ) -> Result<$Bits, ParseFixedError> {
-            let Parse { neg, int, frac } = parse(s, true, radix)?;
+            let Parse { neg, int, frac } = parse_bounds(s, true, radix)?;
             let (abs_frac, whole_frac) = match $frac(frac, radix, frac_nbits) {
                 Some(frac) => (frac, false),
                 None => (0, true),
@@ -494,7 +497,7 @@ macro_rules! impl_from_str_unsigned {
             int_nbits: u32,
             frac_nbits: u32,
         ) -> Result<$Bits, ParseFixedError> {
-            let Parse { int, frac, .. } = parse(s, false, radix)?;
+            let Parse { int, frac, .. } = parse_bounds(s, false, radix)?;
             let (frac, whole_frac) = match $frac(frac, radix, frac_nbits) {
                 Some(frac) => (frac, false),
                 None => (0, true),
@@ -511,7 +514,6 @@ macro_rules! impl_from_str_unsigned {
             if $int_half_cond && nbits <= HALF {
                 return $int_half(int, radix, nbits, whole_frac).map(|x| $Bits::from(x) << HALF);
             }
-            let int = int.trim_start_matches(|x| x == '0');
             if int.is_empty() && !whole_frac {
                 return Some(0);
             } else if int.is_empty() || nbits == 0 {
@@ -804,28 +806,28 @@ mod tests {
 
     #[test]
     fn check_parse_bounds() {
-        let Parse { neg, int, frac } = parse("-12.34", true, 10).unwrap();
+        let Parse { neg, int, frac } = parse_bounds("-12.34", true, 10).unwrap();
         assert_eq!((neg, int, frac), (true, "12", "34"));
-        let Parse { neg, int, frac } = parse("12.", true, 10).unwrap();
+        let Parse { neg, int, frac } = parse_bounds("012.", true, 10).unwrap();
         assert_eq!((neg, int, frac), (false, "12", ""));
-        let Parse { neg, int, frac } = parse("+.34", false, 10).unwrap();
+        let Parse { neg, int, frac } = parse_bounds("+.340", false, 10).unwrap();
         assert_eq!((neg, int, frac), (false, "", "34"));
-        let Parse { neg, int, frac } = parse("0", false, 10).unwrap();
-        assert_eq!((neg, int, frac), (false, "0", ""));
-        let Parse { neg, int, frac } = parse("-.C1A0", true, 16).unwrap();
-        assert_eq!((neg, int, frac), (true, "", "C1A0"));
+        let Parse { neg, int, frac } = parse_bounds("0", false, 10).unwrap();
+        assert_eq!((neg, int, frac), (false, "", ""));
+        let Parse { neg, int, frac } = parse_bounds("-.C1A0", true, 16).unwrap();
+        assert_eq!((neg, int, frac), (true, "", "C1A"));
 
-        let ParseFixedError { kind } = parse("0 ", true, 10).unwrap_err();
+        let ParseFixedError { kind } = parse_bounds("0 ", true, 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::InvalidDigit);
-        let ParseFixedError { kind } = parse("+.", true, 10).unwrap_err();
+        let ParseFixedError { kind } = parse_bounds("+.", true, 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::NoDigits);
-        let ParseFixedError { kind } = parse(".1.", true, 10).unwrap_err();
+        let ParseFixedError { kind } = parse_bounds(".1.", true, 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::TooManyPoints);
-        let ParseFixedError { kind } = parse("1+2", true, 10).unwrap_err();
+        let ParseFixedError { kind } = parse_bounds("1+2", true, 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::InvalidDigit);
-        let ParseFixedError { kind } = parse("1-2", true, 10).unwrap_err();
+        let ParseFixedError { kind } = parse_bounds("1-2", true, 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::InvalidDigit);
-        let ParseFixedError { kind } = parse("-12", false, 10).unwrap_err();
+        let ParseFixedError { kind } = parse_bounds("-12", false, 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::InvalidDigit);
     }
 

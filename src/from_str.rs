@@ -487,7 +487,8 @@ macro_rules! impl_from_str_unsigned {
         $Fixed:ident, $LeEqU:ident, $Bits:ident;
         fn $all:ident;
         fn $int:ident, ($int_half:ident, $int_half_cond:expr);
-        $frac:ident;
+        fn $frac:ident, ($frac_half:ident, $frac_half_cond:expr);
+        $frac_dec:ident;
     ) => {
         impl_from_str! { $Fixed, $LeEqU, $all }
 
@@ -536,23 +537,6 @@ macro_rules! impl_from_str_unsigned {
                 Some(parsed_int << remove_bits)
             }
         }
-    };
-}
-
-macro_rules! impl_from_str_unsigned_not128 {
-    (
-        $Fixed:ident, $LeEqU:ident, $Bits:ident;
-        fn $all:ident;
-        fn $int:ident, ($int_half:ident, $int_half_cond:expr);
-        fn $frac:ident, ($frac_half:ident, $frac_half_cond:expr);
-        $decode_frac:ident, $dec_frac_digits:expr, $DoubleBits:ident;
-    ) => {
-        impl_from_str_unsigned! {
-            $Fixed, $LeEqU, $Bits;
-            fn $all;
-            fn $int, ($int_half, $int_half_cond);
-            $frac;
-        }
 
         fn $frac(frac: &str, radix: u32, nbits: u32) -> Option<$Bits> {
             if $frac_half_cond && nbits <= <$Bits as SealedInt>::NBITS / 2 {
@@ -566,15 +550,36 @@ macro_rules! impl_from_str_unsigned_not128 {
                 2 => bin_str_frac_to_bin(frac, int_nbits),
                 8 => oct_str_frac_to_bin(frac, int_nbits),
                 16 => hex_str_frac_to_bin(frac, int_nbits),
-                10 => {
-                    let end = cmp::min(frac.len(), $dec_frac_digits);
-                    let rem = $dec_frac_digits - end;
-                    let ten: $DoubleBits = 10;
-                    let i = frac[..end].parse::<$DoubleBits>().unwrap() * ten.pow(rem as u32);
-                    $decode_frac(i, int_nbits)
-                }
+                10 => $frac_dec(frac, int_nbits),
                 _ => unreachable!(),
             }
+        }
+    };
+}
+
+macro_rules! impl_from_str_unsigned_not128 {
+    (
+        $Fixed:ident, $LeEqU:ident, $Bits:ident;
+        fn $all:ident;
+        fn $int:ident, ($int_half:ident, $int_half_cond:expr);
+        fn $frac:ident, ($frac_half:ident, $frac_half_cond:expr);
+        fn $frac_dec:ident;
+        $decode_frac:ident, $dec_frac_digits:expr, $DoubleBits:ident;
+    ) => {
+        impl_from_str_unsigned! {
+            $Fixed, $LeEqU, $Bits;
+            fn $all;
+            fn $int, ($int_half, $int_half_cond);
+            fn $frac, ($frac_half, $frac_half_cond);
+            $frac_dec;
+        }
+
+        fn $frac_dec(frac: &str, dump_bits: u32) -> Option<$Bits> {
+            let end = cmp::min(frac.len(), $dec_frac_digits);
+            let rem = $dec_frac_digits - end;
+            let ten: $DoubleBits = 10;
+            let i = frac[..end].parse::<$DoubleBits>().unwrap() * ten.pow(rem as u32);
+            $decode_frac(i, dump_bits)
         }
     };
 }
@@ -590,6 +595,7 @@ impl_from_str_unsigned_not128! {
     fn from_str_u8;
     fn get_int8, (get_int8, false);
     fn get_frac8, (get_frac8, false);
+    fn get_frac8_dec;
     dec3_to_bin8, 3, u16;
 }
 
@@ -604,6 +610,7 @@ impl_from_str_unsigned_not128! {
     fn from_str_u16;
     fn get_int16, (get_int8, true);
     fn get_frac16, (get_frac8, true);
+    fn get_frac16_dec;
     dec6_to_bin16, 6, u32;
 }
 
@@ -618,6 +625,7 @@ impl_from_str_unsigned_not128! {
     fn from_str_u32;
     fn get_int32, (get_int16, true);
     fn get_frac32, (get_frac16, true);
+    fn get_frac32_dec;
     dec13_to_bin32, 13, u64;
 }
 
@@ -632,6 +640,7 @@ impl_from_str_unsigned_not128! {
     fn from_str_u64;
     fn get_int64, (get_int32, true);
     fn get_frac64, (get_frac32, true);
+    fn get_frac64_dec;
     dec27_to_bin64, 27, u128;
 }
 
@@ -645,37 +654,23 @@ impl_from_str_unsigned! {
     FixedU128, LeEqU128, u128;
     fn from_str_u128;
     fn get_int128, (get_int64, true);
-    get_frac128;
+    fn get_frac128, (get_frac64, true);
+    get_frac128_dec;
 }
 
-fn get_frac128(frac: &str, radix: u32, nbits: u32) -> Option<u128> {
-    if nbits <= 64 {
-        return get_frac64(frac, radix, nbits).map(u128::from);
-    }
-    if frac.is_empty() {
-        return Some(0);
-    }
-    let int_nbits = <u128 as SealedInt>::NBITS - nbits;
-    match radix {
-        2 => bin_str_frac_to_bin(frac, int_nbits),
-        8 => oct_str_frac_to_bin(frac, int_nbits),
-        16 => hex_str_frac_to_bin(frac, int_nbits),
-        10 => {
-            let (hi, lo) = if frac.len() <= 27 {
-                let rem = 27 - frac.len();
-                let hi = frac.parse::<u128>().unwrap() * 10u128.pow(rem as u32);
-                (hi, 0)
-            } else {
-                let hi = frac[..27].parse::<u128>().unwrap();
-                let lo_end = cmp::min(frac.len(), 54);
-                let rem = 54 - lo_end;
-                let lo = frac[27..lo_end].parse::<u128>().unwrap() * 10u128.pow(rem as u32);
-                (hi, lo)
-            };
-            dec27_27_to_bin128(hi, lo, int_nbits)
-        }
-        _ => unreachable!(),
-    }
+fn get_frac128_dec(frac: &str, dump_bits: u32) -> Option<u128> {
+    let (hi, lo) = if frac.len() <= 27 {
+        let rem = 27 - frac.len();
+        let hi = frac.parse::<u128>().unwrap() * 10u128.pow(rem as u32);
+        (hi, 0)
+    } else {
+        let hi = frac[..27].parse::<u128>().unwrap();
+        let lo_end = cmp::min(frac.len(), 54);
+        let rem = 54 - lo_end;
+        let lo = frac[27..lo_end].parse::<u128>().unwrap() * 10u128.pow(rem as u32);
+        (hi, lo)
+    };
+    dec27_27_to_bin128(hi, lo, dump_bits)
 }
 
 #[cfg(test)]

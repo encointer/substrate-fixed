@@ -326,17 +326,10 @@ enum ParseErrorKind {
     Overflow,
 }
 
-macro_rules! err {
-    ($cond:expr, $kind:ident) => {
-        if $cond {
-            err!($kind);
-        }
-    };
-    ($kind:ident) => {
-        return Err(ParseFixedError {
-            kind: ParseErrorKind::$kind,
-        });
-    };
+impl From<ParseErrorKind> for ParseFixedError {
+    fn from(kind: ParseErrorKind) -> ParseFixedError {
+        ParseFixedError { kind }
+    }
 }
 
 impl Display for ParseFixedError {
@@ -363,23 +356,23 @@ fn parse_bounds(s: &str, can_be_neg: bool, radix: u32) -> Result<Parse<'_>, Pars
     for (index, &byte) in s.as_bytes().iter().enumerate() {
         match (byte, radix) {
             (b'+', _) => {
-                err!(
-                    sign.is_some() || point.is_some() || has_any_digit,
-                    InvalidDigit
-                );
+                if sign.is_some() || point.is_some() || has_any_digit {
+                    Err(ParseErrorKind::InvalidDigit)?;
+                }
                 sign = Some(false);
                 continue;
             }
             (b'-', _) => {
-                err!(
-                    !can_be_neg || sign.is_some() || point.is_some() || has_any_digit,
-                    InvalidDigit
-                );
+                if !can_be_neg || sign.is_some() || point.is_some() || has_any_digit {
+                    Err(ParseErrorKind::InvalidDigit)?;
+                }
                 sign = Some(true);
                 continue;
             }
             (b'.', _) => {
-                err!(point.is_some(), TooManyPoints);
+                if point.is_some() {
+                    Err(ParseErrorKind::TooManyPoints)?;
+                }
                 point = Some(index);
                 trimmed_frac_end = Some(index + 1);
                 continue;
@@ -398,12 +391,12 @@ fn parse_bounds(s: &str, can_be_neg: bool, radix: u32) -> Result<Parse<'_>, Pars
                 }
                 has_any_digit = true;
             }
-            _ => {
-                err!(InvalidDigit);
-            }
+            _ => Err(ParseErrorKind::InvalidDigit)?,
         }
     }
-    err!(!has_any_digit, NoDigits);
+    if !has_any_digit {
+        Err(ParseErrorKind::NoDigits)?;
+    }
     let neg = sign.unwrap_or(false);
     let int = match (trimmed_int_start, point) {
         (Some(start), Some(point)) => &s[start..point],
@@ -461,17 +454,17 @@ macro_rules! impl_from_str_signed {
                 Some(frac) => (frac, false),
                 None => (0, true),
             };
-            let abs_int = match $int(int, radix, int_nbits, whole_frac) {
-                Some(i) => i,
-                None => err!(Overflow),
-            };
+            let abs_int =
+                $int(int, radix, int_nbits, whole_frac).ok_or(ParseErrorKind::Overflow)?;
             let abs = abs_int | abs_frac;
             let max_abs = if neg {
                 <$Bits as SealedInt>::Unsigned::MSB
             } else {
                 <$Bits as SealedInt>::Unsigned::MSB - 1
             };
-            err!(abs > max_abs, Overflow);
+            if abs > max_abs {
+                Err(ParseErrorKind::Overflow)?;
+            }
             let f = if neg {
                 abs.wrapping_neg() as $Bits
             } else {
@@ -503,10 +496,7 @@ macro_rules! impl_from_str_unsigned {
                 Some(frac) => (frac, false),
                 None => (0, true),
             };
-            let int = match $int(int, radix, int_nbits, whole_frac) {
-                Some(i) => i,
-                None => err!(Overflow),
-            };
+            let int = $int(int, radix, int_nbits, whole_frac).ok_or(ParseErrorKind::Overflow)?;
             Ok(int | frac)
         }
 

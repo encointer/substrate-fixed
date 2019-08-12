@@ -88,6 +88,103 @@ depending on the crate’s [optional features].
 }
 
 /// This trait provides common methods to all fixed-point numbers.
+///
+/// It can be helpful when writing generic code that makes use of
+/// fixed-point numbers.
+///
+/// # Examples
+///
+/// ```rust
+/// use fixed::{
+///     traits::Fixed,
+///     types::{I8F8, I16F16},
+/// };
+///
+/// fn checked_add_twice<F: Fixed>(lhs: F, rhs: F) -> Option<F> {
+///     lhs.checked_add(rhs)?.checked_add(rhs)
+/// }
+///
+/// let val1 = checked_add_twice(I8F8::from_int(5), Fixed::from_float(1.75));
+/// assert_eq!(val1, Some(Fixed::from_float(8.5)));
+/// // can use with different fixed-point type
+/// let val2 = checked_add_twice(I16F16::from_int(5), Fixed::from_float(1.75));
+/// assert_eq!(val2, Some(Fixed::from_float(8.5)));
+/// ```
+///
+/// The following example fails to compile, since the compiler cannot
+/// infer that 500 in the `checked_mul_int` call is of type `F::Bits`.
+///
+/// ```compile_fail
+/// use fixed::traits::Fixed;
+///
+/// fn checked_add_times_500<F: Fixed>(lhs: F, rhs: F) -> Option<F> {
+///     rhs.checked_mul_int(500)?.checked_add(lhs)
+/// }
+/// ```
+///
+/// One way to fix this is to add a trait bound indicating that any
+/// [`u16`] (which can represent 500) can be converted to `F::Bits`.
+///
+/// ```rust
+/// use fixed::{traits::Fixed, types::U12F4};
+///
+/// fn checked_add_times_500<F: Fixed>(lhs: F, rhs: F) -> Option<F>
+/// where
+///     F::Bits: From<u16>,
+/// {
+///     rhs.checked_mul_int(F::Bits::from(500))?.checked_add(lhs)
+/// }
+///
+/// let val = checked_add_times_500(U12F4::from_float(0.25), Fixed::from_float(1.5));
+/// assert_eq!(val, Some(Fixed::from_float(750.25)));
+/// ```
+///
+/// While this works in most cases, [`u16`] cannot be converted to
+/// [`i16`], even if the value 500 does fit in [`i16`], so that the
+/// following example would fail to compile.
+///
+/// ```compile_fail
+/// use fixed::{traits::Fixed, types::I12F4};
+///
+/// fn checked_add_times_500<F: Fixed>(lhs: F, rhs: F) -> Option<F>
+/// where
+///     F::Bits: From<u16>,
+/// {
+///     rhs.checked_mul_int(F::Bits::from(500))?.checked_add(lhs)
+/// }
+///
+/// // I12F4::Bits is i16, which does not implement From<u16>
+/// let val = checked_add_times_500(I12F4::from_float(0.25), Fixed::from_float(1.5));
+/// # let _ = val;
+/// ```
+///
+/// We can use [`TryFrom`] to fix this, as we know that
+/// `F::Bits::try_from(500_u16)` will work for both [`u16`] and
+/// [`i16`]. (The function will always return [`None`] when `F::Bits`
+/// is [`u8`] or [`i8`].)
+///
+/// ```rust
+/// use fixed::{traits::Fixed, types::I12F4};
+/// use std::convert::TryFrom;
+///
+/// fn checked_add_times_500<F: Fixed>(lhs: F, rhs: F) -> Option<F>
+/// where
+///     F::Bits: TryFrom<u16>,
+/// {
+///     let m = F::Bits::try_from(500).ok()?;
+///     rhs.checked_mul_int(m)?.checked_add(lhs)
+/// }
+///
+/// let val = checked_add_times_500(I12F4::from_float(0.25), Fixed::from_float(1.5));
+/// assert_eq!(val, Some(Fixed::from_float(750.25)));
+/// ```
+///
+/// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+/// [`TryFrom`]: https://doc.rust-lang.org/nightly/std/convert/trait.TryFrom.html
+/// [`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
+/// [`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
+/// [`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
+/// [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
 pub trait Fixed
 where
     Self: Copy + Default + Hash + Ord,
@@ -1104,10 +1201,7 @@ macro_rules! impl_fixed {
             trait_delegate! { fn max_value() -> Self }
             trait_delegate! { fn int_nbits() -> u32 }
             trait_delegate! { fn frac_nbits() -> u32 }
-            #[inline]
-            fn from_bits(bits: Self::Bits) -> Self {
-                Self::from_bits(bits)
-            }
+            trait_delegate! { fn from_bits(bits: Self::Bits) -> Self }
             trait_delegate! { fn to_bits(self) -> Self::Bits }
             trait_delegate! { fn from_int<I: Int>(val: I) -> Self }
             trait_delegate! { fn to_int<I: Int>(self) -> I }

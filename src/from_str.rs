@@ -28,13 +28,13 @@ use core::{
     str::FromStr,
 };
 
-fn bin_str_int_to_bin<I>(a: &str) -> Option<I>
+fn bin_str_int_to_bin<I>(s: &str) -> Option<I>
 where
     I: SealedInt<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
-    debug_assert!(!a.is_empty());
-    let mut bytes = a.as_bytes().iter();
+    debug_assert!(!s.is_empty());
+    let mut bytes = s.as_bytes().iter();
     let first_val = *bytes.next().unwrap() - b'0';
     let mut acc = I::from(first_val);
     let mut leading_zeros = acc.leading_zeros();
@@ -46,21 +46,21 @@ where
     Some(acc)
 }
 
-fn bin_str_frac_to_bin<I>(a: &str, dump_bits: u32) -> Option<I>
+fn bin_str_frac_to_bin<I>(s: &str, nbits: u32) -> Option<I>
 where
     I: SealedInt<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
-    debug_assert!(!a.is_empty());
-    let req_bits = I::NBITS - dump_bits;
-    let mut rem_bits = req_bits;
+    debug_assert!(!s.is_empty());
+    let dump_bits = I::NBITS - nbits;
+    let mut rem_bits = nbits;
     let mut acc = I::ZERO;
-    for &byte in a.as_bytes() {
+    for &byte in s.as_bytes() {
         let val = byte - b'0';
         if rem_bits < 1 {
             // round
             acc = acc.checked_add(I::from(val))?;
-            if dump_bits != 0 && !(acc >> req_bits).is_zero() {
+            if dump_bits != 0 && !(acc >> nbits).is_zero() {
                 return None;
             }
             return Some(acc);
@@ -71,13 +71,13 @@ where
     Some(acc << rem_bits)
 }
 
-fn oct_str_int_to_bin<I>(a: &str) -> Option<I>
+fn oct_str_int_to_bin<I>(s: &str) -> Option<I>
 where
     I: SealedInt<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
-    debug_assert!(!a.is_empty());
-    let mut bytes = a.as_bytes().iter();
+    debug_assert!(!s.is_empty());
+    let mut bytes = s.as_bytes().iter();
     let first_val = *bytes.next().unwrap() - b'0';
     let mut acc = I::from(first_val);
     let mut leading_zeros = acc.leading_zeros();
@@ -89,22 +89,22 @@ where
     Some(acc)
 }
 
-fn oct_str_frac_to_bin<I>(a: &str, dump_bits: u32) -> Option<I>
+fn oct_str_frac_to_bin<I>(s: &str, nbits: u32) -> Option<I>
 where
     I: SealedInt<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
-    debug_assert!(!a.is_empty());
-    let req_bits = I::NBITS - dump_bits;
-    let mut rem_bits = req_bits;
+    debug_assert!(!s.is_empty());
+    let dump_bits = I::NBITS - nbits;
+    let mut rem_bits = nbits;
     let mut acc = I::ZERO;
-    for &byte in a.as_bytes() {
+    for &byte in s.as_bytes() {
         let val = byte - b'0';
         if rem_bits < 3 {
             acc = (acc << rem_bits) + I::from(val >> (3 - rem_bits));
             // round
             acc = acc.checked_add(I::from((val >> (2 - rem_bits)) & 1))?;
-            if dump_bits != 0 && !(acc >> req_bits).is_zero() {
+            if dump_bits != 0 && !(acc >> nbits).is_zero() {
                 return None;
             }
             return Some(acc);
@@ -124,13 +124,13 @@ fn unchecked_hex_digit(byte: u8) -> u8 {
     (byte & 0x0f) + if byte >= 0x40 { 9 } else { 0 }
 }
 
-fn hex_str_int_to_bin<I>(a: &str) -> Option<I>
+fn hex_str_int_to_bin<I>(s: &str) -> Option<I>
 where
     I: SealedInt<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Add<Output = I>,
 {
-    debug_assert!(!a.is_empty());
-    let mut bytes = a.as_bytes().iter();
+    debug_assert!(!s.is_empty());
+    let mut bytes = s.as_bytes().iter();
     let first_val = unchecked_hex_digit(*bytes.next().unwrap());
     let mut acc = I::from(first_val);
     let mut leading_zeros = acc.leading_zeros();
@@ -142,22 +142,22 @@ where
     Some(acc)
 }
 
-fn hex_str_frac_to_bin<I>(a: &str, dump_bits: u32) -> Option<I>
+fn hex_str_frac_to_bin<I>(s: &str, nbits: u32) -> Option<I>
 where
     I: SealedInt<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
-    debug_assert!(!a.is_empty());
-    let req_bits = I::NBITS - dump_bits;
-    let mut rem_bits = req_bits;
+    debug_assert!(!s.is_empty());
+    let dump_bits = I::NBITS - nbits;
+    let mut rem_bits = nbits;
     let mut acc = I::ZERO;
-    for &byte in a.as_bytes() {
+    for &byte in s.as_bytes() {
         let val = unchecked_hex_digit(byte);
         if rem_bits < 4 {
             acc = (acc << rem_bits) + I::from(val >> (4 - rem_bits));
             // round
             acc = acc.checked_add(I::from((val >> (3 - rem_bits)) & 1))?;
-            if dump_bits != 0 && !(acc >> req_bits).is_zero() {
+            if dump_bits != 0 && !(acc >> nbits).is_zero() {
                 return None;
             }
             return Some(acc);
@@ -170,13 +170,13 @@ where
 
 // 5^3 × 2 < 2^8 => (10^3 - 1) × 2^(8-3+1) < 2^16
 // Returns None for large fractions that are rounded to 1.0
-fn dec3_to_bin8(a: u16, dump_bits: u32) -> Option<u8> {
-    debug_assert!(a < 10u16.pow(3));
-    debug_assert!(dump_bits <= 8);
+fn dec3_to_bin8(val: u16, nbits: u32) -> Option<u8> {
+    debug_assert!(val < 10u16.pow(3));
+    let dump_bits = 8 - nbits;
     let divisor = 5u16.pow(3) * 2;
-    let shift = a << (8 - 3 + 1) >> dump_bits;
+    let shift = val << (8 - 3 + 1) >> dump_bits;
     let round = shift + (divisor / 2);
-    if round >> (8 - dump_bits) >= divisor {
+    if round >> nbits >= divisor {
         None
     } else {
         Some((round / divisor) as u8)
@@ -184,13 +184,13 @@ fn dec3_to_bin8(a: u16, dump_bits: u32) -> Option<u8> {
 }
 // 5^6 × 2 < 2^16 => (10^6 - 1) × 2^(16-6+1) < 2^32
 // Returns None for large fractions that are rounded to 1.0
-fn dec6_to_bin16(a: u32, dump_bits: u32) -> Option<u16> {
-    debug_assert!(a < 10u32.pow(6));
-    debug_assert!(dump_bits <= 16);
+fn dec6_to_bin16(val: u32, nbits: u32) -> Option<u16> {
+    debug_assert!(val < 10u32.pow(6));
+    let dump_bits = 16 - nbits;
     let divisor = 5u32.pow(6) * 2;
-    let shift = a << (16 - 6 + 1) >> dump_bits;
+    let shift = val << (16 - 6 + 1) >> dump_bits;
     let round = shift + (divisor / 2);
-    if round >> (16 - dump_bits) >= divisor {
+    if round >> nbits >= divisor {
         None
     } else {
         Some((round / divisor) as u16)
@@ -198,13 +198,13 @@ fn dec6_to_bin16(a: u32, dump_bits: u32) -> Option<u16> {
 }
 // 5^13 × 2 < 2^32 => (10^13 - 1) × 2^(32-13+1) < 2^64
 // Returns None for large fractions that are rounded to 1.0
-fn dec13_to_bin32(a: u64, dump_bits: u32) -> Option<u32> {
-    debug_assert!(a < 10u64.pow(13));
-    debug_assert!(dump_bits <= 32);
+fn dec13_to_bin32(val: u64, nbits: u32) -> Option<u32> {
+    debug_assert!(val < 10u64.pow(13));
+    let dump_bits = 32 - nbits;
     let divisor = 5u64.pow(13) * 2;
-    let shift = a << (32 - 13 + 1) >> dump_bits;
+    let shift = val << (32 - 13 + 1) >> dump_bits;
     let round = shift + (divisor / 2);
-    if round >> (32 - dump_bits) >= divisor {
+    if round >> nbits >= divisor {
         None
     } else {
         Some((round / divisor) as u32)
@@ -212,13 +212,13 @@ fn dec13_to_bin32(a: u64, dump_bits: u32) -> Option<u32> {
 }
 // 5^27 × 2 < 2^64 => (10^27 - 1) × 2^(64-27+1) < 2^128
 // Returns None for large fractions that are rounded to 1.0
-fn dec27_to_bin64(a: u128, dump_bits: u32) -> Option<u64> {
-    debug_assert!(a < 10u128.pow(27));
-    debug_assert!(dump_bits <= 64);
+fn dec27_to_bin64(val: u128, nbits: u32) -> Option<u64> {
+    debug_assert!(val < 10u128.pow(27));
+    let dump_bits = 64 - nbits;
     let divisor = 5u128.pow(27) * 2;
-    let shift = a << (64 - 27 + 1) >> dump_bits;;
+    let shift = val << (64 - 27 + 1) >> dump_bits;
     let round = shift + (divisor / 2);
-    if round >> (64 - dump_bits) >= divisor {
+    if round >> nbits >= divisor {
         None
     } else {
         Some((round / divisor) as u64)
@@ -226,10 +226,10 @@ fn dec27_to_bin64(a: u128, dump_bits: u32) -> Option<u64> {
 }
 // 5^54 × 2 < 2^128 => (10^54 - 1) × 2^(128-54+1) < 2^256
 // Returns None for large fractions that are rounded to 1.0
-fn dec27_27_to_bin128(hi: u128, lo: u128, dump_bits: u32) -> Option<u128> {
+fn dec27_27_to_bin128(hi: u128, lo: u128, nbits: u32) -> Option<u128> {
     debug_assert!(hi < 10u128.pow(27));
     debug_assert!(lo < 10u128.pow(27));
-    debug_assert!(dump_bits <= 128);
+    let dump_bits = 128 - nbits;
     let divisor = 5u128.pow(54) * 2;
     // we actually need to combine (10^27*hi + lo) << (128 - 54 + 1)
     let (hi_hi, hi_lo) = mul_hi_lo(hi, 10u128.pow(27));
@@ -237,14 +237,14 @@ fn dec27_27_to_bin128(hi: u128, lo: u128, dump_bits: u32) -> Option<u128> {
     let comb_hi = if overflow { hi_hi + 1 } else { hi_hi };
     let shift_lo;
     let shift_hi;
-    match (128 - 54 + 1).cmp(&dump_bits) {
+    match nbits.cmp(&(54 - 1)) {
         Ordering::Less => {
-            let shr = dump_bits - (128 - 54 + 1);
+            let shr = (54 - 1) - nbits;
             shift_lo = (comb_lo >> shr) | (comb_hi << (128 - shr));
             shift_hi = comb_hi >> shr;
         }
         Ordering::Greater => {
-            let shl = (128 - 54 + 1) - dump_bits;
+            let shl = nbits - (54 - 1);
             shift_lo = comb_lo << shl;
             shift_hi = (comb_hi << shl) | (comb_lo >> (128 - shl));
         }
@@ -257,10 +257,10 @@ fn dec27_27_to_bin128(hi: u128, lo: u128, dump_bits: u32) -> Option<u128> {
     let round_hi = if overflow { shift_hi + 1 } else { shift_hi };
     let whole_compare = if dump_bits == 0 {
         round_hi
-    } else if dump_bits == 128 {
+    } else if nbits == 0 {
         round_lo
     } else {
-        (round_lo >> (128 - dump_bits)) | (round_hi << dump_bits)
+        (round_lo >> nbits) | (round_hi << dump_bits)
     };
     if whole_compare >= divisor {
         None
@@ -545,12 +545,11 @@ macro_rules! impl_from_str_unsigned {
             if frac.is_empty() {
                 return Some(0);
             }
-            let int_nbits = <$Bits as SealedInt>::NBITS - nbits;
             match radix {
-                2 => bin_str_frac_to_bin(frac, int_nbits),
-                8 => oct_str_frac_to_bin(frac, int_nbits),
-                16 => hex_str_frac_to_bin(frac, int_nbits),
-                10 => $frac_dec(frac, int_nbits),
+                2 => bin_str_frac_to_bin(frac, nbits),
+                8 => oct_str_frac_to_bin(frac, nbits),
+                16 => hex_str_frac_to_bin(frac, nbits),
+                10 => $frac_dec(frac, nbits),
                 _ => unreachable!(),
             }
         }
@@ -574,12 +573,12 @@ macro_rules! impl_from_str_unsigned_not128 {
             $frac_dec;
         }
 
-        fn $frac_dec(frac: &str, dump_bits: u32) -> Option<$Bits> {
+        fn $frac_dec(frac: &str, nbits: u32) -> Option<$Bits> {
             let end = cmp::min(frac.len(), $dec_frac_digits);
             let rem = $dec_frac_digits - end;
             let ten: $DoubleBits = 10;
             let i = frac[..end].parse::<$DoubleBits>().unwrap() * ten.pow(rem as u32);
-            $decode_frac(i, dump_bits)
+            $decode_frac(i, nbits)
         }
     };
 }
@@ -658,7 +657,7 @@ impl_from_str_unsigned! {
     get_frac128_dec;
 }
 
-fn get_frac128_dec(frac: &str, dump_bits: u32) -> Option<u128> {
+fn get_frac128_dec(frac: &str, nbits: u32) -> Option<u128> {
     let (hi, lo) = if frac.len() <= 27 {
         let rem = 27 - frac.len();
         let hi = frac.parse::<u128>().unwrap() * 10u128.pow(rem as u32);
@@ -670,7 +669,7 @@ fn get_frac128_dec(frac: &str, dump_bits: u32) -> Option<u128> {
         let lo = frac[27..lo_end].parse::<u128>().unwrap() * 10u128.pow(rem as u32);
         (hi, lo)
     };
-    dec27_27_to_bin128(hi, lo, dump_bits)
+    dec27_27_to_bin128(hi, lo, nbits)
 }
 
 #[cfg(test)]
@@ -683,7 +682,7 @@ mod tests {
         let two_pow = 8f64.exp2();
         let limit = 1000;
         for i in 0..limit {
-            let ans = dec3_to_bin8(i, 0);
+            let ans = dec3_to_bin8(i, 8);
             let approx = two_pow * f64::from(i) / f64::from(limit);
             let error = (ans.map(f64::from).unwrap_or(two_pow) - approx).abs();
             assert!(
@@ -702,7 +701,7 @@ mod tests {
         let two_pow = 16f64.exp2();
         let limit = 1_000_000;
         for i in 0..limit {
-            let ans = dec6_to_bin16(i, 0);
+            let ans = dec6_to_bin16(i, 16);
             let approx = two_pow * f64::from(i) / f64::from(limit);
             let error = (ans.map(f64::from).unwrap_or(two_pow) - approx).abs();
             assert!(
@@ -731,7 +730,7 @@ mod tests {
                 limit / 2 + iter,
                 limit - iter - 1,
             ] {
-                let ans = dec13_to_bin32(i, 0);
+                let ans = dec13_to_bin32(i, 32);
                 let approx = two_pow * i as f64 / limit as f64;
                 let error = (ans.map(f64::from).unwrap_or(two_pow) - approx).abs();
                 assert!(
@@ -761,7 +760,7 @@ mod tests {
                 limit / 2 + iter,
                 limit - iter - 1,
             ] {
-                let ans = dec27_to_bin64(i, 0);
+                let ans = dec27_to_bin64(i, 64);
                 let approx = two_pow * i as f64 / limit as f64;
                 let error = (ans.map(|x| x as f64).unwrap_or(two_pow) - approx).abs();
                 assert!(
@@ -780,21 +779,21 @@ mod tests {
     fn check_dec27_27() {
         let nines = 10u128.pow(27) - 1;
         let zeros = 0;
-        let too_big = dec27_27_to_bin128(nines, nines, 0);
+        let too_big = dec27_27_to_bin128(nines, nines, 128);
         assert_eq!(too_big, None);
-        let big = dec27_27_to_bin128(nines, zeros, 0);
+        let big = dec27_27_to_bin128(nines, zeros, 128);
         assert_eq!(
             big,
             Some(340_282_366_920_938_463_463_374_607_091_485_844_535)
         );
-        let small = dec27_27_to_bin128(zeros, nines, 0);
+        let small = dec27_27_to_bin128(zeros, nines, 128);
         assert_eq!(small, Some(340_282_366_921));
-        let zero = dec27_27_to_bin128(zeros, zeros, 0);
+        let zero = dec27_27_to_bin128(zeros, zeros, 128);
         assert_eq!(zero, Some(0));
         let x = dec27_27_to_bin128(
             123_456_789_012_345_678_901_234_567,
             987_654_321_098_765_432_109_876_543,
-            0,
+            128,
         );
         assert_eq!(x, Some(42_010_168_377_579_896_403_540_037_811_203_677_112));
     }

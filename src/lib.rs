@@ -724,15 +724,11 @@ fixed! { "A 128-bit fixed-point signed", FixedI128(i128, LeEqU128, "128"), Signe
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use crate::types::{I0F32, I16F16, U0F32, U16F16};
 
     #[cfg_attr(feature = "cargo-clippy", allow(clippy::cognitive_complexity))]
     #[test]
     fn rounding() {
-        use crate::frac::{U16, U32};
-
-        type I0F32 = FixedI32<U32>;
-
         // -0.5
         let f = I0F32::from_bits(-1 << 31);
         assert_eq!(f.to_int::<i32>(), -1);
@@ -754,8 +750,6 @@ mod tests {
         assert_eq!(f.overflowing_floor(), (I0F32::from_int(0), false));
         assert_eq!(f.overflowing_round(), (I0F32::from_int(0), false));
 
-        type U0F32 = FixedU32<U32>;
-
         // 0.5 - Δ
         let f = U0F32::from_bits((1 << 31) - 1);
         assert_eq!(f.to_int::<i32>(), 0);
@@ -776,8 +770,6 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (U0F32::from_int(0), true));
         assert_eq!(f.overflowing_floor(), (U0F32::from_int(0), false));
         assert_eq!(f.overflowing_round(), (U0F32::from_int(0), true));
-
-        type I16F16 = FixedI32<U16>;
 
         // -3.5 - Δ
         let f = I16F16::from_bits(((-7) << 15) - 1);
@@ -862,8 +854,6 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (I16F16::from_int(4), false));
         assert_eq!(f.overflowing_floor(), (I16F16::from_int(3), false));
         assert_eq!(f.overflowing_round(), (I16F16::from_int(4), false));
-
-        type U16F16 = FixedU32<U16>;
 
         // 0.5 - Δ
         let f = U16F16::from_bits((1 << 15) - 1);

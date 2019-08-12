@@ -164,6 +164,7 @@ depending on the crate’s [optional features].
 /// is [`u8`] or [`i8`].)
 ///
 /// ```rust
+/// # #[cfg(try_from)] {
 /// use fixed::{traits::Fixed, types::I12F4};
 /// use std::convert::TryFrom;
 ///
@@ -177,6 +178,7 @@ depending on the crate’s [optional features].
 ///
 /// let val = checked_add_times_500(I12F4::from_float(0.25), Fixed::from_float(1.5));
 /// assert_eq!(val, Some(Fixed::from_float(750.25)));
+/// # }
 /// ```
 ///
 /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None

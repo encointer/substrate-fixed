@@ -7,7 +7,7 @@
 
 [package]
 name = "fixed"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Trevor Spiteri <tspiteri@ieee.org>"]
 description = "Fixed-point numbers"
 documentation = "https://docs.rs/fixed"

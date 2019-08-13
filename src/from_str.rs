@@ -746,8 +746,8 @@ impl_from_str_unsigned! {
 
 #[cfg(test)]
 mod tests {
-    use crate::{from_str::*, traits::Fixed};
-    use core::fmt::Debug;
+    use crate::{from_str::*, traits::Fixed, types::*};
+    use std::{fmt::Debug, format, string::String};
 
     #[test]
     fn check_dec3() {
@@ -942,8 +942,6 @@ mod tests {
 
     #[test]
     fn check_i8_u8_from_str() {
-        use crate::types::*;
-
         assert_err::<I0F8>("-1", ParseErrorKind::Overflow);
         assert_err::<I0F8>("-0.502", ParseErrorKind::Overflow);
         assert_ok::<I0F8>("-0.501", -0x80);
@@ -981,8 +979,6 @@ mod tests {
 
     #[test]
     fn check_i16_u16_from_str() {
-        use crate::types::*;
-
         assert_err::<I0F16>("-1", ParseErrorKind::Overflow);
         assert_err::<I0F16>("-0.500008", ParseErrorKind::Overflow);
         assert_ok::<I0F16>("-0.500007", -0x8000);
@@ -1020,8 +1016,6 @@ mod tests {
 
     #[test]
     fn check_i32_u32_from_str() {
-        use crate::types::*;
-
         assert_err::<I0F32>("-1", ParseErrorKind::Overflow);
         assert_err::<I0F32>("-0.5000000002", ParseErrorKind::Overflow);
         assert_ok::<I0F32>("-0.5000000001", -0x8000_0000);
@@ -1059,8 +1053,6 @@ mod tests {
 
     #[test]
     fn check_i16_u16_from_str_binary() {
-        use crate::types::*;
-
         assert_err_radix::<I0F16>("-1", 2, ParseErrorKind::Overflow);
         assert_err_radix::<I0F16>("-0.100000000000000010", 2, ParseErrorKind::Overflow);
         assert_ok_radix::<I0F16>("-0.100000000000000001", 2, -0x8000);
@@ -1098,8 +1090,6 @@ mod tests {
 
     #[test]
     fn check_i16_u16_from_str_octal() {
-        use crate::types::*;
-
         assert_err_radix::<I0F16>("-1", 8, ParseErrorKind::Overflow);
         assert_err_radix::<I0F16>("-0.400002", 8, ParseErrorKind::Overflow);
         assert_ok_radix::<I0F16>("-0.400001", 8, -0x8000);
@@ -1137,8 +1127,6 @@ mod tests {
 
     #[test]
     fn check_i16_u16_from_str_hex() {
-        use crate::types::*;
-
         assert_err_radix::<I0F16>("-1", 16, ParseErrorKind::Overflow);
         assert_err_radix::<I0F16>("-0.80008", 16, ParseErrorKind::Overflow);
         assert_ok_radix::<I0F16>("-0.80007", 16, -0x8000);
@@ -1176,8 +1164,6 @@ mod tests {
 
     #[test]
     fn check_i64_u64_from_str() {
-        use crate::types::*;
-
         assert_err::<I0F64>("-1", ParseErrorKind::Overflow);
         assert_err::<I0F64>("-0.50000000000000000003", ParseErrorKind::Overflow);
         assert_ok::<I0F64>("-0.50000000000000000002", -0x8000_0000_0000_0000);
@@ -1227,8 +1213,6 @@ mod tests {
 
     #[test]
     fn check_i128_u128_from_str() {
-        use crate::types::*;
-
         assert_err::<I0F128>("-1", ParseErrorKind::Overflow);
         assert_err::<I0F128>(
             "-0.500000000000000000000000000000000000002",
@@ -1338,8 +1322,6 @@ mod tests {
 
     #[test]
     fn check_i128_u128_from_str_hex() {
-        use crate::types::*;
-
         assert_err_radix::<I0F128>("-1", 16, ParseErrorKind::Overflow);
         assert_err_radix::<I0F128>(
             "-0.800000000000000000000000000000008",
@@ -1471,8 +1453,6 @@ mod tests {
         );
     }
 
-    use std::{format, string::String};
-
     struct Fractions {
         zero: String,
         eps: String,
@@ -1506,7 +1486,6 @@ mod tests {
     //   * 0.03125 (exactly 1/32) is parsed as 0.0625 (1/16)
     #[test]
     fn check_exact_decimal() {
-        use crate::types::*;
         let prefix0 = String::from("0.");
         let prefix4 = String::from("15.");
         let prefix8 = format!("{}.", !0u8);
@@ -1517,25 +1496,29 @@ mod tests {
         let prefix124 = format!("{}.", !0u128 >> 4);
         let prefix128 = format!("{}.", !0u128);
 
+        // Note: fractions can be generated with this:
+        //
+        //     use rug::Integer;
+        //     for &i in &[0, 4, 8, 16, 28, 32, 64, 124, 128] {
+        //         let eps = Integer::from(Integer::u_pow_u(5, i + 1));
+        //         println!("let eps{} = \"{:02$}\";", i, eps, i as usize + 1);
+        //     }
+
         // eps0 = 0.5 >> 0 = 0.5
-        let eps0 = "5";
         // eps4 = 0.5 >> 4 = 0.03125
-        let eps4 = "03125";
         // eps8 = 0.5 >> 8 = 0.001953125
-        let eps8 = "001953125";
         // etc.
+        let eps0 = "5";
+        let eps4 = "03125";
+        let eps8 = "001953125";
         let eps16 = "00000762939453125";
         let eps28 = "00000000186264514923095703125";
         let eps32 = "000000000116415321826934814453125";
         let eps64 = "00000000000000000002710505431213761085018632002174854278564453125";
-        let eps124 = concat!(
-            "0000000000000000000000000000000000000235098870164457501593747307444449",
-            "1355637331113544175043017503412556834518909454345703125"
-        );
-        let eps128 = concat!(
-            "0000000000000000000000000000000000000014693679385278593849609206715278",
-            "07097273331945965109401885939632848021574318408966064453125"
-        );
+        let eps124 = "0000000000000000000000000000000000000235098870164457501593747307\
+                      4444491355637331113544175043017503412556834518909454345703125";
+        let eps128 = "0000000000000000000000000000000000000014693679385278593849609206\
+                      71527807097273331945965109401885939632848021574318408966064453125";
 
         let frac_0_8 = make_fraction_strings(&prefix0, eps8);
         assert_ok::<U0F8>(&frac_0_8.zero, 0);

@@ -228,17 +228,18 @@ fn dec_frac_digits(frac_bits: u32) -> u32 {
     (frac_bits * 3 + i) / 10
 }
 
-trait Mul10: Sized {
-    fn mul10(self) -> (Self, u8);
+pub(crate) trait Mul10: Sized {
+    fn mul10_assign(&mut self) -> u8;
 }
 macro_rules! mul10_widen {
     ($Single:ty, $Double:ty) => {
         impl Mul10 for $Single {
             #[inline]
-            fn mul10(self) -> ($Single, u8) {
+            fn mul10_assign(&mut self) -> u8 {
                 const NBITS: usize = 8 * mem::size_of::<$Single>();
-                let prod = <$Double>::from(self) * 10;
-                (prod as $Single, (prod >> NBITS) as u8)
+                let prod = <$Double>::from(*self) * 10;
+                *self = prod as $Single;
+                (prod >> NBITS) as u8
             }
         }
     };
@@ -249,20 +250,18 @@ mul10_widen! { u32, u64 }
 mul10_widen! { u64, u128 }
 impl Mul10 for u128 {
     #[inline]
-    fn mul10(self) -> (u128, u8) {
+    fn mul10_assign(&mut self) -> u8 {
         const LO_MASK: u128 = !(!0 << 64);
-        let hi = (self >> 64) * 10;
-        let lo = (self & LO_MASK) * 10;
+        let hi = (*self >> 64) * 10;
+        let lo = (*self & LO_MASK) * 10;
         // Workaround for https://github.com/rust-lang/rust/issues/63384
         // let (wrapped, overflow) = (hi << 64).overflowing_add(lo);
         // ((hi >> 64) as u8 + u8::from(overflow), wrapped)
         let (hi_lo, hi_hi) = (hi as u64, (hi >> 64) as u64);
         let (lo_lo, lo_hi) = (lo as u64, (lo >> 64) as u64);
         let (wrapped, overflow) = hi_lo.overflowing_add(lo_hi);
-        (
-            (u128::from(wrapped) << 64) | u128::from(lo_lo),
-            hi_hi as u8 + u8::from(overflow),
-        )
+        *self = (u128::from(wrapped) << 64) | u128::from(lo_lo);
+        hi_hi as u8 + u8::from(overflow)
     }
 }
 
@@ -283,9 +282,7 @@ macro_rules! fmt_dec_helper {
 
             #[inline]
             fn take_frac_digit(&mut self) -> u8 {
-                let (next, ret) = self.mul10();
-                *self = next;
-                ret
+                self.mul10_assign()
             }
         }
     )* };

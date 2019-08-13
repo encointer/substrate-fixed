@@ -205,6 +205,9 @@ additional terms or conditions.
 #![doc(test(attr(deny(warnings))))]
 #![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
 
+#[cfg(test)]
+extern crate std;
+
 #[macro_use]
 mod macros;
 

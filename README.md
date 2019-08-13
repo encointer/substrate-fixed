@@ -49,6 +49,13 @@ Various conversion methods are available:
 
 ## What’s new
 
+### Version 0.4.2 news (unreleased)
+
+  * Bug fix: parsing of decimal fractions was fixed to give correctly
+    rounded results for long decimal fraction strings, for example
+    with four fractional bits, 0.96874999… (just below 31⁄32) and
+    0.96875 (31⁄32) are now parsed correctly as 0.9375 (15⁄16) and 1.0.
+
 ### Version 0.4.1 news (2019-08-12)
 
   * All fixed-point types now implement [`FromStr`].

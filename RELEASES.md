@@ -5,6 +5,14 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.4.2 (unreleased)
+==========================
+
+  * Bug fix: parsing of decimal fractions was fixed to give correctly
+    rounded results for long decimal fraction strings, for example
+    with four fractional bits, 0.96874999… (just below 31⁄32) and
+    0.96875 (31⁄32) are now parsed correctly as 0.9375 (15⁄16) and 1.0.
+
 Version 0.4.1 (2019-08-12)
 ==========================
 

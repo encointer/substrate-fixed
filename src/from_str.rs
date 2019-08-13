@@ -14,6 +14,7 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
+    display::Mul10,
     frac::False,
     sealed::SealedInt,
     types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
@@ -22,9 +23,9 @@ use crate::{
     FixedU8,
 };
 use core::{
-    cmp::{self, Ordering},
+    cmp::Ordering,
     fmt::{Display, Formatter, Result as FmtResult},
-    ops::{Add, Shl, Shr},
+    ops::{Add, Mul, Shl, Shr},
     str::FromStr,
 };
 
@@ -115,7 +116,6 @@ where
     Some(acc << rem_bits)
 }
 
-#[inline]
 fn unchecked_hex_digit(byte: u8) -> u8 {
     // We know that byte is a valid hex:
     //   * b'0'..=b'9' (0x30..=0x39) => byte & 0x0f
@@ -168,14 +168,131 @@ where
     Some(acc << rem_bits)
 }
 
+enum Round {
+    Nearest,
+    Floor,
+}
+
+trait DecToBin: Sized {
+    type Double;
+    fn parse_is_short(s: &str) -> (Self::Double, bool);
+    fn dec_to_bin(val: Self::Double, nbits: u32, round: Round) -> Option<Self>;
+}
+
+macro_rules! impl_dec_to_bin {
+    ($Single:ident, $Double:ident, $dec:expr, $method:ident) => {
+        impl DecToBin for $Single {
+            type Double = $Double;
+            fn parse_is_short(s: &str) -> ($Double, bool) {
+                let (is_short, slice, pad) = if s.len() <= $dec {
+                    let ten: $Double = 10;
+                    (true, s, ten.pow($dec - s.len() as u32))
+                } else {
+                    (false, &s[..$dec], 1)
+                };
+                let val = slice.parse::<$Double>().unwrap() * pad;
+                (val, is_short)
+            }
+            fn dec_to_bin(val: $Double, nbits: u32, round: Round) -> Option<$Single> {
+                $method(val, nbits, round)
+            }
+        }
+    };
+}
+impl_dec_to_bin! { u8, u16, 3, dec3_to_bin8 }
+impl_dec_to_bin! { u16, u32, 6, dec6_to_bin16 }
+impl_dec_to_bin! { u32, u64, 13, dec13_to_bin32 }
+impl_dec_to_bin! { u64, u128, 27, dec27_to_bin64 }
+
+impl DecToBin for u128 {
+    type Double = (u128, u128);
+    fn parse_is_short(s: &str) -> (Self::Double, bool) {
+        if s.len() <= 27 {
+            let rem = 27 - s.len();
+            let hi = s.parse::<u128>().unwrap() * 10u128.pow(rem as u32);
+            ((hi, 0), true)
+        } else {
+            let hi = s[..27].parse::<u128>().unwrap();
+
+            let (is_short, slice, pad) = if s.len() <= 54 {
+                (true, &s[27..], 10u128.pow(54 - s.len() as u32))
+            } else {
+                (false, &s[27..54], 1)
+            };
+            let lo = slice.parse::<u128>().unwrap() * pad;
+            ((hi, lo), is_short)
+        }
+    }
+    fn dec_to_bin(val: Self::Double, nbits: u32, round: Round) -> Option<Self> {
+        dec27_27_to_bin128(val, nbits, round)
+    }
+}
+
+fn dec_str_frac_to_bin<I>(s: &str, nbits: u32) -> Option<I>
+where
+    I: SealedInt<IsSigned = False> + FromStr + From<u8> + DecToBin,
+    I: Mul10 + Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I> + Mul<Output = I>,
+{
+    let (val, is_short) = I::parse_is_short(s);
+    let one = I::from(1u8);
+    let dump_bits = I::NBITS - nbits;
+    // if is_short, dec_to_bin can round and give correct answer immediately
+    let round = if is_short {
+        Round::Nearest
+    } else {
+        Round::Floor
+    };
+    let floor = I::dec_to_bin(val, nbits, round)?;
+    if is_short {
+        return Some(floor);
+    }
+    // since !is_short, we have a floor and we have to check whether we need to increment
+
+    // add_5 is to add rounding when all bits are used
+    let (mut boundary, mut add_5) = if nbits == 0 {
+        (one << (I::NBITS - 1), false)
+    } else if dump_bits == 0 {
+        (floor, true)
+    } else {
+        ((floor << dump_bits) + (one << (dump_bits - 1)), false)
+    };
+    for &byte in s.as_bytes() {
+        let mut boundary_digit = boundary.mul10_assign();
+        if add_5 {
+            let (wrapped, overflow) = boundary.overflowing_add(I::from(5u8));
+            boundary = wrapped;
+            if overflow {
+                boundary_digit += 1;
+            }
+            add_5 = false;
+        }
+        if byte - b'0' < boundary_digit {
+            return Some(floor);
+        }
+        if byte - b'0' > boundary_digit {
+            break;
+        }
+    }
+    // ≥ boundary, so we round up
+    let next_up = floor.checked_add(one)?;
+    if dump_bits != 0 && (next_up >> nbits).traits().ne(&I::ZERO.traits()) {
+        None
+    } else {
+        Some(next_up)
+    }
+}
+
 // 5^3 × 2 < 2^8 => (10^3 - 1) × 2^(8-3+1) < 2^16
 // Returns None for large fractions that are rounded to 1.0
-fn dec3_to_bin8(val: u16, nbits: u32) -> Option<u8> {
+fn dec3_to_bin8(val: u16, nbits: u32, round: Round) -> Option<u8> {
     debug_assert!(val < 10u16.pow(3));
     let dump_bits = 8 - nbits;
     let divisor = 5u16.pow(3) * 2;
     let shift = val << (8 - 3 + 1) >> dump_bits;
-    let round = shift + (divisor / 2);
+    let round = match round {
+        Round::Nearest => shift + (divisor / 2),
+        Round::Floor => shift,
+    };
     if round >> nbits >= divisor {
         None
     } else {
@@ -184,12 +301,15 @@ fn dec3_to_bin8(val: u16, nbits: u32) -> Option<u8> {
 }
 // 5^6 × 2 < 2^16 => (10^6 - 1) × 2^(16-6+1) < 2^32
 // Returns None for large fractions that are rounded to 1.0
-fn dec6_to_bin16(val: u32, nbits: u32) -> Option<u16> {
+fn dec6_to_bin16(val: u32, nbits: u32, round: Round) -> Option<u16> {
     debug_assert!(val < 10u32.pow(6));
     let dump_bits = 16 - nbits;
     let divisor = 5u32.pow(6) * 2;
     let shift = val << (16 - 6 + 1) >> dump_bits;
-    let round = shift + (divisor / 2);
+    let round = match round {
+        Round::Nearest => shift + (divisor / 2),
+        Round::Floor => shift,
+    };
     if round >> nbits >= divisor {
         None
     } else {
@@ -198,12 +318,15 @@ fn dec6_to_bin16(val: u32, nbits: u32) -> Option<u16> {
 }
 // 5^13 × 2 < 2^32 => (10^13 - 1) × 2^(32-13+1) < 2^64
 // Returns None for large fractions that are rounded to 1.0
-fn dec13_to_bin32(val: u64, nbits: u32) -> Option<u32> {
+fn dec13_to_bin32(val: u64, nbits: u32, round: Round) -> Option<u32> {
     debug_assert!(val < 10u64.pow(13));
     let dump_bits = 32 - nbits;
     let divisor = 5u64.pow(13) * 2;
     let shift = val << (32 - 13 + 1) >> dump_bits;
-    let round = shift + (divisor / 2);
+    let round = match round {
+        Round::Nearest => shift + (divisor / 2),
+        Round::Floor => shift,
+    };
     if round >> nbits >= divisor {
         None
     } else {
@@ -212,12 +335,15 @@ fn dec13_to_bin32(val: u64, nbits: u32) -> Option<u32> {
 }
 // 5^27 × 2 < 2^64 => (10^27 - 1) × 2^(64-27+1) < 2^128
 // Returns None for large fractions that are rounded to 1.0
-fn dec27_to_bin64(val: u128, nbits: u32) -> Option<u64> {
+fn dec27_to_bin64(val: u128, nbits: u32, round: Round) -> Option<u64> {
     debug_assert!(val < 10u128.pow(27));
     let dump_bits = 64 - nbits;
     let divisor = 5u128.pow(27) * 2;
     let shift = val << (64 - 27 + 1) >> dump_bits;
-    let round = shift + (divisor / 2);
+    let round = match round {
+        Round::Nearest => shift + (divisor / 2),
+        Round::Floor => shift,
+    };
     if round >> nbits >= divisor {
         None
     } else {
@@ -226,7 +352,7 @@ fn dec27_to_bin64(val: u128, nbits: u32) -> Option<u64> {
 }
 // 5^54 × 2 < 2^128 => (10^54 - 1) × 2^(128-54+1) < 2^256
 // Returns None for large fractions that are rounded to 1.0
-fn dec27_27_to_bin128(hi: u128, lo: u128, nbits: u32) -> Option<u128> {
+fn dec27_27_to_bin128((hi, lo): (u128, u128), nbits: u32, round: Round) -> Option<u128> {
     debug_assert!(hi < 10u128.pow(27));
     debug_assert!(lo < 10u128.pow(27));
     let dump_bits = 128 - nbits;
@@ -253,7 +379,10 @@ fn dec27_27_to_bin128(hi: u128, lo: u128, nbits: u32) -> Option<u128> {
             shift_hi = comb_hi;
         }
     };
-    let (round_lo, overflow) = shift_lo.overflowing_add(divisor / 2);
+    let (round_lo, overflow) = match round {
+        Round::Nearest => shift_lo.overflowing_add(divisor / 2),
+        Round::Floor => (shift_lo, false),
+    };
     let round_hi = if overflow { shift_hi + 1 } else { shift_hi };
     let whole_compare = if dump_bits == 0 {
         round_hi
@@ -481,7 +610,6 @@ macro_rules! impl_from_str_unsigned {
         fn $all:ident;
         fn $int:ident, ($int_half:ident, $int_half_cond:expr);
         fn $frac:ident, ($frac_half:ident, $frac_half_cond:expr);
-        $frac_dec:ident;
     ) => {
         impl_from_str! { $Fixed, $LeEqU, $all }
 
@@ -505,9 +633,14 @@ macro_rules! impl_from_str_unsigned {
             if $int_half_cond && nbits <= HALF {
                 return $int_half(int, radix, nbits, whole_frac).map(|x| $Bits::from(x) << HALF);
             }
+
             if int.is_empty() && !whole_frac {
                 return Some(0);
-            } else if int.is_empty() || nbits == 0 {
+            } else if int.is_empty() && nbits != 0 {
+                return Some(1);
+            } else if int.is_empty() {
+                return None;
+            } else if nbits == 0 {
                 return None;
             }
             let mut parsed_int = match radix {
@@ -539,36 +672,9 @@ macro_rules! impl_from_str_unsigned {
                 2 => bin_str_frac_to_bin(frac, nbits),
                 8 => oct_str_frac_to_bin(frac, nbits),
                 16 => hex_str_frac_to_bin(frac, nbits),
-                10 => $frac_dec(frac, nbits),
+                10 => dec_str_frac_to_bin(frac, nbits),
                 _ => unreachable!(),
             }
-        }
-    };
-}
-
-macro_rules! impl_from_str_unsigned_not128 {
-    (
-        $Fixed:ident, $LeEqU:ident, $Bits:ident;
-        fn $all:ident;
-        fn $int:ident, ($int_half:ident, $int_half_cond:expr);
-        fn $frac:ident, ($frac_half:ident, $frac_half_cond:expr);
-        fn $frac_dec:ident;
-        $decode_frac:ident, $dec_frac_digits:expr, $DoubleBits:ident;
-    ) => {
-        impl_from_str_unsigned! {
-            $Fixed, $LeEqU, $Bits;
-            fn $all;
-            fn $int, ($int_half, $int_half_cond);
-            fn $frac, ($frac_half, $frac_half_cond);
-            $frac_dec;
-        }
-
-        fn $frac_dec(frac: &str, nbits: u32) -> Option<$Bits> {
-            let end = cmp::min(frac.len(), $dec_frac_digits);
-            let rem = $dec_frac_digits - end;
-            let ten: $DoubleBits = 10;
-            let i = frac[..end].parse::<$DoubleBits>().unwrap() * ten.pow(rem as u32);
-            $decode_frac(i, nbits)
         }
     };
 }
@@ -579,13 +685,11 @@ impl_from_str_signed! {
     get_int8;
     get_frac8;
 }
-impl_from_str_unsigned_not128! {
+impl_from_str_unsigned! {
     FixedU8, LeEqU8, u8;
     fn from_str_u8;
     fn get_int8, (get_int8, false);
     fn get_frac8, (get_frac8, false);
-    fn get_frac8_dec;
-    dec3_to_bin8, 3, u16;
 }
 
 impl_from_str_signed! {
@@ -594,13 +698,11 @@ impl_from_str_signed! {
     get_int16;
     get_frac16;
 }
-impl_from_str_unsigned_not128! {
+impl_from_str_unsigned! {
     FixedU16, LeEqU16, u16;
     fn from_str_u16;
     fn get_int16, (get_int8, true);
     fn get_frac16, (get_frac8, true);
-    fn get_frac16_dec;
-    dec6_to_bin16, 6, u32;
 }
 
 impl_from_str_signed! {
@@ -609,13 +711,11 @@ impl_from_str_signed! {
     get_int32;
     get_frac32;
 }
-impl_from_str_unsigned_not128! {
+impl_from_str_unsigned! {
     FixedU32, LeEqU32, u32;
     fn from_str_u32;
     fn get_int32, (get_int16, true);
     fn get_frac32, (get_frac16, true);
-    fn get_frac32_dec;
-    dec13_to_bin32, 13, u64;
 }
 
 impl_from_str_signed! {
@@ -624,13 +724,11 @@ impl_from_str_signed! {
     get_int64;
     get_frac64;
 }
-impl_from_str_unsigned_not128! {
+impl_from_str_unsigned! {
     FixedU64, LeEqU64, u64;
     fn from_str_u64;
     fn get_int64, (get_int32, true);
     fn get_frac64, (get_frac32, true);
-    fn get_frac64_dec;
-    dec27_to_bin64, 27, u128;
 }
 
 impl_from_str_signed! {
@@ -644,22 +742,6 @@ impl_from_str_unsigned! {
     fn from_str_u128;
     fn get_int128, (get_int64, true);
     fn get_frac128, (get_frac64, true);
-    get_frac128_dec;
-}
-
-fn get_frac128_dec(frac: &str, nbits: u32) -> Option<u128> {
-    let (hi, lo) = if frac.len() <= 27 {
-        let rem = 27 - frac.len();
-        let hi = frac.parse::<u128>().unwrap() * 10u128.pow(rem as u32);
-        (hi, 0)
-    } else {
-        let hi = frac[..27].parse::<u128>().unwrap();
-        let lo_end = cmp::min(frac.len(), 54);
-        let rem = 54 - lo_end;
-        let lo = frac[27..lo_end].parse::<u128>().unwrap() * 10u128.pow(rem as u32);
-        (hi, lo)
-    };
-    dec27_27_to_bin128(hi, lo, nbits)
 }
 
 #[cfg(test)]
@@ -672,7 +754,7 @@ mod tests {
         let two_pow = 8f64.exp2();
         let limit = 1000;
         for i in 0..limit {
-            let ans = dec3_to_bin8(i, 8);
+            let ans = dec3_to_bin8(i, 8, Round::Nearest);
             let approx = two_pow * f64::from(i) / f64::from(limit);
             let error = (ans.map(f64::from).unwrap_or(two_pow) - approx).abs();
             assert!(
@@ -691,7 +773,7 @@ mod tests {
         let two_pow = 16f64.exp2();
         let limit = 1_000_000;
         for i in 0..limit {
-            let ans = dec6_to_bin16(i, 16);
+            let ans = dec6_to_bin16(i, 16, Round::Nearest);
             let approx = two_pow * f64::from(i) / f64::from(limit);
             let error = (ans.map(f64::from).unwrap_or(two_pow) - approx).abs();
             assert!(
@@ -720,7 +802,7 @@ mod tests {
                 limit / 2 + iter,
                 limit - iter - 1,
             ] {
-                let ans = dec13_to_bin32(i, 32);
+                let ans = dec13_to_bin32(i, 32, Round::Nearest);
                 let approx = two_pow * i as f64 / limit as f64;
                 let error = (ans.map(f64::from).unwrap_or(two_pow) - approx).abs();
                 assert!(
@@ -750,7 +832,7 @@ mod tests {
                 limit / 2 + iter,
                 limit - iter - 1,
             ] {
-                let ans = dec27_to_bin64(i, 64);
+                let ans = dec27_to_bin64(i, 64, Round::Nearest);
                 let approx = two_pow * i as f64 / limit as f64;
                 let error = (ans.map(|x| x as f64).unwrap_or(two_pow) - approx).abs();
                 assert!(
@@ -769,21 +851,24 @@ mod tests {
     fn check_dec27_27() {
         let nines = 10u128.pow(27) - 1;
         let zeros = 0;
-        let too_big = dec27_27_to_bin128(nines, nines, 128);
+        let too_big = dec27_27_to_bin128((nines, nines), 128, Round::Nearest);
         assert_eq!(too_big, None);
-        let big = dec27_27_to_bin128(nines, zeros, 128);
+        let big = dec27_27_to_bin128((nines, zeros), 128, Round::Nearest);
         assert_eq!(
             big,
             Some(340_282_366_920_938_463_463_374_607_091_485_844_535)
         );
-        let small = dec27_27_to_bin128(zeros, nines, 128);
+        let small = dec27_27_to_bin128((zeros, nines), 128, Round::Nearest);
         assert_eq!(small, Some(340_282_366_921));
-        let zero = dec27_27_to_bin128(zeros, zeros, 128);
+        let zero = dec27_27_to_bin128((zeros, zeros), 128, Round::Nearest);
         assert_eq!(zero, Some(0));
         let x = dec27_27_to_bin128(
-            123_456_789_012_345_678_901_234_567,
-            987_654_321_098_765_432_109_876_543,
+            (
+                123_456_789_012_345_678_901_234_567,
+                987_654_321_098_765_432_109_876_543,
+            ),
             128,
+            Round::Nearest,
         );
         assert_eq!(x, Some(42_010_168_377_579_896_403_540_037_811_203_677_112));
     }
@@ -1384,5 +1469,150 @@ mod tests {
             16,
             ParseErrorKind::Overflow,
         );
+    }
+
+    use std::{format, string::String};
+
+    struct Fractions {
+        zero: String,
+        eps: String,
+        one_minus_eps: String,
+        one: String,
+    }
+    fn without_last(a: &str) -> &str {
+        &a[..a.len() - 1]
+    }
+    fn make_fraction_strings(prefix: &str, eps_frac: &str) -> Fractions {
+        let eps_frac_compl: String = eps_frac
+            .chars()
+            .map(|digit| (b'0' + b'9' - digit as u8) as char)
+            .collect();
+        let eps_frac_compl = String::from(without_last(&eps_frac_compl)) + "5";
+
+        let zero = String::from("0.") + without_last(&eps_frac) + "499999";
+        let eps = String::from("0.") + eps_frac;
+        let one_minus_eps = String::from(prefix) + without_last(&eps_frac_compl) + "499999";
+        let one = String::from(prefix) + &eps_frac_compl;
+        Fractions {
+            zero,
+            eps,
+            one_minus_eps,
+            one,
+        }
+    }
+
+    // check that for example for four fractional bits,
+    //   * 0.0312499999 (just below 1/32) is parsed as 0 and
+    //   * 0.03125 (exactly 1/32) is parsed as 0.0625 (1/16)
+    #[test]
+    fn check_exact_decimal() {
+        use crate::types::*;
+        let prefix0 = String::from("0.");
+        let prefix4 = String::from("15.");
+        let prefix8 = format!("{}.", !0u8);
+        let prefix16 = format!("{}.", !0u16);
+        let prefix28 = format!("{}.", !0u32 >> 4);
+        let prefix32 = format!("{}.", !0u32);
+        let prefix64 = format!("{}.", !0u64);
+        let prefix124 = format!("{}.", !0u128 >> 4);
+        let prefix128 = format!("{}.", !0u128);
+
+        // eps0 = 0.5 >> 0 = 0.5
+        let eps0 = "5";
+        // eps4 = 0.5 >> 4 = 0.03125
+        let eps4 = "03125";
+        // eps8 = 0.5 >> 8 = 0.001953125
+        let eps8 = "001953125";
+        // etc.
+        let eps16 = "00000762939453125";
+        let eps28 = "00000000186264514923095703125";
+        let eps32 = "000000000116415321826934814453125";
+        let eps64 = "00000000000000000002710505431213761085018632002174854278564453125";
+        let eps124 = concat!(
+            "0000000000000000000000000000000000000235098870164457501593747307444449",
+            "1355637331113544175043017503412556834518909454345703125"
+        );
+        let eps128 = concat!(
+            "0000000000000000000000000000000000000014693679385278593849609206715278",
+            "07097273331945965109401885939632848021574318408966064453125"
+        );
+
+        let frac_0_8 = make_fraction_strings(&prefix0, eps8);
+        assert_ok::<U0F8>(&frac_0_8.zero, 0);
+        assert_ok::<U0F8>(&frac_0_8.eps, 1);
+        assert_ok::<U0F8>(&frac_0_8.one_minus_eps, !0);
+        assert_err::<U0F8>(&frac_0_8.one, ParseErrorKind::Overflow);
+
+        let frac_4_4 = make_fraction_strings(&prefix4, eps4);
+        assert_ok::<U4F4>(&frac_4_4.zero, 0);
+        assert_ok::<U4F4>(&frac_4_4.eps, 1);
+        assert_ok::<U4F4>(&frac_4_4.one_minus_eps, !0);
+        assert_err::<U4F4>(&frac_4_4.one, ParseErrorKind::Overflow);
+
+        let frac_8_0 = make_fraction_strings(&prefix8, eps0);
+        assert_ok::<U8F0>(&frac_8_0.zero, 0);
+        assert_ok::<U8F0>(&frac_8_0.eps, 1);
+        assert_ok::<U8F0>(&frac_8_0.one_minus_eps, !0);
+        assert_err::<U8F0>(&frac_8_0.one, ParseErrorKind::Overflow);
+
+        let frac_0_32 = make_fraction_strings(&prefix0, eps32);
+        assert_ok::<U0F32>(&frac_0_32.zero, 0);
+        assert_ok::<U0F32>(&frac_0_32.eps, 1);
+        assert_ok::<U0F32>(&frac_0_32.one_minus_eps, !0);
+        assert_err::<U0F32>(&frac_0_32.one, ParseErrorKind::Overflow);
+
+        let frac_4_28 = make_fraction_strings(&prefix4, eps28);
+        assert_ok::<U4F28>(&frac_4_28.zero, 0);
+        assert_ok::<U4F28>(&frac_4_28.eps, 1);
+        assert_ok::<U4F28>(&frac_4_28.one_minus_eps, !0);
+        assert_err::<U4F28>(&frac_4_28.one, ParseErrorKind::Overflow);
+
+        let frac_16_16 = make_fraction_strings(&prefix16, eps16);
+        assert_ok::<U16F16>(&frac_16_16.zero, 0);
+        assert_ok::<U16F16>(&frac_16_16.eps, 1);
+        assert_ok::<U16F16>(&frac_16_16.one_minus_eps, !0);
+        assert_err::<U16F16>(&frac_16_16.one, ParseErrorKind::Overflow);
+
+        let frac_28_4 = make_fraction_strings(&prefix28, eps4);
+        assert_ok::<U28F4>(&frac_28_4.zero, 0);
+        assert_ok::<U28F4>(&frac_28_4.eps, 1);
+        assert_ok::<U28F4>(&frac_28_4.one_minus_eps, !0);
+        assert_err::<U28F4>(&frac_28_4.one, ParseErrorKind::Overflow);
+
+        let frac_32_0 = make_fraction_strings(&prefix32, eps0);
+        assert_ok::<U32F0>(&frac_32_0.zero, 0);
+        assert_ok::<U32F0>(&frac_32_0.eps, 1);
+        assert_ok::<U32F0>(&frac_32_0.one_minus_eps, !0);
+        assert_err::<U32F0>(&frac_32_0.one, ParseErrorKind::Overflow);
+
+        let frac_0_128 = make_fraction_strings(&prefix0, eps128);
+        assert_ok::<U0F128>(&frac_0_128.zero, 0);
+        assert_ok::<U0F128>(&frac_0_128.eps, 1);
+        assert_ok::<U0F128>(&frac_0_128.one_minus_eps, !0);
+        assert_err::<U0F128>(&frac_0_128.one, ParseErrorKind::Overflow);
+
+        let frac_4_124 = make_fraction_strings(&prefix4, eps124);
+        assert_ok::<U4F124>(&frac_4_124.zero, 0);
+        assert_ok::<U4F124>(&frac_4_124.eps, 1);
+        assert_ok::<U4F124>(&frac_4_124.one_minus_eps, !0);
+        assert_err::<U4F124>(&frac_4_124.one, ParseErrorKind::Overflow);
+
+        let frac_64_64 = make_fraction_strings(&prefix64, eps64);
+        assert_ok::<U64F64>(&frac_64_64.zero, 0);
+        assert_ok::<U64F64>(&frac_64_64.eps, 1);
+        assert_ok::<U64F64>(&frac_64_64.one_minus_eps, !0);
+        assert_err::<U64F64>(&frac_64_64.one, ParseErrorKind::Overflow);
+
+        let frac_124_4 = make_fraction_strings(&prefix124, eps4);
+        assert_ok::<U124F4>(&frac_124_4.zero, 0);
+        assert_ok::<U124F4>(&frac_124_4.eps, 1);
+        assert_ok::<U124F4>(&frac_124_4.one_minus_eps, !0);
+        assert_err::<U124F4>(&frac_124_4.one, ParseErrorKind::Overflow);
+
+        let frac_128_0 = make_fraction_strings(&prefix128, eps0);
+        assert_ok::<U128F0>(&frac_128_0.zero, 0);
+        assert_ok::<U128F0>(&frac_128_0.eps, 1);
+        assert_ok::<U128F0>(&frac_128_0.one_minus_eps, !0);
+        assert_err::<U128F0>(&frac_128_0.one, ParseErrorKind::Overflow);
     }
 }

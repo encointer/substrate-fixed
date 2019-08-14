@@ -163,7 +163,9 @@ where
     debug_assert!(!bytes.is_empty());
     let mut acc = I::from(0);
     for &byte in bytes {
-        acc = acc.checked_mul(I::from(10))?.checked_add(I::from(byte - b'0'))?;
+        acc = acc
+            .checked_mul(I::from(10))?
+            .checked_add(I::from(byte - b'0'))?;
     }
     Some(acc)
 }

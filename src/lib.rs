@@ -204,6 +204,7 @@ additional terms or conditions.
 #![doc(html_root_url = "https://docs.rs/fixed/0.4.1")]
 #![doc(test(attr(deny(warnings))))]
 #![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
+#![allow(clippy::type_repetition_in_bounds)]
 
 #[cfg(test)]
 extern crate std;

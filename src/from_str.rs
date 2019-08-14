@@ -29,34 +29,30 @@ use core::{
     str::FromStr,
 };
 
-fn bin_str_int_to_bin<I>(s: &str) -> Option<I>
+fn bin_str_int_to_bin<I>(bytes: &[u8]) -> Option<I>
 where
     I: SealedInt<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
-    debug_assert!(!s.is_empty());
-    let mut bytes = s.as_bytes().iter();
-    let first_val = *bytes.next().unwrap() - b'0';
-    let mut acc = I::from(first_val);
+    let mut acc = I::from(bytes[0] - b'0');
     let mut leading_zeros = acc.leading_zeros();
-    for &byte in bytes {
-        let val = byte - b'0';
+    for &byte in &bytes[1..] {
         leading_zeros = leading_zeros.checked_sub(1)?;
-        acc = (acc << 1) + I::from(val);
+        acc = (acc << 1) + I::from(byte - b'0');
     }
     Some(acc)
 }
 
-fn bin_str_frac_to_bin<I>(s: &str, nbits: u32) -> Option<I>
+fn bin_str_frac_to_bin<I>(bytes: &[u8], nbits: u32) -> Option<I>
 where
     I: SealedInt<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
-    debug_assert!(!s.is_empty());
+    debug_assert!(!bytes.is_empty());
     let dump_bits = I::NBITS - nbits;
     let mut rem_bits = nbits;
     let mut acc = I::ZERO;
-    for &byte in s.as_bytes() {
+    for &byte in bytes {
         let val = byte - b'0';
         if rem_bits < 1 {
             // round
@@ -72,34 +68,30 @@ where
     Some(acc << rem_bits)
 }
 
-fn oct_str_int_to_bin<I>(s: &str) -> Option<I>
+fn oct_str_int_to_bin<I>(bytes: &[u8]) -> Option<I>
 where
     I: SealedInt<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
-    debug_assert!(!s.is_empty());
-    let mut bytes = s.as_bytes().iter();
-    let first_val = *bytes.next().unwrap() - b'0';
-    let mut acc = I::from(first_val);
+    let mut acc = I::from(bytes[0] - b'0');
     let mut leading_zeros = acc.leading_zeros();
-    for &byte in bytes {
-        let val = byte - b'0';
+    for &byte in &bytes[1..] {
         leading_zeros = leading_zeros.checked_sub(3)?;
-        acc = (acc << 3) + I::from(val);
+        acc = (acc << 3) + I::from(byte - b'0');
     }
     Some(acc)
 }
 
-fn oct_str_frac_to_bin<I>(s: &str, nbits: u32) -> Option<I>
+fn oct_str_frac_to_bin<I>(bytes: &[u8], nbits: u32) -> Option<I>
 where
     I: SealedInt<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
-    debug_assert!(!s.is_empty());
+    debug_assert!(!bytes.is_empty());
     let dump_bits = I::NBITS - nbits;
     let mut rem_bits = nbits;
     let mut acc = I::ZERO;
-    for &byte in s.as_bytes() {
+    for &byte in bytes {
         let val = byte - b'0';
         if rem_bits < 3 {
             acc = (acc << rem_bits) + I::from(val >> (3 - rem_bits));
@@ -124,34 +116,30 @@ fn unchecked_hex_digit(byte: u8) -> u8 {
     (byte & 0x0f) + if byte >= 0x40 { 9 } else { 0 }
 }
 
-fn hex_str_int_to_bin<I>(s: &str) -> Option<I>
+fn hex_str_int_to_bin<I>(bytes: &[u8]) -> Option<I>
 where
     I: SealedInt<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Add<Output = I>,
 {
-    debug_assert!(!s.is_empty());
-    let mut bytes = s.as_bytes().iter();
-    let first_val = unchecked_hex_digit(*bytes.next().unwrap());
-    let mut acc = I::from(first_val);
+    let mut acc = I::from(unchecked_hex_digit(bytes[0]));
     let mut leading_zeros = acc.leading_zeros();
-    for &byte in bytes {
-        let val = unchecked_hex_digit(byte);
+    for &byte in &bytes[1..] {
         leading_zeros = leading_zeros.checked_sub(4)?;
-        acc = (acc << 4) + I::from(val);
+        acc = (acc << 4) + I::from(unchecked_hex_digit(byte));
     }
     Some(acc)
 }
 
-fn hex_str_frac_to_bin<I>(s: &str, nbits: u32) -> Option<I>
+fn hex_str_frac_to_bin<I>(bytes: &[u8], nbits: u32) -> Option<I>
 where
     I: SealedInt<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
-    debug_assert!(!s.is_empty());
+    debug_assert!(!bytes.is_empty());
     let dump_bits = I::NBITS - nbits;
     let mut rem_bits = nbits;
     let mut acc = I::ZERO;
-    for &byte in s.as_bytes() {
+    for &byte in bytes {
         let val = unchecked_hex_digit(byte);
         if rem_bits < 4 {
             acc = (acc << rem_bits) + I::from(val >> (4 - rem_bits));
@@ -166,6 +154,18 @@ where
         rem_bits -= 4;
     }
     Some(acc << rem_bits)
+}
+
+fn dec_str_int_to_bin<I>(bytes: &[u8]) -> Option<I>
+where
+    I: SealedInt<IsSigned = False> + From<u8>,
+{
+    debug_assert!(!bytes.is_empty());
+    let mut acc = I::from(0);
+    for &byte in bytes {
+        acc = acc.checked_mul(I::from(10))?.checked_add(I::from(byte - b'0'))?;
+    }
+    Some(acc)
 }
 
 enum Round {
@@ -228,7 +228,7 @@ enum Round {
 trait DecToBin: Sized {
     type Double;
     fn dec_to_bin(val: Self::Double, nbits: u32, round: Round) -> Option<Self>;
-    fn parse_is_short(s: &str) -> (Self::Double, bool);
+    fn parse_is_short(bytes: &[u8]) -> (Self::Double, bool);
 }
 
 macro_rules! impl_dec_to_bin {
@@ -253,13 +253,14 @@ macro_rules! impl_dec_to_bin {
                 Some((numer / denom) as $Single)
             }
 
-            fn parse_is_short(s: &str) -> ($Double, bool) {
-                let (is_short, slice, pad) = if let Some(rem) = usize::checked_sub($dec, s.len()) {
-                    (true, s, $Double::pow(10, rem as u32))
-                } else {
-                    (false, &s[..$dec], 1)
-                };
-                let val = slice.parse::<$Double>().unwrap() * pad;
+            fn parse_is_short(bytes: &[u8]) -> ($Double, bool) {
+                let (is_short, slice, pad) =
+                    if let Some(rem) = usize::checked_sub($dec, bytes.len()) {
+                        (true, bytes, $Double::pow(10, rem as u32))
+                    } else {
+                        (false, &bytes[..$dec], 1)
+                    };
+                let val = dec_str_int_to_bin::<$Double>(slice).unwrap() * pad;
                 (val, is_short)
             }
         }
@@ -318,31 +319,31 @@ impl DecToBin for u128 {
         Some(div_wide(numer_hi, numer_lo, denom))
     }
 
-    fn parse_is_short(s: &str) -> ((u128, u128), bool) {
-        if let Some(rem) = 27usize.checked_sub(s.len()) {
-            let hi = s.parse::<u128>().unwrap() * 10u128.pow(rem as u32);
+    fn parse_is_short(bytes: &[u8]) -> ((u128, u128), bool) {
+        if let Some(rem) = 27usize.checked_sub(bytes.len()) {
+            let hi = dec_str_int_to_bin::<u128>(bytes).unwrap() * 10u128.pow(rem as u32);
             ((hi, 0), true)
         } else {
-            let hi = s[..27].parse::<u128>().unwrap();
+            let hi = dec_str_int_to_bin::<u128>(&bytes[..27]).unwrap();
 
-            let (is_short, slice, pad) = if let Some(rem) = 54usize.checked_sub(s.len()) {
-                (true, &s[27..], 10u128.pow(rem as u32))
+            let (is_short, slice, pad) = if let Some(rem) = 54usize.checked_sub(bytes.len()) {
+                (true, &bytes[27..], 10u128.pow(rem as u32))
             } else {
-                (false, &s[27..54], 1)
+                (false, &bytes[27..54], 1)
             };
-            let lo = slice.parse::<u128>().unwrap() * pad;
+            let lo = dec_str_int_to_bin::<u128>(slice).unwrap() * pad;
             ((hi, lo), is_short)
         }
     }
 }
 
-fn dec_str_frac_to_bin<I>(s: &str, nbits: u32) -> Option<I>
+fn dec_str_frac_to_bin<I>(bytes: &[u8], nbits: u32) -> Option<I>
 where
     I: SealedInt<IsSigned = False> + FromStr + From<u8> + DecToBin,
     I: Mul10 + Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I> + Mul<Output = I>,
 {
-    let (val, is_short) = I::parse_is_short(s);
-    let one = I::from(1u8);
+    let (val, is_short) = I::parse_is_short(bytes);
+    let one = I::from(1);
     let dump_bits = I::NBITS - nbits;
     // if is_short, dec_to_bin can round and give correct answer immediately
     let round = if is_short {
@@ -364,10 +365,10 @@ where
     } else {
         ((floor << dump_bits) + (one << (dump_bits - 1)), false)
     };
-    for &byte in s.as_bytes() {
+    for &byte in bytes {
         let mut boundary_digit = boundary.mul10_assign();
         if add_5 {
-            let (wrapped, overflow) = boundary.overflowing_add(I::from(5u8));
+            let (wrapped, overflow) = boundary.overflowing_add(I::from(5));
             boundary = wrapped;
             if overflow {
                 boundary_digit += 1;
@@ -415,8 +416,8 @@ fn div_wide(dividend_hi: u128, dividend_lo: u128, divisor: u128) -> u128 {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct Parse<'a> {
     neg: bool,
-    int: &'a str,
-    frac: &'a str,
+    int: &'a [u8],
+    frac: &'a [u8],
 }
 
 /**
@@ -468,14 +469,14 @@ impl Display for ParseFixedError {
 }
 
 // also trims zeros at start of int and at end of frac
-fn parse_bounds(s: &str, can_be_neg: bool, radix: u32) -> Result<Parse<'_>, ParseFixedError> {
+fn parse_bounds(bytes: &[u8], can_be_neg: bool, radix: u32) -> Result<Parse<'_>, ParseFixedError> {
     let mut sign: Option<bool> = None;
     let mut trimmed_int_start: Option<usize> = None;
     let mut point: Option<usize> = None;
     let mut trimmed_frac_end: Option<usize> = None;
     let mut has_any_digit = false;
 
-    for (index, &byte) in s.as_bytes().iter().enumerate() {
+    for (index, &byte) in bytes.iter().enumerate() {
         match (byte, radix) {
             (b'+', _) => {
                 if sign.is_some() || point.is_some() || has_any_digit {
@@ -521,13 +522,13 @@ fn parse_bounds(s: &str, can_be_neg: bool, radix: u32) -> Result<Parse<'_>, Pars
     }
     let neg = sign.unwrap_or(false);
     let int = match (trimmed_int_start, point) {
-        (Some(start), Some(point)) => &s[start..point],
-        (Some(start), None) => &s[start..],
-        (None, _) => "",
+        (Some(start), Some(point)) => &bytes[start..point],
+        (Some(start), None) => &bytes[start..],
+        (None, _) => &bytes[..0],
     };
     let frac = match (point, trimmed_frac_end) {
-        (Some(point), Some(end)) => &s[(point + 1)..end],
-        _ => "",
+        (Some(point), Some(end)) => &bytes[(point + 1)..end],
+        _ => &bytes[..0],
     };
     Ok(Parse { neg, int, frac })
 }
@@ -543,14 +544,16 @@ macro_rules! impl_from_str {
             type Err = ParseFixedError;
             #[inline]
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                $method(s, 10, Self::int_nbits(), Self::frac_nbits()).map(Self::from_bits)
+                $method(s.as_bytes(), 10, Self::int_nbits(), Self::frac_nbits())
+                    .map(Self::from_bits)
             }
         }
         impl<Frac: $LeEqU> FromStrRadix for $Fixed<Frac> {
             type Err = ParseFixedError;
             #[inline]
             fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::Err> {
-                $method(s, radix, Self::int_nbits(), Self::frac_nbits()).map(Self::from_bits)
+                $method(s.as_bytes(), radix, Self::int_nbits(), Self::frac_nbits())
+                    .map(Self::from_bits)
             }
         }
     };
@@ -566,12 +569,12 @@ macro_rules! impl_from_str_signed {
         impl_from_str! { $Fixed, $LeEqU, $all }
 
         fn $all(
-            s: &str,
+            bytes: &[u8],
             radix: u32,
             int_nbits: u32,
             frac_nbits: u32,
         ) -> Result<$Bits, ParseFixedError> {
-            let Parse { neg, int, frac } = parse_bounds(s, true, radix)?;
+            let Parse { neg, int, frac } = parse_bounds(bytes, true, radix)?;
             let (abs_frac, whole_frac) = match $frac(frac, radix, frac_nbits) {
                 Some(frac) => (frac, false),
                 None => (0, true),
@@ -607,12 +610,12 @@ macro_rules! impl_from_str_unsigned {
         impl_from_str! { $Fixed, $LeEqU, $all }
 
         fn $all(
-            s: &str,
+            bytes: &[u8],
             radix: u32,
             int_nbits: u32,
             frac_nbits: u32,
         ) -> Result<$Bits, ParseFixedError> {
-            let Parse { int, frac, .. } = parse_bounds(s, false, radix)?;
+            let Parse { int, frac, .. } = parse_bounds(bytes, false, radix)?;
             let (frac, whole_frac) = match $frac(frac, radix, frac_nbits) {
                 Some(frac) => (frac, false),
                 None => (0, true),
@@ -621,7 +624,7 @@ macro_rules! impl_from_str_unsigned {
             Ok(int | frac)
         }
 
-        fn $int(int: &str, radix: u32, nbits: u32, whole_frac: bool) -> Option<$Bits> {
+        fn $int(int: &[u8], radix: u32, nbits: u32, whole_frac: bool) -> Option<$Bits> {
             const HALF: u32 = <$Bits as SealedInt>::NBITS / 2;
             if $int_half_cond && nbits <= HALF {
                 return $int_half(int, radix, nbits, whole_frac).map(|x| $Bits::from(x) << HALF);
@@ -636,11 +639,11 @@ macro_rules! impl_from_str_unsigned {
             } else if nbits == 0 {
                 return None;
             }
-            let mut parsed_int = match radix {
+            let mut parsed_int: $Bits = match radix {
                 2 => bin_str_int_to_bin(int)?,
                 8 => oct_str_int_to_bin(int)?,
                 16 => hex_str_int_to_bin(int)?,
-                10 => int.parse::<$Bits>().ok()?,
+                10 => dec_str_int_to_bin(int)?,
                 _ => unreachable!(),
             };
             if whole_frac {
@@ -654,7 +657,7 @@ macro_rules! impl_from_str_unsigned {
             }
         }
 
-        fn $frac(frac: &str, radix: u32, nbits: u32) -> Option<$Bits> {
+        fn $frac(frac: &[u8], radix: u32, nbits: u32) -> Option<$Bits> {
             if $frac_half_cond && nbits <= <$Bits as SealedInt>::NBITS / 2 {
                 return $frac_half(frac, radix, nbits).map($Bits::from);
             }
@@ -868,28 +871,28 @@ mod tests {
 
     #[test]
     fn check_parse_bounds() {
-        let Parse { neg, int, frac } = parse_bounds("-12.34", true, 10).unwrap();
-        assert_eq!((neg, int, frac), (true, "12", "34"));
-        let Parse { neg, int, frac } = parse_bounds("012.", true, 10).unwrap();
-        assert_eq!((neg, int, frac), (false, "12", ""));
-        let Parse { neg, int, frac } = parse_bounds("+.340", false, 10).unwrap();
-        assert_eq!((neg, int, frac), (false, "", "34"));
-        let Parse { neg, int, frac } = parse_bounds("0", false, 10).unwrap();
-        assert_eq!((neg, int, frac), (false, "", ""));
-        let Parse { neg, int, frac } = parse_bounds("-.C1A0", true, 16).unwrap();
-        assert_eq!((neg, int, frac), (true, "", "C1A"));
+        let Parse { neg, int, frac } = parse_bounds(b"-12.34", true, 10).unwrap();
+        assert_eq!((neg, int, frac), (true, &b"12"[..], &b"34"[..]));
+        let Parse { neg, int, frac } = parse_bounds(b"012.", true, 10).unwrap();
+        assert_eq!((neg, int, frac), (false, &b"12"[..], &b""[..]));
+        let Parse { neg, int, frac } = parse_bounds(b"+.340", false, 10).unwrap();
+        assert_eq!((neg, int, frac), (false, &b""[..], &b"34"[..]));
+        let Parse { neg, int, frac } = parse_bounds(b"0", false, 10).unwrap();
+        assert_eq!((neg, int, frac), (false, &b""[..], &b""[..]));
+        let Parse { neg, int, frac } = parse_bounds(b"-.C1A0", true, 16).unwrap();
+        assert_eq!((neg, int, frac), (true, &b""[..], &b"C1A"[..]));
 
-        let ParseFixedError { kind } = parse_bounds("0 ", true, 10).unwrap_err();
+        let ParseFixedError { kind } = parse_bounds(b"0 ", true, 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::InvalidDigit);
-        let ParseFixedError { kind } = parse_bounds("+.", true, 10).unwrap_err();
+        let ParseFixedError { kind } = parse_bounds(b"+.", true, 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::NoDigits);
-        let ParseFixedError { kind } = parse_bounds(".1.", true, 10).unwrap_err();
+        let ParseFixedError { kind } = parse_bounds(b".1.", true, 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::TooManyPoints);
-        let ParseFixedError { kind } = parse_bounds("1+2", true, 10).unwrap_err();
+        let ParseFixedError { kind } = parse_bounds(b"1+2", true, 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::InvalidDigit);
-        let ParseFixedError { kind } = parse_bounds("1-2", true, 10).unwrap_err();
+        let ParseFixedError { kind } = parse_bounds(b"1-2", true, 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::InvalidDigit);
-        let ParseFixedError { kind } = parse_bounds("-12", false, 10).unwrap_err();
+        let ParseFixedError { kind } = parse_bounds(b"-12", false, 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::InvalidDigit);
     }
 
@@ -898,7 +901,7 @@ mod tests {
         F: Fixed + FromStr<Err = ParseFixedError>,
         F::Bits: Eq + Debug,
     {
-        match s.parse::<F>() {
+        match F::from_str(s) {
             Ok(f) => assert_eq!(f.to_bits(), bits),
             Err(e) => panic!("could not parse {}: {}", s, e),
         }
@@ -907,7 +910,7 @@ mod tests {
     where
         F: Fixed + FromStr<Err = ParseFixedError>,
     {
-        match s.parse::<F>() {
+        match F::from_str(s) {
             Ok(f) => panic!("incorrectly parsed {} as {}", s, f),
             Err(ParseFixedError { kind: err }) => assert_eq!(err, kind),
         }

@@ -90,6 +90,7 @@ pub trait SealedInt: Copy {
     fn is_zero(self) -> bool;
     fn is_negative(self) -> bool;
     fn checked_add(self, val: Self) -> Option<Self>;
+    fn checked_mul(self, val: Self) -> Option<Self>;
     fn overflowing_add(self, val: Self) -> (Self, bool);
     fn leading_zeros(self) -> u32;
 
@@ -171,6 +172,11 @@ macro_rules! sealed_int {
             #[inline]
             fn checked_add(self, val: $Int) -> Option<$Int> {
                 <$Int>::checked_add(self, val)
+            }
+
+            #[inline]
+            fn checked_mul(self, val: $Int) -> Option<$Int> {
+                <$Int>::checked_mul(self, val)
             }
 
             #[inline]

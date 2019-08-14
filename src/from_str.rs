@@ -173,58 +173,166 @@ enum Round {
     Floor,
 }
 
+// Decode fractional decimal digits into nbits fractional bits.
+//
+// For an output with BIN = 8 bits, we can take DEC = 3 decimal digits.
+//
+//     0 ≤ val ≤ 999, 0 ≤ nbits ≤ 8
+//
+// In general,
+//
+//     0 ≤ val ≤ 10^DEC - 1, 0 ≤ nbits ≤ BIN
+//
+// We can either floor the result or round to the nearest (ties away from zero).
+// If rounding results in more than nbits bits, returns None.
+//
+// Examples: (for DEC = 3, BIN = 8)
+//
+//    dec_to_bin(999, 8, Round::Floor) -> floor(999 × 256 / 1000) -> 255 -> Some(255)
+//    dec_to_bin(999, 8, Round::Nearest) -> floor(999 × 256 / 1000 + 0.5) -> 256 -> None
+//    dec_to_bin(999, 5, Round::Floor) -> floor(999 × 32 / 1000) -> 31 -> Some(31)
+//    dec_to_bin(999, 5, Round::Nearest) -> floor(999 × 32 / 1000 + 0.5) -> 32 -> None
+//    dec_to_bin(499, 0, Round::Floor) -> floor(499 / 1000) -> 0 -> Some(0)
+//    dec_to_bin(499, 0, Round::Nearest) -> floor(499 / 1000 + 0.5) -> 0 -> Some(0)
+//    dec_to_bin(500, 0, Round::Nearest) -> floor(500 / 1000 + 0.5) -> 1 -> None
+//
+// For flooring:
+//
+//     floor(val × 2^nbits / 10^3) = floor(val × 2^(nbits - 3) / 5^3)
+//
+// For rounding:
+//
+//     floor(val × 2^nbits / 10^3 + 0.5) = floor((val × 2^(nbits - 2) + 5^3) / (2 × 5^3))
+//
+// Using integer arithmetic, this is equal to:
+//
+//     ((val << 6 >> (8 - nbits)) + if rounding { 125 } else { 0 }) / 250
+//
+// Note that val << 6 cannot overflow u16, as val < 1000 and 1000 × 2^6 < 2^16.
+//
+// In general:
+//
+//     ((val << (BIN - DEC + 1) >> (8 - nbits)) + if rounding { 5^DEC } else { 0 }) / (2 × 5^DEC)
+//
+// And we ensure that 10^DEC × 2^(BIN - DEC + 1) < 2^(2 × BIN), which simplifies to
+//
+//     5^DEC × 2 < 2^BIN
+//
+// From this it also follows that val << (BIN - DEC + 1) never overflows a (2 × BIN)-bit number.
+//
+// So for u8, BIN = 8, DEC  3
+// So for u16, BIN = 16, DEC ≤ 6
+// So for u32, BIN = 32, DEC ≤ 13
+// So for u64, BIN = 64, DEC ≤ 27
+// So for u128, BIN = 128, DEC ≤ 54
 trait DecToBin: Sized {
     type Double;
-    fn parse_is_short(s: &str) -> (Self::Double, bool);
     fn dec_to_bin(val: Self::Double, nbits: u32, round: Round) -> Option<Self>;
+    fn parse_is_short(s: &str) -> (Self::Double, bool);
 }
 
 macro_rules! impl_dec_to_bin {
-    ($Single:ident, $Double:ident, $dec:expr, $method:ident) => {
+    ($Single:ident, $Double:ident, $dec:expr, $bin:expr) => {
         impl DecToBin for $Single {
             type Double = $Double;
+            fn dec_to_bin(val: $Double, nbits: u32, round: Round) -> Option<$Single> {
+                debug_assert!(val < $Double::pow(10, $dec));
+                debug_assert!(nbits <= $bin);
+                let fives = $Double::pow(5, $dec);
+                let denom = fives * 2;
+                let mut numer = val << ($bin - $dec + 1) >> ($bin - nbits);
+                match round {
+                    Round::Nearest => {
+                        numer += fives;
+                        if numer >> nbits >= denom {
+                            return None;
+                        }
+                    }
+                    Round::Floor => {}
+                }
+                Some((numer / denom) as $Single)
+            }
+
             fn parse_is_short(s: &str) -> ($Double, bool) {
-                let (is_short, slice, pad) = if s.len() <= $dec {
-                    let ten: $Double = 10;
-                    (true, s, ten.pow($dec - s.len() as u32))
+                let (is_short, slice, pad) = if let Some(rem) = usize::checked_sub($dec, s.len()) {
+                    (true, s, $Double::pow(10, rem as u32))
                 } else {
                     (false, &s[..$dec], 1)
                 };
                 let val = slice.parse::<$Double>().unwrap() * pad;
                 (val, is_short)
             }
-            fn dec_to_bin(val: $Double, nbits: u32, round: Round) -> Option<$Single> {
-                $method(val, nbits, round)
-            }
         }
     };
 }
-impl_dec_to_bin! { u8, u16, 3, dec3_to_bin8 }
-impl_dec_to_bin! { u16, u32, 6, dec6_to_bin16 }
-impl_dec_to_bin! { u32, u64, 13, dec13_to_bin32 }
-impl_dec_to_bin! { u64, u128, 27, dec27_to_bin64 }
+impl_dec_to_bin! { u8, u16, 3, 8 }
+impl_dec_to_bin! { u16, u32, 6, 16 }
+impl_dec_to_bin! { u32, u64, 13, 32 }
+impl_dec_to_bin! { u64, u128, 27, 64 }
 
 impl DecToBin for u128 {
     type Double = (u128, u128);
-    fn parse_is_short(s: &str) -> (Self::Double, bool) {
-        if s.len() <= 27 {
-            let rem = 27 - s.len();
+    fn dec_to_bin((hi, lo): (u128, u128), nbits: u32, round: Round) -> Option<u128> {
+        debug_assert!(hi < 10u128.pow(27));
+        debug_assert!(lo < 10u128.pow(27));
+        debug_assert!(nbits <= 128);
+        let fives = 5u128.pow(54);
+        let denom = fives * 2;
+        // we need to combine (10^27*hi + lo) << (128 - 54 + 1)
+        let (hi_hi, hi_lo) = mul_hi_lo(hi, 10u128.pow(27));
+        let (mut numer_lo, overflow) = hi_lo.overflowing_add(lo);
+        let mut numer_hi = if overflow { hi_hi + 1 } else { hi_hi };
+        match nbits.cmp(&(54 - 1)) {
+            Ordering::Less => {
+                let shr = (54 - 1) - nbits;
+                numer_lo = (numer_lo >> shr) | (numer_hi << (128 - shr));
+                numer_hi >>= shr;
+            }
+            Ordering::Greater => {
+                let shl = nbits - (54 - 1);
+                numer_hi = (numer_hi << shl) | (numer_lo >> (128 - shl));
+                numer_lo <<= shl;
+            }
+            Ordering::Equal => {}
+        };
+        match round {
+            Round::Nearest => {
+                let (wrapped, overflow) = numer_lo.overflowing_add(fives);
+                numer_lo = wrapped;
+                if overflow {
+                    numer_hi += 1;
+                }
+                let check_overflow = if nbits == 128 {
+                    numer_hi
+                } else if nbits == 0 {
+                    numer_lo
+                } else {
+                    (numer_lo >> nbits) | (numer_hi << (128 - nbits))
+                };
+                if check_overflow >= denom {
+                    return None;
+                }
+            }
+            Round::Floor => {}
+        }
+        Some(div_wide(numer_hi, numer_lo, denom))
+    }
+
+    fn parse_is_short(s: &str) -> ((u128, u128), bool) {
+        if let Some(rem) = 27usize.checked_sub(s.len()) {
             let hi = s.parse::<u128>().unwrap() * 10u128.pow(rem as u32);
             ((hi, 0), true)
         } else {
             let hi = s[..27].parse::<u128>().unwrap();
 
-            let (is_short, slice, pad) = if s.len() <= 54 {
-                (true, &s[27..], 10u128.pow(54 - s.len() as u32))
+            let (is_short, slice, pad) = if let Some(rem) = 54usize.checked_sub(s.len()) {
+                (true, &s[27..], 10u128.pow(rem as u32))
             } else {
                 (false, &s[27..54], 1)
             };
             let lo = slice.parse::<u128>().unwrap() * pad;
             ((hi, lo), is_short)
         }
-    }
-    fn dec_to_bin(val: Self::Double, nbits: u32, round: Round) -> Option<Self> {
-        dec27_27_to_bin128(val, nbits, round)
     }
 }
 
@@ -282,121 +390,6 @@ where
     }
 }
 
-// 5^3 × 2 < 2^8 => (10^3 - 1) × 2^(8-3+1) < 2^16
-// Returns None for large fractions that are rounded to 1.0
-fn dec3_to_bin8(val: u16, nbits: u32, round: Round) -> Option<u8> {
-    debug_assert!(val < 10u16.pow(3));
-    let dump_bits = 8 - nbits;
-    let divisor = 5u16.pow(3) * 2;
-    let shift = val << (8 - 3 + 1) >> dump_bits;
-    let round = match round {
-        Round::Nearest => shift + (divisor / 2),
-        Round::Floor => shift,
-    };
-    if round >> nbits >= divisor {
-        None
-    } else {
-        Some((round / divisor) as u8)
-    }
-}
-// 5^6 × 2 < 2^16 => (10^6 - 1) × 2^(16-6+1) < 2^32
-// Returns None for large fractions that are rounded to 1.0
-fn dec6_to_bin16(val: u32, nbits: u32, round: Round) -> Option<u16> {
-    debug_assert!(val < 10u32.pow(6));
-    let dump_bits = 16 - nbits;
-    let divisor = 5u32.pow(6) * 2;
-    let shift = val << (16 - 6 + 1) >> dump_bits;
-    let round = match round {
-        Round::Nearest => shift + (divisor / 2),
-        Round::Floor => shift,
-    };
-    if round >> nbits >= divisor {
-        None
-    } else {
-        Some((round / divisor) as u16)
-    }
-}
-// 5^13 × 2 < 2^32 => (10^13 - 1) × 2^(32-13+1) < 2^64
-// Returns None for large fractions that are rounded to 1.0
-fn dec13_to_bin32(val: u64, nbits: u32, round: Round) -> Option<u32> {
-    debug_assert!(val < 10u64.pow(13));
-    let dump_bits = 32 - nbits;
-    let divisor = 5u64.pow(13) * 2;
-    let shift = val << (32 - 13 + 1) >> dump_bits;
-    let round = match round {
-        Round::Nearest => shift + (divisor / 2),
-        Round::Floor => shift,
-    };
-    if round >> nbits >= divisor {
-        None
-    } else {
-        Some((round / divisor) as u32)
-    }
-}
-// 5^27 × 2 < 2^64 => (10^27 - 1) × 2^(64-27+1) < 2^128
-// Returns None for large fractions that are rounded to 1.0
-fn dec27_to_bin64(val: u128, nbits: u32, round: Round) -> Option<u64> {
-    debug_assert!(val < 10u128.pow(27));
-    let dump_bits = 64 - nbits;
-    let divisor = 5u128.pow(27) * 2;
-    let shift = val << (64 - 27 + 1) >> dump_bits;
-    let round = match round {
-        Round::Nearest => shift + (divisor / 2),
-        Round::Floor => shift,
-    };
-    if round >> nbits >= divisor {
-        None
-    } else {
-        Some((round / divisor) as u64)
-    }
-}
-// 5^54 × 2 < 2^128 => (10^54 - 1) × 2^(128-54+1) < 2^256
-// Returns None for large fractions that are rounded to 1.0
-fn dec27_27_to_bin128((hi, lo): (u128, u128), nbits: u32, round: Round) -> Option<u128> {
-    debug_assert!(hi < 10u128.pow(27));
-    debug_assert!(lo < 10u128.pow(27));
-    let dump_bits = 128 - nbits;
-    let divisor = 5u128.pow(54) * 2;
-    // we actually need to combine (10^27*hi + lo) << (128 - 54 + 1)
-    let (hi_hi, hi_lo) = mul_hi_lo(hi, 10u128.pow(27));
-    let (comb_lo, overflow) = hi_lo.overflowing_add(lo);
-    let comb_hi = if overflow { hi_hi + 1 } else { hi_hi };
-    let shift_lo;
-    let shift_hi;
-    match nbits.cmp(&(54 - 1)) {
-        Ordering::Less => {
-            let shr = (54 - 1) - nbits;
-            shift_lo = (comb_lo >> shr) | (comb_hi << (128 - shr));
-            shift_hi = comb_hi >> shr;
-        }
-        Ordering::Greater => {
-            let shl = nbits - (54 - 1);
-            shift_lo = comb_lo << shl;
-            shift_hi = (comb_hi << shl) | (comb_lo >> (128 - shl));
-        }
-        Ordering::Equal => {
-            shift_lo = comb_lo;
-            shift_hi = comb_hi;
-        }
-    };
-    let (round_lo, overflow) = match round {
-        Round::Nearest => shift_lo.overflowing_add(divisor / 2),
-        Round::Floor => (shift_lo, false),
-    };
-    let round_hi = if overflow { shift_hi + 1 } else { shift_hi };
-    let whole_compare = if dump_bits == 0 {
-        round_hi
-    } else if nbits == 0 {
-        round_lo
-    } else {
-        (round_lo >> nbits) | (round_hi << dump_bits)
-    };
-    if whole_compare >= divisor {
-        None
-    } else {
-        Some(div_wide(round_hi, round_lo, divisor))
-    }
-}
 fn mul_hi_lo(lhs: u128, rhs: u128) -> (u128, u128) {
     const LO: u128 = !(!0 << 64);
     let (lhs_hi, lhs_lo) = (lhs >> 64, lhs & LO);
@@ -750,11 +743,11 @@ mod tests {
     use std::{fmt::Debug, format, string::String};
 
     #[test]
-    fn check_dec3() {
+    fn check_dec_8() {
         let two_pow = 8f64.exp2();
         let limit = 1000;
         for i in 0..limit {
-            let ans = dec3_to_bin8(i, 8, Round::Nearest);
+            let ans = <u8 as DecToBin>::dec_to_bin(i, 8, Round::Nearest);
             let approx = two_pow * f64::from(i) / f64::from(limit);
             let error = (ans.map(f64::from).unwrap_or(two_pow) - approx).abs();
             assert!(
@@ -769,11 +762,11 @@ mod tests {
     }
 
     #[test]
-    fn check_dec6() {
+    fn check_dec_16() {
         let two_pow = 16f64.exp2();
         let limit = 1_000_000;
         for i in 0..limit {
-            let ans = dec6_to_bin16(i, 16, Round::Nearest);
+            let ans = <u16 as DecToBin>::dec_to_bin(i, 16, Round::Nearest);
             let approx = two_pow * f64::from(i) / f64::from(limit);
             let error = (ans.map(f64::from).unwrap_or(two_pow) - approx).abs();
             assert!(
@@ -788,7 +781,7 @@ mod tests {
     }
 
     #[test]
-    fn check_dec13() {
+    fn check_dec_32() {
         let two_pow = 32f64.exp2();
         let limit = 10_000_000_000_000;
         for iter in 0..1_000_000 {
@@ -802,7 +795,7 @@ mod tests {
                 limit / 2 + iter,
                 limit - iter - 1,
             ] {
-                let ans = dec13_to_bin32(i, 32, Round::Nearest);
+                let ans = <u32 as DecToBin>::dec_to_bin(i, 32, Round::Nearest);
                 let approx = two_pow * i as f64 / limit as f64;
                 let error = (ans.map(f64::from).unwrap_or(two_pow) - approx).abs();
                 assert!(
@@ -818,7 +811,7 @@ mod tests {
     }
 
     #[test]
-    fn check_dec27() {
+    fn check_dec_64() {
         let two_pow = 64f64.exp2();
         let limit = 1_000_000_000_000_000_000_000_000_000;
         for iter in 0..200_000 {
@@ -832,7 +825,7 @@ mod tests {
                 limit / 2 + iter,
                 limit - iter - 1,
             ] {
-                let ans = dec27_to_bin64(i, 64, Round::Nearest);
+                let ans = <u64 as DecToBin>::dec_to_bin(i, 64, Round::Nearest);
                 let approx = two_pow * i as f64 / limit as f64;
                 let error = (ans.map(|x| x as f64).unwrap_or(two_pow) - approx).abs();
                 assert!(
@@ -848,21 +841,21 @@ mod tests {
     }
 
     #[test]
-    fn check_dec27_27() {
+    fn check_dec_128() {
         let nines = 10u128.pow(27) - 1;
         let zeros = 0;
-        let too_big = dec27_27_to_bin128((nines, nines), 128, Round::Nearest);
+        let too_big = <u128 as DecToBin>::dec_to_bin((nines, nines), 128, Round::Nearest);
         assert_eq!(too_big, None);
-        let big = dec27_27_to_bin128((nines, zeros), 128, Round::Nearest);
+        let big = <u128 as DecToBin>::dec_to_bin((nines, zeros), 128, Round::Nearest);
         assert_eq!(
             big,
             Some(340_282_366_920_938_463_463_374_607_091_485_844_535)
         );
-        let small = dec27_27_to_bin128((zeros, nines), 128, Round::Nearest);
+        let small = <u128 as DecToBin>::dec_to_bin((zeros, nines), 128, Round::Nearest);
         assert_eq!(small, Some(340_282_366_921));
-        let zero = dec27_27_to_bin128((zeros, zeros), 128, Round::Nearest);
+        let zero = <u128 as DecToBin>::dec_to_bin((zeros, zeros), 128, Round::Nearest);
         assert_eq!(zero, Some(0));
-        let x = dec27_27_to_bin128(
+        let x = <u128 as DecToBin>::dec_to_bin(
             (
                 123_456_789_012_345_678_901_234_567,
                 987_654_321_098_765_432_109_876_543,

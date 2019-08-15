@@ -14,17 +14,14 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
-    sealed::Fixed,
-    traits::ToFixed,
+    sealed::{Fixed as SealedFixed, Float, Int},
+    traits::{Fixed, FixedSigned, FromFixed, ToFixed},
     types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
 use core::{
-    cmp::Ordering,
-    default::Default,
-    fmt::{Debug, Display, Formatter, Result as FmtResult},
-    hash::{Hash, Hasher},
+    fmt::{Display, Formatter, Result as FmtResult},
     iter::{Product, Sum},
     num::Wrapping as CoreWrapping,
     ops::{
@@ -48,9 +45,94 @@ use core::{
 /// assert_eq!(Fix::min_value(), (max + delta).0);
 /// ```
 #[repr(transparent)]
-pub struct Wrapping<F: Fixed>(pub F);
+#[derive(Clone, Copy, Default, Hash, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub struct Wrapping<F>(pub F);
 
 impl<F: Fixed> Wrapping<F> {
+    /// Wrapping conversion from another fixed-point number.
+    ///
+    /// Any extra fractional bits are truncated.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::Wrapping;
+    /// type Src = fixed::types::I16F16;
+    /// type Dst = fixed::types::I4F4;
+    /// // 0x1234.5678 wrapped into 0x4.5
+    /// let src = Src::from_bits(0x1234_5678);
+    /// let dst = Wrapping::<Dst>::from_fixed(src);
+    /// assert_eq!(dst, Wrapping(Dst::from_bits(0x45)));
+    /// ```
+    pub fn from_fixed<Src: SealedFixed>(val: Src) -> Self {
+        Wrapping(<F as FromFixed>::wrapping_from_fixed(val))
+    }
+
+    /// Wrapping conversion from an integer.
+    ///
+    /// The integer can be of type [`i8`], [`i16`], [`i32`], [`i64`],
+    /// [`i128`], [`isize`], [`u8`], [`u16`], [`u32`], [`u64`],
+    /// [`u128`], and [`usize`].
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::Wrapping;
+    /// type Fix = fixed::types::I4F4;
+    /// // 0x1234 wrapped into 0x4.0
+    /// let src = 0x1234_i32;
+    /// let dst = Wrapping::<Fix>::from_int(src);
+    /// assert_eq!(dst, Wrapping(Fix::from_bits(0x40)));
+    /// ```
+    ///
+    /// [`i128`]: https://doc.rust-lang.org/nightly/std/primitive.i128.html
+    /// [`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
+    /// [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
+    /// [`i64`]: https://doc.rust-lang.org/nightly/std/primitive.i64.html
+    /// [`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
+    /// [`isize`]: https://doc.rust-lang.org/nightly/std/primitive.isize.html
+    /// [`u128`]: https://doc.rust-lang.org/nightly/std/primitive.u128.html
+    /// [`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
+    /// [`u32`]: https://doc.rust-lang.org/nightly/std/primitive.u32.html
+    /// [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
+    /// [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
+    /// [`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
+    pub fn from_int<I: Int>(val: I) -> Self {
+        Wrapping(F::wrapping_from_int(val))
+    }
+
+    /// Wrapping conversion from a floating-point number.
+    ///
+    /// The floating-point value can be of type [`f32`] or [`f64`]. If
+    /// the [`f16` feature] is enabled, it can also be of type
+    /// [`f16`].
+    ///
+    /// This method rounds to the nearest, with ties rounding to even.
+    ///
+    /// # Panics
+    ///
+    /// This method panics if the value is not [finite].
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::Wrapping;
+    /// type Fix = fixed::types::I4F4;
+    /// // 129.75 wrapped into 1.75
+    /// let src = 129.75;
+    /// let dst = Wrapping::<Fix>::from_float(src);
+    /// assert_eq!(dst, Wrapping(Fix::from_float(1.75)));
+    /// ```
+    ///
+    /// [`f16` feature]: index.html#optional-features
+    /// [`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
+    /// [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
+    /// [`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html
+    /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
+    pub fn from_float<Src: Float>(val: Src) -> Self {
+        Wrapping(F::wrapping_from_float(val))
+    }
+
     /// Wrapping ceil. Rounds to the next integer towards +∞, wrapping
     /// on overflow.
     ///
@@ -64,7 +146,7 @@ impl<F: Fixed> Wrapping<F> {
     /// assert_eq!(Wrapping(Fix::max_value()).ceil(), Wrapping(Fix::min_value()));
     /// ```
     pub fn ceil(self) -> Wrapping<F> {
-        Wrapping((self.0).wrapping_ceil())
+        Wrapping(self.0.wrapping_ceil())
     }
 
     /// Wrapping floor. Rounds to the next integer towards −∞,
@@ -84,7 +166,7 @@ impl<F: Fixed> Wrapping<F> {
     /// assert_eq!(Wrapping(AllFrac::min_value()).floor(), Wrapping(AllFrac::from_int(0)));
     /// ```
     pub fn floor(self) -> Wrapping<F> {
-        Wrapping((self.0).wrapping_floor())
+        Wrapping(self.0.wrapping_floor())
     }
 
     /// Wrapping round. Rounds to the next integer to the nearest,
@@ -101,7 +183,7 @@ impl<F: Fixed> Wrapping<F> {
     /// assert_eq!(Wrapping(Fix::max_value()).round(), Wrapping(Fix::min_value()));
     /// ```
     pub fn round(self) -> Wrapping<F> {
-        Wrapping((self.0).wrapping_round())
+        Wrapping(self.0.wrapping_round())
     }
 
     /// Wrapping absolute value. Returns the absolute value, wrapping
@@ -118,45 +200,18 @@ impl<F: Fixed> Wrapping<F> {
     /// assert_eq!(Wrapping(Fix::from_int(-5)).abs(), Wrapping(Fix::from_int(5)));
     /// assert_eq!(Wrapping(Fix::min_value()).abs(), Wrapping(Fix::min_value()));
     /// ```
-    pub fn abs(self) -> Wrapping<F> {
-        Wrapping((self.0).wrapping_abs())
-    }
-}
-
-impl<F: Fixed> Clone for Wrapping<F> {
-    #[inline]
-    fn clone(&self) -> Wrapping<F> {
-        Wrapping(self.0)
-    }
-}
-
-impl<F: Fixed> Copy for Wrapping<F> {}
-
-impl<F: Fixed> Default for Wrapping<F> {
-    #[inline]
-    fn default() -> Wrapping<F> {
-        Wrapping(F::Traits::default().into())
-    }
-}
-
-impl<F: Fixed> Hash for Wrapping<F> {
-    #[inline]
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.0.traits().hash(state);
-    }
-}
-
-impl<F: Fixed> Debug for Wrapping<F> {
-    #[inline]
-    fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        <F::Traits as Debug>::fmt(&self.0.traits(), f)
+    pub fn abs(self) -> Wrapping<F>
+    where
+        F: FixedSigned,
+    {
+        Wrapping(self.0.wrapping_abs())
     }
 }
 
 impl<F: Fixed> Display for Wrapping<F> {
     #[inline]
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        <F::Traits as Display>::fmt(&self.0.traits(), f)
+        <F as Display>::fmt(&self.0, f)
     }
 }
 
@@ -164,42 +219,6 @@ impl<F: Fixed> From<F> for Wrapping<F> {
     #[inline]
     fn from(src: F) -> Wrapping<F> {
         Wrapping(src)
-    }
-}
-
-impl<F: Fixed> Eq for Wrapping<F> {}
-impl<F: Fixed> PartialEq<Wrapping<F>> for Wrapping<F> {
-    #[inline]
-    fn eq(&self, other: &Wrapping<F>) -> bool {
-        self.0.traits().eq(&other.0.traits())
-    }
-}
-impl<F: Fixed> Ord for Wrapping<F> {
-    #[inline]
-    fn cmp(&self, other: &Wrapping<F>) -> Ordering {
-        self.0.traits().cmp(&other.0.traits())
-    }
-}
-impl<F: Fixed> PartialOrd<Wrapping<F>> for Wrapping<F> {
-    #[inline]
-    fn partial_cmp(&self, other: &Wrapping<F>) -> Option<Ordering> {
-        self.0.traits().partial_cmp(&other.0.traits())
-    }
-    #[inline]
-    fn lt(&self, other: &Wrapping<F>) -> bool {
-        self.0.traits().lt(&other.0.traits())
-    }
-    #[inline]
-    fn le(&self, other: &Wrapping<F>) -> bool {
-        self.0.traits().le(&other.0.traits())
-    }
-    #[inline]
-    fn gt(&self, other: &Wrapping<F>) -> bool {
-        self.0.traits().gt(&other.0.traits())
-    }
-    #[inline]
-    fn ge(&self, other: &Wrapping<F>) -> bool {
-        self.0.traits().ge(&other.0.traits())
     }
 }
 

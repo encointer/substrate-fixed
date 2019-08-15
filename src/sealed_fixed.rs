@@ -86,12 +86,6 @@ pub trait SealedFixed: Copy {
         <Self::SBits as SealedInt>::Unsigned,
         <Self::SBits as SealedInt>::Unsigned,
     );
-
-    fn wrapping_ceil(self) -> Self;
-    fn wrapping_floor(self) -> Self;
-    fn wrapping_round(self) -> Self;
-    fn wrapping_neg(self) -> Self;
-    fn wrapping_abs(self) -> Self;
 }
 
 macro_rules! sealed_fixed {
@@ -268,35 +262,6 @@ macro_rules! sealed_fixed {
                     ((abs >> Self::FRAC_NBITS), (abs << Self::INT_NBITS))
                 };
                 (neg, int_abs, frac_abs)
-            }
-
-            #[inline]
-            fn wrapping_ceil(self) -> Self {
-                self.wrapping_ceil()
-            }
-
-            #[inline]
-            fn wrapping_floor(self) -> Self {
-                self.wrapping_floor()
-            }
-
-            #[inline]
-            fn wrapping_round(self) -> Self {
-                self.wrapping_round()
-            }
-
-            #[inline]
-            fn wrapping_neg(self) -> Self {
-                self.wrapping_neg()
-            }
-
-            #[inline]
-            fn wrapping_abs(self) -> Self {
-                if_signed_unsigned! {
-                    $Signedness,
-                    self.wrapping_abs(),
-                    self,
-                }
             }
         }
     };

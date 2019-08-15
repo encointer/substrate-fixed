@@ -8,6 +8,8 @@ as-is, without any warranty. -->
 Version 0.4.2 (unreleased)
 ==========================
 
+  * The new methods `from_fixed`, `from_int` and `from_float` were
+    added to the `Wrapping` wrapper.
   * Bug fix: parsing of decimal fractions was fixed to give correctly
     rounded results for long decimal fraction strings, for example
     with four fractional bits, 0.96874999… (just below 31⁄32) and

@@ -15,7 +15,7 @@
 
 use crate::{
     frac::{Bit, False, True, Unsigned, U0, U128, U16, U32, U64, U8},
-    sealed::{Fixed, SealedFixed, Widest},
+    sealed::{Fixed, SealedFixed, ToFixedHelper, Widest},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
@@ -94,12 +94,12 @@ pub trait SealedInt: Copy {
     fn overflowing_add(self, val: Self) -> (Self, bool);
     fn leading_zeros(self) -> u32;
 
-    fn to_fixed_dir_overflow(
+    fn to_fixed_helper(
         self,
         src_frac_bits: i32,
         dst_frac_bits: u32,
         dst_int_bits: u32,
-    ) -> (Widest, Ordering, bool);
+    ) -> ToFixedHelper;
 
     fn to_repr_fixed(self) -> Self::ReprFixed;
 
@@ -219,17 +219,21 @@ macro_rules! sealed_int {
             }
 
             #[inline]
-            fn to_fixed_dir_overflow(
+            fn to_fixed_helper(
                 self,
                 src_frac_bits: i32,
                 dst_frac_bits: u32,
                 dst_int_bits: u32,
-            ) -> (Widest, Ordering, bool) {
+            ) -> ToFixedHelper {
                 let src_bits = Self::NBITS as i32;
                 let dst_bits = (dst_frac_bits + dst_int_bits) as i32;
 
                 if self == 0 {
-                    return (Widest::Unsigned(0), Ordering::Equal, false);
+                    return ToFixedHelper {
+                        bits:Widest::Unsigned(0),
+                        dir:Ordering::Equal,
+                        overflow:false,
+                    };
                 }
 
                 let leading_zeros = self.leading_zeros();
@@ -248,7 +252,11 @@ macro_rules! sealed_int {
                     _ => unreachable!(),
                 };
                 let dir = if lost_bits { Ordering::Less } else { Ordering::Equal };
-                (Widest::Unsigned(bits), dir, overflow)
+                ToFixedHelper {
+                    bits: Widest::Unsigned(bits),
+                    dir,
+                    overflow,
+                }
             }
         }
     };
@@ -281,17 +289,21 @@ macro_rules! sealed_int {
             }
 
             #[inline]
-            fn to_fixed_dir_overflow(
+            fn to_fixed_helper(
                 self,
                 src_frac_bits: i32,
                 dst_frac_bits: u32,
                 dst_int_bits: u32,
-            ) -> (Widest, Ordering, bool) {
+            ) -> ToFixedHelper {
                 let src_bits = Self::NBITS as i32;
                 let dst_bits = (dst_frac_bits + dst_int_bits) as i32;
 
                 if self == 0 {
-                    return (Widest::Unsigned(0), Ordering::Equal, false);
+                    return ToFixedHelper {
+                        bits: Widest::Unsigned(0),
+                        dir: Ordering::Equal,
+                        overflow: false,
+                    };
                 }
 
                 let need_to_shr = src_frac_bits - dst_frac_bits as i32;
@@ -314,11 +326,12 @@ macro_rules! sealed_int {
                     _ => unreachable!(),
                 };
                 let dir = if lost_bits { Ordering::Less } else { Ordering::Equal };
-                if self >= 0 {
-                    (Widest::Unsigned(bits as u128), dir, overflow)
+                let bits = if self >= 0 {
+                    Widest::Unsigned(bits as u128)
                 } else {
-                    (Widest::Negative(bits), dir, overflow)
-                }
+                    Widest::Negative(bits)
+                };
+                ToFixedHelper { bits, dir, overflow }
             }
         }
     };

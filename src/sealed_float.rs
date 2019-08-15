@@ -13,7 +13,7 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-use crate::sealed::{Fixed, SealedFixed, SealedInt, Widest};
+use crate::sealed::{Fixed, SealedFixed, SealedInt, ToFixedHelper, Widest};
 use core::{
     cmp::Ordering,
     fmt::{Debug, Display},
@@ -79,7 +79,7 @@ pub trait SealedFloat: Copy {
 
     fn from_neg_abs(neg: bool, abs: u128, frac_bits: u32, int_bits: u32) -> Self;
     // self must be finite, otherwise meaningless results are returned
-    fn to_fixed_dir_overflow(self, frac_bits: u32, int_bits: u32) -> (Widest, Ordering, bool);
+    fn to_fixed_helper(self, frac_bits: u32, int_bits: u32) -> ToFixedHelper;
 }
 
 macro_rules! sealed_float {
@@ -212,11 +212,7 @@ macro_rules! sealed_float {
             }
 
             #[inline]
-            fn to_fixed_dir_overflow(
-                self,
-                dst_frac_bits: u32,
-                dst_int_bits: u32,
-            ) -> (Widest, Ordering, bool) {
+            fn to_fixed_helper(self, dst_frac_bits: u32, dst_int_bits: u32) -> ToFixedHelper {
                 let prec = Self::PREC as i32;
 
                 let (neg, exp, mut mantissa) = self.parts();
@@ -226,7 +222,11 @@ macro_rules! sealed_float {
                     mantissa |= 1 << (prec - 1);
                 }
                 if mantissa == 0 {
-                    return (Widest::Unsigned(0), Ordering::Equal, false);
+                    return ToFixedHelper {
+                        bits: Widest::Unsigned(0),
+                        dir: Ordering::Equal,
+                        overflow: false,
+                    };
                 }
 
                 let mut src_frac_bits = prec - 1 - exp;
@@ -237,7 +237,11 @@ macro_rules! sealed_float {
                     } else {
                         Ordering::Less
                     };
-                    return (Widest::Unsigned(0), dir, false);
+                    return ToFixedHelper {
+                        bits: Widest::Unsigned(0),
+                        dir,
+                        overflow: false,
+                    };
                 }
                 let mut dir = Ordering::Equal;
                 if need_to_shr > 0 {
@@ -262,9 +266,8 @@ macro_rules! sealed_float {
                     mantissa = -mantissa;
                     dir = dir.reverse();
                 }
-                let (fixed, _, overflow) =
-                    mantissa.to_fixed_dir_overflow(src_frac_bits, dst_frac_bits, dst_int_bits);
-                (fixed, dir, overflow)
+                let conv = mantissa.to_fixed_helper(src_frac_bits, dst_frac_bits, dst_int_bits);
+                ToFixedHelper { dir, ..conv }
             }
         }
     };

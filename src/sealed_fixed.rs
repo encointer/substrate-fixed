@@ -21,6 +21,7 @@ use crate::{
     FixedU8,
 };
 use core::{
+    cmp::Ordering,
     fmt::{Debug, Display},
     hash::Hash,
 };
@@ -30,6 +31,12 @@ use core::{
 pub enum Widest {
     Unsigned(u128),
     Negative(i128),
+}
+
+pub struct ToFixedHelper {
+    pub(crate) bits: Widest,
+    pub(crate) dir: Ordering,
+    pub(crate) overflow: bool,
 }
 
 pub trait SealedFixed: Copy {
@@ -102,12 +109,12 @@ macro_rules! sealed_fixed {
 
             #[inline]
             fn saturating_from_fixed<F: Fixed>(val: F) -> Self {
-                let (value, _, overflow) = val.to_sbits().to_fixed_dir_overflow(
+                let conv = val.to_sbits().to_fixed_helper(
                     F::FRAC_NBITS as i32,
                     Self::FRAC_NBITS,
                     Self::INT_NBITS,
                 );
-                if overflow {
+                if conv.overflow {
                     return if val.to_sbits().is_negative() {
                         SealedFixed::from_sbits(Self::SBits::min_value())
                     } else {
@@ -116,7 +123,7 @@ macro_rules! sealed_fixed {
                 }
                 let bits = if_signed_unsigned!(
                     $Signedness,
-                    match value {
+                    match conv.bits {
                         Widest::Unsigned(bits) => {
                             if (bits as Self::SBits) < 0 {
                                 return $Fixed::from_bits(Self::SBits::max_value());
@@ -125,7 +132,7 @@ macro_rules! sealed_fixed {
                         }
                         Widest::Negative(bits) => bits as Self::SBits,
                     },
-                    match value {
+                    match conv.bits {
                         Widest::Unsigned(bits) => bits as Self::SBits,
                         Widest::Negative(_) => {
                             return $Fixed::from_bits(Self::SBits::min_value());
@@ -137,31 +144,32 @@ macro_rules! sealed_fixed {
 
             #[inline]
             fn overflowing_from_fixed<F: Fixed>(val: F) -> (Self, bool) {
-                let (value, _, mut overflow) = val.to_sbits().to_fixed_dir_overflow(
+                let conv = val.to_sbits().to_fixed_helper(
                     F::FRAC_NBITS as i32,
                     Self::FRAC_NBITS,
                     Self::INT_NBITS,
                 );
+                let mut new_overflow = false;
                 let bits = if_signed_unsigned!(
                     $Signedness,
-                    match value {
+                    match conv.bits {
                         Widest::Unsigned(bits) => {
                             if (bits as Self::SBits) < 0 {
-                                overflow = true;
+                                new_overflow = true;
                             }
                             bits as Self::SBits
                         }
                         Widest::Negative(bits) => bits as Self::SBits,
                     },
-                    match value {
+                    match conv.bits {
                         Widest::Unsigned(bits) => bits as Self::SBits,
                         Widest::Negative(bits) => {
-                            overflow = true;
+                            new_overflow = true;
                             bits as Self::SBits
                         }
                     },
                 );
-                ($Fixed::from_bits(bits), overflow)
+                ($Fixed::from_bits(bits), conv.overflow || new_overflow)
             }
 
             #[inline]
@@ -177,14 +185,13 @@ macro_rules! sealed_fixed {
                 if !val.is_finite() {
                     return saturated;
                 }
-                let (value, _, overflow) =
-                    val.to_fixed_dir_overflow(Self::FRAC_NBITS, Self::INT_NBITS);
-                if overflow {
+                let conv = val.to_fixed_helper(Self::FRAC_NBITS, Self::INT_NBITS);
+                if conv.overflow {
                     return saturated;
                 }
                 let bits = if_signed_unsigned!(
                     $Signedness,
-                    match value {
+                    match conv.bits {
                         Widest::Unsigned(bits) => {
                             if (bits as Self::SBits) < 0 {
                                 return Self::max_value();
@@ -193,7 +200,7 @@ macro_rules! sealed_fixed {
                         }
                         Widest::Negative(bits) => bits as Self::SBits,
                     },
-                    match value {
+                    match conv.bits {
                         Widest::Unsigned(bits) => bits as Self::SBits,
                         Widest::Negative(_) => return Self::min_value(),
                     },
@@ -205,28 +212,28 @@ macro_rules! sealed_fixed {
                 if !val.is_finite() {
                     panic!("{} is not finite", val.traits());
                 }
-                let (value, _, mut overflow) =
-                    val.to_fixed_dir_overflow(Self::FRAC_NBITS, Self::INT_NBITS);
+                let conv = val.to_fixed_helper(Self::FRAC_NBITS, Self::INT_NBITS);
+                let mut new_overflow = false;
                 let bits = if_signed_unsigned!(
                     $Signedness,
-                    match value {
+                    match conv.bits {
                         Widest::Unsigned(bits) => {
                             if (bits as Self::SBits) < 0 {
-                                overflow = true;
+                                new_overflow = true;
                             }
                             bits as Self::SBits
                         }
                         Widest::Negative(bits) => bits as Self::SBits,
                     },
-                    match value {
+                    match conv.bits {
                         Widest::Unsigned(bits) => bits as Self::SBits,
                         Widest::Negative(bits) => {
-                            overflow = true;
+                            new_overflow = true;
                             bits as Self::SBits
                         }
                     },
                 );
-                ($Fixed::from_bits(bits), overflow)
+                ($Fixed::from_bits(bits), conv.overflow || new_overflow)
             }
 
             #[inline]

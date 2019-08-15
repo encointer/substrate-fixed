@@ -29,16 +29,16 @@ macro_rules! fixed_cmp_fixed {
         impl<FracLhs: $LhsLeEqU, FracRhs: $RhsLeEqU> PartialEq<$Rhs<FracRhs>> for $Lhs<FracLhs> {
             #[inline]
             fn eq(&self, rhs: &$Rhs<FracRhs>) -> bool {
-                let (rhs_128, dir, overflow) = rhs.to_bits().to_fixed_dir_overflow(
+                let conv = rhs.to_bits().to_fixed_helper(
                     <$Rhs<FracRhs>>::FRAC_NBITS as i32,
                     Self::FRAC_NBITS,
                     Self::INT_NBITS,
                 );
-                let rhs_bits = match rhs_128 {
+                let rhs_bits = match conv.bits {
                     Widest::Unsigned(bits) => bits as <Self as Fixed>::Bits,
                     Widest::Negative(bits) => bits as <Self as Fixed>::Bits,
                 };
-                dir == Ordering::Equal && !overflow && rhs_bits == self.to_bits()
+                conv.dir == Ordering::Equal && !conv.overflow && rhs_bits == self.to_bits()
             }
         }
 
@@ -50,23 +50,23 @@ macro_rules! fixed_cmp_fixed {
                     (true, false) => return Some(Ordering::Less),
                     _ => {}
                 }
-                let (rhs_128, dir, overflow) = rhs.to_bits().to_fixed_dir_overflow(
+                let conv = rhs.to_bits().to_fixed_helper(
                     <$Rhs<FracRhs>>::FRAC_NBITS as i32,
                     Self::FRAC_NBITS,
                     Self::INT_NBITS,
                 );
-                if overflow {
+                if conv.overflow {
                     return if rhs.to_bits().is_negative() {
                         Some(Ordering::Greater)
                     } else {
                         Some(Ordering::Less)
                     };
                 }
-                let rhs_bits = match rhs_128 {
+                let rhs_bits = match conv.bits {
                     Widest::Unsigned(bits) => bits as <Self as Fixed>::Bits,
                     Widest::Negative(bits) => bits as <Self as Fixed>::Bits,
                 };
-                Some(self.to_bits().cmp(&rhs_bits).then(dir))
+                Some(self.to_bits().cmp(&rhs_bits).then(conv.dir))
             }
 
             #[inline]
@@ -76,19 +76,20 @@ macro_rules! fixed_cmp_fixed {
                     (true, false) => return true,
                     _ => {}
                 }
-                let (rhs_128, dir, overflow) = rhs.to_bits().to_fixed_dir_overflow(
+                let conv = rhs.to_bits().to_fixed_helper(
                     <$Rhs<FracRhs>>::FRAC_NBITS as i32,
                     Self::FRAC_NBITS,
                     Self::INT_NBITS,
                 );
-                if overflow {
+                if conv.overflow {
                     return !rhs.to_bits().is_negative();
                 }
-                let rhs_bits = match rhs_128 {
+                let rhs_bits = match conv.bits {
                     Widest::Unsigned(bits) => bits as <Self as Fixed>::Bits,
                     Widest::Negative(bits) => bits as <Self as Fixed>::Bits,
                 };
-                self.to_bits() < rhs_bits || (self.to_bits() == rhs_bits && dir == Ordering::Less)
+                self.to_bits() < rhs_bits
+                    || (self.to_bits() == rhs_bits && conv.dir == Ordering::Less)
             }
 
             #[inline]
@@ -189,13 +190,12 @@ macro_rules! fixed_cmp_float {
                 if !SealedFloat::is_finite(*rhs) {
                     return false;
                 }
-                let (rhs_128, dir, overflow) =
-                    rhs.to_fixed_dir_overflow(Self::FRAC_NBITS, Self::INT_NBITS);
-                let rhs_bits = match rhs_128 {
+                let conv = rhs.to_fixed_helper(Self::FRAC_NBITS, Self::INT_NBITS);
+                let rhs_bits = match conv.bits {
                     Widest::Unsigned(bits) => bits as <Self as Fixed>::Bits,
                     Widest::Negative(bits) => bits as <Self as Fixed>::Bits,
                 };
-                dir == Ordering::Equal && !overflow && rhs_bits == self.to_bits()
+                conv.dir == Ordering::Equal && !conv.overflow && rhs_bits == self.to_bits()
             }
         }
 
@@ -225,20 +225,19 @@ macro_rules! fixed_cmp_float {
                     (true, false) => return Some(Ordering::Less),
                     _ => {}
                 }
-                let (rhs_128, dir, overflow) =
-                    rhs.to_fixed_dir_overflow(Self::FRAC_NBITS, Self::INT_NBITS);
-                if overflow {
+                let conv = rhs.to_fixed_helper(Self::FRAC_NBITS, Self::INT_NBITS);
+                if conv.overflow {
                     return if rhs_is_neg {
                         Some(Ordering::Greater)
                     } else {
                         Some(Ordering::Less)
                     };
                 }
-                let rhs_bits = match rhs_128 {
+                let rhs_bits = match conv.bits {
                     Widest::Unsigned(bits) => bits as <Self as Fixed>::Bits,
                     Widest::Negative(bits) => bits as <Self as Fixed>::Bits,
                 };
-                Some(self.to_bits().cmp(&rhs_bits).then(dir))
+                Some(self.to_bits().cmp(&rhs_bits).then(conv.dir))
             }
 
             #[inline]
@@ -255,17 +254,16 @@ macro_rules! fixed_cmp_float {
                     (true, false) => return true,
                     _ => {}
                 }
-                let (rhs_128, dir, overflow) =
-                    rhs.to_fixed_dir_overflow(Self::FRAC_NBITS, Self::INT_NBITS);
-                if overflow {
+                let conv = rhs.to_fixed_helper(Self::FRAC_NBITS, Self::INT_NBITS);
+                if conv.overflow {
                     return !rhs_is_neg;
                 }
-                let rhs_bits = match rhs_128 {
+                let rhs_bits = match conv.bits {
                     Widest::Unsigned(bits) => bits as <Self as Fixed>::Bits,
                     Widest::Negative(bits) => bits as <Self as Fixed>::Bits,
                 };
                 let lhs_bits = self.to_bits();
-                lhs_bits < rhs_bits || (lhs_bits == rhs_bits && dir == Ordering::Less)
+                lhs_bits < rhs_bits || (lhs_bits == rhs_bits && conv.dir == Ordering::Less)
             }
 
             #[inline]
@@ -304,17 +302,16 @@ macro_rules! fixed_cmp_float {
                     (true, false) => return true,
                     _ => {}
                 }
-                let (lhs_128, dir, overflow) =
-                    self.to_fixed_dir_overflow(<$Fix<Frac>>::FRAC_NBITS, <$Fix<Frac>>::INT_NBITS);
-                if overflow {
+                let conv = self.to_fixed_helper(<$Fix<Frac>>::FRAC_NBITS, <$Fix<Frac>>::INT_NBITS);
+                if conv.overflow {
                     return lhs_is_neg;
                 }
-                let lhs_bits = match lhs_128 {
+                let lhs_bits = match conv.bits {
                     Widest::Unsigned(bits) => bits as <$Fix<Frac> as Fixed>::Bits,
                     Widest::Negative(bits) => bits as <$Fix<Frac> as Fixed>::Bits,
                 };
                 let rhs_bits = rhs.to_bits();
-                lhs_bits < rhs_bits || (lhs_bits == rhs_bits && dir == Ordering::Greater)
+                lhs_bits < rhs_bits || (lhs_bits == rhs_bits && conv.dir == Ordering::Greater)
             }
 
             #[inline]

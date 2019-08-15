@@ -18,7 +18,7 @@ This module contains sealed traits.
 */
 
 pub(crate) use crate::{
-    sealed_fixed::{SealedFixed, Widest},
+    sealed_fixed::{SealedFixed, ToFixedHelper, Widest},
     sealed_float::SealedFloat,
     sealed_int::SealedInt,
 };

@@ -312,6 +312,28 @@ macro_rules! bool_to_fixed {
                 Self::from_bits(unshifted << shift)
             }
         }
+
+        impl<FracDst: $DstLeEqU> LossyFrom<bool> for $DstU<FracDst>
+        where
+            $DstBits: Sub<FracDst>,
+            U1: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
+        {
+            #[inline]
+            fn lossy_from(src: bool) -> Self {
+                src.into()
+            }
+        }
+
+        impl<FracDst: $DstLeEqU> LossyFrom<bool> for $DstI<FracDst>
+        where
+            $DstBitsM1: Sub<FracDst>,
+            U1: IsLessOrEqual<Diff<$DstBitsM1, FracDst>, Output = True>,
+        {
+            #[inline]
+            fn lossy_from(src: bool) -> Self {
+                src.into()
+            }
+        }
     };
 }
 
@@ -398,7 +420,6 @@ macro_rules! fixed_to_int_lossy {
             }
         }
 
-        // Conditions: $SrcBits - FracSrc <= $DstBitsM1
         impl<FracSrc: $SrcLeEqU> LossyFrom<$SrcU<FracSrc>> for $DstI
         where
             $SrcBits: Sub<FracSrc>,

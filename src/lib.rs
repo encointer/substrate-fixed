@@ -299,21 +299,13 @@ are implemented by the Rust compiler.
 # Examples
 
 ```rust
-use fixed::{frac::U3, ",
-            $s_fixed,
-            "};
-let eleven = ",
-            $s_fixed,
-            "::<U3>::from_num(11);
-assert_eq!(eleven, ",
-            $s_fixed,
-            "::<U3>::from_bits(11 << 3));
+use fixed::{frac::U3, ", $s_fixed, "};
+let eleven = ", $s_fixed, "::<U3>::from_num(11);
+assert_eq!(eleven, ", $s_fixed, "::<U3>::from_bits(11 << 3));
 assert_eq!(eleven, 11);
 assert_eq!(eleven.to_string(), \"11.0\");
 let two_point_75 = eleven / 4;
-assert_eq!(two_point_75, ",
-            $s_fixed,
-            "::<U3>::from_bits(11 << 1));
+assert_eq!(two_point_75, ", $s_fixed, "::<U3>::from_bits(11 << 1));
 assert_eq!(two_point_75, 2.75);
 assert_eq!(two_point_75.to_string(), \"2.8\");
 ```
@@ -365,12 +357,9 @@ assert_eq!(two_point_75.to_string(), \"2.8\");
 # Examples
 
 ```rust
-type Fix = fixed::",
-                $s_fixed,
-                "<fixed::frac::U4>;
-assert_eq!(Fix::min_value(), Fix::from_bits(",
-                $s_inner,
-                "::min_value()));
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(Fix::min_value(), Fix::from_bits(", $s_inner, "::min_value()));
 ```
 ";
                 $Fixed($Inner) => fn min_value()
@@ -381,12 +370,9 @@ assert_eq!(Fix::min_value(), Fix::from_bits(",
 # Examples
 
 ```rust
-type Fix = fixed::",
-                $s_fixed,
-                "<fixed::frac::U4>;
-assert_eq!(Fix::max_value(), Fix::from_bits(",
-                $s_inner,
-                "::max_value()));
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(Fix::max_value(), Fix::from_bits(", $s_inner, "::max_value()));
 ```
 ";
                 $Fixed($Inner) => fn max_value()
@@ -398,12 +384,9 @@ assert_eq!(Fix::max_value(), Fix::from_bits(",
 # Examples
 
 ```rust
-type Fix = fixed::",
-                $s_fixed,
-                "<fixed::frac::U6>;
-assert_eq!(Fix::int_nbits(), ",
-                $s_nbits,
-                " - 6);
+use fixed::{frac::U6, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U6>;
+assert_eq!(Fix::int_nbits(), ", $s_nbits, " - 6);
 ```
 ";
                 #[inline]
@@ -418,9 +401,8 @@ assert_eq!(Fix::int_nbits(), ",
 # Examples
 
 ```rust
-type Fix = fixed::",
-                    $s_fixed,
-                    "<fixed::frac::U6>;
+use fixed::{frac::U6, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U6>;
 assert_eq!(Fix::frac_nbits(), 6);
 ```
 ";
@@ -440,9 +422,8 @@ representation.
 # Examples
 
 ```rust
-type Fix = fixed::",
-                $s_fixed,
-                "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 let f = Fix::from_bits(0b11_0010);
 assert_eq!(f.count_ones(), 3);
 ```
@@ -456,9 +437,8 @@ representation.
 # Examples
 
 ```rust
-type Fix = fixed::",
-                $s_fixed,
-                "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 let f = Fix::from_bits(!0b11_0010);
 assert_eq!(f.count_zeros(), 3);
 ```
@@ -472,13 +452,10 @@ representation.
 # Examples
 
 ```rust
-type Fix = fixed::",
-                $s_fixed,
-                "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 let f = Fix::from_bits(0b10_0000);
-assert_eq!(f.leading_zeros(), ",
-                $s_nbits,
-                " - 6);
+assert_eq!(f.leading_zeros(), ", $s_nbits, " - 6);
 ```
 ";
                 $Fixed => fn leading_zeros(self) -> u32
@@ -490,9 +467,8 @@ representation.
 # Examples
 
 ```rust
-type Fix = fixed::",
-                $s_fixed,
-                "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 let f = Fix::from_bits(0b10_0000);
 assert_eq!(f.trailing_zeros(), 5);
 ```
@@ -506,14 +482,9 @@ truncated bits to the right end.
 # Examples
 
 ```rust
-type Fix = fixed::",
-                $s_fixed,
-                "<fixed::frac::U4>;
-let bits: ",
-                $s_inner,
-                " = (0b111 << (",
-                $s_nbits,
-                " - 3)) | 0b1010;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+let bits: ", $s_inner, " = (0b111 << (", $s_nbits, " - 3)) | 0b1010;
 let rot = 0b1010111;
 assert_eq!(bits.rotate_left(3), rot);
 assert_eq!(Fix::from_bits(bits).rotate_left(3), Fix::from_bits(rot));
@@ -528,15 +499,10 @@ truncated bits to the left end.
 # Examples
 
 ```rust
-type Fix = fixed::",
-                $s_fixed,
-                "<fixed::frac::U4>;
-let bits: ",
-                $s_inner,
-                " = 0b1010111;
-let rot = (0b111 << (",
-                $s_nbits,
-                " - 3)) | 0b1010;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+let bits: ", $s_inner, " = 0b1010111;
+let rot = (0b111 << (", $s_nbits, " - 3)) | 0b1010;
 assert_eq!(bits.rotate_right(3), rot);
 assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
 ```
@@ -552,9 +518,8 @@ assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
 # Examples
 
 ```rust
-type Fix = fixed::",
-                    $s_fixed,
-                    "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 let five = Fix::from_num(5);
 let minus_five = Fix::from_num(-5);
 assert_eq!(five.abs(), five);
@@ -583,9 +548,8 @@ represented is almost certainly a bug.
 # Examples
 
 ```rust
-type Fix = fixed::",
-                    $s_fixed,
-                    "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 assert_eq!(Fix::from_num(5).signum(), 1);
 assert_eq!(Fix::from_num(0).signum(), 0);
 assert_eq!(Fix::from_num(-5).signum(), -1);
@@ -613,9 +577,8 @@ assert_eq!(Fix::from_num(-5).signum(), -1);
 # Examples
 
 ```rust
-type Fix = fixed::",
-                    $s_fixed,
-                    "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 // 3/8 is 0.0110
 let three_eights = Fix::from_bits(0b0110);
 // 1/2 is 0.1000
@@ -642,9 +605,8 @@ future it panics.
 # Examples
 
 ```rust
-type Fix = fixed::",
-                    $s_fixed,
-                    "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 // 3/8 is 0.0110
 let three_eights = Fix::from_bits(0b0110);
 // 1/2 is 0.1000
@@ -663,9 +625,8 @@ assert_eq!(half.next_power_of_two(), half);
 # Examples
 
 ```rust
-type Fix = fixed::",
-                    $s_fixed,
-                    "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 // 3/8 is 0.0110
 let three_eights = Fix::from_bits(0b0110);
 // 1/2 is 0.1000
@@ -691,9 +652,8 @@ assert!(Fix::max_value().checked_next_power_of_two().is_none());
 # Examples
 
 ```rust
-type Fix = fixed::",
-                    $s_fixed,
-                    "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 assert!(Fix::from_num(5).is_positive());
 assert!(!Fix::from_num(0).is_positive());
 assert!(!Fix::from_num(-5).is_positive());
@@ -710,9 +670,8 @@ assert!(!Fix::from_num(-5).is_positive());
 # Examples
 
 ```rust
-type Fix = fixed::",
-                    $s_fixed,
-                    "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 assert!(!Fix::from_num(5).is_negative());
 assert!(!Fix::from_num(0).is_negative());
 assert!(Fix::from_num(-5).is_negative());

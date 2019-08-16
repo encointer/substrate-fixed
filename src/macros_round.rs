@@ -24,20 +24,15 @@ macro_rules! fixed_round {
                 "Note that since the numbers are stored in two’s
 complement, negative numbers with non-zero fractional parts will be
 rounded towards −∞, except in the case where there are no integer
-bits, that is `",
-                $s_fixed,
-                "<U",
-                $s_nbits,
-                ">`, where the return value is always zero.
+bits, that is `", $s_fixed, "<U", $s_nbits, ">`, where the return value is always zero.
 
 ",
             ),
             "# Examples
 
 ```rust
-type Fix = fixed::",
-            $s_fixed,
-            "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 // 0010.0000
 let two = Fix::from_num(2);
 // 0010.0100
@@ -68,11 +63,8 @@ assert_eq!((-two_and_quarter).int(), -three);
                 $Signedness,
                 "Note that since the numbers are stored in two’s
 complement, the returned fraction will be non-negative for negative
-numbers, except in the case where there are no integer bits, that is `",
-                $s_fixed,
-                "<U",
-                $s_nbits,
-                ">` where the return value is always equal to
+numbers, except in the case where there are no integer bits, that is
+`", $s_fixed, "<U", $s_nbits, ">` where the return value is always equal to
 `self`.
 
 ",
@@ -80,9 +72,8 @@ numbers, except in the case where there are no integer bits, that is `",
             "# Examples
 
 ```rust
-type Fix = fixed::",
-            $s_fixed,
-            "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 // 0000.0100
 let quarter = Fix::from_num(1) / 4;
 // 0010.0100
@@ -118,9 +109,8 @@ it panics; if wrapping is required use [`wrapping_ceil`] instead.
 # Examples
 
 ```rust
-type Fix = fixed::",
-            $s_fixed,
-            "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.ceil(), Fix::from_num(3));
 ",
@@ -162,9 +152,8 @@ Overflow can only occur when there are zero integer bits.
             "# Examples
 
 ```rust
-type Fix = fixed::",
-            $s_fixed,
-            "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.floor(), Fix::from_num(2));
 ",
@@ -200,9 +189,8 @@ it panics; if wrapping is required use [`wrapping_round`] instead.
 # Examples
 
 ```rust
-type Fix = fixed::",
-            $s_fixed,
-            r"<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, r"<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.round(), Fix::from_num(3));
 ",
@@ -231,9 +219,8 @@ returning [`None`] on overflow.
 # Examples
 
 ```rust
-type Fix = fixed::",
-            $s_fixed,
-            "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.checked_ceil(), Some(Fix::from_num(3)));
 ",
@@ -268,20 +255,26 @@ Overflow can only occur when there are zero integer bits.",
 # Examples
 
 ```rust
-type Fix = fixed::",
-            $s_fixed,
-            "<fixed::frac::U4>;
+use fixed::{",
+            if_signed_unsigned!(
+                $Signedness,
+                concat!(
+                    "
+    frac::{U4, U", $s_nbits, "},
+    ", $s_fixed, ",
+",
+                ),
+                concat!("frac::U4, ", $s_fixed),
+            ),
+            "};
+type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.checked_floor(), Some(Fix::from_num(2)));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
                 "assert_eq!((-two_half).checked_floor(), Some(Fix::from_num(-3)));
-type AllFrac = fixed::",
-                $s_fixed,
-                "<fixed::frac::U",
-                $s_nbits,
-                ">;
+type AllFrac = ", $s_fixed, "<U", $s_nbits, ">;
 assert!(AllFrac::min_value().checked_floor().is_none());
 ",
             ),
@@ -310,9 +303,8 @@ rounded away from zero, returning [`None`] on overflow.
 # Examples
 
 ```rust
-type Fix = fixed::",
-            $s_fixed,
-            "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.checked_round(), Some(Fix::from_num(3)));
 ",
@@ -340,9 +332,8 @@ saturating on overflow.
 # Examples
 
 ```rust
-type Fix = fixed::",
-            $s_fixed,
-            "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.saturating_ceil(), Fix::from_num(3));
 ",
@@ -375,20 +366,26 @@ Overflow can only occur when there are zero integer bits.",
 # Examples
 
 ```rust
-type Fix = fixed::",
-            $s_fixed,
-            "<fixed::frac::U4>;
+use fixed::{",
+            if_signed_unsigned!(
+                $Signedness,
+                concat!(
+                    "
+    frac::{U4, U", $s_nbits, "},
+    ", $s_fixed, ",
+",
+                ),
+                concat!("frac::U4, ", $s_fixed),
+            ),
+            "};
+type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.saturating_floor(), Fix::from_num(2));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
                 "assert_eq!((-two_half).saturating_floor(), Fix::from_num(-3));
-type AllFrac = fixed::",
-                $s_fixed,
-                "<fixed::frac::U",
-                $s_nbits,
-                ">;
+type AllFrac = ", $s_fixed, "<U", $s_nbits, ">;
 assert_eq!(AllFrac::min_value().saturating_floor(), AllFrac::min_value());
 ",
             ),
@@ -408,9 +405,8 @@ ties rounded away from zero, and saturating on overflow.
 # Examples
 
 ```rust
-type Fix = fixed::",
-            $s_fixed,
-            "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.saturating_round(), Fix::from_num(3));
 ",
@@ -441,9 +437,8 @@ wrapping on overflow.
 # Examples
 
 ```rust
-type Fix = fixed::",
-            $s_fixed,
-            "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.wrapping_ceil(), Fix::from_num(3));
 ",
@@ -475,20 +470,26 @@ Overflow can only occur when there are zero integer bits.",
 # Examples
 
 ```rust
-type Fix = fixed::",
-            $s_fixed,
-            "<fixed::frac::U4>;
+use fixed::{",
+            if_signed_unsigned!(
+                $Signedness,
+                concat!(
+                    "
+    frac::{U4, U", $s_nbits, "},
+    ", $s_fixed, ",
+",
+                ),
+                concat!("frac::U4, ", $s_fixed),
+            ),
+            "};
+type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.wrapping_floor(), Fix::from_num(2));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
                 "assert_eq!((-two_half).wrapping_floor(), Fix::from_num(-3));
-type AllFrac = fixed::",
-                $s_fixed,
-                "<fixed::frac::U",
-                $s_nbits,
-                ">;
+type AllFrac = ", $s_fixed, "<U", $s_nbits, ">;
 assert_eq!(AllFrac::min_value().wrapping_floor(), AllFrac::from_num(0));
 ",
             ),
@@ -507,9 +508,8 @@ nearest, with ties rounded away from zero, and wrapping on overflow.
 # Examples
 
 ```rust
-type Fix = fixed::",
-            $s_fixed,
-            "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.wrapping_round(), Fix::from_num(3));
 ",
@@ -537,9 +537,8 @@ returned.
 # Examples
 
 ```rust
-type Fix = fixed::",
-            $s_fixed,
-            "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.overflowing_ceil(), (Fix::from_num(3), false));
 ",
@@ -591,20 +590,26 @@ occur when there are zero integer bits.",
 # Examples
 
 ```rust
-type Fix = fixed::",
-            $s_fixed,
-            "<fixed::frac::U4>;
+use fixed::{",
+            if_signed_unsigned!(
+                $Signedness,
+                concat!(
+                    "
+    frac::{U4, U", $s_nbits, "},
+    ", $s_fixed, ",
+",
+                ),
+                concat!("frac::U4, ", $s_fixed),
+            ),
+            "};
+type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.overflowing_floor(), (Fix::from_num(2), false));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
                 "assert_eq!((-two_half).overflowing_floor(), (Fix::from_num(-3), false));
-type AllFrac = fixed::",
-                $s_fixed,
-                "<fixed::frac::U",
-                $s_nbits,
-                ">;
+type AllFrac = ", $s_fixed, "<U", $s_nbits, ">;
 assert_eq!(AllFrac::min_value().overflowing_floor(), (AllFrac::from_num(0), true));
 ",
             ),
@@ -637,9 +642,8 @@ returned.
 # Examples
 
 ```rust
-type Fix = fixed::",
-            $s_fixed,
-            "<fixed::frac::U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.overflowing_round(), (Fix::from_num(3), false));
 ",

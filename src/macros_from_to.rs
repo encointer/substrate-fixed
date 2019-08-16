@@ -22,12 +22,8 @@ representation identical to the given integer.
 # Examples
 
 ```rust
-use fixed::{frac::U4, ",
-            $s_fixed,
-            "};
-type Fix = ",
-            $s_fixed,
-            "<U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 // 0010.0000 == 2
 assert_eq!(Fix::from_bits(0b10_0000), 2);
 ```
@@ -48,12 +44,8 @@ identical to the given fixed-point number.
 # Examples
 
 ```rust
-use fixed::{frac::U4, ",
-            $s_fixed,
-        "};
-type Fix = ",
-            $s_fixed,
-            "<U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 // 2 is 0010.0000
 assert_eq!(Fix::from_num(2).to_bits(), 0b10_0000);
 ```
@@ -92,12 +84,8 @@ it panics; if wrapping is required use [`wrapping_from_num`] instead.
 # Examples
 
 ```rust
-use fixed::{frac::U4, types::I16F16, ",
-            $s_fixed,
-            "};
-type Fix = ",
-            $s_fixed,
-            "<U4>;
+use fixed::{frac::U4, types::I16F16, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 
 // 1.75 is 1.11 in binary
 let src = I16F16::from_bits(0b111 << (16 - 2));
@@ -176,12 +164,8 @@ it panics; if wrapping is required use [`wrapping_to_num`] instead.
 # Examples
 
 ```rust
-use fixed::{frac::U4, types::I30F2, ",
-            $s_fixed,
-            "};
-type Fix = ",
-            $s_fixed,
-            "<U4>;
+use fixed::{frac::U4, types::I30F2, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 
 // 1.75 is 1.11 in binary
 let src = Fix::from_bits(0b111 << (4 - 2));
@@ -261,26 +245,18 @@ The other number can be:
 use fixed::{
     frac::{U2, U4},
     types::I16F16,
-    ",
-            $s_fixed,
-            ",
+    ", $s_fixed, ",
 };
-type Fix = ",
-            $s_fixed,
-            "<U4>;
+type Fix = ", $s_fixed, "<U4>;
 
 // 1.75 is 1.11 in binary
 let src = I16F16::from_bits(0b111 << (16 - 2));
 assert_eq!(Fix::checked_from_num(src), Some(Fix::from_bits(0b111 << (4 - 2))));
-let too_large = ",
-            $s_fixed,
-            "::<U2>::max_value();
+let too_large = ", $s_fixed, "::<U2>::max_value();
 assert!(Fix::checked_from_num(too_large).is_none());
 
 assert_eq!(Fix::checked_from_num(3), Some(Fix::from_bits(3 << 4)));
-let too_large = ",
-            $s_inner,
-            "::max_value();
+let too_large = ", $s_inner, "::max_value();
 assert!(Fix::checked_from_num(too_large).is_none());
 let too_small = ",
             if_signed_unsigned!(
@@ -355,21 +331,15 @@ The other number can be:
 use fixed::{
     frac::{U0, U4, U6},
     types::I16F16,
-    ",
-            $s_fixed,
-            ",
+    ", $s_fixed, ",
 };
-type Fix = ",
-            $s_fixed,
-            "<U4>;
+type Fix = ", $s_fixed, "<U4>;
 
 // 1.75 is 1.11 in binary
 let src = Fix::from_bits(0b111 << (4 - 2));
 let expected = I16F16::from_bits(0b111 << (16 - 2));
 assert_eq!(src.checked_to_num::<I16F16>(), Some(expected));
-type TooFewIntBits = ",
-            $s_fixed,
-            "<U6>;
+type TooFewIntBits = ", $s_fixed, "<U6>;
 assert!(Fix::max_value().checked_to_num::<TooFewIntBits>().is_none());
 
 // 2.5 is 10.1 in binary
@@ -382,17 +352,14 @@ assert_eq!(",
                 "two_point_5.checked_to_num::<i64>(), Some(2",
             ),
             "));
-type AllInt = ",
-            $s_fixed,
-            "<U0>;
+type AllInt = ", $s_fixed, "<U0>;
 assert!(AllInt::",
             if_signed_unsigned!(
                 $Signedness,
                 "from_bits(-1).checked_to_num::<u",
                 "max_value().checked_to_num::<i",
             ),
-            $s_nbits,
-            ">().is_none());
+            $s_nbits, ">().is_none());
 
 // 1.625 is 1.101 in binary
 let one_point_625 = Fix::from_bits(0b1101 << (4 - 3));
@@ -453,20 +420,14 @@ This method panics if the value is a floating-point [NaN].
 use fixed::{
     frac::{U2, U4},
     types::I16F16,
-    ",
-            $s_fixed,
-            ",
+    ", $s_fixed, ",
 };
-type Fix = ",
-            $s_fixed,
-            "<U4>;
+type Fix = ", $s_fixed, "<U4>;
 
 // 1.75 is 1.11 in binary
 let src = I16F16::from_bits(0b111 << (16 - 2));
 assert_eq!(Fix::saturating_from_num(src), Fix::from_bits(0b111 << (4 - 2)));
-let too_large = ",
-            $s_fixed,
-            "::<U2>::max_value();
+let too_large = ", $s_fixed, "::<U2>::max_value();
 assert_eq!(Fix::saturating_from_num(too_large), Fix::max_value());
 
 assert_eq!(Fix::saturating_from_num(3), Fix::from_bits(3 << 4));
@@ -543,44 +504,29 @@ The other number can be:
 use fixed::{
     frac::{U0, U4, U6},
     types::I16F16,
-    ",
-            $s_fixed,
-            ",
+    ", $s_fixed, ",
 };
-type Fix = ",
-            $s_fixed,
-            "<U4>;
+type Fix = ", $s_fixed, "<U4>;
 
 // 1.75 is 1.11 in binary
 let src = Fix::from_bits(0b111 << (4 - 2));
 let expected = I16F16::from_bits(0b111 << (16 - 2));
 assert_eq!(src.saturating_to_num::<I16F16>(), expected);
-type TooFewIntBits = ",
-            $s_fixed,
-            "<U6>;
+type TooFewIntBits = ", $s_fixed, "<U6>;
 let saturated = Fix::max_value().saturating_to_num::<TooFewIntBits>();
 assert_eq!(saturated, TooFewIntBits::max_value());
 
 // 2.5 is 10.1 in binary
 let two_point_5 = Fix::from_bits(0b101 << (4 - 1));
 assert_eq!(two_point_5.saturating_to_num::<i32>(), 2);
-type AllInt = ",
-            $s_fixed,
-            "<U0>;
+type AllInt = ", $s_fixed, "<U0>;
 assert_eq!(",
             if_signed_unsigned!(
                 $Signedness,
+                concat!("AllInt::from_bits(-1).saturating_to_num::<u", $s_nbits, ">(), 0"),
                 concat!(
-                    "AllInt::from_bits(-1).saturating_to_num::<u",
-                    $s_nbits,
-                    ">(), 0",
-                ),
-                concat!(
-                    "AllInt::max_value().saturating_to_num::<i",
-                    $s_nbits,
-                    ">(), i",
-                    $s_nbits,
-                    "::max_value()",
+                    "AllInt::max_value().saturating_to_num::<i", $s_nbits, ">(), ",
+                    "i", $s_nbits, "::max_value()",
                 ),
             ),
             ");
@@ -642,55 +588,29 @@ For floating-point numbers, panics if the value is not [finite].
 use fixed::{
     frac::{U0, U4},
     types::I16F16,
-    ",
-            $s_fixed,
-            ",
+    ", $s_fixed, ",
 };
-type Fix = ",
-            $s_fixed,
-            "<U4>;
+type Fix = ", $s_fixed, "<U4>;
 
 // 1.75 is 1.11 in binary
 let src = I16F16::from_bits(0b111 << (16 - 2));
 assert_eq!(Fix::wrapping_from_num(src), Fix::from_bits(0b111 << (4 - 2)));
-// integer 0b1101 << (",
-            $s_nbits,
-            " - 7) will wrap to fixed-point 1010...
-let too_large = ",
-            $s_fixed,
-            "::<U0>::from_bits(0b1101 << (",
-            $s_nbits,
-            " - 7));
-let wrapped = Fix::from_bits(0b1010 << (",
-            $s_nbits,
-            " - 4));
+// integer 0b1101 << (", $s_nbits, " - 7) will wrap to fixed-point 1010...
+let too_large = ", $s_fixed, "::<U0>::from_bits(0b1101 << (", $s_nbits, " - 7));
+let wrapped = Fix::from_bits(0b1010 << (", $s_nbits, " - 4));
 assert_eq!(Fix::wrapping_from_num(too_large), wrapped);
 
-// integer 0b1101 << (",
-            $s_nbits,
-            " - 7) will wrap to fixed-point 1010...
-let large: ",
-            $s_inner,
-            " = 0b1101 << (",
-            $s_nbits,
-            " - 7);
-let wrapped = Fix::from_bits(0b1010 << (",
-            $s_nbits,
-            " - 4));
+// integer 0b1101 << (", $s_nbits, " - 7) will wrap to fixed-point 1010...
+let large: ", $s_inner, " = 0b1101 << (", $s_nbits, " - 7);
+let wrapped = Fix::from_bits(0b1010 << (", $s_nbits, " - 4));
 assert_eq!(Fix::wrapping_from_num(large), wrapped);
 
 // 1.75 is 1.11 in binary
 let expected = Fix::from_bits(0b111 << (4 - 2));
 assert_eq!(Fix::wrapping_from_num(1.75f32), expected);
-// 1.75 << (",
-            $s_nbits,
-            " - 4) wraps to binary 11000...
-let large = 1.75 * 2f32.powi(",
-            $s_nbits,
-            " - 4);
-let wrapped = Fix::from_bits(0b1100 << (",
-            $s_nbits,
-            " - 4));
+// 1.75 << (", $s_nbits, " - 4) wraps to binary 11000...
+let large = 1.75 * 2f32.powi(", $s_nbits, " - 4);
+let wrapped = Fix::from_bits(0b1100 << (", $s_nbits, " - 4));
 assert_eq!(Fix::wrapping_from_num(large), wrapped);
 ```
 
@@ -744,45 +664,30 @@ The other number can be:
 use fixed::{
     frac::{U0, U4, U6},
     types::I16F16,
-    ",
-            $s_fixed,
-            ",
+    ", $s_fixed, ",
 };
-type Fix = ",
-            $s_fixed,
-            "<U4>;
+type Fix = ", $s_fixed, "<U4>;
 
 // 1.75 is 1.11 in binary
 let src = Fix::from_bits(0b111 << (4 - 2));
 let expected = I16F16::from_bits(0b111 << (16 - 2));
 assert_eq!(src.wrapping_to_num::<I16F16>(), expected);
-type TooFewIntBits = ",
-            $s_fixed,
-            "<U6>;
+type TooFewIntBits = ", $s_fixed, "<U6>;
 let wrapped = TooFewIntBits::from_bits(Fix::max_value().to_bits() << 2);
 assert_eq!(Fix::max_value().wrapping_to_num::<TooFewIntBits>(), wrapped);
 
 // 2.5 is 10.1 in binary
 let two_point_5 = Fix::from_bits(0b101 << (4 - 1));
 assert_eq!(two_point_5.wrapping_to_num::<i32>(), 2);
-type AllInt = ",
-            $s_fixed,
-            "<U0>;
+type AllInt = ", $s_fixed, "<U0>;
 assert_eq!(",
             if_signed_unsigned!(
                 $Signedness,
                 concat!(
-                    "AllInt::from_bits(-1).wrapping_to_num::<u",
-                    $s_nbits,
-                    ">(), u",
-                    $s_nbits,
-                    "::max_value()",
+                    "AllInt::from_bits(-1).wrapping_to_num::<u", $s_nbits, ">(), ",
+                    "u", $s_nbits, "::max_value()",
                 ),
-                concat!(
-                    "AllInt::max_value().wrapping_to_num::<i",
-                    $s_nbits,
-                    ">(), -1",
-                ),
+                concat!("AllInt::max_value().wrapping_to_num::<i", $s_nbits, ">(), -1"),
             ),
             ");
 
@@ -846,57 +751,31 @@ For floating-point numbers, panics if the value is not [finite].
 use fixed::{
     frac::{U0, U4},
     types::I16F16,
-    ",
-            $s_fixed,
-            ",
+    ", $s_fixed, ",
 };
-type Fix = ",
-            $s_fixed,
-            "<U4>;
+type Fix = ", $s_fixed, "<U4>;
 
 // 1.75 is 1.11 in binary
 let src = I16F16::from_bits(0b111 << (16 - 2));
 let expected = Fix::from_bits(0b111 << (4 - 2));
 assert_eq!(Fix::overflowing_from_num(src), (expected, false));
-// integer 0b1101 << (",
-            $s_nbits,
-            " - 7) will wrap to fixed-point 1010...
-let too_large = ",
-            $s_fixed,
-            "::<U0>::from_bits(0b1101 << (",
-            $s_nbits,
-            " - 7));
-let wrapped = Fix::from_bits(0b1010 << (",
-            $s_nbits,
-            " - 4));
+// integer 0b1101 << (", $s_nbits, " - 7) will wrap to fixed-point 1010...
+let too_large = ", $s_fixed, "::<U0>::from_bits(0b1101 << (", $s_nbits, " - 7));
+let wrapped = Fix::from_bits(0b1010 << (", $s_nbits, " - 4));
 assert_eq!(Fix::overflowing_from_num(too_large), (wrapped, true));
 
 assert_eq!(Fix::overflowing_from_num(3), (Fix::from_bits(3 << 4), false));
-// integer 0b1101 << (",
-            $s_nbits,
-            " - 7) will wrap to fixed-point 1010...
-let large: ",
-            $s_inner,
-            " = 0b1101 << (",
-            $s_nbits,
-            " - 7);
-let wrapped = Fix::from_bits(0b1010 << (",
-            $s_nbits,
-            " - 4));
+// integer 0b1101 << (", $s_nbits, " - 7) will wrap to fixed-point 1010...
+let large: ", $s_inner, " = 0b1101 << (", $s_nbits, " - 7);
+let wrapped = Fix::from_bits(0b1010 << (", $s_nbits, " - 4));
 assert_eq!(Fix::overflowing_from_num(large), (wrapped, true));
 
 // 1.75 is 1.11 in binary
 let expected = Fix::from_bits(0b111 << (4 - 2));
 assert_eq!(Fix::overflowing_from_num(1.75f32), (expected, false));
-// 1.75 << (",
-            $s_nbits,
-            " - 4) wraps to binary 11000...
-let large = 1.75 * 2f32.powi(",
-            $s_nbits,
-            " - 4);
-let wrapped = Fix::from_bits(0b1100 << (",
-            $s_nbits,
-            " - 4));
+// 1.75 << (", $s_nbits, " - 4) wraps to binary 11000...
+let large = 1.75 * 2f32.powi(", $s_nbits, " - 4);
+let wrapped = Fix::from_bits(0b1100 << (", $s_nbits, " - 4));
 assert_eq!(Fix::overflowing_from_num(large), (wrapped, true));
 ```
 
@@ -954,30 +833,22 @@ The other number can be:
 use fixed::{
     frac::{U0, U4, U6},
     types::I16F16,
-    ",
-            $s_fixed,
-            ",
+    ", $s_fixed, ",
 };
-type Fix = ",
-            $s_fixed,
-            "<U4>;
+type Fix = ", $s_fixed, "<U4>;
 
 // 1.75 is 1.11 in binary
 let src = Fix::from_bits(0b111 << (4 - 2));
 let expected = I16F16::from_bits(0b111 << (16 - 2));
 assert_eq!(src.overflowing_to_num::<I16F16>(), (expected, false));
-type TooFewIntBits = ",
-            $s_fixed,
-            "<U6>;
+type TooFewIntBits = ", $s_fixed, "<U6>;
 let wrapped = TooFewIntBits::from_bits(Fix::max_value().to_bits() << 2);
 assert_eq!(Fix::max_value().overflowing_to_num::<TooFewIntBits>(), (wrapped, true));
 
 // 2.5 is 10.1 in binary
 let two_point_5 = Fix::from_bits(0b101 << (4 - 1));
 assert_eq!(two_point_5.overflowing_to_num::<i32>(), (2, false));
-let does_not_fit = ",
-            $s_fixed,
-            "::<U0>::",
+let does_not_fit = ", $s_fixed, "::<U0>::",
             if_signed_unsigned!($Signedness, "from_bits(-1)", "max_value()"),
             ";
 let wrapped = ",
@@ -989,8 +860,7 @@ let wrapped = ",
             ";
 assert_eq!(does_not_fit.overflowing_to_num::<",
             if_signed_unsigned!($Signedness, "u", "i"),
-            $s_nbits,
-            ">(), (wrapped, true));
+            $s_nbits, ">(), (wrapped, true));
 
 // 1.625 is 1.101 in binary
 let one_point_625 = Fix::from_bits(0b1101 << (4 - 3));
@@ -1030,12 +900,8 @@ assert_eq!(one_point_625.overflowing_to_num::<f32>(), (1.625f32, false));
 # Examples
 
 ```rust
-use fixed::{frac::U4, ",
-            $s_fixed,
-            "};
-type Fix = ",
-            $s_fixed,
-            "<U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 // 1.75 is 1.11 in binary
 let f = Fix::from_str_binary(\"1.11\");
 let check = Fix::from_bits(0b111 << (4 - 2));
@@ -1061,12 +927,8 @@ assert_eq!(neg, Ok(-check));
 # Examples
 
 ```rust
-use fixed::{frac::U4, ",
-            $s_fixed,
-            "};
-type Fix = ",
-            $s_fixed,
-            "<U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 // 1.75 is 1.11 in binary, 1.6 in octal
 let f = Fix::from_str_octal(\"1.6\");
 let check = Fix::from_bits(0b111 << (4 - 2));
@@ -1092,12 +954,8 @@ assert_eq!(neg, Ok(-check));
 # Examples
 
 ```rust
-use fixed::{frac::U4, ",
-            $s_fixed,
-            "};
-type Fix = ",
-            $s_fixed,
-            "<U4>;
+use fixed::{frac::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
 // 1.75 is 1.11 in binary, 1.C in hexadecimal
 let f = Fix::from_str_hex(\"1.C\");
 let check = Fix::from_bits(0b111 << (4 - 2));

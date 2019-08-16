@@ -37,11 +37,10 @@ use core::{
 /// # Examples
 ///
 /// ```rust
-/// use fixed::Wrapping;
-/// type Fix = fixed::types::I16F16;
-/// let max = Wrapping(Fix::max_value());
-/// let delta = Wrapping(Fix::from_bits(1));
-/// assert_eq!(Fix::min_value(), (max + delta).0);
+/// use fixed::{types::I16F16, Wrapping};
+/// let max = Wrapping(I16F16::max_value());
+/// let delta = Wrapping(I16F16::from_bits(1));
+/// assert_eq!(I16F16::min_value(), (max + delta).0);
 /// ```
 #[repr(transparent)]
 #[derive(Clone, Copy, Default, Hash, Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -122,11 +121,10 @@ impl<F: Fixed> Wrapping<F> {
     /// # Examples
     ///
     /// ```rust
-    /// use fixed::Wrapping;
-    /// type Fix = fixed::types::I16F16;
-    /// let two_half = Wrapping(Fix::from_num(5) / 2);
-    /// assert_eq!(two_half.ceil(), Wrapping(Fix::from_num(3)));
-    /// assert_eq!(Wrapping(Fix::max_value()).ceil(), Wrapping(Fix::min_value()));
+    /// use fixed::{types::I16F16, Wrapping};
+    /// let two_half = Wrapping(I16F16::from_num(5) / 2);
+    /// assert_eq!(two_half.ceil(), Wrapping(I16F16::from_num(3)));
+    /// assert_eq!(Wrapping(I16F16::max_value()).ceil(), Wrapping(I16F16::min_value()));
     /// ```
     pub fn ceil(self) -> Wrapping<F> {
         Wrapping(self.0.wrapping_ceil())
@@ -141,12 +139,13 @@ impl<F: Fixed> Wrapping<F> {
     /// # Examples
     ///
     /// ```rust
-    /// use fixed::Wrapping;
-    /// type Fix = fixed::types::I16F16;
-    /// let two_half = Wrapping(Fix::from_num(5) / 2);
-    /// assert_eq!(two_half.floor(), Wrapping(Fix::from_num(2)));
-    /// type AllFrac = fixed::types::I0F32;
-    /// assert_eq!(Wrapping(AllFrac::min_value()).floor(), Wrapping(AllFrac::from_num(0)));
+    /// use fixed::{
+    ///     types::{I0F32, I16F16},
+    ///     Wrapping,
+    /// };
+    /// let two_half = Wrapping(I16F16::from_num(5) / 2);
+    /// assert_eq!(two_half.floor(), Wrapping(I16F16::from_num(2)));
+    /// assert_eq!(Wrapping(I0F32::min_value()).floor(), Wrapping(I0F32::from_num(0)));
     /// ```
     pub fn floor(self) -> Wrapping<F> {
         Wrapping(self.0.wrapping_floor())
@@ -158,12 +157,11 @@ impl<F: Fixed> Wrapping<F> {
     /// # Examples
     ///
     /// ```rust
-    /// use fixed::Wrapping;
-    /// type Fix = fixed::types::I16F16;
-    /// let two_half = Wrapping(Fix::from_num(5) / 2);
-    /// assert_eq!(two_half.round(), Wrapping(Fix::from_num(3)));
-    /// assert_eq!((-two_half).round(), Wrapping(Fix::from_num(-3)));
-    /// assert_eq!(Wrapping(Fix::max_value()).round(), Wrapping(Fix::min_value()));
+    /// use fixed::{types::I16F16, Wrapping};
+    /// let two_half = Wrapping(I16F16::from_num(5) / 2);
+    /// assert_eq!(two_half.round(), Wrapping(I16F16::from_num(3)));
+    /// assert_eq!((-two_half).round(), Wrapping(I16F16::from_num(-3)));
+    /// assert_eq!(Wrapping(I16F16::max_value()).round(), Wrapping(I16F16::min_value()));
     /// ```
     pub fn round(self) -> Wrapping<F> {
         Wrapping(self.0.wrapping_round())
@@ -178,10 +176,9 @@ impl<F: Fixed> Wrapping<F> {
     /// # Examples
     ///
     /// ```rust
-    /// use fixed::Wrapping;
-    /// type Fix = fixed::types::I16F16;
-    /// assert_eq!(Wrapping(Fix::from_num(-5)).abs(), Wrapping(Fix::from_num(5)));
-    /// assert_eq!(Wrapping(Fix::min_value()).abs(), Wrapping(Fix::min_value()));
+    /// use fixed::{types::I16F16, Wrapping};
+    /// assert_eq!(Wrapping(I16F16::from_num(-5)).abs(), Wrapping(I16F16::from_num(5)));
+    /// assert_eq!(Wrapping(I16F16::min_value()).abs(), Wrapping(I16F16::min_value()));
     /// ```
     pub fn abs(self) -> Wrapping<F>
     where

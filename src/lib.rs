@@ -323,32 +323,38 @@ assert_eq!(two_point_75.to_string(), \"2.8\");
 [typenum crate]: https://crates.io/crates/typenum
 ";
             #[repr(transparent)]
-            pub struct $Fixed<Frac: $LeEqU> {
+            pub struct $Fixed<Frac> {
                 bits: $Inner,
                 phantom: PhantomData<Frac>,
             }
         );
 
-        impl<Frac: $LeEqU> Clone for $Fixed<Frac> {
+        impl<Frac> Clone for $Fixed<Frac> {
             #[inline]
             fn clone(&self) -> $Fixed<Frac> {
-                Self::from_bits(self.to_bits())
+                $Fixed {
+                    bits: self.bits,
+                    phantom: PhantomData,
+                }
             }
         }
 
-        impl<Frac: $LeEqU> Copy for $Fixed<Frac> {}
+        impl<Frac> Copy for $Fixed<Frac> {}
 
-        impl<Frac: $LeEqU> Default for $Fixed<Frac> {
+        impl<Frac> Default for $Fixed<Frac> {
             #[inline]
             fn default() -> $Fixed<Frac> {
-                Self::from_bits(<$Inner>::default())
+                $Fixed {
+                    bits: <$Inner>::default(),
+                    phantom: PhantomData
+                }
             }
         }
 
-        impl<Frac: $LeEqU> Hash for $Fixed<Frac> {
+        impl<Frac> Hash for $Fixed<Frac> {
             #[inline]
             fn hash<H: Hasher>(&self, state: &mut H) {
-                self.to_bits().hash(state);
+                self.bits.hash(state);
             }
         }
 

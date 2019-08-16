@@ -5,7 +5,7 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
-Version 0.4.2 (unreleased)
+Version 0.4.2 (2019-08-16)
 ==========================
 
   * The new methods [`from_num`] and [`to_num`] together with their

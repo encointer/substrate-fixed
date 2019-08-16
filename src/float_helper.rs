@@ -13,10 +13,7 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-use crate::{
-    helpers::IntHelper,
-    sealed::{FloatKind, ToFixedHelper, ToFloatHelper, Widest},
-};
+use crate::helpers::{FloatKind, IntHelper, ToFixedHelper, ToFloatHelper, Widest};
 use core::cmp::Ordering;
 #[cfg(feature = "f16")]
 use half::f16;

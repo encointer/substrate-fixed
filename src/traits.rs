@@ -18,8 +18,7 @@ This module contains traits.
 */
 
 use crate::{
-    helpers::{FloatHelper, IntHelper},
-    sealed::{FloatKind, FromFloatHelper, Sealed, Widest},
+    helpers::{FloatHelper, FloatKind, FromFloatHelper, IntHelper, Sealed, Widest},
     types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8, ParseFixedError,

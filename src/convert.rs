@@ -156,6 +156,33 @@ convert_lossy! { FixedU32, FixedI32, U32, LeEqU32 }
 convert_lossy! { FixedU64, FixedI64, U64, LeEqU64 }
 convert_lossy! { FixedU128, FixedI128, U128, LeEqU128 }
 
+macro_rules! lossy {
+    ($Src:ty) => {
+        impl LossyFrom<$Src> for $Src {
+            #[inline]
+            fn lossy_from(src: $Src) -> Self {
+                src
+            }
+        }
+    };
+    ($Src:ty as $Dst:ty) => {
+        impl LossyFrom<$Src> for $Dst {
+            #[inline]
+            fn lossy_from(src: $Src) -> Self {
+                src as Self
+            }
+        }
+    };
+    ($Src:ty: Into $($Dst:ty),*) => { $(
+        impl LossyFrom<$Src> for $Dst {
+            #[inline]
+            fn lossy_from(src: $Src) -> Self {
+                src.into()
+            }
+        }
+    )* };
+}
+
 macro_rules! int_to_fixed {
     (
         ($SrcU:ident, $SrcI:ident, $SrcBits:ident, $SrcLeEqU:ident) ->
@@ -249,19 +276,8 @@ macro_rules! int_to_fixed {
             }
         }
 
-        impl LossyFrom<$SrcU> for $DstU<U0> {
-            #[inline]
-            fn lossy_from(src: $SrcU) -> Self {
-                src.into()
-            }
-        }
-
-        impl LossyFrom<$SrcI> for $DstI<U0> {
-            #[inline]
-            fn lossy_from(src: $SrcI) -> Self {
-                src.into()
-            }
-        }
+        lossy! { $SrcU: Into $DstU<U0> }
+        lossy! { $SrcI: Into $DstI<U0> }
     };
 }
 
@@ -543,27 +559,35 @@ int_to_float_lossy! { u64 }
 int_to_float_lossy! { u128 }
 int_to_float_lossy! { usize }
 
+lossy! { bool }
+lossy! { bool: Into i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize }
+lossy! { i8 }
+lossy! { i8: Into i16, i32, i64, i128, isize }
+lossy! { i16 }
+lossy! { i16: Into i32, i64, i128, isize }
+lossy! { i32 }
+lossy! { i32: Into i64, i128 }
+lossy! { i64 }
+lossy! { i64: Into i128 }
+lossy! { i128 }
+lossy! { isize }
+lossy! { u8 }
+lossy! { u8: Into i16, i32, i64, i128, isize, u16, u32, u64, u128, usize }
+lossy! { u16 }
+lossy! { u16: Into i32, i64, i128, u32, u64, u128, usize }
+lossy! { u32 }
+lossy! { u32: Into i64, i128, u64, u128 }
+lossy! { u64 }
+lossy! { u64: Into i128, u128 }
+lossy! { u128 }
+lossy! { usize }
+
 #[cfg(feature = "f16")]
-impl LossyFrom<f16> for f16 {
-    #[inline]
-    fn lossy_from(src: f16) -> Self {
-        src
-    }
-}
+lossy! { f16 }
 #[cfg(feature = "f16")]
-impl LossyFrom<f16> for f32 {
-    #[inline]
-    fn lossy_from(src: f16) -> Self {
-        src.into()
-    }
-}
+lossy! { f16: Into f32 }
 #[cfg(feature = "f16")]
-impl LossyFrom<f16> for f64 {
-    #[inline]
-    fn lossy_from(src: f16) -> Self {
-        src.into()
-    }
-}
+lossy! { f16: Into f64 }
 
 #[cfg(feature = "f16")]
 impl LossyFrom<f32> for f16 {
@@ -572,18 +596,8 @@ impl LossyFrom<f32> for f16 {
         f16::from_f32(src)
     }
 }
-impl LossyFrom<f32> for f32 {
-    #[inline]
-    fn lossy_from(src: f32) -> Self {
-        src
-    }
-}
-impl LossyFrom<f32> for f64 {
-    #[inline]
-    fn lossy_from(src: f32) -> Self {
-        src.into()
-    }
-}
+lossy! { f32 }
+lossy! { f32: Into f64 }
 
 #[cfg(feature = "f16")]
 impl LossyFrom<f64> for f16 {
@@ -592,18 +606,8 @@ impl LossyFrom<f64> for f16 {
         f16::from_f64(src)
     }
 }
-impl LossyFrom<f64> for f32 {
-    #[inline]
-    fn lossy_from(src: f64) -> Self {
-        src as f32
-    }
-}
-impl LossyFrom<f64> for f64 {
-    #[inline]
-    fn lossy_from(src: f64) -> Self {
-        src
-    }
-}
+lossy! { f64 as f32 }
+lossy! { f64 }
 
 /// These are doc tests that should not appear in the docs, but are
 /// useful as doc tests can check to ensure compilation failure.

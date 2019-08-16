@@ -16,7 +16,7 @@
 use crate::{
     frac::{Diff, IsLessOrEqual, True, U0, U1, U127, U128, U15, U16, U31, U32, U63, U64, U7, U8},
     helpers::IntHelper,
-    traits::{FromFixed, LossyFrom},
+    traits::LossyFrom,
     types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
@@ -38,10 +38,10 @@ macro_rules! convert {
             Diff<$SrcBits, FracSrc>: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
             #[inline]
-            fn from(src: $SrcU<FracSrc>) -> $DstU<FracDst> {
-                let unshifted = $DstU::<FracDst>::from_bits(src.to_bits().into()).to_bits();
+            fn from(src: $SrcU<FracSrc>) -> Self {
+                let unshifted = Self::from_bits(src.to_bits().into()).to_bits();
                 let shift = FracDst::U32 - FracSrc::U32;
-                $DstU::<FracDst>::from_bits(unshifted << shift)
+                Self::from_bits(unshifted << shift)
             }
         }
 
@@ -53,10 +53,10 @@ macro_rules! convert {
             Diff<$SrcBits, FracSrc>: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
             #[inline]
-            fn from(src: $SrcI<FracSrc>) -> $DstI<FracDst> {
-                let unshifted = $DstI::<FracDst>::from_bits(src.to_bits().into()).to_bits();
+            fn from(src: $SrcI<FracSrc>) -> Self {
+                let unshifted = Self::from_bits(src.to_bits().into()).to_bits();
                 let shift = FracDst::U32 - FracSrc::U32;
-                $DstI::<FracDst>::from_bits(unshifted << shift)
+                Self::from_bits(unshifted << shift)
             }
         }
 
@@ -68,10 +68,10 @@ macro_rules! convert {
             Diff<$SrcBits, FracSrc>: IsLessOrEqual<Diff<$DstBitsM1, FracDst>, Output = True>,
         {
             #[inline]
-            fn from(src: $SrcU<FracSrc>) -> $DstI<FracDst> {
-                let unshifted = $DstI::<FracDst>::from_bits(src.to_bits().into()).to_bits();
+            fn from(src: $SrcU<FracSrc>) -> Self {
+                let unshifted = Self::from_bits(src.to_bits().into()).to_bits();
                 let shift = FracDst::U32 - FracSrc::U32;
-                $DstI::<FracDst>::from_bits(unshifted << shift)
+                Self::from_bits(unshifted << shift)
             }
         }
     };
@@ -88,8 +88,8 @@ macro_rules! convert_lossy {
             Diff<$SrcBits, FracSrc>: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
             #[inline]
-            fn lossy_from(src: $SrcU<FracSrc>) -> $DstU<FracDst> {
-                FromFixed::wrapping_from_fixed(src)
+            fn lossy_from(src: $SrcU<FracSrc>) -> Self {
+                src.to_num()
             }
         }
 
@@ -100,8 +100,8 @@ macro_rules! convert_lossy {
             Diff<$SrcBits, FracSrc>: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
             #[inline]
-            fn lossy_from(src: $SrcI<FracSrc>) -> $DstI<FracDst> {
-                FromFixed::wrapping_from_fixed(src)
+            fn lossy_from(src: $SrcI<FracSrc>) -> Self {
+                src.to_num()
             }
         }
 
@@ -112,8 +112,8 @@ macro_rules! convert_lossy {
             Diff<$SrcBits, FracSrc>: IsLessOrEqual<Diff<$DstBitsM1, FracDst>, Output = True>,
         {
             #[inline]
-            fn lossy_from(src: $SrcU<FracSrc>) -> $DstI<FracDst> {
-                FromFixed::wrapping_from_fixed(src)
+            fn lossy_from(src: $SrcU<FracSrc>) -> Self {
+                src.to_num()
             }
         }
     };
@@ -167,10 +167,10 @@ macro_rules! int_to_fixed {
             $SrcBits: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
             #[inline]
-            fn from(src: $SrcU) -> $DstU<FracDst> {
-                let unshifted = $DstU::<FracDst>::from_bits(src.into()).to_bits();
+            fn from(src: $SrcU) -> Self {
+                let unshifted = Self::from_bits(src.into()).to_bits();
                 let shift = FracDst::U32;
-                $DstU::<FracDst>::from_bits(unshifted << shift)
+                Self::from_bits(unshifted << shift)
             }
         }
 
@@ -180,10 +180,10 @@ macro_rules! int_to_fixed {
             $SrcBits: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
             #[inline]
-            fn from(src: $SrcI) -> $DstI<FracDst> {
-                let unshifted = $DstI::<FracDst>::from_bits(src.into()).to_bits();
+            fn from(src: $SrcI) -> Self {
+                let unshifted = Self::from_bits(src.into()).to_bits();
                 let shift = FracDst::U32;
-                $DstI::<FracDst>::from_bits(unshifted << shift)
+                Self::from_bits(unshifted << shift)
             }
         }
 
@@ -193,10 +193,10 @@ macro_rules! int_to_fixed {
             $SrcBits: IsLessOrEqual<Diff<$DstBitsM1, FracDst>, Output = True>,
         {
             #[inline]
-            fn from(src: $SrcU) -> $DstI<FracDst> {
-                let unshifted = $DstI::<FracDst>::from_bits(src.into()).to_bits();
+            fn from(src: $SrcU) -> Self {
+                let unshifted = Self::from_bits(src.into()).to_bits();
                 let shift = FracDst::U32;
-                $DstI::<FracDst>::from_bits(unshifted << shift)
+                Self::from_bits(unshifted << shift)
             }
         }
 
@@ -206,8 +206,8 @@ macro_rules! int_to_fixed {
             $SrcBits: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
             #[inline]
-            fn lossy_from(src: $SrcU) -> $DstU<FracDst> {
-                From::from(src)
+            fn lossy_from(src: $SrcU) -> Self {
+                src.into()
             }
         }
 
@@ -217,8 +217,8 @@ macro_rules! int_to_fixed {
             $SrcBits: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
             #[inline]
-            fn lossy_from(src: $SrcI) -> $DstI<FracDst> {
-                From::from(src)
+            fn lossy_from(src: $SrcI) -> Self {
+                src.into()
             }
         }
 
@@ -228,8 +228,8 @@ macro_rules! int_to_fixed {
             $SrcBits: IsLessOrEqual<Diff<$DstBitsM1, FracDst>, Output = True>,
         {
             #[inline]
-            fn lossy_from(src: $SrcU) -> $DstI<FracDst> {
-                From::from(src)
+            fn lossy_from(src: $SrcU) -> Self {
+                src.into()
             }
         }
     };
@@ -237,29 +237,29 @@ macro_rules! int_to_fixed {
     (($SrcU:ident, $SrcI:ident) -> ($DstU:ident, $DstI:ident)) => {
         impl From<$SrcU> for $DstU<U0> {
             #[inline]
-            fn from(src: $SrcU) -> $DstU<U0> {
-                $DstU::<U0>::from_bits(src)
+            fn from(src: $SrcU) -> Self {
+                Self::from_bits(src)
             }
         }
 
         impl From<$SrcI> for $DstI<U0> {
             #[inline]
-            fn from(src: $SrcI) -> $DstI<U0> {
-                $DstI::<U0>::from_bits(src)
+            fn from(src: $SrcI) -> Self {
+                Self::from_bits(src)
             }
         }
 
         impl LossyFrom<$SrcU> for $DstU<U0> {
             #[inline]
-            fn lossy_from(src: $SrcU) -> $DstU<U0> {
-                From::from(src)
+            fn lossy_from(src: $SrcU) -> Self {
+                src.into()
             }
         }
 
         impl LossyFrom<$SrcI> for $DstI<U0> {
             #[inline]
-            fn lossy_from(src: $SrcI) -> $DstI<U0> {
-                From::from(src)
+            fn lossy_from(src: $SrcI) -> Self {
+                src.into()
             }
         }
     };
@@ -293,10 +293,10 @@ macro_rules! bool_to_fixed {
             U1: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
             #[inline]
-            fn from(src: bool) -> $DstU<FracDst> {
-                let unshifted = $DstU::<FracDst>::from_bits(src.into()).to_bits();
+            fn from(src: bool) -> Self {
+                let unshifted = Self::from_bits(src.into()).to_bits();
                 let shift = FracDst::U32;
-                $DstU::<FracDst>::from_bits(unshifted << shift)
+                Self::from_bits(unshifted << shift)
             }
         }
 
@@ -306,10 +306,10 @@ macro_rules! bool_to_fixed {
             U1: IsLessOrEqual<Diff<$DstBitsM1, FracDst>, Output = True>,
         {
             #[inline]
-            fn from(src: bool) -> $DstI<FracDst> {
-                let unshifted = $DstI::<FracDst>::from_bits(src.into()).to_bits();
+            fn from(src: bool) -> Self {
+                let unshifted = Self::from_bits(src.into()).to_bits();
                 let shift = FracDst::U32;
-                $DstI::<FracDst>::from_bits(unshifted << shift)
+                Self::from_bits(unshifted << shift)
             }
         }
     };
@@ -325,14 +325,14 @@ macro_rules! fixed_to_int {
     (($SrcU:ident, $SrcI:ident) -> ($DstU:ident, $DstI:ident)) => {
         impl From<$SrcU<U0>> for $DstU {
             #[inline]
-            fn from(src: $SrcU<U0>) -> $DstU {
+            fn from(src: $SrcU<U0>) -> Self {
                 src.to_bits().into()
             }
         }
 
         impl From<$SrcI<U0>> for $DstI {
             #[inline]
-            fn from(src: $SrcI<U0>) -> $DstI {
+            fn from(src: $SrcI<U0>) -> Self {
                 src.to_bits().into()
             }
         }
@@ -342,7 +342,7 @@ macro_rules! fixed_to_int {
 
         impl From<$SrcU<U0>> for $DstI {
             #[inline]
-            fn from(src: $SrcU<U0>) -> $DstI {
+            fn from(src: $SrcU<U0>) -> Self {
                 src.to_bits().into()
             }
         }
@@ -382,8 +382,8 @@ macro_rules! fixed_to_int_lossy {
             Diff<$SrcBits, FracSrc>: IsLessOrEqual<$DstBits, Output = True>,
         {
             #[inline]
-            fn lossy_from(src: $SrcU<FracSrc>) -> $DstU {
-                FromFixed::wrapping_from_fixed(src)
+            fn lossy_from(src: $SrcU<FracSrc>) -> Self {
+                src.to_num()
             }
         }
 
@@ -393,8 +393,8 @@ macro_rules! fixed_to_int_lossy {
             Diff<$SrcBits, FracSrc>: IsLessOrEqual<$DstBits, Output = True>,
         {
             #[inline]
-            fn lossy_from(src: $SrcI<FracSrc>) -> $DstI {
-                FromFixed::wrapping_from_fixed(src)
+            fn lossy_from(src: $SrcI<FracSrc>) -> Self {
+                src.to_num()
             }
         }
 
@@ -405,8 +405,8 @@ macro_rules! fixed_to_int_lossy {
             Diff<$SrcBits, FracSrc>: IsLessOrEqual<$DstBitsM1, Output = True>,
         {
             #[inline]
-            fn lossy_from(src: $SrcU<FracSrc>) -> $DstI {
-                FromFixed::wrapping_from_fixed(src)
+            fn lossy_from(src: $SrcU<FracSrc>) -> Self {
+                src.to_num()
             }
         }
     };
@@ -497,7 +497,7 @@ macro_rules! int_to_float_lossy {
         impl LossyFrom<$Int> for $Float {
             #[inline]
             fn lossy_from(src: $Int) -> $Float {
-                <$Int as IntHelper>::to_repr_fixed(src).to_num()
+                src.to_repr_fixed().to_num()
             }
         }
     };
@@ -525,61 +525,61 @@ int_to_float_lossy! { usize }
 #[cfg(feature = "f16")]
 impl LossyFrom<f16> for f16 {
     #[inline]
-    fn lossy_from(src: f16) -> f16 {
+    fn lossy_from(src: f16) -> Self {
         src
     }
 }
 #[cfg(feature = "f16")]
 impl LossyFrom<f16> for f32 {
     #[inline]
-    fn lossy_from(src: f16) -> f32 {
-        f32::from(src)
+    fn lossy_from(src: f16) -> Self {
+        src.into()
     }
 }
 #[cfg(feature = "f16")]
 impl LossyFrom<f16> for f64 {
     #[inline]
-    fn lossy_from(src: f16) -> f64 {
-        f64::from(src)
+    fn lossy_from(src: f16) -> Self {
+        src.into()
     }
 }
 
 #[cfg(feature = "f16")]
 impl LossyFrom<f32> for f16 {
     #[inline]
-    fn lossy_from(src: f32) -> f16 {
+    fn lossy_from(src: f32) -> Self {
         f16::from_f32(src)
     }
 }
 impl LossyFrom<f32> for f32 {
     #[inline]
-    fn lossy_from(src: f32) -> f32 {
+    fn lossy_from(src: f32) -> Self {
         src
     }
 }
 impl LossyFrom<f32> for f64 {
     #[inline]
-    fn lossy_from(src: f32) -> f64 {
-        f64::from(src)
+    fn lossy_from(src: f32) -> Self {
+        src.into()
     }
 }
 
 #[cfg(feature = "f16")]
 impl LossyFrom<f64> for f16 {
     #[inline]
-    fn lossy_from(src: f64) -> f16 {
+    fn lossy_from(src: f64) -> Self {
         f16::from_f64(src)
     }
 }
 impl LossyFrom<f64> for f32 {
     #[inline]
-    fn lossy_from(src: f64) -> f32 {
+    fn lossy_from(src: f64) -> Self {
         src as f32
     }
 }
 impl LossyFrom<f64> for f64 {
     #[inline]
-    fn lossy_from(src: f64) -> f64 {
+    fn lossy_from(src: f64) -> Self {
         src
     }
 }

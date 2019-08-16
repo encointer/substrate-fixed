@@ -38,7 +38,6 @@ where
     type ReprFixed: Fixed;
 
     const NBITS: u32 = Self::NBits::U32;
-    const IS_SIGNED: bool = Self::IsSigned::BOOL;
     const MSB: Self;
     const ZERO: Self;
 

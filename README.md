@@ -127,11 +127,11 @@ Details on other releases can be found in [*RELEASES.md*].
 use fixed::types::I20F12;
 
 // 19/3 = 6 1/3
-let six_and_third = I20F12::from_int(19) / 3;
+let six_and_third = I20F12::from_num(19) / 3;
 // four decimal digits for 12 binary digits
 assert_eq!(six_and_third.to_string(), "6.3333");
 // find the ceil and convert to i32
-assert_eq!(six_and_third.ceil().to_int::<i32>(), 7);
+assert_eq!(six_and_third.ceil().to_num::<i32>(), 7);
 // we can also compare directly to integers
 assert_eq!(six_and_third.ceil(), 7);
 ```
@@ -146,8 +146,8 @@ of eight, 16, 32, 64 or 128 bits.
 ```rust
 // −8 ≤ I4F4 < 8 with steps of 1/16 (about 0.06)
 use fixed::types::I4F4;
-let a = I4F4::from_int(1);
-// multiplication and division by integers is possible
+let a = I4F4::from_num(1);
+// multiplication and division by integers are possible
 let ans1 = a / 5 * 17;
 // 1 / 5 × 17 = 3 2/5 (3.4), but we get 3 3/16 (3.19)
 assert_eq!(ans1, I4F4::from_bits((3 << 4) + 3));
@@ -157,7 +157,7 @@ assert_eq!(ans1.to_string(), "3.19");
 use fixed::types::I4F12;
 let wider_a = I4F12::from(a);
 let wider_ans = wider_a / 5 * 17;
-let ans2 = I4F4::from_fixed(wider_ans);
+let ans2 = I4F4::from_num(wider_ans);
 // now the answer is the much closer 3 6/16 (3.38)
 assert_eq!(ans2, I4F4::from_bits((3 << 4) + 6));
 assert_eq!(ans2.to_string(), "3.38");
@@ -174,7 +174,7 @@ Note that we can convert from [`I4F4`] to [`I4F12`] using [`From`], as
 the target type has the same number of integer bits and a larger
 number of fractional bits. Converting from [`I4F12`] to [`I4F4`]
 cannot use [`From`] as we have less fractional bits, so we use
-[`from_fixed`] instead.
+[`from_num`] instead.
 
 ## Using the *fixed* crate
 

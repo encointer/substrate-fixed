@@ -47,7 +47,7 @@ assert_eq!(Fix::from_num(5).checked_neg(), None);",
 ";
             #[inline]
             pub fn checked_neg(self) -> Option<$Fixed<Frac>> {
-                <$Inner>::checked_neg(self.to_bits()).map(Self::from_bits)
+                self.to_bits().checked_neg().map(Self::from_bits)
             }
         );
 
@@ -69,7 +69,7 @@ assert_eq!(Fix::max_value().checked_add(one), None);
 ";
             #[inline]
             pub fn checked_add(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
-                <$Inner>::checked_add(self.to_bits(), rhs.to_bits()).map(Self::from_bits)
+                self.to_bits().checked_add(rhs.to_bits()).map(Self::from_bits)
             }
         );
 
@@ -91,7 +91,7 @@ assert_eq!(Fix::min_value().checked_sub(one), None);
 ";
             #[inline]
             pub fn checked_sub(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
-                <$Inner>::checked_sub(self.to_bits(), rhs.to_bits()).map(Self::from_bits)
+                self.to_bits().checked_sub(rhs.to_bits()).map(Self::from_bits)
             }
         );
 
@@ -167,7 +167,7 @@ assert_eq!(Fix::max_value().checked_mul_int(2), None);
 ";
             #[inline]
             pub fn checked_mul_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
-                <$Inner>::checked_mul(self.to_bits(), rhs).map(Self::from_bits)
+                self.to_bits().checked_mul(rhs).map(Self::from_bits)
             }
         );
 
@@ -201,7 +201,7 @@ assert_eq!(Fix::from_num(1).checked_div_int(0), None);
 ";
             #[inline]
             pub fn checked_div_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
-                <$Inner>::checked_div(self.to_bits(), rhs).map(Self::from_bits)
+                self.to_bits().checked_div(rhs).map(Self::from_bits)
             }
         );
 
@@ -236,7 +236,7 @@ assert_eq!(Fix::from_num(1).checked_rem_int(0), None);
 ";
             #[inline]
             pub fn checked_rem_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
-                <$Inner>::checked_rem(self.to_bits(), rhs).map(Self::from_bits)
+                self.to_bits().checked_rem(rhs).map(Self::from_bits)
             }
         );
 
@@ -261,7 +261,7 @@ assert_eq!((Fix::from_num(1) / 2).checked_shl(",
 ";
             #[inline]
             pub fn checked_shl(self, rhs: u32) -> Option<$Fixed<Frac>> {
-                <$Inner>::checked_shl(self.to_bits(), rhs).map(Self::from_bits)
+                self.to_bits().checked_shl(rhs).map(Self::from_bits)
             }
         );
 
@@ -286,7 +286,7 @@ assert_eq!(Fix::from_num(4).checked_shr(",
 ";
             #[inline]
             pub fn checked_shr(self, rhs: u32) -> Option<$Fixed<Frac>> {
-                <$Inner>::checked_shr(self.to_bits(), rhs).map(Self::from_bits)
+                self.to_bits().checked_shr(rhs).map(Self::from_bits)
             }
         );
 
@@ -311,7 +311,7 @@ assert_eq!(Fix::min_value().checked_abs(), None);
 ";
                 #[inline]
                 pub fn checked_abs(self) -> Option<$Fixed<Frac>> {
-                    <$Inner>::checked_abs(self.to_bits()).map(Self::from_bits)
+                    self.to_bits().checked_abs().map(Self::from_bits)
                 }
             );
         }
@@ -354,7 +354,7 @@ assert_eq!(Fix::from_num(5).saturating_neg(), Fix::from_num(0));",
             }
         );
 
-        comment!(
+        delegate!(
             "Saturating addition. Returns the sum, saturating on overflow.
 
 # Examples
@@ -367,13 +367,10 @@ assert_eq!(Fix::from_num(3).saturating_add(Fix::from_num(2)), Fix::from_num(5));
 assert_eq!(Fix::max_value().saturating_add(Fix::from_num(1)), Fix::max_value());
 ```
 ";
-            #[inline]
-            pub fn saturating_add(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                Self::from_bits(<$Inner>::saturating_add(self.to_bits(), rhs.to_bits()))
-            }
+            $Fixed => fn saturating_add(self, rhs)
         );
 
-        comment!(
+        delegate!(
             "Saturating subtraction. Returns the difference, saturating on overflow.
 
 # Examples
@@ -393,10 +390,7 @@ assert_eq!(Fix::from_num(0).saturating_sub(Fix::from_num(1)), Fix::from_num(0));
             "
 ```
 ";
-            #[inline]
-            pub fn saturating_sub(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                Self::from_bits(<$Inner>::saturating_sub(self.to_bits(), rhs.to_bits()))
-            }
+            $Fixed => fn saturating_sub(self, rhs)
         );
 
         comment!(
@@ -467,7 +461,7 @@ assert_eq!(Fix::max_value().saturating_mul_int(2), Fix::max_value());
 ";
             #[inline]
             pub fn saturating_mul_int(self, rhs: $Inner) -> $Fixed<Frac> {
-                Self::from_bits(<$Inner>::saturating_mul(self.to_bits(), rhs))
+                Self::from_bits(self.to_bits().saturating_mul(rhs))
             }
         );
 
@@ -495,7 +489,7 @@ assert_eq!(Fix::min_value().saturating_abs(), Fix::max_value());
             );
         }
 
-        comment!(
+        delegate!(
             "Wrapping negation. Returns the negated value, wrapping on overflow.
 
 ",
@@ -525,13 +519,10 @@ assert_eq!(Fix::from_num(5).wrapping_neg(), Fix::from_bits(neg_five_bits));",
             "
 ```
 ";
-            #[inline]
-            pub fn wrapping_neg(self) -> $Fixed<Frac> {
-                Self::from_bits(<$Inner>::wrapping_neg(self.to_bits()))
-            }
+            $Fixed => fn wrapping_neg(self)
         );
 
-        comment!(
+        delegate!(
             "Wrapping addition. Returns the sum, wrapping on overflow.
 
 # Examples
@@ -548,13 +539,10 @@ assert_eq!(Fix::max_value().wrapping_add(one), ",
             "one_minus_bit);
 ```
 ";
-            #[inline]
-            pub fn wrapping_add(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                Self::from_bits(<$Inner>::wrapping_add(self.to_bits(), rhs.to_bits()))
-            }
+            $Fixed => fn wrapping_add(self, rhs)
         );
 
-        comment!(
+        delegate!(
             "Wrapping subtraction. Returns the difference, wrapping on overflow.
 
 # Examples
@@ -576,10 +564,7 @@ assert_eq!(Fix::from_num(0)",
             ".wrapping_sub(one), Fix::max_value() - one_minus_bit);
 ```
 ";
-            #[inline]
-            pub fn wrapping_sub(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                Self::from_bits(<$Inner>::wrapping_sub(self.to_bits(), rhs.to_bits()))
-            }
+            $Fixed => fn wrapping_sub(self, rhs)
         );
 
         comment!(
@@ -646,7 +631,7 @@ assert_eq!(Fix::max_value().wrapping_mul_int(4), wrapped);
 ";
             #[inline]
             pub fn wrapping_mul_int(self, rhs: $Inner) -> $Fixed<Frac> {
-                Self::from_bits(<$Inner>::wrapping_mul(self.to_bits(), rhs))
+                Self::from_bits(self.to_bits().wrapping_mul(rhs))
             }
         );
 
@@ -686,7 +671,7 @@ assert_eq!(Fix::from_num(3).wrapping_div_int(2), one_point_5);
 ";
             #[inline]
             pub fn wrapping_div_int(self, rhs: $Inner) -> $Fixed<Frac> {
-                Self::from_bits(<$Inner>::wrapping_div(self.to_bits(), rhs))
+                Self::from_bits(self.to_bits().wrapping_div(rhs))
             }
         );
 
@@ -725,11 +710,11 @@ assert_eq!(Fix::from_bits(0b10101).wrapping_rem_int(8), Fix::from_bits(0b101));
 ";
             #[inline]
             pub fn wrapping_rem_int(self, rhs: $Inner) -> $Fixed<Frac> {
-                Self::from_bits(<$Inner>::wrapping_rem(self.to_bits(), rhs))
+                Self::from_bits(self.to_bits().wrapping_rem(rhs))
             }
         );
 
-        comment!(
+        delegate!(
             "Wrapping shift left. Wraps `rhs` if `rhs` ≥ ",
             $s_nbits,
             ", then shifts and returns the number.
@@ -746,13 +731,10 @@ assert_eq!((Fix::from_num(1) / 2).wrapping_shl(3 + ",
             "), Fix::from_num(4));
 ```
 ";
-            #[inline]
-            pub fn wrapping_shl(self, rhs: u32) -> $Fixed<Frac> {
-                Self::from_bits(<$Inner>::wrapping_shl(self.to_bits(), rhs))
-            }
+            $Fixed => fn wrapping_shl(self, rhs: u32)
         );
 
-        comment!(
+        delegate!(
             "Wrapping shift right. Wraps `rhs` if `rhs` ≥ ",
             $s_nbits,
             ", then shifts and returns the number.
@@ -769,15 +751,12 @@ assert_eq!((Fix::from_num(4)).wrapping_shr(3 + ",
             "), Fix::from_num(1) / 2);
 ```
 ";
-            #[inline]
-            pub fn wrapping_shr(self, rhs: u32) -> $Fixed<Frac> {
-                Self::from_bits(<$Inner>::wrapping_shr(self.to_bits(), rhs))
-            }
+            $Fixed => fn wrapping_shr(self, rhs: u32)
         );
 
         if_signed! {
             $Signedness;
-            comment!(
+            delegate!(
                 "Wrapping absolute value. Returns the absolute value, wrapping on overflow.
 
 Overflow can only occur when trying to find the absolute value of the minimum value.
@@ -792,10 +771,7 @@ assert_eq!(Fix::from_num(-5).wrapping_abs(), Fix::from_num(5));
 assert_eq!(Fix::min_value().wrapping_abs(), Fix::min_value());
 ```
 ";
-                #[inline]
-                pub fn wrapping_abs(self) -> $Fixed<Frac> {
-                    Self::from_bits(<$Inner>::wrapping_abs(self.to_bits()))
-                }
+                $Fixed => fn wrapping_abs(self)
             );
         }
 
@@ -837,7 +813,7 @@ assert_eq!(Fix::from_num(5).overflowing_neg(), (Fix::from_bits(neg_five_bits), t
 ";
             #[inline]
             pub fn overflowing_neg(self) -> ($Fixed<Frac>, bool) {
-                let (ans, o) = <$Inner>::overflowing_neg(self.to_bits());
+                let (ans, o) = self.to_bits().overflowing_neg();
                 (Self::from_bits(ans), o)
             }
         );
@@ -867,7 +843,7 @@ assert_eq!(Fix::max_value().overflowing_add(one), (",
 ";
             #[inline]
             pub fn overflowing_add(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
-                let (ans, o) = <$Inner>::overflowing_add(self.to_bits(), rhs.to_bits());
+                let (ans, o) = self.to_bits().overflowing_add(rhs.to_bits());
                 (Self::from_bits(ans), o)
             }
         );
@@ -902,7 +878,7 @@ assert_eq!(Fix::from_num(0)",
 ";
             #[inline]
             pub fn overflowing_sub(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
-                let (ans, o) = <$Inner>::overflowing_sub(self.to_bits(), rhs.to_bits());
+                let (ans, o) = self.to_bits().overflowing_sub(rhs.to_bits());
                 (Self::from_bits(ans), o)
             }
         );
@@ -986,7 +962,7 @@ assert_eq!(Fix::max_value().overflowing_mul_int(4), (wrapped, true));
 ";
             #[inline]
             pub fn overflowing_mul_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
-                let (ans, o) = <$Inner>::overflowing_mul(self.to_bits(), rhs);
+                let (ans, o) = self.to_bits().overflowing_mul(rhs);
                 (Self::from_bits(ans), o)
             }
         );
@@ -1030,7 +1006,7 @@ assert_eq!(Fix::from_num(3).overflowing_div_int(2), (one_point_5, false));
 ";
             #[inline]
             pub fn overflowing_div_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
-                let (ans, o) = <$Inner>::overflowing_div(self.to_bits(), rhs);
+                let (ans, o) = self.to_bits().overflowing_div(rhs);
                 (Self::from_bits(ans), o)
             }
         );
@@ -1073,7 +1049,7 @@ assert_eq!(Fix::from_bits(0b10101).overflowing_rem_int(8), (Fix::from_bits(0b101
 ";
             #[inline]
             pub fn overflowing_rem_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
-                let (ans, o) = <$Inner>::overflowing_rem(self.to_bits(), rhs);
+                let (ans, o) = self.to_bits().overflowing_rem(rhs);
                 (Self::from_bits(ans), o)
             }
         );
@@ -1103,7 +1079,7 @@ assert_eq!((Fix::from_num(1) / 2).overflowing_shl(3 + ",
 ";
             #[inline]
             pub fn overflowing_shl(self, rhs: u32) -> ($Fixed<Frac>, bool) {
-                let (ans, o) = <$Inner>::overflowing_shl(self.to_bits(), rhs);
+                let (ans, o) = self.to_bits().overflowing_shl(rhs);
                 (Self::from_bits(ans), o)
             }
         );
@@ -1133,7 +1109,7 @@ assert_eq!((Fix::from_num(4)).overflowing_shr(3 + ",
 ";
             #[inline]
             pub fn overflowing_shr(self, rhs: u32) -> ($Fixed<Frac>, bool) {
-                let (ans, o) = <$Inner>::overflowing_shr(self.to_bits(), rhs);
+                let (ans, o) = self.to_bits().overflowing_shr(rhs);
                 (Self::from_bits(ans), o)
             }
         );
@@ -1164,7 +1140,7 @@ assert_eq!(Fix::min_value().overflowing_abs(), (Fix::min_value(), true));
 ";
                 #[inline]
                 pub fn overflowing_abs(self) -> ($Fixed<Frac>, bool) {
-                    let (ans, o) = <$Inner>::overflowing_abs(self.to_bits());
+                    let (ans, o) = self.to_bits().overflowing_abs();
                     (Self::from_bits(ans), o)
                 }
             );

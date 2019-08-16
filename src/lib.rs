@@ -343,9 +343,9 @@ assert_eq!(two_point_75.to_string(), \"2.8\");
 
         impl<Frac> Default for $Fixed<Frac> {
             #[inline]
-            fn default() -> $Fixed<Frac> {
+            fn default() -> Self {
                 $Fixed {
-                    bits: <$Inner>::default(),
+                    bits: Default::default(),
                     phantom: PhantomData
                 }
             }
@@ -447,7 +447,7 @@ let f = Fix::from_bits(0b11_0010);
 assert_eq!(f.count_ones(), 3);
 ```
 ";
-                $Fixed($Inner) => fn count_ones(self) -> u32
+                $Fixed => fn count_ones(self) -> u32
             );
             delegate!(
                 "Returns the number of zeros in the binary
@@ -463,7 +463,7 @@ let f = Fix::from_bits(!0b11_0010);
 assert_eq!(f.count_zeros(), 3);
 ```
 ";
-                $Fixed($Inner) => fn count_zeros(self) -> u32
+                $Fixed => fn count_zeros(self) -> u32
             );
             delegate!(
                 "Returns the number of leading zeros in the binary
@@ -481,7 +481,7 @@ assert_eq!(f.leading_zeros(), ",
                 " - 6);
 ```
 ";
-                $Fixed($Inner) => fn leading_zeros(self) -> u32
+                $Fixed => fn leading_zeros(self) -> u32
             );
             delegate!(
                 "Returns the number of trailing zeros in the binary
@@ -497,7 +497,7 @@ let f = Fix::from_bits(0b10_0000);
 assert_eq!(f.trailing_zeros(), 5);
 ```
 ";
-                $Fixed($Inner) => fn trailing_zeros(self) -> u32
+                $Fixed => fn trailing_zeros(self) -> u32
             );
             delegate!(
                 "Shifts to the left by *n* bits, wrapping the
@@ -519,7 +519,7 @@ assert_eq!(bits.rotate_left(3), rot);
 assert_eq!(Fix::from_bits(bits).rotate_left(3), Fix::from_bits(rot));
 ```
 ";
-                $Fixed($Inner) => fn rotate_left(self, n: u32)
+                $Fixed => fn rotate_left(self, n: u32)
             );
             delegate!(
                 "Shifts to the right by *n* bits, wrapping the
@@ -541,7 +541,7 @@ assert_eq!(bits.rotate_right(3), rot);
 assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
 ```
 ";
-                $Fixed($Inner) => fn rotate_right(self, n: u32)
+                $Fixed => fn rotate_right(self, n: u32)
             );
 
             if_signed! {
@@ -561,7 +561,7 @@ assert_eq!(five.abs(), five);
 assert_eq!(minus_five.abs(), five);
 ```
 ";
-                    $Fixed($Inner) => fn abs(self)
+                    $Fixed => fn abs(self)
                 );
 
                 comment!(
@@ -626,7 +626,7 @@ assert!(half.is_power_of_two());
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 ";
-                    $Fixed($Inner) => fn is_power_of_two(self) -> bool
+                    $Fixed => fn is_power_of_two(self) -> bool
                 );
 
                 delegate!(
@@ -653,7 +653,7 @@ assert_eq!(three_eights.next_power_of_two(), half);
 assert_eq!(half.next_power_of_two(), half);
 ```
 ";
-                    $Fixed($Inner) => fn next_power_of_two(self)
+                    $Fixed => fn next_power_of_two(self)
                 );
 
                 comment!(
@@ -678,7 +678,7 @@ assert!(Fix::max_value().checked_next_power_of_two().is_none());
 ";
                     #[inline]
                     pub fn checked_next_power_of_two(self) -> Option<$Fixed<Frac>> {
-                        <$Inner>::checked_next_power_of_two(self.to_bits()).map(Self::from_bits)
+                        self.to_bits().checked_next_power_of_two().map(Self::from_bits)
                     }
                 );
             }
@@ -701,7 +701,7 @@ assert!(!Fix::from_num(-5).is_positive());
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 ";
-                    $Fixed($Inner) => fn is_positive(self) -> bool
+                    $Fixed => fn is_positive(self) -> bool
                 );
 
                 delegate!(
@@ -720,7 +720,7 @@ assert!(Fix::from_num(-5).is_negative());
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 ";
-                    $Fixed($Inner) => fn is_negative(self) -> bool
+                    $Fixed => fn is_negative(self) -> bool
                 );
             }
 

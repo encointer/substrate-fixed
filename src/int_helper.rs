@@ -74,22 +74,22 @@ macro_rules! sealed_int {
 
             #[inline]
             fn checked_add(self, val: $Int) -> Option<$Int> {
-                <$Int>::checked_add(self, val)
+                self.checked_add(val)
             }
 
             #[inline]
             fn checked_mul(self, val: $Int) -> Option<$Int> {
-                <$Int>::checked_mul(self, val)
+                self.checked_mul(val)
             }
 
             #[inline]
             fn overflowing_add(self, val: $Int) -> ($Int, bool) {
-                <$Int>::overflowing_add(self, val)
+                self.overflowing_add(val)
             }
 
             #[inline]
             fn leading_zeros(self) -> u32 {
-                <$Int>::leading_zeros(self)
+                self.leading_zeros()
             }
 
             #[inline]

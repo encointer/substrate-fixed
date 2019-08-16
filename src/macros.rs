@@ -74,33 +74,39 @@ macro_rules! delegate {
             }
         }
     };
-    ($($comment:expr),*; $Fixed:ident($Inner:ty) => fn $method:ident(self)) => {
+    ($($comment:expr),*; $Fixed:ident => fn $method:ident(self)) => {
         doc_comment! {
             concat!($($comment),*);
             #[inline]
             pub fn $method(self) -> $Fixed<Frac> {
-                Self::from_bits(<$Inner>::$method(self.to_bits()))
+                Self::from_bits(self.to_bits().$method())
             }
         }
     };
-    ($($comment:expr),*; $Fixed:ident($Inner:ty) => fn $method:ident(self) -> $ret_ty:ty) => {
+    ($($comment:expr),*; $Fixed:ident => fn $method:ident(self, rhs)) => {
         doc_comment! {
             concat!($($comment),*);
             #[inline]
-            pub fn $method(self) -> $ret_ty {
-                <$Inner>::$method(self.to_bits())
+            pub fn $method(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                Self::from_bits(self.to_bits().$method(rhs.to_bits()))
             }
         }
     };
-    (
-        $($comment:expr),*;
-        $Fixed:ident($Inner:ty) => fn $method:ident(self, $param:ident: $param_ty:ty)
-    ) => {
+    ($($comment:expr),*; $Fixed:ident => fn $method:ident(self) -> $Ret:ty) => {
         doc_comment! {
             concat!($($comment),*);
             #[inline]
-            pub fn $method(self, $param: $param_ty) -> $Fixed<Frac> {
-                Self::from_bits(<$Inner>::$method(self.to_bits(), $param))
+            pub fn $method(self) -> $Ret {
+                self.to_bits().$method()
+            }
+        }
+    };
+    ($($comment:expr),*; $Fixed:ident => fn $method:ident(self, $param:ident: $Param:ty)) => {
+        doc_comment! {
+            concat!($($comment),*);
+            #[inline]
+            pub fn $method(self, $param: $Param) -> $Fixed<Frac> {
+                Self::from_bits(self.to_bits().$method($param))
             }
         }
     };

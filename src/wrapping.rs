@@ -194,7 +194,7 @@ impl<F: Fixed> Wrapping<F> {
 impl<F: Fixed> Display for Wrapping<F> {
     #[inline]
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        <F as Display>::fmt(&self.0, f)
+        Display::fmt(&self.0, f)
     }
 }
 

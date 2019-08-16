@@ -1237,7 +1237,7 @@ macro_rules! impl_float {
                 match kind {
                     FloatKind::Finite { .. } => {
                         let helper = FromFloatHelper { kind };
-                        match <F as Sealed>::private_overflowing_from_float_helper(helper) {
+                        match F::private_overflowing_from_float_helper(helper) {
                             (_, true) => None,
                             (wrapped, false) => Some(wrapped),
                         }
@@ -1249,7 +1249,7 @@ macro_rules! impl_float {
             fn saturating_to_fixed<F: Fixed>(self) -> F {
                 let kind = self.to_float_kind(F::frac_nbits(), F::int_nbits());
                 let helper = FromFloatHelper { kind };
-                <F as Sealed>::private_saturating_from_float_helper(helper)
+                F::private_saturating_from_float_helper(helper)
             }
             #[inline]
             fn wrapping_to_fixed<F: Fixed>(self) -> F {
@@ -1260,7 +1260,7 @@ macro_rules! impl_float {
             fn overflowing_to_fixed<F: Fixed>(self) -> (F, bool) {
                 let kind = self.to_float_kind(F::frac_nbits(), F::int_nbits());
                 let helper = FromFloatHelper { kind };
-                <F as Sealed>::private_overflowing_from_float_helper(helper)
+                F::private_overflowing_from_float_helper(helper)
             }
         }
     };

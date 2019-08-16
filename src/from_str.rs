@@ -452,6 +452,7 @@ enum ParseErrorKind {
 }
 
 impl From<ParseErrorKind> for ParseFixedError {
+    #[inline]
     fn from(kind: ParseErrorKind) -> ParseFixedError {
         ParseFixedError { kind }
     }

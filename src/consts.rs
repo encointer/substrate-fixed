@@ -77,6 +77,13 @@ pub const FRAC_TAU_8: FixedU128<U128> = FixedU128 {
     phantom: PhantomData,
 };
 
+/// τ/12 = 0.523598…
+// FRAC_TAU_12 = 0.5235987755982988730771072305465838140328...
+pub const FRAC_TAU_12: FixedU128<U128> = FixedU128 {
+    bits: 0x860A_91C1_6B9B_2C23_2DD9_9707_AB3D_688B,
+    phantom: PhantomData,
+};
+
 /// 1/τ = 0.159154…
 // FRAC_1_TAU = 0.1591549430918953357688837633725143620344...
 pub const FRAC_1_TAU: FixedU128<U128> = FixedU128 {
@@ -243,6 +250,7 @@ mod tests {
         assert_eq!(f16::from_fixed(FRAC_TAU_4), half::consts::FRAC_PI_2);
         assert_eq!(f16::from_fixed(FRAC_TAU_6), half::consts::FRAC_PI_3);
         assert_eq!(f16::from_fixed(FRAC_TAU_8), half::consts::FRAC_PI_4);
+        assert_eq!(f16::from_fixed(FRAC_TAU_12), half::consts::FRAC_PI_6);
         assert_eq!(
             f16::from_fixed(FRAC_1_TAU),
             f16::from_f32(f32::consts::FRAC_1_PI * 0.5)
@@ -280,6 +288,7 @@ mod tests {
         assert_eq!(f32::from_fixed(FRAC_TAU_4), f32::consts::FRAC_PI_2);
         assert_eq!(f32::from_fixed(FRAC_TAU_6), f32::consts::FRAC_PI_3);
         assert_eq!(f32::from_fixed(FRAC_TAU_8), f32::consts::FRAC_PI_4);
+        assert_eq!(f32::from_fixed(FRAC_TAU_12), f32::consts::FRAC_PI_6);
         assert_eq!(f32::from_fixed(FRAC_1_TAU), f32::consts::FRAC_1_PI * 0.5);
         assert_eq!(f32::from_fixed(FRAC_2_TAU), f32::consts::FRAC_1_PI);
         assert_eq!(f32::from_fixed(FRAC_4_TAU), f32::consts::FRAC_2_PI);
@@ -311,6 +320,7 @@ mod tests {
         assert_eq!(f64::from_fixed(FRAC_TAU_4), f64::consts::FRAC_PI_2);
         assert_eq!(f64::from_fixed(FRAC_TAU_6), f64::consts::FRAC_PI_3);
         assert_eq!(f64::from_fixed(FRAC_TAU_8), f64::consts::FRAC_PI_4);
+        assert_eq!(f64::from_fixed(FRAC_TAU_12), f64::consts::FRAC_PI_6);
         assert_eq!(f64::from_fixed(FRAC_1_TAU), f64::consts::FRAC_1_PI * 0.5);
         assert_eq!(f64::from_fixed(FRAC_2_TAU), f64::consts::FRAC_1_PI);
         assert_eq!(f64::from_fixed(FRAC_4_TAU), f64::consts::FRAC_2_PI);

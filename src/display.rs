@@ -14,7 +14,8 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
-    sealed::{SealedFixed, SealedInt},
+    helpers::IntHelper,
+    traits::Fixed,
     types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
@@ -64,7 +65,7 @@ radix2! { Oct(3, "0o"), 0..=7 => b'0' }
 radix2! { LowHex(4, "0x"), 0..=9 => b'0', 10..=15 => b'a' - 10 }
 radix2! { UpHex(4, "0x"), 0..=9 => b'0', 10..=15 => b'A' - 10 }
 
-trait FmtRadix2Helper: SealedInt {
+trait FmtRadix2Helper: IntHelper {
     fn take_int_digit(&mut self, digit_bits: u32) -> u8;
     fn take_frac_digit(&mut self, digit_bits: u32) -> u8;
 }
@@ -118,7 +119,7 @@ fn fmt_radix2_helper<F: FmtRadix2Helper>(
         for r in buf[0..max_int_digits as usize].iter_mut().rev() {
             *r = int.take_int_digit(digit_bits);
             int_start -= 1;
-            if int.is_zero() {
+            if int == F::ZERO {
                 break;
             }
         }
@@ -141,13 +142,34 @@ fn fmt_radix2_helper<F: FmtRadix2Helper>(
 }
 
 #[inline]
-fn fmt_radix2<F, Bits>(num: F, radix: &dyn Radix2, fmt: &mut Formatter) -> FmtResult
+fn parts<F: Fixed>(
+    num: F,
+) -> (
+    bool,
+    <F::Bits as IntHelper>::Unsigned,
+    <F::Bits as IntHelper>::Unsigned,
+)
 where
-    F: SealedFixed<SBits = Bits>,
-    Bits: SealedInt,
-    Bits::Unsigned: FmtRadix2Helper,
+    F::Bits: IntHelper,
 {
-    fmt_radix2_helper(F::FRAC_NBITS, num.parts(), radix, fmt)
+    let (neg, abs) = num.to_bits().neg_abs();
+    let (int_nbits, frac_nbits) = (F::int_nbits(), F::frac_nbits());
+    if int_nbits == 0 {
+        (neg, IntHelper::ZERO, abs)
+    } else if frac_nbits == 0 {
+        (neg, abs, IntHelper::ZERO)
+    } else {
+        (neg, abs >> frac_nbits, abs << int_nbits)
+    }
+}
+
+#[inline]
+fn fmt_radix2<F: Fixed>(num: F, radix: &dyn Radix2, fmt: &mut Formatter) -> FmtResult
+where
+    F::Bits: IntHelper,
+    <F::Bits as IntHelper>::Unsigned: FmtRadix2Helper,
+{
+    fmt_radix2_helper(F::frac_nbits(), parts(num), radix, fmt)
 }
 
 macro_rules! impl_fmt {
@@ -265,7 +287,7 @@ impl Mul10 for u128 {
     }
 }
 
-trait FmtDecHelper: SealedInt {
+trait FmtDecHelper: IntHelper {
     fn take_int_digit(&mut self) -> u8;
     fn take_frac_digit(&mut self) -> u8;
 }
@@ -330,7 +352,7 @@ fn fmt_dec_helper<F: FmtDecHelper>(
         for r in buf[1..int_start as usize].iter_mut().rev() {
             *r = b'0' + int.take_int_digit();
             int_start -= 1;
-            if int.is_zero() {
+            if int == F::ZERO {
                 break;
             }
         }
@@ -344,7 +366,7 @@ fn fmt_dec_helper<F: FmtDecHelper>(
             *r = b'0' + frac.take_frac_digit();
         }
         // check for rounding up
-        let round_up = match frac.traits().cmp(&F::MSB.traits()) {
+        let round_up = match frac.cmp(&F::MSB) {
             Ordering::Less => false,
             Ordering::Greater => true,
             Ordering::Equal => {
@@ -376,13 +398,12 @@ fn fmt_dec_helper<F: FmtDecHelper>(
 }
 
 #[inline]
-fn fmt_dec<F, Bits>(num: F, fmt: &mut Formatter) -> FmtResult
+fn fmt_dec<F: Fixed>(num: F, fmt: &mut Formatter) -> FmtResult
 where
-    F: SealedFixed<SBits = Bits>,
-    Bits: SealedInt,
-    Bits::Unsigned: FmtDecHelper,
+    F::Bits: IntHelper,
+    <F::Bits as IntHelper>::Unsigned: FmtDecHelper,
 {
-    fmt_dec_helper(F::FRAC_NBITS, num.parts(), fmt)
+    fmt_dec_helper(F::frac_nbits(), parts(num), fmt)
 }
 
 #[cfg(test)]

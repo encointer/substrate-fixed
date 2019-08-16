@@ -39,7 +39,7 @@ type Fix = fixed::",
             $s_fixed,
             "<fixed::frac::U4>;
 // 0010.0000
-let two = Fix::from_int(2);
+let two = Fix::from_num(2);
 // 0010.0100
 let two_and_quarter = two + two / 8;
 assert_eq!(two_and_quarter.int(), two);
@@ -47,7 +47,7 @@ assert_eq!(two_and_quarter.int(), two);
             if_signed_else_empty_str!(
                 $Signedness,
                 "// 1101.0000
-let three = Fix::from_int(3);
+let three = Fix::from_num(3);
 // 1101.1100
 assert_eq!((-two_and_quarter).int(), -three);
 ",
@@ -56,8 +56,7 @@ assert_eq!((-two_and_quarter).int(), -three);
 ";
             #[inline]
             pub fn int(self) -> $Fixed<Frac> {
-                let mask = Self::INT_MASK as <Self as SealedFixed>::SBits;
-                Self::from_bits(self.to_bits() & mask)
+                Self::from_bits(self.to_bits() & Self::INT_MASK)
             }
         );
 
@@ -85,7 +84,7 @@ type Fix = fixed::",
             $s_fixed,
             "<fixed::frac::U4>;
 // 0000.0100
-let quarter = Fix::from_int(1) / 4;
+let quarter = Fix::from_num(1) / 4;
 // 0010.0100
 let two_and_quarter = quarter * 9;
 assert_eq!(two_and_quarter.frac(), quarter);
@@ -102,8 +101,7 @@ assert_eq!((-two_and_quarter).frac(), three_quarters);
 ";
             #[inline]
             pub fn frac(self) -> $Fixed<Frac> {
-                let mask = Self::FRAC_MASK as <Self as SealedFixed>::SBits;
-                Self::from_bits(self.to_bits() & mask)
+                Self::from_bits(self.to_bits() & Self::FRAC_MASK)
             }
         );
 
@@ -123,12 +121,12 @@ it panics; if wrapping is required use [`wrapping_ceil`] instead.
 type Fix = fixed::",
             $s_fixed,
             "<fixed::frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.ceil(), Fix::from_int(3));
+let two_half = Fix::from_num(5) / 2;
+assert_eq!(two_half.ceil(), Fix::from_num(3));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
-                "assert_eq!((-two_half).ceil(), Fix::from_int(-2));
+                "assert_eq!((-two_half).ceil(), Fix::from_num(-2));
 ",
             ),
             "```
@@ -167,12 +165,12 @@ Overflow can only occur when there are zero integer bits.
 type Fix = fixed::",
             $s_fixed,
             "<fixed::frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.floor(), Fix::from_int(2));
+let two_half = Fix::from_num(5) / 2;
+assert_eq!(two_half.floor(), Fix::from_num(2));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
-                "assert_eq!((-two_half).floor(), Fix::from_int(-3));
+                "assert_eq!((-two_half).floor(), Fix::from_num(-3));
 ",
             ),
             "```
@@ -205,12 +203,12 @@ it panics; if wrapping is required use [`wrapping_round`] instead.
 type Fix = fixed::",
             $s_fixed,
             r"<fixed::frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.round(), Fix::from_int(3));
+let two_half = Fix::from_num(5) / 2;
+assert_eq!(two_half.round(), Fix::from_num(3));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
-                "assert_eq!((-two_half).round(), Fix::from_int(-3));
+                "assert_eq!((-two_half).round(), Fix::from_num(-3));
 ",
             ),
             "```
@@ -236,12 +234,12 @@ returning [`None`] on overflow.
 type Fix = fixed::",
             $s_fixed,
             "<fixed::frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.checked_ceil(), Some(Fix::from_int(3)));
+let two_half = Fix::from_num(5) / 2;
+assert_eq!(two_half.checked_ceil(), Some(Fix::from_num(3)));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
-                "assert_eq!((-two_half).checked_ceil(), Some(Fix::from_int(-2)));
+                "assert_eq!((-two_half).checked_ceil(), Some(Fix::from_num(-2)));
 ",
             ),
             "assert!(Fix::max_value().checked_ceil().is_none());
@@ -273,12 +271,12 @@ Overflow can only occur when there are zero integer bits.",
 type Fix = fixed::",
             $s_fixed,
             "<fixed::frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.checked_floor(), Some(Fix::from_int(2)));
+let two_half = Fix::from_num(5) / 2;
+assert_eq!(two_half.checked_floor(), Some(Fix::from_num(2)));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
-                "assert_eq!((-two_half).checked_floor(), Some(Fix::from_int(-3)));
+                "assert_eq!((-two_half).checked_floor(), Some(Fix::from_num(-3)));
 type AllFrac = fixed::",
                 $s_fixed,
                 "<fixed::frac::U",
@@ -315,12 +313,12 @@ rounded away from zero, returning [`None`] on overflow.
 type Fix = fixed::",
             $s_fixed,
             "<fixed::frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.checked_round(), Some(Fix::from_int(3)));
+let two_half = Fix::from_num(5) / 2;
+assert_eq!(two_half.checked_round(), Some(Fix::from_num(3)));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
-                "assert_eq!((-two_half).checked_round(), Some(Fix::from_int(-3)));
+                "assert_eq!((-two_half).checked_round(), Some(Fix::from_num(-3)));
 ",
             ),
             "assert!(Fix::max_value().checked_round().is_none());
@@ -345,12 +343,12 @@ saturating on overflow.
 type Fix = fixed::",
             $s_fixed,
             "<fixed::frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.saturating_ceil(), Fix::from_int(3));
+let two_half = Fix::from_num(5) / 2;
+assert_eq!(two_half.saturating_ceil(), Fix::from_num(3));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
-                "assert_eq!((-two_half).saturating_ceil(), Fix::from_int(-2));
+                "assert_eq!((-two_half).saturating_ceil(), Fix::from_num(-2));
 ",
             ),
             "assert_eq!(Fix::max_value().saturating_ceil(), Fix::max_value());
@@ -380,12 +378,12 @@ Overflow can only occur when there are zero integer bits.",
 type Fix = fixed::",
             $s_fixed,
             "<fixed::frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.saturating_floor(), Fix::from_int(2));
+let two_half = Fix::from_num(5) / 2;
+assert_eq!(two_half.saturating_floor(), Fix::from_num(2));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
-                "assert_eq!((-two_half).saturating_floor(), Fix::from_int(-3));
+                "assert_eq!((-two_half).saturating_floor(), Fix::from_num(-3));
 type AllFrac = fixed::",
                 $s_fixed,
                 "<fixed::frac::U",
@@ -413,12 +411,12 @@ ties rounded away from zero, and saturating on overflow.
 type Fix = fixed::",
             $s_fixed,
             "<fixed::frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.saturating_round(), Fix::from_int(3));
+let two_half = Fix::from_num(5) / 2;
+assert_eq!(two_half.saturating_round(), Fix::from_num(3));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
-                "assert_eq!((-two_half).saturating_round(), Fix::from_int(-3));
+                "assert_eq!((-two_half).saturating_round(), Fix::from_num(-3));
 ",
             ),
             "assert_eq!(Fix::max_value().saturating_round(), Fix::max_value());
@@ -446,12 +444,12 @@ wrapping on overflow.
 type Fix = fixed::",
             $s_fixed,
             "<fixed::frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.wrapping_ceil(), Fix::from_int(3));
+let two_half = Fix::from_num(5) / 2;
+assert_eq!(two_half.wrapping_ceil(), Fix::from_num(3));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
-                "assert_eq!((-two_half).wrapping_ceil(), Fix::from_int(-2));
+                "assert_eq!((-two_half).wrapping_ceil(), Fix::from_num(-2));
 ",
             ),
             "assert_eq!(Fix::max_value().wrapping_ceil(), Fix::min_value());
@@ -480,18 +478,18 @@ Overflow can only occur when there are zero integer bits.",
 type Fix = fixed::",
             $s_fixed,
             "<fixed::frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.wrapping_floor(), Fix::from_int(2));
+let two_half = Fix::from_num(5) / 2;
+assert_eq!(two_half.wrapping_floor(), Fix::from_num(2));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
-                "assert_eq!((-two_half).wrapping_floor(), Fix::from_int(-3));
+                "assert_eq!((-two_half).wrapping_floor(), Fix::from_num(-3));
 type AllFrac = fixed::",
                 $s_fixed,
                 "<fixed::frac::U",
                 $s_nbits,
                 ">;
-assert_eq!(AllFrac::min_value().wrapping_floor(), AllFrac::from_int(0));
+assert_eq!(AllFrac::min_value().wrapping_floor(), AllFrac::from_num(0));
 ",
             ),
             "```
@@ -512,12 +510,12 @@ nearest, with ties rounded away from zero, and wrapping on overflow.
 type Fix = fixed::",
             $s_fixed,
             "<fixed::frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.wrapping_round(), Fix::from_int(3));
+let two_half = Fix::from_num(5) / 2;
+assert_eq!(two_half.wrapping_round(), Fix::from_num(3));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
-                "assert_eq!((-two_half).wrapping_round(), Fix::from_int(-3));
+                "assert_eq!((-two_half).wrapping_round(), Fix::from_num(-3));
 ",
             ),
             "assert_eq!(Fix::max_value().wrapping_round(), Fix::min_value());
@@ -542,12 +540,12 @@ returned.
 type Fix = fixed::",
             $s_fixed,
             "<fixed::frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.overflowing_ceil(), (Fix::from_int(3), false));
+let two_half = Fix::from_num(5) / 2;
+assert_eq!(two_half.overflowing_ceil(), (Fix::from_num(3), false));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
-                "assert_eq!((-two_half).overflowing_ceil(), (Fix::from_int(-2), false));
+                "assert_eq!((-two_half).overflowing_ceil(), (Fix::from_num(-2), false));
 "
             ),
             "assert_eq!(Fix::max_value().overflowing_ceil(), (Fix::min_value(), true));
@@ -565,8 +563,7 @@ assert_eq!(two_half.overflowing_ceil(), (Fix::from_int(3), false));
                 if Self::INT_NBITS == 0 {
                     return (int, self.to_bits() > 0);
                 }
-                let int_lsb = Self::INT_LSB as <Self as SealedFixed>::SBits;
-                let increment = Self::from_bits(int_lsb);
+                let increment = Self::from_bits(Self::INT_LSB);
                 if_signed! {
                     $Signedness;
                     if Self::INT_NBITS == 1 {
@@ -597,18 +594,18 @@ occur when there are zero integer bits.",
 type Fix = fixed::",
             $s_fixed,
             "<fixed::frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.overflowing_floor(), (Fix::from_int(2), false));
+let two_half = Fix::from_num(5) / 2;
+assert_eq!(two_half.overflowing_floor(), (Fix::from_num(2), false));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
-                "assert_eq!((-two_half).overflowing_floor(), (Fix::from_int(-3), false));
+                "assert_eq!((-two_half).overflowing_floor(), (Fix::from_num(-3), false));
 type AllFrac = fixed::",
                 $s_fixed,
                 "<fixed::frac::U",
                 $s_nbits,
                 ">;
-assert_eq!(AllFrac::min_value().overflowing_floor(), (AllFrac::from_int(0), true));
+assert_eq!(AllFrac::min_value().overflowing_floor(), (AllFrac::from_num(0), true));
 ",
             ),
             "```
@@ -643,12 +640,12 @@ returned.
 type Fix = fixed::",
             $s_fixed,
             "<fixed::frac::U4>;
-let two_half = Fix::from_int(5) / 2;
-assert_eq!(two_half.overflowing_round(), (Fix::from_int(3), false));
+let two_half = Fix::from_num(5) / 2;
+assert_eq!(two_half.overflowing_round(), (Fix::from_num(3), false));
 ",
             if_signed_else_empty_str!(
                 $Signedness,
-                "assert_eq!((-two_half).overflowing_round(), (Fix::from_int(-3), false));
+                "assert_eq!((-two_half).overflowing_round(), (Fix::from_num(-3), false));
 ",
             ),
             "assert_eq!(Fix::max_value().overflowing_round(), (Fix::min_value(), true));
@@ -660,15 +657,13 @@ assert_eq!(two_half.overflowing_round(), (Fix::from_int(3), false));
             #[inline]
             pub fn overflowing_round(self) -> ($Fixed<Frac>, bool) {
                 let int = self.int();
-                let frac_msb = Self::FRAC_MSB as <Self as SealedFixed>::SBits;
-                if (self.to_bits() & frac_msb) == 0 {
+                if (self.to_bits() & Self::FRAC_MSB) == 0 {
                     return (int, false);
                 }
-                let int_lsb = Self::INT_LSB as <Self as SealedFixed>::SBits;
-                let increment = Self::from_bits(int_lsb);
+                let increment = Self::from_bits(Self::INT_LSB);
                 if_signed! {
                     $Signedness;
-                    let tie = self.frac().to_bits() == frac_msb;
+                    let tie = self.frac().to_bits() == Self::FRAC_MSB;
                     if Self::INT_NBITS == 0 {
                         // if num is .100...00 = -0.5, we have overflow
                         // otherwise .100...01, 0 < x < -0.5,  no overflow

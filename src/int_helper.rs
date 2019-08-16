@@ -15,79 +15,33 @@
 
 use crate::{
     frac::{Bit, False, True, Unsigned, U0, U128, U16, U32, U64, U8},
-    sealed::{Fixed, SealedFixed, ToFixedHelper, Widest},
+    sealed::{ToFixedHelper, Widest},
+    traits::Fixed,
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
 use core::{
     cmp::Ordering,
     fmt::{Debug, Display},
+    ops::{BitAnd, BitOr, Not, Shl, Shr},
 };
 
-pub trait SealedInt: Copy {
+pub trait IntHelper
+where
+    Self: Copy + Ord + Debug + Display,
+    Self: Shl<u32, Output = Self> + Shr<u32, Output = Self>,
+    Self: Not<Output = Self> + BitAnd<Output = Self> + BitOr<Output = Self>,
+{
     type NBits: Unsigned;
     type IsSigned: Bit;
-    type Unsigned: SealedInt;
+    type Unsigned: IntHelper;
     type ReprFixed: Fixed;
-    type Traits: Copy + Ord + Debug + Display;
 
     const NBITS: u32 = Self::NBits::U32;
     const IS_SIGNED: bool = Self::IsSigned::BOOL;
     const MSB: Self;
     const ZERO: Self;
 
-    fn traits(self) -> Self::Traits;
-
-    #[inline]
-    fn from_fixed<F: Fixed>(val: F) -> Self {
-        let (wrapped, overflow) = Self::overflowing_from_fixed(val);
-        debug_assert!(!overflow, "{} overflows", val.traits());
-        let _ = overflow;
-        wrapped
-    }
-    #[inline]
-    fn checked_from_fixed<F: Fixed>(val: F) -> Option<Self> {
-        match Self::overflowing_from_fixed(val) {
-            (_, true) => None,
-            (wrapped, false) => Some(wrapped),
-        }
-    }
-    fn saturating_from_fixed<F: Fixed>(val: F) -> Self;
-    #[inline]
-    fn wrapping_from_fixed<F: Fixed>(val: F) -> Self {
-        let (wrapped, _) = Self::overflowing_from_fixed(val);
-        wrapped
-    }
-    fn overflowing_from_fixed<F: Fixed>(val: F) -> (Self, bool);
-
-    #[inline]
-    fn to_fixed<F: Fixed>(self) -> F {
-        let (wrapped, overflow) = Self::overflowing_to_fixed(self);
-        debug_assert!(!overflow, "{} overflows", self.traits());
-        let _ = overflow;
-        wrapped
-    }
-    #[inline]
-    fn checked_to_fixed<F: Fixed>(self) -> Option<F> {
-        match Self::overflowing_to_fixed(self) {
-            (_, true) => None,
-            (wrapped, false) => Some(wrapped),
-        }
-    }
-    fn saturating_to_fixed<F: Fixed>(self) -> F;
-    #[inline]
-    fn wrapping_to_fixed<F: Fixed>(self) -> F {
-        let (wrapped, _) = Self::overflowing_to_fixed(self);
-        wrapped
-    }
-    fn overflowing_to_fixed<F: Fixed>(self) -> (F, bool);
-
-    fn min_value() -> Self;
-    fn max_value() -> Self;
-
-    fn one_shl(shift: u32) -> Self;
-    fn all_ones_shl(shift: u32) -> Self;
-    fn is_zero(self) -> bool;
     fn is_negative(self) -> bool;
     fn checked_add(self, val: Self) -> Option<Self>;
     fn checked_mul(self, val: Self) -> Option<Self>;
@@ -102,6 +56,7 @@ pub trait SealedInt: Copy {
     ) -> ToFixedHelper;
 
     fn to_repr_fixed(self) -> Self::ReprFixed;
+    fn from_repr_fixed(src: Self::ReprFixed) -> Self;
 
     fn neg_abs(self) -> (bool, Self::Unsigned);
     fn from_neg_abs(neg: bool, abs: Self::Unsigned) -> Self;
@@ -109,65 +64,14 @@ pub trait SealedInt: Copy {
 
 macro_rules! sealed_int {
     ($Int:ident($NBits:ident, $IsSigned:ident, $Unsigned:ty, $ReprFixed:ident); $($rest:tt)*) => {
-        impl SealedInt for $Int {
+        impl IntHelper for $Int {
             type NBits = $NBits;
             type IsSigned = $IsSigned;
             type Unsigned = $Unsigned;
             type ReprFixed = $ReprFixed<U0>;
-            type Traits = $Int;
 
             const MSB: $Int = 1 << (Self::NBITS - 1);
             const ZERO: $Int = 0;
-
-            #[inline]
-            fn traits(self) -> Self::Traits {
-                self
-            }
-
-            #[inline]
-            fn min_value() -> $Int {
-                $Int::min_value()
-            }
-
-            #[inline]
-            fn max_value() -> $Int {
-                $Int::max_value()
-            }
-
-            #[inline]
-            fn saturating_from_fixed<F: Fixed>(val: F) -> Self {
-                let saturated = Self::ReprFixed::saturating_from_fixed(val);
-                IntRepr::from_int_repr(saturated.to_bits())
-            }
-            #[inline]
-            fn overflowing_from_fixed<F: Fixed>(val: F) -> (Self, bool) {
-                let (wrapped, overflow) = Self::ReprFixed::overflowing_from_fixed(val);
-                (IntRepr::from_int_repr(wrapped.to_bits()), overflow)
-            }
-
-            #[inline]
-            fn saturating_to_fixed<F: Fixed>(self) -> F {
-                SealedFixed::saturating_from_fixed(self.to_repr_fixed())
-            }
-            #[inline]
-            fn overflowing_to_fixed<F: Fixed>(self) -> (F, bool) {
-                SealedFixed::overflowing_from_fixed(self.to_repr_fixed())
-            }
-
-            #[inline]
-            fn one_shl(shift: u32) -> $Int {
-                1 << shift
-            }
-
-            #[inline]
-            fn all_ones_shl(shift: u32) -> $Int {
-                !0 << shift
-            }
-
-            #[inline]
-            fn is_zero(self) -> bool {
-                self == 0
-            }
 
             #[inline]
             fn checked_add(self, val: $Int) -> Option<$Int> {
@@ -192,6 +96,11 @@ macro_rules! sealed_int {
             #[inline]
             fn to_repr_fixed(self) -> Self::ReprFixed {
                 Self::ReprFixed::from_bits(self.int_repr())
+            }
+
+            #[inline]
+            fn from_repr_fixed(src: Self::ReprFixed) -> Self {
+                IntRepr::from_int_repr(src.to_bits())
             }
 
             $($rest)*

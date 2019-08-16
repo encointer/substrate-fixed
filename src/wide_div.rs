@@ -13,7 +13,7 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-use crate::sealed::SealedInt;
+use crate::helpers::IntHelper;
 
 trait DivHalf: Copy {
     fn hi(self) -> Self;
@@ -171,7 +171,7 @@ macro_rules! signed_wide_div_rem {
                 let (q, r) = d_abs.div_rem_from(n_abs);
                 (
                     NegAbsHiLo::from_neg_abs(n_neg != d_neg, q),
-                    SealedInt::from_neg_abs(n_neg, r),
+                    IntHelper::from_neg_abs(n_neg, r),
                 )
             }
             #[inline]

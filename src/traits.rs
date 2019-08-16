@@ -18,7 +18,8 @@ This module contains traits.
 */
 
 use crate::{
-    sealed::{self, Float, Int, SealedFixed, SealedFloat, SealedInt},
+    helpers::{FloatHelper, IntHelper},
+    sealed::{FloatKind, FromFloatHelper, Sealed, Widest},
     types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8, ParseFixedError,
@@ -92,6 +93,11 @@ depending on the crate’s [optional features].
 /// It can be helpful when writing generic code that makes use of
 /// fixed-point numbers.
 ///
+/// This trait is sealed and cannot be implemented for more types; it
+/// is implemented for [`FixedI8`], [`FixedI16`], [`FixedI32`],
+/// [`FixedI64`], [`FixedI128`], [`FixedU8`], [`FixedU16`],
+/// [`FixedU32`], [`FixedU64`], and [`FixedU128`].
+///
 /// # Examples
 ///
 /// ```rust
@@ -104,11 +110,11 @@ depending on the crate’s [optional features].
 ///     lhs.checked_add(rhs)?.checked_add(rhs)
 /// }
 ///
-/// let val1 = checked_add_twice(I8F8::from_int(5), Fixed::from_float(1.75));
-/// assert_eq!(val1, Some(Fixed::from_float(8.5)));
+/// let val1 = checked_add_twice(I8F8::from_num(5), Fixed::from_num(1.75));
+/// assert_eq!(val1, Some(Fixed::from_num(8.5)));
 /// // can use with different fixed-point type
-/// let val2 = checked_add_twice(I16F16::from_int(5), Fixed::from_float(1.75));
-/// assert_eq!(val2, Some(Fixed::from_float(8.5)));
+/// let val2 = checked_add_twice(I16F16::from_num(5), Fixed::from_num(1.75));
+/// assert_eq!(val2, Some(Fixed::from_num(8.5)));
 /// ```
 ///
 /// The following example fails to compile, since the compiler cannot
@@ -135,8 +141,8 @@ depending on the crate’s [optional features].
 ///     rhs.checked_mul_int(F::Bits::from(500))?.checked_add(lhs)
 /// }
 ///
-/// let val = checked_add_times_500(U12F4::from_float(0.25), Fixed::from_float(1.5));
-/// assert_eq!(val, Some(Fixed::from_float(750.25)));
+/// let val = checked_add_times_500(U12F4::from_num(0.25), Fixed::from_num(1.5));
+/// assert_eq!(val, Some(Fixed::from_num(750.25)));
 /// ```
 ///
 /// While this works in most cases, [`u16`] cannot be converted to
@@ -154,7 +160,7 @@ depending on the crate’s [optional features].
 /// }
 ///
 /// // I12F4::Bits is i16, which does not implement From<u16>
-/// let val = checked_add_times_500(I12F4::from_float(0.25), Fixed::from_float(1.5));
+/// let val = checked_add_times_500(I12F4::from_num(0.25), Fixed::from_num(1.5));
 /// # let _ = val;
 /// ```
 ///
@@ -176,11 +182,21 @@ depending on the crate’s [optional features].
 ///     rhs.checked_mul_int(m)?.checked_add(lhs)
 /// }
 ///
-/// let val = checked_add_times_500(I12F4::from_float(0.25), Fixed::from_float(1.5));
-/// assert_eq!(val, Some(Fixed::from_float(750.25)));
+/// let val = checked_add_times_500(I12F4::from_num(0.25), Fixed::from_num(1.5));
+/// assert_eq!(val, Some(Fixed::from_num(750.25)));
 /// # }
 /// ```
 ///
+/// [`FixedI128`]: ../struct.FixedI128.html
+/// [`FixedI16`]: ../struct.FixedI16.html
+/// [`FixedI32`]: ../struct.FixedI32.html
+/// [`FixedI64`]: ../struct.FixedI64.html
+/// [`FixedI8`]: ../struct.FixedI8.html
+/// [`FixedU128`]: ../struct.FixedU128.html
+/// [`FixedU16`]: ../struct.FixedU16.html
+/// [`FixedU32`]: ../struct.FixedU32.html
+/// [`FixedU64`]: ../struct.FixedU64.html
+/// [`FixedU8`]: ../struct.FixedU8.html
 /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
 /// [`TryFrom`]: https://doc.rust-lang.org/nightly/std/convert/trait.TryFrom.html
 /// [`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
@@ -191,7 +207,7 @@ pub trait Fixed
 where
     Self: Copy + Default + Hash + Ord,
     Self: Debug + Display + Binary + Octal + LowerHex + UpperHex + FromStr,
-    Self: FromFixed + ToFixed + sealed::Fixed + FixedOptionalFeatures,
+    Self: FromFixed + ToFixed + FixedOptionalFeatures,
     Self: Add<Output = Self> + AddAssign + Sub<Output = Self> + SubAssign,
     Self: Mul<Output = Self> + MulAssign + Div<Output = Self> + DivAssign,
     Self: Mul<<Self as Fixed>::Bits, Output = Self> + MulAssign<<Self as Fixed>::Bits>,
@@ -205,6 +221,7 @@ where
     Self: PartialOrd<u8> + PartialOrd<u16> + PartialOrd<u32>,
     Self: PartialOrd<u64> + PartialOrd<u128> + PartialOrd<usize>,
     Self: PartialOrd<f32> + PartialOrd<f64>,
+    Self: Sealed,
 {
     /// The primitive integer underlying type.
     type Bits;
@@ -229,126 +246,83 @@ where
     /// to the given fixed-point number.
     fn to_bits(self) -> Self::Bits;
 
-    /// Creates a fixed-point number from an integer.
+    /// Creates a fixed-point number from another number.
     ///
-    /// Returns the same value as [`val.to_fixed()`][`to_fixed`].
-    ///
-    /// [`to_fixed`]: trait.ToFixed.html#tymethod.to_fixed
-    fn from_int<I: Int>(val: I) -> Self;
-
-    /// Converts a fixed-point number to an integer.
-    ///
-    /// Returns the same value as [`I::from_fixed(self)`][`from_fixed`].
-    ///
-    /// [`from_fixed`]: trait.FromFixed.html#tymethod.from_fixed
-    fn to_int<I: Int>(self) -> I;
-
-    /// Creates a fixed-point number from a floating-point number.
-    ///
-    /// Returns the same value as [`val.to_fixed()`][`to_fixed`].
+    /// Returns the same value as [`src.to_fixed()`][`to_fixed`].
     ///
     /// [`to_fixed`]: trait.ToFixed.html#tymethod.to_fixed
-    fn from_float<F: Float>(val: F) -> Self;
+    fn from_num<Src: ToFixed>(src: Src) -> Self;
 
-    /// Converts a fixed-point number to a floating-point number.
+    /// Converts a fixed-point number to another number.
     ///
-    /// Returns the same value as [`F::from_fixed(self)`][`from_fixed`].
+    /// Returns the same value as [`Dst::from_fixed(self)`][`from_fixed`].
     ///
     /// [`from_fixed`]: trait.FromFixed.html#tymethod.from_fixed
-    fn to_float<F: Float>(self) -> F;
+    fn to_num<Dst: FromFixed>(self) -> Dst;
 
-    /// Creates a fixed-point number from an integer if it fits,
+    /// Creates a fixed-point number from another number if it fits,
     /// otherwise returns [`None`].
     ///
-    /// Returns the same value as [`val.checked_to_fixed()`][`checked_to_fixed`].
+    /// Returns the same value as [`src.checked_to_fixed()`][`checked_to_fixed`].
     ///
+    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
     /// [`checked_to_fixed`]: trait.ToFixed.html#tymethod.checked_to_fixed
-    fn checked_from_int<I: Int>(val: I) -> Option<Self>;
+    fn checked_from_num<Src: ToFixed>(src: Src) -> Option<Self>;
 
-    /// Converts a fixed-point number to an integer if it fits,
+    /// Converts a fixed-point number to another number if it fits,
     /// otherwise returns [`None`].
     ///
-    /// Returns the same value as [`I::checked_from_fixed(self)`][`checked_from_fixed`].
+    /// Returns the same value as [`Dst::checked_from_fixed(self)`][`checked_from_fixed`].
     ///
+    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
     /// [`checked_from_fixed`]: trait.FromFixed.html#tymethod.checked_from_fixed
-    fn checked_to_int<I: Int>(self) -> Option<I>;
+    fn checked_to_num<Dst: FromFixed>(self) -> Option<Dst>;
 
-    /// Creates a fixed-point number from a floating-point number if
-    /// it fits, otherwise returns [`None`].
-    ///
-    /// Returns the same value as [`val.checked_to_fixed()`][`checked_to_fixed`].
-    ///
-    /// [`checked_to_fixed`]: trait.ToFixed.html#tymethod.checked_to_fixed
-    fn checked_from_float<F: Float>(val: F) -> Option<Self>;
-
-    /// Creates a fixed-point number from an integer, saturating the
+    /// Creates a fixed-point number from another number, saturating the
     /// value if it does not fit.
     ///
-    /// Returns the same value as [`val.saturating_to_fixed()`][`saturating_to_fixed`].
+    /// Returns the same value as [`src.saturating_to_fixed()`][`saturating_to_fixed`].
     ///
     /// [`saturating_to_fixed`]: trait.ToFixed.html#tymethod.saturating_to_fixed
-    fn saturating_from_int<I: Int>(val: I) -> Self;
+    fn saturating_from_num<Src: ToFixed>(src: Src) -> Self;
 
-    /// Converts a fixed-point number to an integer, saturating the
+    /// Converts a fixed-point number to another number, saturating the
     /// value if it does not fit.
     ///
-    /// Returns the same value as [`I::saturating_from_fixed(self)`][`saturating_from_fixed`].
+    /// Returns the same value as [`Dst::saturating_from_fixed(self)`][`saturating_from_fixed`].
     ///
     /// [`saturating_from_fixed`]: trait.FromFixed.html#tymethod.saturating_from_fixed
-    fn saturating_to_int<I: Int>(self) -> I;
+    fn saturating_to_num<Dst: FromFixed>(self) -> Dst;
 
-    /// Creates a fixed-point number from a floating-point number,
-    /// saturating the value if it does not fit.
-    ///
-    /// Returns the same value as [`val.saturating_to_fixed()`][`saturating_to_fixed`].
-    ///
-    /// [`saturating_to_fixed`]: trait.ToFixed.html#tymethod.saturating_to_fixed
-    fn saturating_from_float<F: Float>(val: F) -> Self;
-
-    /// Creates a fixed-point number from an integer, wrapping the
+    /// Creates a fixed-point number from another number, wrapping the
     /// value on overflow.
     ///
-    /// Returns the same value as [`val.wrapping_to_fixed()`][`wrapping_to_fixed`].
+    /// Returns the same value as [`src.wrapping_to_fixed()`][`wrapping_to_fixed`].
     ///
     /// [`wrapping_to_fixed`]: trait.ToFixed.html#tymethod.wrapping_to_fixed
-    fn wrapping_from_int<I: Int>(val: I) -> Self;
+    fn wrapping_from_num<Src: ToFixed>(src: Src) -> Self;
 
-    /// Converts a fixed-point number to an integer, wrapping the
+    /// Converts a fixed-point number to another number, wrapping the
     /// value on overflow.
     ///
-    /// Returns the same value as [`I::wrapping_from_fixed(self)`][`wrapping_from_fixed`].
+    /// Returns the same value as [`Src::wrapping_from_fixed(self)`][`wrapping_from_fixed`].
     ///
     /// [`wrapping_from_fixed`]: trait.FromFixed.html#tymethod.wrapping_from_fixed
-    fn wrapping_to_int<I: Int>(self) -> I;
+    fn wrapping_to_num<Dst: FromFixed>(self) -> Dst;
 
-    /// Creates a fixed-point number from a floating-point number,
-    /// wrapping the value on overflow.
+    /// Creates a fixed-point number from another number.
     ///
-    /// Returns the same value as [`val.wrapping_to_fixed()`][`wrapping_to_fixed`].
-    ///
-    /// [`wrapping_to_fixed`]: trait.ToFixed.html#tymethod.wrapping_to_fixed
-    fn wrapping_from_float<F: Float>(val: F) -> Self;
-
-    /// Creates a fixed-point number from an integer.
-    ///
-    /// Returns the same value as [`val.overflowing_to_fixed()`][`overflowing_to_fixed`].
+    /// Returns the same value as [`src.overflowing_to_fixed()`][`overflowing_to_fixed`].
     ///
     /// [`overflowing_to_fixed`]: trait.ToFixed.html#tymethod.overflowing_to_fixed
-    fn overflowing_from_int<I: Int>(val: I) -> (Self, bool);
+    fn overflowing_from_num<Src: ToFixed>(src: Src) -> (Self, bool);
 
-    /// Converts a fixed-point number to an integer.
+    /// Converts a fixed-point number to another number.
     ///
-    /// Returns the same value as [`I::overflowing_from_fixed(self)`][`overflowing_from_fixed`].
+    /// Returns the same value as [`Dst::overflowing_from_fixed(self)`][`overflowing_from_fixed`].
     ///
     /// [`overflowing_from_fixed`]: trait.FromFixed.html#tymethod.overflowing_from_fixed
-    fn overflowing_to_int<I: Int>(self) -> (I, bool);
-
-    /// Creates a fixed-point number from a floating-point number.
-    ///
-    /// Returns the same value as [`val.overflowing_to_fixed()`][`overflowing_to_fixed`].
-    ///
-    /// [`overflowing_to_fixed`]: trait.ToFixed.html#tymethod.overflowing_to_fixed
-    fn overflowing_from_float<F: Float>(val: F) -> (Self, bool);
+    fn overflowing_to_num<Dst: FromFixed>(self) -> (Dst, bool);
 
     /// Converts a string slice containing binary digits to a fixed-point number.
     fn from_str_binary(src: &str) -> Result<Self, ParseFixedError>;
@@ -727,6 +701,118 @@ where
     fn rem_int(self, rhs: Self::Bits) -> Self {
         self % rhs
     }
+
+    /// Creates a fixed-point number from another number.
+    #[deprecated(since = "0.4.2", note = "replaced by from_num")]
+    #[inline]
+    fn from_int<Src: ToFixed>(src: Src) -> Self {
+        src.to_fixed()
+    }
+
+    /// Converts a fixed-point number to another number.
+    #[deprecated(since = "0.4.2", note = "replaced by from_num")]
+    #[inline]
+    fn to_int<Dst: FromFixed>(self) -> Dst {
+        Dst::from_fixed(self)
+    }
+
+    /// Creates a fixed-point number from another number.
+    #[deprecated(since = "0.4.2", note = "replaced by from_num")]
+    #[inline]
+    fn from_float<Src: ToFixed>(src: Src) -> Self {
+        src.to_fixed()
+    }
+
+    /// Converts a fixed-point number to another number.
+    #[deprecated(since = "0.4.2", note = "replaced by from_num")]
+    #[inline]
+    fn to_float<Dst: FromFixed>(self) -> Dst {
+        Dst::from_fixed(self)
+    }
+
+    /// Creates a fixed-point number from another number.
+    #[deprecated(since = "0.4.2", note = "replaced by checked_from_num")]
+    #[inline]
+    fn checked_from_int<Src: ToFixed>(src: Src) -> Option<Self> {
+        src.checked_to_fixed()
+    }
+
+    /// Converts a fixed-point number to another number.
+    #[deprecated(since = "0.4.2", note = "replaced by checked_from_num")]
+    #[inline]
+    fn checked_to_int<Dst: FromFixed>(self) -> Option<Dst> {
+        Dst::checked_from_fixed(self)
+    }
+
+    /// Creates a fixed-point number from another number.
+    #[deprecated(since = "0.4.2", note = "replaced by checked_from_num")]
+    #[inline]
+    fn checked_from_float<Src: ToFixed>(src: Src) -> Option<Self> {
+        src.checked_to_fixed()
+    }
+
+    /// Creates a fixed-point number from another number.
+    #[deprecated(since = "0.4.2", note = "replaced by saturating_from_num")]
+    #[inline]
+    fn saturating_from_int<Src: ToFixed>(src: Src) -> Self {
+        src.saturating_to_fixed()
+    }
+
+    /// Converts a fixed-point number to another number.
+    #[deprecated(since = "0.4.2", note = "replaced by saturating_from_num")]
+    #[inline]
+    fn saturating_to_int<Dst: FromFixed>(self) -> Dst {
+        Dst::saturating_from_fixed(self)
+    }
+
+    /// Creates a fixed-point number from another number.
+    #[deprecated(since = "0.4.2", note = "replaced by saturating_from_num")]
+    #[inline]
+    fn saturating_from_float<Src: ToFixed>(src: Src) -> Self {
+        src.saturating_to_fixed()
+    }
+
+    /// Creates a fixed-point number from another number.
+    #[deprecated(since = "0.4.2", note = "replaced by wrapping_from_num")]
+    #[inline]
+    fn wrapping_from_int<Src: ToFixed>(src: Src) -> Self {
+        src.wrapping_to_fixed()
+    }
+
+    /// Converts a fixed-point number to another number.
+    #[deprecated(since = "0.4.2", note = "replaced by wrapping_from_num")]
+    #[inline]
+    fn wrapping_to_int<Dst: FromFixed>(self) -> Dst {
+        Dst::wrapping_from_fixed(self)
+    }
+
+    /// Creates a fixed-point number from another number.
+    #[deprecated(since = "0.4.2", note = "replaced by wrapping_from_num")]
+    #[inline]
+    fn wrapping_from_float<Src: ToFixed>(src: Src) -> Self {
+        src.wrapping_to_fixed()
+    }
+
+    /// Creates a fixed-point number from another number.
+    #[deprecated(since = "0.4.2", note = "replaced by overflowing_from_num")]
+    #[inline]
+    fn overflowing_from_int<Src: ToFixed>(src: Src) -> (Self, bool) {
+        src.overflowing_to_fixed()
+    }
+
+    /// Converts a fixed-point number to another number.
+    #[deprecated(since = "0.4.2", note = "replaced by overflowing_from_num")]
+    #[inline]
+    fn overflowing_to_int<Dst: FromFixed>(self) -> (Dst, bool) {
+        Dst::overflowing_from_fixed(self)
+    }
+
+    /// Creates a fixed-point number from another number.
+    #[deprecated(since = "0.4.2", note = "replaced by overflowing_from_num")]
+    #[inline]
+    fn overflowing_from_float<Src: ToFixed>(src: Src) -> (Self, bool) {
+        src.overflowing_to_fixed()
+    }
 }
 
 /// This trait provides common methods to all signed fixed-point numbers.
@@ -900,26 +986,26 @@ pub trait FromFixed {
     /// [`wrapping_from_fixed`] instead.
     ///
     /// [`wrapping_from_fixed`]: #method.wrapping_from_fixed
-    fn from_fixed<F: sealed::Fixed>(val: F) -> Self;
+    fn from_fixed<F: Fixed>(src: F) -> Self;
 
     /// Converts from a fixed-point number if it fits, otherwise returns [`None`].
     ///
     /// Any extra fractional bits are truncated.
     ///
     /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
-    fn checked_from_fixed<F: sealed::Fixed>(val: F) -> Option<Self>
+    fn checked_from_fixed<F: Fixed>(src: F) -> Option<Self>
     where
         Self: Sized;
 
     /// Converts from a fixed-point number, saturating if it does not fit.
     ///
     /// Any extra fractional bits are truncated.
-    fn saturating_from_fixed<F: sealed::Fixed>(val: F) -> Self;
+    fn saturating_from_fixed<F: Fixed>(src: F) -> Self;
 
     /// Converts from a fixed-point number, wrapping if it does not fit.
     ///
     /// Any extra fractional bits are truncated.
-    fn wrapping_from_fixed<F: sealed::Fixed>(val: F) -> Self;
+    fn wrapping_from_fixed<F: Fixed>(src: F) -> Self;
 
     /// Converts from a fixed-point number.
     ///
@@ -931,7 +1017,7 @@ pub trait FromFixed {
     ///
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
-    fn overflowing_from_fixed<F: sealed::Fixed>(val: F) -> (Self, bool)
+    fn overflowing_from_fixed<F: Fixed>(src: F) -> (Self, bool)
     where
         Self: Sized;
 }
@@ -950,13 +1036,13 @@ pub trait FromFixed {
 /// assert_eq!(f, U8F8::from_bits((13 << 8) | (1 << 7)));
 /// // 0x1234.5678 is too large and can be wrapped to 0x34.56
 /// let too_large = U16F16::from_bits(0x1234_5678);
-/// let checked: Option<U8F8> = too_large.checked_to_fixed();
+/// let checked: Option<U8F8> = too_large.checked_to_num();
 /// assert_eq!(checked, None);
-/// let saturating: U8F8 = too_large.saturating_to_fixed();
+/// let saturating: U8F8 = too_large.saturating_to_num();
 /// assert_eq!(saturating, U8F8::max_value());
-/// let wrapping: U8F8 = too_large.wrapping_to_fixed();
+/// let wrapping: U8F8 = too_large.wrapping_to_num();
 /// assert_eq!(wrapping, U8F8::from_bits(0x3456));
-/// let overflowing: (U8F8, bool) = too_large.overflowing_to_fixed();
+/// let overflowing: (U8F8, bool) = too_large.overflowing_to_num();
 /// assert_eq!(overflowing, (U8F8::from_bits(0x3456), true));
 /// ```
 pub trait ToFixed {
@@ -976,14 +1062,14 @@ pub trait ToFixed {
     ///
     /// [`wrapping_to_fixed`]: #method.wrapping_to_fixed
     /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
-    fn to_fixed<F: sealed::Fixed>(self) -> F;
+    fn to_fixed<F: Fixed>(self) -> F;
 
     /// Converts to a fixed-point number if it fits, otherwise returns [`None`].
     ///
     /// Any extra fractional bits are truncated.
     ///
     /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
-    fn checked_to_fixed<F: sealed::Fixed>(self) -> Option<F>;
+    fn checked_to_fixed<F: Fixed>(self) -> Option<F>;
 
     /// Converts to a fixed-point number, saturating if it does not fit.
     ///
@@ -994,7 +1080,7 @@ pub trait ToFixed {
     /// Panics if `self` is a floating-point number that is [NaN].
     ///
     /// [NaN]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_nan
-    fn saturating_to_fixed<F: sealed::Fixed>(self) -> F;
+    fn saturating_to_fixed<F: Fixed>(self) -> F;
 
     /// Converts to a fixed-point number, wrapping if it does not fit.
     ///
@@ -1005,7 +1091,7 @@ pub trait ToFixed {
     /// Panics if `self` is a floating-point number that is not [finite].
     ///
     /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
-    fn wrapping_to_fixed<F: sealed::Fixed>(self) -> F;
+    fn wrapping_to_fixed<F: Fixed>(self) -> F;
 
     /// Converts from a fixed-point number.
     ///
@@ -1022,29 +1108,29 @@ pub trait ToFixed {
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
-    fn overflowing_to_fixed<F: sealed::Fixed>(self) -> (F, bool);
+    fn overflowing_to_fixed<F: Fixed>(self) -> (F, bool);
 }
 
 impl ToFixed for bool {
     #[inline]
-    fn to_fixed<F: sealed::Fixed>(self) -> F {
-        ToFixed::to_fixed(u8::from(self))
+    fn to_fixed<F: Fixed>(self) -> F {
+        ToFixed::to_fixed(self as u8)
     }
     #[inline]
-    fn checked_to_fixed<F: sealed::Fixed>(self) -> Option<F> {
-        ToFixed::checked_to_fixed(u8::from(self))
+    fn checked_to_fixed<F: Fixed>(self) -> Option<F> {
+        ToFixed::checked_to_fixed(self as u8)
     }
     #[inline]
-    fn saturating_to_fixed<F: sealed::Fixed>(self) -> F {
-        ToFixed::saturating_to_fixed(u8::from(self))
+    fn saturating_to_fixed<F: Fixed>(self) -> F {
+        ToFixed::saturating_to_fixed(self as u8)
     }
     #[inline]
-    fn wrapping_to_fixed<F: sealed::Fixed>(self) -> F {
-        ToFixed::wrapping_to_fixed(u8::from(self))
+    fn wrapping_to_fixed<F: Fixed>(self) -> F {
+        ToFixed::wrapping_to_fixed(self as u8)
     }
     #[inline]
-    fn overflowing_to_fixed<F: sealed::Fixed>(self) -> (F, bool) {
-        ToFixed::overflowing_to_fixed(u8::from(self))
+    fn overflowing_to_fixed<F: Fixed>(self) -> (F, bool) {
+        ToFixed::overflowing_to_fixed(self as u8)
     }
 }
 
@@ -1052,47 +1138,48 @@ macro_rules! impl_int {
     ($Int:ident) => {
         impl FromFixed for $Int {
             #[inline]
-            fn from_fixed<F: sealed::Fixed>(val: F) -> Self {
-                SealedInt::from_fixed(val)
+            fn from_fixed<F: Fixed>(src: F) -> Self {
+                $Int::from_repr_fixed(FromFixed::from_fixed(src))
             }
             #[inline]
-            fn checked_from_fixed<F: sealed::Fixed>(val: F) -> Option<Self> {
-                SealedInt::checked_from_fixed(val)
+            fn checked_from_fixed<F: Fixed>(src: F) -> Option<Self> {
+                FromFixed::checked_from_fixed(src).map($Int::from_repr_fixed)
             }
             #[inline]
-            fn saturating_from_fixed<F: sealed::Fixed>(val: F) -> Self {
-                SealedInt::saturating_from_fixed(val)
+            fn saturating_from_fixed<F: Fixed>(src: F) -> Self {
+                $Int::from_repr_fixed(FromFixed::saturating_from_fixed(src))
             }
             #[inline]
-            fn wrapping_from_fixed<F: sealed::Fixed>(val: F) -> Self {
-                SealedInt::wrapping_from_fixed(val)
+            fn wrapping_from_fixed<F: Fixed>(src: F) -> Self {
+                $Int::from_repr_fixed(FromFixed::wrapping_from_fixed(src))
             }
             #[inline]
-            fn overflowing_from_fixed<F: sealed::Fixed>(val: F) -> (Self, bool) {
-                SealedInt::overflowing_from_fixed(val)
+            fn overflowing_from_fixed<F: Fixed>(src: F) -> (Self, bool) {
+                let (repr_fixed, overflow) = FromFixed::overflowing_from_fixed(src);
+                ($Int::from_repr_fixed(repr_fixed), overflow)
             }
         }
 
         impl ToFixed for $Int {
             #[inline]
-            fn to_fixed<F: sealed::Fixed>(self) -> F {
-                SealedInt::to_fixed(self)
+            fn to_fixed<F: Fixed>(self) -> F {
+                ToFixed::to_fixed(self.to_repr_fixed())
             }
             #[inline]
-            fn checked_to_fixed<F: sealed::Fixed>(self) -> Option<F> {
-                SealedInt::checked_to_fixed(self)
+            fn checked_to_fixed<F: Fixed>(self) -> Option<F> {
+                ToFixed::checked_to_fixed(self.to_repr_fixed())
             }
             #[inline]
-            fn saturating_to_fixed<F: sealed::Fixed>(self) -> F {
-                SealedInt::saturating_to_fixed(self)
+            fn saturating_to_fixed<F: Fixed>(self) -> F {
+                ToFixed::saturating_to_fixed(self.to_repr_fixed())
             }
             #[inline]
-            fn wrapping_to_fixed<F: sealed::Fixed>(self) -> F {
-                SealedInt::wrapping_to_fixed(self)
+            fn wrapping_to_fixed<F: Fixed>(self) -> F {
+                ToFixed::wrapping_to_fixed(self.to_repr_fixed())
             }
             #[inline]
-            fn overflowing_to_fixed<F: sealed::Fixed>(self) -> (F, bool) {
-                SealedInt::overflowing_to_fixed(self)
+            fn overflowing_to_fixed<F: Fixed>(self) -> (F, bool) {
+                ToFixed::overflowing_to_fixed(self.to_repr_fixed())
             }
         }
     };
@@ -1115,47 +1202,66 @@ macro_rules! impl_float {
     ($Float:ty) => {
         impl FromFixed for $Float {
             #[inline]
-            fn from_fixed<F: sealed::Fixed>(val: F) -> Self {
-                val.to_float()
+            fn from_fixed<F: Fixed>(src: F) -> Self {
+                let helper = src.private_to_float_helper();
+                FloatHelper::from_to_float_helper(helper, F::frac_nbits(), F::int_nbits())
             }
             #[inline]
-            fn checked_from_fixed<F: sealed::Fixed>(val: F) -> Option<Self> {
-                Some(val.to_float())
+            fn checked_from_fixed<F: Fixed>(src: F) -> Option<Self> {
+                Some(FromFixed::from_fixed(src))
             }
             #[inline]
-            fn saturating_from_fixed<F: sealed::Fixed>(val: F) -> Self {
-                val.to_float()
+            fn saturating_from_fixed<F: Fixed>(src: F) -> Self {
+                FromFixed::from_fixed(src)
             }
             #[inline]
-            fn wrapping_from_fixed<F: sealed::Fixed>(val: F) -> Self {
-                val.to_float()
+            fn wrapping_from_fixed<F: Fixed>(src: F) -> Self {
+                FromFixed::from_fixed(src)
             }
             #[inline]
-            fn overflowing_from_fixed<F: sealed::Fixed>(val: F) -> (Self, bool) {
-                (val.to_float(), false)
+            fn overflowing_from_fixed<F: Fixed>(src: F) -> (Self, bool) {
+                (FromFixed::from_fixed(src), false)
             }
         }
 
         impl ToFixed for $Float {
             #[inline]
-            fn to_fixed<F: sealed::Fixed>(self) -> F {
-                SealedFloat::to_fixed(self)
+            fn to_fixed<F: Fixed>(self) -> F {
+                let (wrapped, overflow) = ToFixed::overflowing_to_fixed(self);
+                debug_assert!(!overflow, "{} overflows", self);
+                let _ = overflow;
+                wrapped
             }
             #[inline]
-            fn checked_to_fixed<F: sealed::Fixed>(self) -> Option<F> {
-                SealedFloat::checked_to_fixed(self)
+            fn checked_to_fixed<F: Fixed>(self) -> Option<F> {
+                let kind = self.to_float_kind(F::frac_nbits(), F::int_nbits());
+                match kind {
+                    FloatKind::Finite { .. } => {
+                        let helper = FromFloatHelper { kind };
+                        match <F as Sealed>::private_overflowing_from_float_helper(helper) {
+                            (_, true) => None,
+                            (wrapped, false) => Some(wrapped),
+                        }
+                    }
+                    _ => None,
+                }
             }
             #[inline]
-            fn saturating_to_fixed<F: sealed::Fixed>(self) -> F {
-                SealedFloat::saturating_to_fixed(self)
+            fn saturating_to_fixed<F: Fixed>(self) -> F {
+                let kind = self.to_float_kind(F::frac_nbits(), F::int_nbits());
+                let helper = FromFloatHelper { kind };
+                <F as Sealed>::private_saturating_from_float_helper(helper)
             }
             #[inline]
-            fn wrapping_to_fixed<F: sealed::Fixed>(self) -> F {
-                SealedFloat::wrapping_to_fixed(self)
+            fn wrapping_to_fixed<F: Fixed>(self) -> F {
+                let (wrapped, _) = ToFixed::overflowing_to_fixed(self);
+                wrapped
             }
             #[inline]
-            fn overflowing_to_fixed<F: sealed::Fixed>(self) -> (F, bool) {
-                SealedFloat::overflowing_to_fixed(self)
+            fn overflowing_to_fixed<F: Fixed>(self) -> (F, bool) {
+                let kind = self.to_float_kind(F::frac_nbits(), F::int_nbits());
+                let helper = FromFloatHelper { kind };
+                <F as Sealed>::private_overflowing_from_float_helper(helper)
             }
         }
     };
@@ -1194,7 +1300,7 @@ macro_rules! trait_delegate {
 }
 
 macro_rules! impl_fixed {
-    ($Fixed:ident, $LeEqU:ident, $Bits:ident) => {
+    ($Fixed:ident, $LeEqU:ident, $Bits:ident, $Signedness:tt) => {
         impl<Frac: $LeEqU> FixedOptionalFeatures for $Fixed<Frac> {}
 
         impl<Frac: $LeEqU> Fixed for $Fixed<Frac> {
@@ -1205,22 +1311,16 @@ macro_rules! impl_fixed {
             trait_delegate! { fn frac_nbits() -> u32 }
             trait_delegate! { fn from_bits(bits: Self::Bits) -> Self }
             trait_delegate! { fn to_bits(self) -> Self::Bits }
-            trait_delegate! { fn from_int<I: Int>(val: I) -> Self }
-            trait_delegate! { fn to_int<I: Int>(self) -> I }
-            trait_delegate! { fn from_float<F: Float>(val: F) -> Self }
-            trait_delegate! { fn to_float<F: Float>(self) -> F }
-            trait_delegate! { fn checked_from_int<I: Int>(val: I) -> Option<Self> }
-            trait_delegate! { fn checked_to_int<I: Int>(self) -> Option<I> }
-            trait_delegate! { fn checked_from_float<F: Float>(val: F) -> Option<Self> }
-            trait_delegate! { fn saturating_from_int<I: Int>(val: I) -> Self }
-            trait_delegate! { fn saturating_to_int<I: Int>(self) -> I }
-            trait_delegate! { fn saturating_from_float<F: Float>(val: F) -> Self }
-            trait_delegate! { fn wrapping_from_int<I: Int>(val: I) -> Self }
-            trait_delegate! { fn wrapping_to_int<I: Int>(self) -> I }
-            trait_delegate! { fn wrapping_from_float<F: Float>(val: F) -> Self }
-            trait_delegate! { fn overflowing_from_int<I: Int>(val: I) -> (Self, bool) }
-            trait_delegate! { fn overflowing_to_int<I: Int>(self) -> (I, bool) }
-            trait_delegate! { fn overflowing_from_float<F: Float>(val: F) -> (Self, bool) }
+            trait_delegate! { fn from_num<Src: ToFixed>(src: Src) -> Self }
+            trait_delegate! { fn to_num<Dst: FromFixed>(self) -> Dst }
+            trait_delegate! { fn checked_from_num<Src: ToFixed>(val: Src) -> Option<Self> }
+            trait_delegate! { fn checked_to_num<Dst: FromFixed>(self) -> Option<Dst> }
+            trait_delegate! { fn saturating_from_num<Src: ToFixed>(val: Src) -> Self }
+            trait_delegate! { fn saturating_to_num<Dst: FromFixed>(self) -> Dst }
+            trait_delegate! { fn wrapping_from_num<Src: ToFixed>(val: Src) -> Self }
+            trait_delegate! { fn wrapping_to_num<Dst: FromFixed>(self) -> Dst }
+            trait_delegate! { fn overflowing_from_num<Src: ToFixed>(val: Src) -> (Self, bool) }
+            trait_delegate! { fn overflowing_to_num<Dst: FromFixed>(self) -> (Dst, bool) }
             trait_delegate! { fn from_str_binary(src: &str) -> Result<Self, ParseFixedError> }
             trait_delegate! { fn from_str_octal(src: &str) -> Result<Self, ParseFixedError> }
             trait_delegate! { fn from_str_hex(src: &str) -> Result<Self, ParseFixedError> }
@@ -1287,88 +1387,136 @@ macro_rules! impl_fixed {
 
         impl<Frac: $LeEqU> FromFixed for $Fixed<Frac> {
             #[inline]
-            fn from_fixed<F: sealed::Fixed>(val: F) -> Self {
-                SealedFixed::from_fixed(val)
+            fn from_fixed<F: Fixed>(src: F) -> Self {
+                let (wrapped, overflow) = FromFixed::overflowing_from_fixed(src);
+                debug_assert!(!overflow, "{} overflows", src);
+                let _ = overflow;
+                wrapped
             }
             #[inline]
-            fn checked_from_fixed<F: sealed::Fixed>(val: F) -> Option<Self> {
-                SealedFixed::checked_from_fixed(val)
+            fn checked_from_fixed<F: Fixed>(src: F) -> Option<Self> {
+                match FromFixed::overflowing_from_fixed(src) {
+                    (_, true) => None,
+                    (wrapped, false) => Some(wrapped),
+                }
             }
             #[inline]
-            fn saturating_from_fixed<F: sealed::Fixed>(val: F) -> Self {
-                SealedFixed::saturating_from_fixed(val)
+            fn saturating_from_fixed<F: Fixed>(src: F) -> Self {
+                let conv = src.private_to_fixed_helper(Self::frac_nbits(), Self::int_nbits());
+                if conv.overflow {
+                    return if src < 0 {
+                        Self::min_value()
+                    } else {
+                        Self::max_value()
+                    };
+                }
+                let bits = if_signed_unsigned!(
+                    $Signedness,
+                    match conv.bits {
+                        Widest::Unsigned(bits) => {
+                            if (bits as $Bits) < 0 {
+                                return Self::max_value();
+                            }
+                            bits as $Bits
+                        }
+                        Widest::Negative(bits) => bits as $Bits,
+                    },
+                    match conv.bits {
+                        Widest::Unsigned(bits) => bits as $Bits,
+                        Widest::Negative(_) => {
+                            return Self::min_value();
+                        }
+                    },
+                );
+                Self::from_bits(bits)
             }
             #[inline]
-            fn wrapping_from_fixed<F: sealed::Fixed>(val: F) -> Self {
-                SealedFixed::wrapping_from_fixed(val)
+            fn wrapping_from_fixed<F: Fixed>(src: F) -> Self {
+                let (wrapped, _) = FromFixed::overflowing_from_fixed(src);
+                wrapped
             }
             #[inline]
-            fn overflowing_from_fixed<F: sealed::Fixed>(val: F) -> (Self, bool) {
-                SealedFixed::overflowing_from_fixed(val)
+            fn overflowing_from_fixed<F: Fixed>(src: F) -> (Self, bool) {
+                let conv = src.private_to_fixed_helper(Self::frac_nbits(), Self::int_nbits());
+                let mut new_overflow = false;
+                let bits = if_signed_unsigned!(
+                    $Signedness,
+                    match conv.bits {
+                        Widest::Unsigned(bits) => {
+                            if (bits as $Bits) < 0 {
+                                new_overflow = true;
+                            }
+                            bits as $Bits
+                        }
+                        Widest::Negative(bits) => bits as $Bits,
+                    },
+                    match conv.bits {
+                        Widest::Unsigned(bits) => bits as $Bits,
+                        Widest::Negative(bits) => {
+                            new_overflow = true;
+                            bits as $Bits
+                        }
+                    },
+                );
+                (Self::from_bits(bits), conv.overflow || new_overflow)
             }
         }
 
         impl<Frac: $LeEqU> ToFixed for $Fixed<Frac> {
             #[inline]
-            fn to_fixed<F: sealed::Fixed>(self) -> F {
-                SealedFixed::from_fixed(self)
+            fn to_fixed<F: Fixed>(self) -> F {
+                FromFixed::from_fixed(self)
             }
             #[inline]
-            fn checked_to_fixed<F: sealed::Fixed>(self) -> Option<F> {
-                SealedFixed::checked_from_fixed(self)
+            fn checked_to_fixed<F: Fixed>(self) -> Option<F> {
+                FromFixed::checked_from_fixed(self)
             }
             #[inline]
-            fn saturating_to_fixed<F: sealed::Fixed>(self) -> F {
-                SealedFixed::saturating_from_fixed(self)
+            fn saturating_to_fixed<F: Fixed>(self) -> F {
+                FromFixed::saturating_from_fixed(self)
             }
             #[inline]
-            fn wrapping_to_fixed<F: sealed::Fixed>(self) -> F {
-                SealedFixed::wrapping_from_fixed(self)
+            fn wrapping_to_fixed<F: Fixed>(self) -> F {
+                FromFixed::wrapping_from_fixed(self)
             }
             #[inline]
-            fn overflowing_to_fixed<F: sealed::Fixed>(self) -> (F, bool) {
-                SealedFixed::overflowing_from_fixed(self)
+            fn overflowing_to_fixed<F: Fixed>(self) -> (F, bool) {
+                FromFixed::overflowing_from_fixed(self)
+            }
+        }
+
+        if_signed! {
+            $Signedness;
+            impl<Frac: $LeEqU> FixedSigned for $Fixed<Frac> {
+                trait_delegate! { fn abs(self) -> Self }
+                trait_delegate! { fn signum(self) -> Self }
+                trait_delegate! { fn checked_abs(self) -> Option<Self> }
+                trait_delegate! { fn saturating_abs(self) -> Self }
+                trait_delegate! { fn wrapping_abs(self) -> Self }
+                trait_delegate! { fn overflowing_abs(self) -> (Self, bool) }
+                trait_delegate! { fn is_positive(self) -> bool }
+                trait_delegate! { fn is_negative(self) -> bool }
+            }
+        }
+
+        if_unsigned! {
+            $Signedness;
+            impl<Frac: $LeEqU> FixedUnsigned for $Fixed<Frac> {
+                trait_delegate! { fn is_power_of_two(self) -> bool }
+                trait_delegate! { fn next_power_of_two(self) -> Self }
+                trait_delegate! { fn checked_next_power_of_two(self) -> Option<Self> }
             }
         }
     };
 }
 
-macro_rules! impl_fixed_signed {
-    ($Fixed:ident, $LeEqU:ident, $Bits:ident) => {
-        impl_fixed! { $Fixed, $LeEqU, $Bits }
-
-        impl<Frac: $LeEqU> FixedSigned for $Fixed<Frac> {
-            trait_delegate! { fn abs(self) -> Self }
-            trait_delegate! { fn signum(self) -> Self }
-            trait_delegate! { fn checked_abs(self) -> Option<Self> }
-            trait_delegate! { fn saturating_abs(self) -> Self }
-            trait_delegate! { fn wrapping_abs(self) -> Self }
-            trait_delegate! { fn overflowing_abs(self) -> (Self, bool) }
-            trait_delegate! { fn is_positive(self) -> bool }
-            trait_delegate! { fn is_negative(self) -> bool }
-        }
-    };
-}
-
-macro_rules! impl_fixed_unsigned {
-    ($Fixed:ident, $LeEqU:ident, $Bits:ident) => {
-        impl_fixed! { $Fixed, $LeEqU, $Bits }
-
-        impl<Frac: $LeEqU> FixedUnsigned for $Fixed<Frac> {
-            trait_delegate! { fn is_power_of_two(self) -> bool }
-            trait_delegate! { fn next_power_of_two(self) -> Self }
-            trait_delegate! { fn checked_next_power_of_two(self) -> Option<Self> }
-        }
-    };
-}
-
-impl_fixed_signed! { FixedI8, LeEqU8, i8 }
-impl_fixed_signed! { FixedI16, LeEqU16, i16 }
-impl_fixed_signed! { FixedI32, LeEqU32, i32 }
-impl_fixed_signed! { FixedI64, LeEqU64, i64 }
-impl_fixed_signed! { FixedI128, LeEqU128, i128 }
-impl_fixed_unsigned! { FixedU8, LeEqU8, u8 }
-impl_fixed_unsigned! { FixedU16, LeEqU16, u16 }
-impl_fixed_unsigned! { FixedU32, LeEqU32, u32 }
-impl_fixed_unsigned! { FixedU64, LeEqU64, u64 }
-impl_fixed_unsigned! { FixedU128, LeEqU128, u128 }
+impl_fixed! { FixedI8, LeEqU8, i8, Signed }
+impl_fixed! { FixedI16, LeEqU16, i16, Signed }
+impl_fixed! { FixedI32, LeEqU32, i32, Signed }
+impl_fixed! { FixedI64, LeEqU64, i64, Signed }
+impl_fixed! { FixedI128, LeEqU128, i128, Signed }
+impl_fixed! { FixedU8, LeEqU8, u8, Unsigned }
+impl_fixed! { FixedU16, LeEqU16, u16, Unsigned }
+impl_fixed! { FixedU32, LeEqU32, u32, Unsigned }
+impl_fixed! { FixedU64, LeEqU64, u64, Unsigned }
+impl_fixed! { FixedU128, LeEqU128, u128, Unsigned }

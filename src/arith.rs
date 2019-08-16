@@ -14,7 +14,8 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
-    sealed::SealedInt,
+    helpers::IntHelper,
+    traits::ToFixed,
     types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     wide_div::WideDivRem,
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,

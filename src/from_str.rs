@@ -16,7 +16,7 @@
 use crate::{
     display::Mul10,
     frac::False,
-    sealed::SealedInt,
+    helpers::IntHelper,
     types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     wide_div::WideDivRem,
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
@@ -31,7 +31,7 @@ use core::{
 
 fn bin_str_int_to_bin<I>(bytes: &[u8]) -> Option<I>
 where
-    I: SealedInt<IsSigned = False> + From<u8>,
+    I: IntHelper<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
     let mut acc = I::from(bytes[0] - b'0');
@@ -45,7 +45,7 @@ where
 
 fn bin_str_frac_to_bin<I>(bytes: &[u8], nbits: u32) -> Option<I>
 where
-    I: SealedInt<IsSigned = False> + From<u8>,
+    I: IntHelper<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
     debug_assert!(!bytes.is_empty());
@@ -57,7 +57,7 @@ where
         if rem_bits < 1 {
             // round
             acc = acc.checked_add(I::from(val))?;
-            if dump_bits != 0 && !(acc >> nbits).is_zero() {
+            if dump_bits != 0 && acc >> nbits != I::ZERO {
                 return None;
             }
             return Some(acc);
@@ -70,7 +70,7 @@ where
 
 fn oct_str_int_to_bin<I>(bytes: &[u8]) -> Option<I>
 where
-    I: SealedInt<IsSigned = False> + From<u8>,
+    I: IntHelper<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
     let mut acc = I::from(bytes[0] - b'0');
@@ -84,7 +84,7 @@ where
 
 fn oct_str_frac_to_bin<I>(bytes: &[u8], nbits: u32) -> Option<I>
 where
-    I: SealedInt<IsSigned = False> + From<u8>,
+    I: IntHelper<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
     debug_assert!(!bytes.is_empty());
@@ -97,7 +97,7 @@ where
             acc = (acc << rem_bits) + I::from(val >> (3 - rem_bits));
             // round
             acc = acc.checked_add(I::from((val >> (2 - rem_bits)) & 1))?;
-            if dump_bits != 0 && !(acc >> nbits).is_zero() {
+            if dump_bits != 0 && acc >> nbits != I::ZERO {
                 return None;
             }
             return Some(acc);
@@ -118,7 +118,7 @@ fn unchecked_hex_digit(byte: u8) -> u8 {
 
 fn hex_str_int_to_bin<I>(bytes: &[u8]) -> Option<I>
 where
-    I: SealedInt<IsSigned = False> + From<u8>,
+    I: IntHelper<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Add<Output = I>,
 {
     let mut acc = I::from(unchecked_hex_digit(bytes[0]));
@@ -132,7 +132,7 @@ where
 
 fn hex_str_frac_to_bin<I>(bytes: &[u8], nbits: u32) -> Option<I>
 where
-    I: SealedInt<IsSigned = False> + From<u8>,
+    I: IntHelper<IsSigned = False> + From<u8>,
     I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
     debug_assert!(!bytes.is_empty());
@@ -145,7 +145,7 @@ where
             acc = (acc << rem_bits) + I::from(val >> (4 - rem_bits));
             // round
             acc = acc.checked_add(I::from((val >> (3 - rem_bits)) & 1))?;
-            if dump_bits != 0 && !(acc >> nbits).is_zero() {
+            if dump_bits != 0 && acc >> nbits != I::ZERO {
                 return None;
             }
             return Some(acc);
@@ -158,7 +158,7 @@ where
 
 fn dec_str_int_to_bin<I>(bytes: &[u8]) -> Option<I>
 where
-    I: SealedInt<IsSigned = False> + From<u8>,
+    I: IntHelper<IsSigned = False> + From<u8>,
 {
     debug_assert!(!bytes.is_empty());
     let mut acc = I::from(0);
@@ -341,7 +341,7 @@ impl DecToBin for u128 {
 
 fn dec_str_frac_to_bin<I>(bytes: &[u8], nbits: u32) -> Option<I>
 where
-    I: SealedInt<IsSigned = False> + FromStr + From<u8> + DecToBin,
+    I: IntHelper<IsSigned = False> + FromStr + From<u8> + DecToBin,
     I: Mul10 + Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I> + Mul<Output = I>,
 {
     let (val, is_short) = I::parse_is_short(bytes);
@@ -386,7 +386,7 @@ where
     }
     // ≥ boundary, so we round up
     let next_up = floor.checked_add(one)?;
-    if dump_bits != 0 && (next_up >> nbits).traits().ne(&I::ZERO.traits()) {
+    if dump_bits != 0 && next_up >> nbits != I::ZERO {
         None
     } else {
         Some(next_up)
@@ -585,9 +585,9 @@ macro_rules! impl_from_str_signed {
                 $int(int, radix, int_nbits, whole_frac).ok_or(ParseErrorKind::Overflow)?;
             let abs = abs_int | abs_frac;
             let max_abs = if neg {
-                <$Bits as SealedInt>::Unsigned::MSB
+                <$Bits as IntHelper>::Unsigned::MSB
             } else {
-                <$Bits as SealedInt>::Unsigned::MSB - 1
+                <$Bits as IntHelper>::Unsigned::MSB - 1
             };
             if abs > max_abs {
                 Err(ParseErrorKind::Overflow)?;
@@ -627,7 +627,7 @@ macro_rules! impl_from_str_unsigned {
         }
 
         fn $int(int: &[u8], radix: u32, nbits: u32, whole_frac: bool) -> Option<$Bits> {
-            const HALF: u32 = <$Bits as SealedInt>::NBITS / 2;
+            const HALF: u32 = <$Bits as IntHelper>::NBITS / 2;
             if $int_half_cond && nbits <= HALF {
                 return $int_half(int, radix, nbits, whole_frac).map(|x| $Bits::from(x) << HALF);
             }
@@ -651,7 +651,7 @@ macro_rules! impl_from_str_unsigned {
             if whole_frac {
                 parsed_int = parsed_int.checked_add(1)?;
             }
-            let remove_bits = <$Bits as SealedInt>::NBITS - nbits;
+            let remove_bits = <$Bits as IntHelper>::NBITS - nbits;
             if remove_bits > 0 && (parsed_int >> nbits) != 0 {
                 None
             } else {
@@ -660,7 +660,7 @@ macro_rules! impl_from_str_unsigned {
         }
 
         fn $frac(frac: &[u8], radix: u32, nbits: u32) -> Option<$Bits> {
-            if $frac_half_cond && nbits <= <$Bits as SealedInt>::NBITS / 2 {
+            if $frac_half_cond && nbits <= <$Bits as IntHelper>::NBITS / 2 {
                 return $frac_half(frac, radix, nbits).map($Bits::from);
             }
             if frac.is_empty() {

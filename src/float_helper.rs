@@ -13,100 +13,44 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
-use crate::sealed::{Fixed, SealedFixed, SealedInt, ToFixedHelper, Widest};
-use core::{
-    cmp::Ordering,
-    fmt::{Debug, Display},
+use crate::{
+    helpers::IntHelper,
+    sealed::{FloatKind, ToFixedHelper, ToFloatHelper, Widest},
 };
+use core::cmp::Ordering;
 #[cfg(feature = "f16")]
 use half::f16;
 
-pub trait SealedFloat: Copy {
-    type Bits: SealedInt;
-    type Traits: Copy + Debug + Display;
+pub trait FloatHelper: Copy {
+    type Bits: IntHelper;
 
     const PREC: u32;
     const EXP_BIAS: i32 = (1 << (Self::Bits::NBITS - Self::PREC - 1)) - 1;
     const EXP_MIN: i32 = 1 - Self::EXP_BIAS;
     const EXP_MAX: i32 = Self::EXP_BIAS;
-    const SIGN_MASK: Self::Bits;
+    const SIGN_MASK: Self::Bits = Self::Bits::MSB;
     const EXP_MASK: Self::Bits;
     const MANT_MASK: Self::Bits;
 
-    fn traits(self) -> Self::Traits;
-
-    fn zero(neg: bool) -> Self;
-    fn infinity(neg: bool) -> Self;
     fn is_nan(self) -> bool;
     fn is_infinite(self) -> bool;
     fn is_finite(self) -> bool;
-    fn is_zero(self) -> bool;
     fn is_sign_negative(self) -> bool;
 
     fn parts(self) -> (bool, i32, Self::Bits);
-    fn from_parts(sign: bool, exp: i32, mant: Self::Bits) -> Self;
 
-    #[inline]
-    fn to_fixed<F: Fixed>(self) -> F {
-        let (wrapped, overflow) = Self::overflowing_to_fixed(self);
-        debug_assert!(!overflow, "{} overflows", self.traits());
-        let _ = overflow;
-        wrapped
-    }
-    #[inline]
-    fn checked_to_fixed<F: Fixed>(self) -> Option<F> {
-        if !self.is_finite() {
-            return None;
-        }
-        match Self::overflowing_to_fixed(self) {
-            (_, true) => None,
-            (wrapped, false) => Some(wrapped),
-        }
-    }
-    #[inline]
-    fn saturating_to_fixed<F: Fixed>(self) -> F {
-        SealedFixed::saturating_from_float(self)
-    }
-    #[inline]
-    fn wrapping_to_fixed<F: Fixed>(self) -> F {
-        let (wrapped, _) = Self::overflowing_to_fixed(self);
-        wrapped
-    }
-    #[inline]
-    fn overflowing_to_fixed<F: Fixed>(self) -> (F, bool) {
-        SealedFixed::overflowing_from_float(self)
-    }
-
-    fn from_neg_abs(neg: bool, abs: u128, frac_bits: u32, int_bits: u32) -> Self;
-    // self must be finite, otherwise meaningless results are returned
-    fn to_fixed_helper(self, frac_bits: u32, int_bits: u32) -> ToFixedHelper;
+    fn from_to_float_helper(val: ToFloatHelper, frac_bits: u32, int_bits: u32) -> Self;
+    fn to_float_kind(self, dst_frac_bits: u32, dst_int_bits: u32) -> FloatKind;
 }
 
 macro_rules! sealed_float {
     ($Float:ident($Bits:ty, $IBits:ty, $prec:expr)) => {
-        impl SealedFloat for $Float {
+        impl FloatHelper for $Float {
             type Bits = $Bits;
-            type Traits = $Float;
 
             const PREC: u32 = $prec;
-            const SIGN_MASK: Self::Bits = Self::Bits::MSB;
-            const EXP_MASK: Self::Bits = Self::SIGN_MASK - (1 << (Self::PREC - 1));
+            const EXP_MASK: Self::Bits = !(Self::SIGN_MASK | Self::MANT_MASK);
             const MANT_MASK: Self::Bits = (1 << (Self::PREC - 1)) - 1;
-
-            #[inline]
-            fn traits(self) -> Self::Traits {
-                self
-            }
-
-            #[inline]
-            fn zero(neg: bool) -> $Float {
-                Self::from_bits(if neg { Self::SIGN_MASK } else { 0 })
-            }
-
-            #[inline]
-            fn infinity(neg: bool) -> $Float {
-                Self::from_bits(Self::EXP_MASK | if neg { Self::SIGN_MASK } else { 0 })
-            }
 
             #[inline]
             fn is_nan(self) -> bool {
@@ -121,11 +65,6 @@ macro_rules! sealed_float {
             #[inline]
             fn is_finite(self) -> bool {
                 (self.to_bits() & !Self::SIGN_MASK) < Self::EXP_MASK
-            }
-
-            #[inline]
-            fn is_zero(self) -> bool {
-                (self.to_bits() & !Self::SIGN_MASK) == 0
             }
 
             #[inline]
@@ -146,30 +85,22 @@ macro_rules! sealed_float {
             }
 
             #[inline]
-            #[cfg_attr(feature = "cargo-clippy", allow(clippy::cast_lossless))]
-            fn from_parts(sign: bool, exp: i32, mant: $Bits) -> Self {
-                let sign_bits = if sign { Self::SIGN_MASK } else { 0 };
-                let biased_exp = (exp + Self::EXP_BIAS) as Self::Bits;
-                let exp_bits = biased_exp << (Self::PREC - 1);
-                let bits = sign_bits | exp_bits | mant;
-                Self::from_bits(bits)
-            }
-
-            #[inline]
-            fn from_neg_abs(neg: bool, abs: u128, frac_bits: u32, int_bits: u32) -> $Float {
+            fn from_to_float_helper(val: ToFloatHelper, frac_bits: u32, int_bits: u32) -> $Float {
                 let fix_bits = frac_bits + int_bits;
 
+                let bits_sign = if val.neg { Self::SIGN_MASK } else { 0 };
+
                 let extra_zeros = 128 - fix_bits;
-                let leading_zeros = abs.leading_zeros() - extra_zeros;
+                let leading_zeros = val.abs.leading_zeros() - extra_zeros;
                 let signif_bits = fix_bits - leading_zeros;
                 if signif_bits == 0 {
-                    return Self::zero(neg);
+                    return Self::from_bits(bits_sign);
                 }
                 // remove leading zeros and implicit one
-                let mut mantissa = abs << leading_zeros << 1;
+                let mut mantissa = val.abs << leading_zeros << 1;
                 let exponent = int_bits as i32 - 1 - leading_zeros as i32;
                 let biased_exponent = if exponent > Self::EXP_MAX {
-                    return Self::infinity(neg);
+                    return Self::from_bits(Self::EXP_MASK | bits_sign);
                 } else if exponent < Self::EXP_MIN {
                     let lost_prec = Self::EXP_MIN - exponent;
                     if lost_prec as u32 >= (int_bits + frac_bits) {
@@ -197,7 +128,6 @@ macro_rules! sealed_float {
                         mantissa & (mid_bit << 1) != 0
                     }
                 };
-                let bits_sign = if neg { !(!0 >> 1) } else { 0 };
                 let bits_exp = biased_exponent << (Self::PREC - 1);
                 let bits_mantissa = (if fix_bits >= Self::PREC - 1 {
                     (mantissa >> (fix_bits - (Self::PREC - 1))) as Self::Bits
@@ -212,21 +142,28 @@ macro_rules! sealed_float {
             }
 
             #[inline]
-            fn to_fixed_helper(self, dst_frac_bits: u32, dst_int_bits: u32) -> ToFixedHelper {
+            fn to_float_kind(self, dst_frac_bits: u32, dst_int_bits: u32) -> FloatKind {
                 let prec = Self::PREC as i32;
 
                 let (neg, exp, mut mantissa) = self.parts();
-                debug_assert!(exp <= Self::EXP_MAX, "not finite");
+                if exp == Self::EXP_MAX {
+                    if mantissa == 0 {
+                        return FloatKind::Infinite { neg };
+                    } else {
+                        return FloatKind::NaN;
+                    };
+                }
                 // if not subnormal, add implicit bit
                 if exp >= Self::EXP_MIN {
                     mantissa |= 1 << (prec - 1);
                 }
                 if mantissa == 0 {
-                    return ToFixedHelper {
+                    let conv = ToFixedHelper {
                         bits: Widest::Unsigned(0),
                         dir: Ordering::Equal,
                         overflow: false,
                     };
+                    return FloatKind::Finite { neg, conv };
                 }
 
                 let mut src_frac_bits = prec - 1 - exp;
@@ -237,11 +174,12 @@ macro_rules! sealed_float {
                     } else {
                         Ordering::Less
                     };
-                    return ToFixedHelper {
+                    let conv = ToFixedHelper {
                         bits: Widest::Unsigned(0),
                         dir,
                         overflow: false,
                     };
+                    return FloatKind::Finite { neg, conv };
                 }
                 let mut dir = Ordering::Equal;
                 if need_to_shr > 0 {
@@ -266,8 +204,9 @@ macro_rules! sealed_float {
                     mantissa = -mantissa;
                     dir = dir.reverse();
                 }
-                let conv = mantissa.to_fixed_helper(src_frac_bits, dst_frac_bits, dst_int_bits);
-                ToFixedHelper { dir, ..conv }
+                let mut conv = mantissa.to_fixed_helper(src_frac_bits, dst_frac_bits, dst_int_bits);
+                conv.dir = dir;
+                FloatKind::Finite { neg, conv }
             }
         }
     };

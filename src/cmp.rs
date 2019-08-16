@@ -14,7 +14,8 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
-    sealed::{SealedFixed, SealedFloat, SealedInt, Widest},
+    helpers::{FloatHelper, IntHelper},
+    sealed::{FloatKind, Widest},
     traits::Fixed,
     types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
@@ -30,9 +31,9 @@ macro_rules! fixed_cmp_fixed {
             #[inline]
             fn eq(&self, rhs: &$Rhs<FracRhs>) -> bool {
                 let conv = rhs.to_bits().to_fixed_helper(
-                    <$Rhs<FracRhs>>::FRAC_NBITS as i32,
-                    Self::FRAC_NBITS,
-                    Self::INT_NBITS,
+                    <$Rhs<FracRhs>>::frac_nbits() as i32,
+                    Self::frac_nbits(),
+                    Self::int_nbits(),
                 );
                 let rhs_bits = match conv.bits {
                     Widest::Unsigned(bits) => bits as <Self as Fixed>::Bits,
@@ -51,9 +52,9 @@ macro_rules! fixed_cmp_fixed {
                     _ => {}
                 }
                 let conv = rhs.to_bits().to_fixed_helper(
-                    <$Rhs<FracRhs>>::FRAC_NBITS as i32,
-                    Self::FRAC_NBITS,
-                    Self::INT_NBITS,
+                    <$Rhs<FracRhs>>::frac_nbits() as i32,
+                    Self::frac_nbits(),
+                    Self::int_nbits(),
                 );
                 if conv.overflow {
                     return if rhs.to_bits().is_negative() {
@@ -77,9 +78,9 @@ macro_rules! fixed_cmp_fixed {
                     _ => {}
                 }
                 let conv = rhs.to_bits().to_fixed_helper(
-                    <$Rhs<FracRhs>>::FRAC_NBITS as i32,
-                    Self::FRAC_NBITS,
-                    Self::INT_NBITS,
+                    <$Rhs<FracRhs>>::frac_nbits() as i32,
+                    Self::frac_nbits(),
+                    Self::int_nbits(),
                 );
                 if conv.overflow {
                     return !rhs.to_bits().is_negative();
@@ -187,10 +188,10 @@ macro_rules! fixed_cmp_float {
         impl<Frac: $LeEqU> PartialEq<$Float> for $Fix<Frac> {
             #[inline]
             fn eq(&self, rhs: &$Float) -> bool {
-                if !SealedFloat::is_finite(*rhs) {
-                    return false;
-                }
-                let conv = rhs.to_fixed_helper(Self::FRAC_NBITS, Self::INT_NBITS);
+                let conv = match rhs.to_float_kind(Self::frac_nbits(), Self::int_nbits()) {
+                    FloatKind::Finite { conv, .. } => conv,
+                    _ => return false,
+                };
                 let rhs_bits = match conv.bits {
                     Widest::Unsigned(bits) => bits as <Self as Fixed>::Bits,
                     Widest::Negative(bits) => bits as <Self as Fixed>::Bits,
@@ -209,23 +210,23 @@ macro_rules! fixed_cmp_float {
         impl<Frac: $LeEqU> PartialOrd<$Float> for $Fix<Frac> {
             #[inline]
             fn partial_cmp(&self, rhs: &$Float) -> Option<Ordering> {
-                if SealedFloat::is_nan(*rhs) {
-                    return None;
-                }
-                let rhs_is_neg = SealedFloat::is_sign_negative(*rhs);
-                if SealedFloat::is_infinite(*rhs) {
-                    return if rhs_is_neg {
-                        Some(Ordering::Greater)
-                    } else {
-                        Some(Ordering::Less)
+                let (rhs_is_neg, conv) =
+                    match rhs.to_float_kind(Self::frac_nbits(), Self::int_nbits()) {
+                        FloatKind::NaN => return None,
+                        FloatKind::Infinite { neg } => {
+                            return if neg {
+                                Some(Ordering::Greater)
+                            } else {
+                                Some(Ordering::Less)
+                            };
+                        }
+                        FloatKind::Finite { neg, conv } => (neg, conv),
                     };
-                }
                 match (self.to_bits().is_negative(), rhs_is_neg) {
                     (false, true) => return Some(Ordering::Greater),
                     (true, false) => return Some(Ordering::Less),
                     _ => {}
                 }
-                let conv = rhs.to_fixed_helper(Self::FRAC_NBITS, Self::INT_NBITS);
                 if conv.overflow {
                     return if rhs_is_neg {
                         Some(Ordering::Greater)
@@ -242,19 +243,18 @@ macro_rules! fixed_cmp_float {
 
             #[inline]
             fn lt(&self, rhs: &$Float) -> bool {
-                if SealedFloat::is_nan(*rhs) {
-                    return false;
-                }
-                let rhs_is_neg = SealedFloat::is_sign_negative(*rhs);
-                if SealedFloat::is_infinite(*rhs) {
-                    return !rhs_is_neg;
-                }
+                let (rhs_is_neg, conv) =
+                    match rhs.to_float_kind(Self::frac_nbits(), Self::int_nbits()) {
+                        FloatKind::NaN => return false,
+                        FloatKind::Infinite { neg } => return !neg,
+                        FloatKind::Finite { neg, conv } => (neg, conv),
+                    };
+
                 match (self.to_bits().is_negative(), rhs_is_neg) {
                     (false, true) => return false,
                     (true, false) => return true,
                     _ => {}
                 }
-                let conv = rhs.to_fixed_helper(Self::FRAC_NBITS, Self::INT_NBITS);
                 if conv.overflow {
                     return !rhs_is_neg;
                 }
@@ -268,7 +268,7 @@ macro_rules! fixed_cmp_float {
 
             #[inline]
             fn le(&self, rhs: &$Float) -> bool {
-                !SealedFloat::is_nan(*rhs) && !rhs.lt(self)
+                !FloatHelper::is_nan(*rhs) && !rhs.lt(self)
             }
 
             #[inline]
@@ -278,7 +278,7 @@ macro_rules! fixed_cmp_float {
 
             #[inline]
             fn ge(&self, rhs: &$Float) -> bool {
-                !SealedFloat::is_nan(*rhs) && !self.lt(rhs)
+                !FloatHelper::is_nan(*rhs) && !self.lt(rhs)
             }
         }
 
@@ -290,19 +290,19 @@ macro_rules! fixed_cmp_float {
 
             #[inline]
             fn lt(&self, rhs: &$Fix<Frac>) -> bool {
-                if SealedFloat::is_nan(*self) {
-                    return false;
-                }
-                let lhs_is_neg = SealedFloat::is_sign_negative(*self);
-                if SealedFloat::is_infinite(*self) {
-                    return lhs_is_neg;
-                }
+                let (lhs_is_neg, conv) = match self
+                    .to_float_kind(<$Fix<Frac>>::frac_nbits(), <$Fix<Frac>>::int_nbits())
+                {
+                    FloatKind::NaN => return false,
+                    FloatKind::Infinite { neg } => return neg,
+                    FloatKind::Finite { neg, conv } => (neg, conv),
+                };
+
                 match (lhs_is_neg, rhs.to_bits().is_negative()) {
                     (false, true) => return false,
                     (true, false) => return true,
                     _ => {}
                 }
-                let conv = self.to_fixed_helper(<$Fix<Frac>>::FRAC_NBITS, <$Fix<Frac>>::INT_NBITS);
                 if conv.overflow {
                     return lhs_is_neg;
                 }
@@ -316,7 +316,7 @@ macro_rules! fixed_cmp_float {
 
             #[inline]
             fn le(&self, rhs: &$Fix<Frac>) -> bool {
-                !SealedFloat::is_nan(*self) && !rhs.lt(self)
+                !FloatHelper::is_nan(*self) && !rhs.lt(self)
             }
 
             #[inline]
@@ -326,7 +326,7 @@ macro_rules! fixed_cmp_float {
 
             #[inline]
             fn ge(&self, rhs: &$Fix<Frac>) -> bool {
-                !SealedFloat::is_nan(*self) && !self.lt(rhs)
+                !FloatHelper::is_nan(*self) && !self.lt(rhs)
             }
         }
     };
@@ -407,8 +407,8 @@ mod tests {
     #[test]
     fn cmp_signed() {
         use core::cmp::Ordering::*;
-        let neg1_16 = FixedI32::<frac::U16>::from_int(-1);
-        let neg1_20 = FixedI32::<frac::U20>::from_int(-1);
+        let neg1_16 = FixedI32::<frac::U16>::from_num(-1);
+        let neg1_20 = FixedI32::<frac::U20>::from_num(-1);
         let mut a = neg1_16;
         let mut b = neg1_20;
         // a = ffff.0000 = -1, b = fff.00000 = -1
@@ -460,8 +460,8 @@ mod tests {
     #[test]
     fn cmp_unsigned() {
         use core::cmp::Ordering::*;
-        let one_16 = FixedU32::<frac::U16>::from_int(1);
-        let one_20 = FixedU32::<frac::U20>::from_int(1);
+        let one_16 = FixedU32::<frac::U16>::from_num(1);
+        let one_20 = FixedU32::<frac::U20>::from_num(1);
         let mut a = one_16;
         let mut b = one_20;
         // a = 0001.0000 = 1, b = 001.00000 = 1

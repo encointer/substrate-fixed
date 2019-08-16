@@ -51,17 +51,22 @@ Various conversion methods are available:
 
 ### Version 0.4.2 news (unreleased)
 
-  * The new methods [`from_fixed`], [`from_int`] and [`from_float`]
-    were added to the [`Wrapping`] wrapper.
+  * The new methods [`from_num`] and [`to_num`] together with their
+    checked versions were added to all fixed-point numbers.
+  * The methods `from_fixed`, `to_fixed`, `from_int`, `to_int`,
+    `from_float`, and `to_float`, and their checked versions, were
+    deprecated.
+  * The new method [`from_num`][`Wrapping::from_num`] was added to the
+    [`Wrapping`] wrapper.
   * Bug fix: parsing of decimal fractions was fixed to give correctly
     rounded results for long decimal fraction strings, for example
     with four fractional bits, 0.96874999… (just below 31⁄32) and
     0.96875 (31⁄32) are now parsed correctly as 0.9375 (15⁄16) and 1.0.
 
+[`Wrapping::from_num`]: https://docs.rs/fixed/0.4.2/fixed/struct.Wrapping.html#method.from_num
 [`Wrapping`]: https://docs.rs/fixed/0.4.2/fixed/struct.Wrapping.html
-[`from_fixed`]: https://docs.rs/fixed/0.4.2/fixed/struct.Wrapping.html#method.from_fixed
-[`from_float`]: https://docs.rs/fixed/0.4.2/fixed/struct.Wrapping.html#method.from_float
-[`from_int`]: https://docs.rs/fixed/0.4.2/fixed/struct.Wrapping.html#method.from_int
+[`from_num`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.from_num
+[`to_num`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.to_num
 
 ### Version 0.4.1 news (2019-08-12)
 

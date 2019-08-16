@@ -63,11 +63,11 @@ Various conversion methods are available:
 use fixed::types::I20F12;
 
 // 19/3 = 6 1/3
-let six_and_third = I20F12::from_int(19) / 3;
+let six_and_third = I20F12::from_num(19) / 3;
 // four decimal digits for 12 binary digits
 assert_eq!(six_and_third.to_string(), "6.3333");
 // find the ceil and convert to i32
-assert_eq!(six_and_third.ceil().to_int::<i32>(), 7);
+assert_eq!(six_and_third.ceil().to_num::<i32>(), 7);
 // we can also compare directly to integers
 assert_eq!(six_and_third.ceil(), 7);
 ```
@@ -82,7 +82,7 @@ of eight, 16, 32, 64 or 128 bits.
 ```rust
 // −8 ≤ I4F4 < 8 with steps of 1/16 (about 0.06)
 use fixed::types::I4F4;
-let a = I4F4::from_int(1);
+let a = I4F4::from_num(1);
 // multiplication and division by integers are possible
 let ans1 = a / 5 * 17;
 // 1 / 5 × 17 = 3 2/5 (3.4), but we get 3 3/16 (3.19)
@@ -93,7 +93,7 @@ assert_eq!(ans1.to_string(), "3.19");
 use fixed::types::I4F12;
 let wider_a = I4F12::from(a);
 let wider_ans = wider_a / 5 * 17;
-let ans2 = I4F4::from_fixed(wider_ans);
+let ans2 = I4F4::from_num(wider_ans);
 // now the answer is the much closer 3 6/16 (3.38)
 assert_eq!(ans2, I4F4::from_bits((3 << 4) + 6));
 assert_eq!(ans2.to_string(), "3.38");
@@ -110,7 +110,7 @@ Note that we can convert from [`I4F4`] to [`I4F12`] using [`From`], as
 the target type has the same number of integer bits and a larger
 number of fractional bits. Converting from [`I4F12`] to [`I4F4`]
 cannot use [`From`] as we have less fractional bits, so we use
-[`from_fixed`] instead.
+[`from_num`] instead.
 
 ## Using the *fixed* crate
 
@@ -196,7 +196,7 @@ additional terms or conditions.
 [`U20F12`]: types/type.U20F12.html
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html
 [`frac::U12`]: frac/type.U12.html
-[`from_fixed`]: struct.FixedI8.html#method.from_fixed
+[`from_num`]: struct.FixedI8.html#method.from_num
 [const generics]: https://github.com/rust-lang/rust/issues/44580
 */
 #![no_std]
@@ -217,23 +217,22 @@ mod cmp;
 pub mod consts;
 mod convert;
 mod display;
+mod float_helper;
 pub mod frac;
 mod from_str;
+mod helpers;
+mod int_helper;
 pub mod sealed;
-mod sealed_fixed;
-mod sealed_float;
-mod sealed_int;
 #[cfg(feature = "serde")]
 mod serdeize;
 pub mod traits;
 pub mod types;
 mod wide_div;
 mod wrapping;
-
 use crate::{
     arith::MulDivDir,
     from_str::FromStrRadix,
-    sealed::{Fixed, Float, Int, SealedFixed, SealedFloat, SealedInt},
+    traits::{FromFixed, ToFixed},
     types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
 };
 pub use crate::{from_str::ParseFixedError, wrapping::Wrapping};
@@ -241,6 +240,7 @@ use core::{
     cmp::Ordering,
     hash::{Hash, Hasher},
     marker::PhantomData,
+    mem,
 };
 
 /// A prelude for users of the *fixed* crate.
@@ -268,19 +268,25 @@ mod macros_from_to;
 mod macros_round;
 #[macro_use]
 mod macros_checked_arith;
+#[macro_use]
+mod macros_deprecated;
 
 macro_rules! fixed {
-    ($description:expr, $Fixed:ident($Inner:ty, $LeEqU:tt, $s_nbits:expr), $Signedness:tt) => {
+    (
+        $description:expr,
+        $Fixed:ident($Inner:ty, $LeEqU:tt, $s_nbits:expr),
+        $UInner:ty, $Signedness:tt
+    ) => {
         fixed! {
             $description,
             $Fixed[stringify!($Fixed)]($Inner[stringify!($Inner)], $LeEqU, $s_nbits),
-            $Signedness
+            $UInner, $Signedness
         }
     };
     (
         $description:expr,
         $Fixed:ident[$s_fixed:expr]($Inner:ty[$s_inner:expr], $LeEqU:tt, $s_nbits:expr),
-        $Signedness:tt
+        $UInner:ty, $Signedness:tt
     ) => {
         comment!(
             $description,
@@ -298,7 +304,7 @@ use fixed::{frac::U3, ",
             "};
 let eleven = ",
             $s_fixed,
-            "::<U3>::from_int(11);
+            "::<U3>::from_num(11);
 assert_eq!(eleven, ",
             $s_fixed,
             "::<U3>::from_bits(11 << 3));
@@ -543,8 +549,8 @@ assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
 type Fix = fixed::",
                     $s_fixed,
                     "<fixed::frac::U4>;
-let five = Fix::from_int(5);
-let minus_five = Fix::from_int(-5);
+let five = Fix::from_num(5);
+let minus_five = Fix::from_num(-5);
 assert_eq!(five.abs(), five);
 assert_eq!(minus_five.abs(), five);
 ```
@@ -574,17 +580,17 @@ represented is almost certainly a bug.
 type Fix = fixed::",
                     $s_fixed,
                     "<fixed::frac::U4>;
-assert_eq!(Fix::from_int(5).signum(), 1);
-assert_eq!(Fix::from_int(0).signum(), 0);
-assert_eq!(Fix::from_int(-5).signum(), -1);
+assert_eq!(Fix::from_num(5).signum(), 1);
+assert_eq!(Fix::from_num(0).signum(), 0);
+assert_eq!(Fix::from_num(-5).signum(), -1);
 ```
 ";
                     #[inline]
                     pub fn signum(self) -> $Fixed<Frac> {
                         match self.to_bits().cmp(&0) {
                             Ordering::Equal => Self::from_bits(0),
-                            Ordering::Greater => 1.to_fixed(),
-                            Ordering::Less => (-1).to_fixed(),
+                            Ordering::Greater => Self::from_num(1),
+                            Ordering::Less => Self::from_num(-1),
                         }
                     }
                 );
@@ -682,9 +688,9 @@ assert!(Fix::max_value().checked_next_power_of_two().is_none());
 type Fix = fixed::",
                     $s_fixed,
                     "<fixed::frac::U4>;
-assert!(Fix::from_int(5).is_positive());
-assert!(!Fix::from_int(0).is_positive());
-assert!(!Fix::from_int(-5).is_positive());
+assert!(Fix::from_num(5).is_positive());
+assert!(!Fix::from_num(0).is_positive());
+assert!(!Fix::from_num(-5).is_positive());
 ```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
@@ -701,9 +707,9 @@ assert!(!Fix::from_int(-5).is_positive());
 type Fix = fixed::",
                     $s_fixed,
                     "<fixed::frac::U4>;
-assert!(!Fix::from_int(5).is_negative());
-assert!(!Fix::from_int(0).is_negative());
-assert!(Fix::from_int(-5).is_negative());
+assert!(!Fix::from_num(5).is_negative());
+assert!(!Fix::from_num(0).is_negative());
+assert!(Fix::from_num(-5).is_negative());
 ```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
@@ -711,20 +717,35 @@ assert!(Fix::from_int(-5).is_negative());
                     $Fixed($Inner) => fn is_negative(self) -> bool
                 );
             }
+
+            fixed_deprecated! { $Fixed($Inner) }
+
+            // some useful constants
+            const INT_NBITS: u32 = mem::size_of::<$Inner>() as u32 * 8 - Self::FRAC_NBITS;
+            // split shift in two parts to avoid overflow when INT_NBITS = 0
+            const INT_MASK: $Inner =
+                !0 << (Self::FRAC_NBITS / 2) << (Self::FRAC_NBITS - Self::FRAC_NBITS / 2);
+            const INT_LSB: $Inner = Self::INT_MASK ^ (Self::INT_MASK << 1);
+            // 0 when FRAC_NBITS = 0
+            const FRAC_NBITS: u32 = Frac::U32;
+            const FRAC_MASK: $Inner = !Self::INT_MASK;
+            // 0 when INT_NBITS = 0
+            const FRAC_MSB: $Inner =
+                Self::FRAC_MASK ^ ((Self::FRAC_MASK as $UInner) >> 1) as $Inner;
         }
     };
 }
 
-fixed! { "An eight-bit fixed-point unsigned", FixedU8(u8, LeEqU8, "8"), Unsigned }
-fixed! { "A 16-bit fixed-point unsigned", FixedU16(u16, LeEqU16, "16"), Unsigned }
-fixed! { "A 32-bit fixed-point unsigned", FixedU32(u32, LeEqU32, "32"), Unsigned }
-fixed! { "A 64-bit fixed-point unsigned", FixedU64(u64, LeEqU64, "64"), Unsigned }
-fixed! { "A 128-bit fixed-point unsigned", FixedU128(u128, LeEqU128, "128"), Unsigned }
-fixed! { "An eight-bit fixed-point signed", FixedI8(i8, LeEqU8, "8"), Signed }
-fixed! { "A 16-bit fixed-point signed", FixedI16(i16, LeEqU16, "16"), Signed }
-fixed! { "A 32-bit fixed-point signed", FixedI32(i32, LeEqU32, "32"), Signed }
-fixed! { "A 64-bit fixed-point signed", FixedI64(i64, LeEqU64, "64"), Signed }
-fixed! { "A 128-bit fixed-point signed", FixedI128(i128, LeEqU128, "128"), Signed }
+fixed! { "An eight-bit fixed-point unsigned", FixedU8(u8, LeEqU8, "8"), u8, Unsigned }
+fixed! { "A 16-bit fixed-point unsigned", FixedU16(u16, LeEqU16, "16"), u16, Unsigned }
+fixed! { "A 32-bit fixed-point unsigned", FixedU32(u32, LeEqU32, "32"), u32, Unsigned }
+fixed! { "A 64-bit fixed-point unsigned", FixedU64(u64, LeEqU64, "64"), u64, Unsigned }
+fixed! { "A 128-bit fixed-point unsigned", FixedU128(u128, LeEqU128, "128"), u128, Unsigned }
+fixed! { "An eight-bit fixed-point signed", FixedI8(i8, LeEqU8, "8"), u8, Signed }
+fixed! { "A 16-bit fixed-point signed", FixedI16(i16, LeEqU16, "16"), u16, Signed }
+fixed! { "A 32-bit fixed-point signed", FixedI32(i32, LeEqU32, "32"), u32, Signed }
+fixed! { "A 64-bit fixed-point signed", FixedI64(i64, LeEqU64, "64"), u64, Signed }
+fixed! { "A 128-bit fixed-point signed", FixedI128(i128, LeEqU128, "128"), u128, Signed }
 
 #[cfg(test)]
 mod tests {
@@ -735,170 +756,170 @@ mod tests {
     fn rounding() {
         // -0.5
         let f = I0F32::from_bits(-1 << 31);
-        assert_eq!(f.to_int::<i32>(), -1);
-        assert_eq!(f.overflowing_ceil(), (I0F32::from_int(0), false));
-        assert_eq!(f.overflowing_floor(), (I0F32::from_int(0), true));
-        assert_eq!(f.overflowing_round(), (I0F32::from_int(0), true));
+        assert_eq!(f.to_num::<i32>(), -1);
+        assert_eq!(f.overflowing_ceil(), (I0F32::from_num(0), false));
+        assert_eq!(f.overflowing_floor(), (I0F32::from_num(0), true));
+        assert_eq!(f.overflowing_round(), (I0F32::from_num(0), true));
 
         // -0.5 + Δ
         let f = I0F32::from_bits((-1 << 31) + 1);
-        assert_eq!(f.to_int::<i32>(), -1);
-        assert_eq!(f.overflowing_ceil(), (I0F32::from_int(0), false));
-        assert_eq!(f.overflowing_floor(), (I0F32::from_int(0), true));
-        assert_eq!(f.overflowing_round(), (I0F32::from_int(0), false));
+        assert_eq!(f.to_num::<i32>(), -1);
+        assert_eq!(f.overflowing_ceil(), (I0F32::from_num(0), false));
+        assert_eq!(f.overflowing_floor(), (I0F32::from_num(0), true));
+        assert_eq!(f.overflowing_round(), (I0F32::from_num(0), false));
 
         // 0.5 - Δ
         let f = I0F32::from_bits((1 << 30) - 1 + (1 << 30));
-        assert_eq!(f.to_int::<i32>(), 0);
-        assert_eq!(f.overflowing_ceil(), (I0F32::from_int(0), true));
-        assert_eq!(f.overflowing_floor(), (I0F32::from_int(0), false));
-        assert_eq!(f.overflowing_round(), (I0F32::from_int(0), false));
+        assert_eq!(f.to_num::<i32>(), 0);
+        assert_eq!(f.overflowing_ceil(), (I0F32::from_num(0), true));
+        assert_eq!(f.overflowing_floor(), (I0F32::from_num(0), false));
+        assert_eq!(f.overflowing_round(), (I0F32::from_num(0), false));
 
         // 0.5 - Δ
         let f = U0F32::from_bits((1 << 31) - 1);
-        assert_eq!(f.to_int::<i32>(), 0);
-        assert_eq!(f.overflowing_ceil(), (U0F32::from_int(0), true));
-        assert_eq!(f.overflowing_floor(), (U0F32::from_int(0), false));
-        assert_eq!(f.overflowing_round(), (U0F32::from_int(0), false));
+        assert_eq!(f.to_num::<i32>(), 0);
+        assert_eq!(f.overflowing_ceil(), (U0F32::from_num(0), true));
+        assert_eq!(f.overflowing_floor(), (U0F32::from_num(0), false));
+        assert_eq!(f.overflowing_round(), (U0F32::from_num(0), false));
 
         // 0.5
         let f = U0F32::from_bits(1 << 31);
-        assert_eq!(f.to_int::<i32>(), 0);
-        assert_eq!(f.overflowing_ceil(), (U0F32::from_int(0), true));
-        assert_eq!(f.overflowing_floor(), (U0F32::from_int(0), false));
-        assert_eq!(f.overflowing_round(), (U0F32::from_int(0), true));
+        assert_eq!(f.to_num::<i32>(), 0);
+        assert_eq!(f.overflowing_ceil(), (U0F32::from_num(0), true));
+        assert_eq!(f.overflowing_floor(), (U0F32::from_num(0), false));
+        assert_eq!(f.overflowing_round(), (U0F32::from_num(0), true));
 
         // 0.5 + Δ
         let f = U0F32::from_bits((1 << 31) + 1);
-        assert_eq!(f.to_int::<i32>(), 0);
-        assert_eq!(f.overflowing_ceil(), (U0F32::from_int(0), true));
-        assert_eq!(f.overflowing_floor(), (U0F32::from_int(0), false));
-        assert_eq!(f.overflowing_round(), (U0F32::from_int(0), true));
+        assert_eq!(f.to_num::<i32>(), 0);
+        assert_eq!(f.overflowing_ceil(), (U0F32::from_num(0), true));
+        assert_eq!(f.overflowing_floor(), (U0F32::from_num(0), false));
+        assert_eq!(f.overflowing_round(), (U0F32::from_num(0), true));
 
         // -3.5 - Δ
         let f = I16F16::from_bits(((-7) << 15) - 1);
-        assert_eq!(f.to_int::<i32>(), -4);
-        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(-3), false));
-        assert_eq!(f.overflowing_floor(), (I16F16::from_int(-4), false));
-        assert_eq!(f.overflowing_round(), (I16F16::from_int(-4), false));
+        assert_eq!(f.to_num::<i32>(), -4);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_num(-3), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_num(-4), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_num(-4), false));
 
         // -3.5
         let f = I16F16::from_bits((-7) << 15);
-        assert_eq!(f.to_int::<i32>(), -4);
-        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(-3), false));
-        assert_eq!(f.overflowing_floor(), (I16F16::from_int(-4), false));
-        assert_eq!(f.overflowing_round(), (I16F16::from_int(-4), false));
+        assert_eq!(f.to_num::<i32>(), -4);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_num(-3), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_num(-4), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_num(-4), false));
 
         // -3.5 + Δ
         let f = I16F16::from_bits(((-7) << 15) + 1);
-        assert_eq!(f.to_int::<i32>(), -4);
-        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(-3), false));
-        assert_eq!(f.overflowing_floor(), (I16F16::from_int(-4), false));
-        assert_eq!(f.overflowing_round(), (I16F16::from_int(-3), false));
+        assert_eq!(f.to_num::<i32>(), -4);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_num(-3), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_num(-4), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_num(-3), false));
 
         // -0.5 - Δ
         let f = I16F16::from_bits(((-1) << 15) - 1);
-        assert_eq!(f.to_int::<i32>(), -1);
-        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(0), false));
-        assert_eq!(f.overflowing_floor(), (I16F16::from_int(-1), false));
-        assert_eq!(f.overflowing_round(), (I16F16::from_int(-1), false));
+        assert_eq!(f.to_num::<i32>(), -1);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_num(0), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_num(-1), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_num(-1), false));
 
         // -0.5
         let f = I16F16::from_bits((-1) << 15);
-        assert_eq!(f.to_int::<i32>(), -1);
-        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(0), false));
-        assert_eq!(f.overflowing_floor(), (I16F16::from_int(-1), false));
-        assert_eq!(f.overflowing_round(), (I16F16::from_int(-1), false));
+        assert_eq!(f.to_num::<i32>(), -1);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_num(0), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_num(-1), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_num(-1), false));
 
         // -0.5 + Δ
         let f = I16F16::from_bits(((-1) << 15) + 1);
-        assert_eq!(f.to_int::<i32>(), -1);
-        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(0), false));
-        assert_eq!(f.overflowing_floor(), (I16F16::from_int(-1), false));
-        assert_eq!(f.overflowing_round(), (I16F16::from_int(0), false));
+        assert_eq!(f.to_num::<i32>(), -1);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_num(0), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_num(-1), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_num(0), false));
 
         // 0.5 - Δ
         let f = I16F16::from_bits((1 << 15) - 1);
-        assert_eq!(f.to_int::<i32>(), 0);
-        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(1), false));
-        assert_eq!(f.overflowing_floor(), (I16F16::from_int(0), false));
-        assert_eq!(f.overflowing_round(), (I16F16::from_int(0), false));
+        assert_eq!(f.to_num::<i32>(), 0);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_num(1), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_num(0), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_num(0), false));
 
         // 0.5
         let f = I16F16::from_bits(1 << 15);
-        assert_eq!(f.to_int::<i32>(), 0);
-        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(1), false));
-        assert_eq!(f.overflowing_floor(), (I16F16::from_int(0), false));
-        assert_eq!(f.overflowing_round(), (I16F16::from_int(1), false));
+        assert_eq!(f.to_num::<i32>(), 0);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_num(1), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_num(0), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_num(1), false));
 
         // 0.5 + Δ
         let f = I16F16::from_bits((1 << 15) + 1);
-        assert_eq!(f.to_int::<i32>(), 0);
-        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(1), false));
-        assert_eq!(f.overflowing_floor(), (I16F16::from_int(0), false));
-        assert_eq!(f.overflowing_round(), (I16F16::from_int(1), false));
+        assert_eq!(f.to_num::<i32>(), 0);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_num(1), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_num(0), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_num(1), false));
 
         // 3.5 - Δ
         let f = I16F16::from_bits((7 << 15) - 1);
-        assert_eq!(f.to_int::<i32>(), 3);
-        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(4), false));
-        assert_eq!(f.overflowing_floor(), (I16F16::from_int(3), false));
-        assert_eq!(f.overflowing_round(), (I16F16::from_int(3), false));
+        assert_eq!(f.to_num::<i32>(), 3);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_num(4), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_num(3), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_num(3), false));
 
         // 3.5
         let f = I16F16::from_bits(7 << 15);
-        assert_eq!(f.to_int::<i32>(), 3);
-        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(4), false));
-        assert_eq!(f.overflowing_floor(), (I16F16::from_int(3), false));
-        assert_eq!(f.overflowing_round(), (I16F16::from_int(4), false));
+        assert_eq!(f.to_num::<i32>(), 3);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_num(4), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_num(3), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_num(4), false));
 
         // 3.5 + Δ
         let f = I16F16::from_bits((7 << 15) + 1);
-        assert_eq!(f.to_int::<i32>(), 3);
-        assert_eq!(f.overflowing_ceil(), (I16F16::from_int(4), false));
-        assert_eq!(f.overflowing_floor(), (I16F16::from_int(3), false));
-        assert_eq!(f.overflowing_round(), (I16F16::from_int(4), false));
+        assert_eq!(f.to_num::<i32>(), 3);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_num(4), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_num(3), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_num(4), false));
 
         // 0.5 - Δ
         let f = U16F16::from_bits((1 << 15) - 1);
-        assert_eq!(f.to_int::<i32>(), 0);
-        assert_eq!(f.overflowing_ceil(), (U16F16::from_int(1), false));
-        assert_eq!(f.overflowing_floor(), (U16F16::from_int(0), false));
-        assert_eq!(f.overflowing_round(), (U16F16::from_int(0), false));
+        assert_eq!(f.to_num::<i32>(), 0);
+        assert_eq!(f.overflowing_ceil(), (U16F16::from_num(1), false));
+        assert_eq!(f.overflowing_floor(), (U16F16::from_num(0), false));
+        assert_eq!(f.overflowing_round(), (U16F16::from_num(0), false));
 
         // 0.5
         let f = U16F16::from_bits(1 << 15);
-        assert_eq!(f.to_int::<i32>(), 0);
-        assert_eq!(f.overflowing_ceil(), (U16F16::from_int(1), false));
-        assert_eq!(f.overflowing_floor(), (U16F16::from_int(0), false));
-        assert_eq!(f.overflowing_round(), (U16F16::from_int(1), false));
+        assert_eq!(f.to_num::<i32>(), 0);
+        assert_eq!(f.overflowing_ceil(), (U16F16::from_num(1), false));
+        assert_eq!(f.overflowing_floor(), (U16F16::from_num(0), false));
+        assert_eq!(f.overflowing_round(), (U16F16::from_num(1), false));
 
         // 0.5 + Δ
         let f = U16F16::from_bits((1 << 15) + 1);
-        assert_eq!(f.to_int::<i32>(), 0);
-        assert_eq!(f.overflowing_ceil(), (U16F16::from_int(1), false));
-        assert_eq!(f.overflowing_floor(), (U16F16::from_int(0), false));
-        assert_eq!(f.overflowing_round(), (U16F16::from_int(1), false));
+        assert_eq!(f.to_num::<i32>(), 0);
+        assert_eq!(f.overflowing_ceil(), (U16F16::from_num(1), false));
+        assert_eq!(f.overflowing_floor(), (U16F16::from_num(0), false));
+        assert_eq!(f.overflowing_round(), (U16F16::from_num(1), false));
 
         // 3.5 - Δ
         let f = U16F16::from_bits((7 << 15) - 1);
-        assert_eq!(f.to_int::<i32>(), 3);
-        assert_eq!(f.overflowing_ceil(), (U16F16::from_int(4), false));
-        assert_eq!(f.overflowing_floor(), (U16F16::from_int(3), false));
-        assert_eq!(f.overflowing_round(), (U16F16::from_int(3), false));
+        assert_eq!(f.to_num::<i32>(), 3);
+        assert_eq!(f.overflowing_ceil(), (U16F16::from_num(4), false));
+        assert_eq!(f.overflowing_floor(), (U16F16::from_num(3), false));
+        assert_eq!(f.overflowing_round(), (U16F16::from_num(3), false));
 
         // 3.5
         let f = U16F16::from_bits(7 << 15);
-        assert_eq!(f.to_int::<i32>(), 3);
-        assert_eq!(f.overflowing_ceil(), (U16F16::from_int(4), false));
-        assert_eq!(f.overflowing_floor(), (U16F16::from_int(3), false));
-        assert_eq!(f.overflowing_round(), (U16F16::from_int(4), false));
+        assert_eq!(f.to_num::<i32>(), 3);
+        assert_eq!(f.overflowing_ceil(), (U16F16::from_num(4), false));
+        assert_eq!(f.overflowing_floor(), (U16F16::from_num(3), false));
+        assert_eq!(f.overflowing_round(), (U16F16::from_num(4), false));
 
         // 3.5 + Δ
         let f = U16F16::from_bits((7 << 15) + 1);
-        assert_eq!(f.to_int::<i32>(), 3);
-        assert_eq!(f.overflowing_ceil(), (U16F16::from_int(4), false));
-        assert_eq!(f.overflowing_floor(), (U16F16::from_int(3), false));
-        assert_eq!(f.overflowing_round(), (U16F16::from_int(4), false));
+        assert_eq!(f.to_num::<i32>(), 3);
+        assert_eq!(f.overflowing_ceil(), (U16F16::from_num(4), false));
+        assert_eq!(f.overflowing_floor(), (U16F16::from_num(3), false));
+        assert_eq!(f.overflowing_round(), (U16F16::from_num(4), false));
     }
 }

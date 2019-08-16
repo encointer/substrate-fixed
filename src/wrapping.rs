@@ -14,8 +14,7 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
-    sealed::{Fixed as SealedFixed, Float, Int},
-    traits::{Fixed, FixedSigned, FromFixed, ToFixed},
+    traits::{Fixed, FixedSigned, ToFixed},
     types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
@@ -49,88 +48,72 @@ use core::{
 pub struct Wrapping<F>(pub F);
 
 impl<F: Fixed> Wrapping<F> {
-    /// Wrapping conversion from another fixed-point number.
+    /// Wrapping conversion from another number.
     ///
-    /// Any extra fractional bits are truncated.
+    /// The other number can be:
     ///
-    /// # Examples
+    ///   * A fixed-point number. Any extra fractional bits are truncated.
+    ///   * An integer of type [`i8`], [`i16`], [`i32`], [`i64`], [`i128`],
+    ///     [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], or
+    ///     [`usize`].
+    ///   * A floating-point number of type [`f32`] or [`f64`]. If the [`f16`
+    ///     feature] is enabled, it can also be of type [`f16`]. For this
+    ///     conversion, the method rounds to the nearest, with ties rounding
+    ///     to even.
+    ///   * Any other number `src` for which [`ToFixed`] is implemented, in
+    ///     which case this method returns
+    ///     <code>[Wrapping][`Wrapping`]&lt;[src.wrapping_to_fixed()][`wrapping_to_fixed`]&gt;</code>.
     ///
-    /// ```rust
-    /// use fixed::Wrapping;
-    /// type Src = fixed::types::I16F16;
-    /// type Dst = fixed::types::I4F4;
-    /// // 0x1234.5678 wrapped into 0x4.5
-    /// let src = Src::from_bits(0x1234_5678);
-    /// let dst = Wrapping::<Dst>::from_fixed(src);
-    /// assert_eq!(dst, Wrapping(Dst::from_bits(0x45)));
-    /// ```
-    pub fn from_fixed<Src: SealedFixed>(val: Src) -> Self {
-        Wrapping(<F as FromFixed>::wrapping_from_fixed(val))
-    }
-
-    /// Wrapping conversion from an integer.
+    /// # Panics
     ///
-    /// The integer can be of type [`i8`], [`i16`], [`i32`], [`i64`],
-    /// [`i128`], [`isize`], [`u8`], [`u16`], [`u32`], [`u64`],
-    /// [`u128`], and [`usize`].
+    /// For floating-point numbers, panics if the value is not [finite].
     ///
     /// # Examples
     ///
     /// ```rust
-    /// use fixed::Wrapping;
-    /// type Fix = fixed::types::I4F4;
-    /// // 0x1234 wrapped into 0x4.0
-    /// let src = 0x1234_i32;
-    /// let dst = Wrapping::<Fix>::from_int(src);
-    /// assert_eq!(dst, Wrapping(Fix::from_bits(0x40)));
+    /// use fixed::{
+    ///     types::{I4F4, I16F16},
+    ///     Wrapping,
+    /// };
+    ///
+    /// // 0x1234.5678 wraps into 0x4.5
+    /// let src = I16F16::from_bits(0x1234_5678);
+    /// let dst = Wrapping::<I4F4>::from_num(src);
+    /// assert_eq!(dst, Wrapping(I4F4::from_bits(0x45)));
+    ///
+    /// // 0x1234 wraps into 0x4.0
+    /// let src_int = 0x1234_i32;
+    /// let dst_int = Wrapping::<I4F4>::from_num(src_int);
+    /// assert_eq!(dst_int, Wrapping(I4F4::from_bits(0x40)));
+    ///
+    /// // 129.75 wrapped into 1.75 (binary 1.1100)
+    /// let src_float = 129.75;
+    /// let dst_float = Wrapping::<I4F4>::from_num(src_float);
+    /// assert_eq!(dst_float, Wrapping(I4F4::from_bits(0b11100)));
     /// ```
     ///
+    /// [`ToFixed`]: traits/trait.ToFixed.html
+    /// [`Wrapping`]: struct.Wrapping.html
+    /// [`f16` feature]: index.html#optional-features
+    /// [`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
+    /// [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
+    /// [`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html
     /// [`i128`]: https://doc.rust-lang.org/nightly/std/primitive.i128.html
     /// [`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
     /// [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
     /// [`i64`]: https://doc.rust-lang.org/nightly/std/primitive.i64.html
     /// [`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
     /// [`isize`]: https://doc.rust-lang.org/nightly/std/primitive.isize.html
+    /// [`wrapping_to_fixed`]: traits/trait.ToFixed.html#tymethod.wrapping_to_fixed
     /// [`u128`]: https://doc.rust-lang.org/nightly/std/primitive.u128.html
     /// [`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
     /// [`u32`]: https://doc.rust-lang.org/nightly/std/primitive.u32.html
     /// [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
     /// [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
     /// [`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
-    pub fn from_int<I: Int>(val: I) -> Self {
-        Wrapping(F::wrapping_from_int(val))
-    }
-
-    /// Wrapping conversion from a floating-point number.
-    ///
-    /// The floating-point value can be of type [`f32`] or [`f64`]. If
-    /// the [`f16` feature] is enabled, it can also be of type
-    /// [`f16`].
-    ///
-    /// This method rounds to the nearest, with ties rounding to even.
-    ///
-    /// # Panics
-    ///
-    /// This method panics if the value is not [finite].
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use fixed::Wrapping;
-    /// type Fix = fixed::types::I4F4;
-    /// // 129.75 wrapped into 1.75
-    /// let src = 129.75;
-    /// let dst = Wrapping::<Fix>::from_float(src);
-    /// assert_eq!(dst, Wrapping(Fix::from_float(1.75)));
-    /// ```
-    ///
-    /// [`f16` feature]: index.html#optional-features
-    /// [`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
-    /// [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
-    /// [`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html
     /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
-    pub fn from_float<Src: Float>(val: Src) -> Self {
-        Wrapping(F::wrapping_from_float(val))
+    pub fn from_num<Src: ToFixed>(src: Src) -> Self {
+        Wrapping(src.wrapping_to_fixed())
     }
 
     /// Wrapping ceil. Rounds to the next integer towards +∞, wrapping
@@ -141,8 +124,8 @@ impl<F: Fixed> Wrapping<F> {
     /// ```rust
     /// use fixed::Wrapping;
     /// type Fix = fixed::types::I16F16;
-    /// let two_half = Wrapping(Fix::from_int(5) / 2);
-    /// assert_eq!(two_half.ceil(), Wrapping(Fix::from_int(3)));
+    /// let two_half = Wrapping(Fix::from_num(5) / 2);
+    /// assert_eq!(two_half.ceil(), Wrapping(Fix::from_num(3)));
     /// assert_eq!(Wrapping(Fix::max_value()).ceil(), Wrapping(Fix::min_value()));
     /// ```
     pub fn ceil(self) -> Wrapping<F> {
@@ -160,10 +143,10 @@ impl<F: Fixed> Wrapping<F> {
     /// ```rust
     /// use fixed::Wrapping;
     /// type Fix = fixed::types::I16F16;
-    /// let two_half = Wrapping(Fix::from_int(5) / 2);
-    /// assert_eq!(two_half.floor(), Wrapping(Fix::from_int(2)));
+    /// let two_half = Wrapping(Fix::from_num(5) / 2);
+    /// assert_eq!(two_half.floor(), Wrapping(Fix::from_num(2)));
     /// type AllFrac = fixed::types::I0F32;
-    /// assert_eq!(Wrapping(AllFrac::min_value()).floor(), Wrapping(AllFrac::from_int(0)));
+    /// assert_eq!(Wrapping(AllFrac::min_value()).floor(), Wrapping(AllFrac::from_num(0)));
     /// ```
     pub fn floor(self) -> Wrapping<F> {
         Wrapping(self.0.wrapping_floor())
@@ -177,9 +160,9 @@ impl<F: Fixed> Wrapping<F> {
     /// ```rust
     /// use fixed::Wrapping;
     /// type Fix = fixed::types::I16F16;
-    /// let two_half = Wrapping(Fix::from_int(5) / 2);
-    /// assert_eq!(two_half.round(), Wrapping(Fix::from_int(3)));
-    /// assert_eq!((-two_half).round(), Wrapping(Fix::from_int(-3)));
+    /// let two_half = Wrapping(Fix::from_num(5) / 2);
+    /// assert_eq!(two_half.round(), Wrapping(Fix::from_num(3)));
+    /// assert_eq!((-two_half).round(), Wrapping(Fix::from_num(-3)));
     /// assert_eq!(Wrapping(Fix::max_value()).round(), Wrapping(Fix::min_value()));
     /// ```
     pub fn round(self) -> Wrapping<F> {
@@ -197,7 +180,7 @@ impl<F: Fixed> Wrapping<F> {
     /// ```rust
     /// use fixed::Wrapping;
     /// type Fix = fixed::types::I16F16;
-    /// assert_eq!(Wrapping(Fix::from_int(-5)).abs(), Wrapping(Fix::from_int(5)));
+    /// assert_eq!(Wrapping(Fix::from_num(-5)).abs(), Wrapping(Fix::from_num(5)));
     /// assert_eq!(Wrapping(Fix::min_value()).abs(), Wrapping(Fix::min_value()));
     /// ```
     pub fn abs(self) -> Wrapping<F>

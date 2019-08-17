@@ -65,15 +65,6 @@ macro_rules! comment {
 }
 
 macro_rules! delegate {
-    ($($comment:expr),*; $Fixed:ident($Inner:ty) => fn $method:ident()) => {
-        doc_comment! {
-            concat!($($comment),*);
-            #[inline]
-            pub fn $method() -> $Fixed<Frac> {
-                Self::from_bits(<$Inner>::$method())
-            }
-        }
-    };
     ($($comment:expr),*; $Fixed:ident => fn $method:ident(self)) => {
         doc_comment! {
             concat!($($comment),*);

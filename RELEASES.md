@@ -5,6 +5,12 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.4.3 (unreleased)
+==========================
+
+  * The following methods are now `const` functions:
+      * `min_value`, `max_value`, `from_bits`, `to_bits`
+
 Version 0.4.2 (2019-08-16)
 ==========================
 

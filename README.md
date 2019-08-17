@@ -49,6 +49,16 @@ Various conversion methods are available:
 
 ## What’s new
 
+### Version 0.4.3 news (unreleased)
+
+  * The following methods are now `const` functions:
+      * `min_value`, `max_value`, `from_bits`, `to_bits`
+
+[`from_bits`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.from_bits
+[`max_value`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.max_value
+[`min_value`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.min_value
+[`to_bits`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.to_bits
+
 ### Version 0.4.2 news (2019-08-16)
 
   * The new methods [`from_num`] and [`to_num`] together with their

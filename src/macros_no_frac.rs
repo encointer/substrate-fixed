@@ -20,7 +20,7 @@ macro_rules! fixed_no_frac {
         $UInner:ty, $Signedness:tt
     ) => {
         impl<Frac> $Fixed<Frac> {
-            delegate!(
+            comment!(
                 "Returns the smallest value that can be represented.
 
 # Examples
@@ -31,10 +31,13 @@ type Fix = ", $s_fixed, "<U4>;
 assert_eq!(Fix::min_value(), Fix::from_bits(", $s_inner, "::min_value()));
 ```
 ";
-                $Fixed($Inner) => fn min_value()
+                #[inline]
+                pub const fn min_value() -> $Fixed<Frac> {
+                    Self::from_bits(<$Inner>::min_value())
+                }
             );
 
-            delegate!(
+            comment!(
                 "Returns the largest value that can be represented.
 
 # Examples
@@ -45,7 +48,10 @@ type Fix = ", $s_fixed, "<U4>;
 assert_eq!(Fix::max_value(), Fix::from_bits(", $s_inner, "::max_value()));
 ```
 ";
-                $Fixed($Inner) => fn max_value()
+                #[inline]
+                pub const fn max_value() -> $Fixed<Frac> {
+                    Self::from_bits(<$Inner>::max_value())
+                }
             );
 
             comment!(
@@ -62,7 +68,7 @@ assert_eq!(Fix::from_bits(0b10_0000), 2);
 ```
 ";
                 #[inline]
-                pub fn from_bits(bits: $Inner) -> $Fixed<Frac> {
+                pub const fn from_bits(bits: $Inner) -> $Fixed<Frac> {
                     $Fixed {
                         bits,
                         phantom: PhantomData,
@@ -84,7 +90,7 @@ assert_eq!(Fix::from_num(2).to_bits(), 0b10_0000);
 ```
 ";
                 #[inline]
-                pub fn to_bits(self) -> $Inner {
+                pub const fn to_bits(self) -> $Inner {
                     self.bits
                 }
             );

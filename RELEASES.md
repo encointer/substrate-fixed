@@ -18,6 +18,7 @@ Version 0.4.3 (unreleased)
 	  * `overflowing_neg`, `overflowing_add`, `overflowing_sub`,
         `overflowing_mul_int`, `overflowing_shl`, `overflowing_shr`
       * `is_positive`, `is_negative`
+  * The associated constants `INT_NBITS` and `FRAC_NBITS` were added.
 
 Version 0.4.2 (2019-08-16)
 ==========================

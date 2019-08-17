@@ -21,6 +21,47 @@ macro_rules! fixed_frac {
     ) => {
         impl<Frac: $LeEqU> $Fixed<Frac> {
             comment!(
+                "The number of integer bits.
+
+# Examples
+
+```rust
+use fixed::{frac::U6, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U6>;
+assert_eq!(Fix::INT_NBITS, ", $s_nbits, " - 6);
+```
+";
+                pub const INT_NBITS: u32 = mem::size_of::<$Inner>() as u32 * 8 - Self::FRAC_NBITS;
+            );
+
+            comment!(
+                "The number of fractional bits.
+
+# Examples
+
+```rust
+use fixed::{frac::U6, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U6>;
+assert_eq!(Fix::FRAC_NBITS, 6);
+```
+";
+                pub const FRAC_NBITS: u32 = Frac::U32;
+            );
+
+            // some other useful constants for internal use:
+
+            const INT_MASK: $Inner =
+                !0 << (Self::FRAC_NBITS / 2) << (Self::FRAC_NBITS - Self::FRAC_NBITS / 2);
+            const FRAC_MASK: $Inner = !Self::INT_MASK;
+
+            // 0 when FRAC_NBITS = 0
+            const INT_LSB: $Inner = Self::INT_MASK ^ (Self::INT_MASK << 1);
+
+            // 0 when INT_NBITS = 0
+            const FRAC_MSB: $Inner =
+                Self::FRAC_MASK ^ ((Self::FRAC_MASK as $UInner) >> 1) as $Inner;
+
+            comment!(
                 "Returns the number of integer bits.
 
 # Examples
@@ -301,19 +342,6 @@ assert_eq!(Fix::max_value().overflowing_div(quarter), (wrapped, true));
             );
 
             fixed_deprecated! { $Fixed($Inner) }
-
-            // some useful constants
-            const INT_NBITS: u32 = mem::size_of::<$Inner>() as u32 * 8 - Self::FRAC_NBITS;
-            // split shift in two parts to avoid overflow when INT_NBITS = 0
-            const INT_MASK: $Inner =
-                !0 << (Self::FRAC_NBITS / 2) << (Self::FRAC_NBITS - Self::FRAC_NBITS / 2);
-            const INT_LSB: $Inner = Self::INT_MASK ^ (Self::INT_MASK << 1);
-            // 0 when FRAC_NBITS = 0
-            const FRAC_NBITS: u32 = Frac::U32;
-            const FRAC_MASK: $Inner = !Self::INT_MASK;
-            // 0 when INT_NBITS = 0
-            const FRAC_MSB: $Inner =
-                Self::FRAC_MASK ^ ((Self::FRAC_MASK as $UInner) >> 1) as $Inner;
         }
     };
 }

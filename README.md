@@ -62,7 +62,10 @@ Various conversion methods are available:
         [`overflowing_mul_int`], [`overflowing_shl`],
         [`overflowing_shr`]
       * [`is_positive`], [`is_negative`]
+  * The associated constants [`INT_NBITS`] and [`FRAC_NBITS`] were added.
 
+[`FRAC_NBITS`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#associatedconstant.FRAC_NBITS
+[`INT_NBITS`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#associatedconstant.INT_NBITS
 [`count_ones`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.count_ones
 [`count_zeros`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.count_zeros
 [`from_bits`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.from_bits
@@ -86,7 +89,6 @@ Various conversion methods are available:
 [`wrapping_neg`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_neg
 [`wrapping_shl`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_shl
 [`wrapping_shr`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_shr
-[`wrapping_sub`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_sub
 
 ### Version 0.4.2 news (2019-08-16)
 

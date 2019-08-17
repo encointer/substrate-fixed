@@ -1559,7 +1559,7 @@ mod tests {
             .collect();
 
         let zero = String::from("0.") + eps_frac;
-        let gt_0 = String::from(&zero) + "000001";
+        let gt_0 = String::from(&*zero) + "000001";
         let max = String::from(max_int) + &eps_frac_compl + "999999";
         let over = String::from(max_int) + without_last(&eps_frac_compl) + "5";
         Fractions {

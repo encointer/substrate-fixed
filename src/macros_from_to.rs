@@ -16,47 +16,6 @@
 macro_rules! fixed_from_to {
     ($Fixed:ident[$s_fixed:expr]($Inner:ty[$s_inner:expr], $s_nbits:expr), $Signedness:tt) => {
         comment!(
-            "Creates a fixed-point number that has a bitwise
-representation identical to the given integer.
-
-# Examples
-
-```rust
-use fixed::{frac::U4, ", $s_fixed, "};
-type Fix = ", $s_fixed, "<U4>;
-// 0010.0000 == 2
-assert_eq!(Fix::from_bits(0b10_0000), 2);
-```
-";
-            #[inline]
-            pub fn from_bits(bits: $Inner) -> $Fixed<Frac> {
-                $Fixed {
-                    bits,
-                    phantom: PhantomData,
-                }
-            }
-        );
-
-        comment!(
-            "Creates an integer that has a bitwise representation
-identical to the given fixed-point number.
-
-# Examples
-
-```rust
-use fixed::{frac::U4, ", $s_fixed, "};
-type Fix = ", $s_fixed, "<U4>;
-// 2 is 0010.0000
-assert_eq!(Fix::from_num(2).to_bits(), 0b10_0000);
-```
-";
-            #[inline]
-            pub fn to_bits(self) -> $Inner {
-                self.bits
-            }
-        );
-
-        comment!(
             "Creates a fixed-point number from another number.
 
 The other number can be:

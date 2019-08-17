@@ -169,7 +169,6 @@ depending on the crate’s [optional features].
 /// is [`u8`] or [`i8`].)
 ///
 /// ```rust
-/// # #[cfg(try_from)] {
 /// use fixed::{traits::Fixed, types::I12F4};
 /// use std::convert::TryFrom;
 ///
@@ -183,7 +182,6 @@ depending on the crate’s [optional features].
 ///
 /// let val = checked_add_times_500(I12F4::from_num(0.25), Fixed::from_num(1.5));
 /// assert_eq!(val, Some(Fixed::from_num(750.25)));
-/// # }
 /// ```
 ///
 /// [`FixedI128`]: ../struct.FixedI128.html

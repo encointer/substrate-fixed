@@ -28,8 +28,6 @@ fn main() {
         out_dir: PathBuf::from(cargo_env("OUT_DIR")),
         rustc: cargo_env("RUSTC"),
     };
-    // TryFrom is needed for some doc tests
-    env.check_feature("try_from", Optional(true), TRY_TRY_FROM, None);
 }
 
 #[derive(PartialEq)]
@@ -131,10 +129,3 @@ fn create_file_or_panic(filename: &Path, contents: &str) {
     file.write_all(contents.as_bytes())
         .unwrap_or_else(|_| panic!("Unable to write to file: {:?}", filename));
 }
-
-const TRY_TRY_FROM: &str = r#"// try_try_from.rs
-use std::convert::TryFrom;
-fn main() {
-    let _ = i8::try_from(1u64);
-}
-"#;

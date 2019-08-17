@@ -547,16 +547,14 @@ macro_rules! impl_from_str {
             type Err = ParseFixedError;
             #[inline]
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                $method(s.as_bytes(), 10, Self::int_nbits(), Self::frac_nbits())
-                    .map(Self::from_bits)
+                $method(s.as_bytes(), 10, Self::INT_NBITS, Self::FRAC_NBITS).map(Self::from_bits)
             }
         }
         impl<Frac: $LeEqU> FromStrRadix for $Fixed<Frac> {
             type Err = ParseFixedError;
             #[inline]
             fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::Err> {
-                $method(s.as_bytes(), radix, Self::int_nbits(), Self::frac_nbits())
-                    .map(Self::from_bits)
+                $method(s.as_bytes(), radix, Self::INT_NBITS, Self::FRAC_NBITS).map(Self::from_bits)
             }
         }
     };

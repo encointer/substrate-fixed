@@ -64,7 +64,7 @@ macro_rules! impl_sealed {
                 dst_int_nbits: u32,
             ) -> ToFixedHelper {
                 self.to_bits().to_fixed_helper(
-                    Self::frac_nbits() as i32,
+                    Self::FRAC_NBITS as i32,
                     dst_frac_nbits,
                     dst_int_nbits,
                 )

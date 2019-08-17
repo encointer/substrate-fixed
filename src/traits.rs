@@ -1399,7 +1399,7 @@ macro_rules! impl_fixed {
             }
             #[inline]
             fn saturating_from_fixed<F: Fixed>(src: F) -> Self {
-                let conv = src.private_to_fixed_helper(Self::frac_nbits(), Self::int_nbits());
+                let conv = src.private_to_fixed_helper(Self::FRAC_NBITS, Self::INT_NBITS);
                 if conv.overflow {
                     return if src < 0 {
                         Self::min_value()
@@ -1434,7 +1434,7 @@ macro_rules! impl_fixed {
             }
             #[inline]
             fn overflowing_from_fixed<F: Fixed>(src: F) -> (Self, bool) {
-                let conv = src.private_to_fixed_helper(Self::frac_nbits(), Self::int_nbits());
+                let conv = src.private_to_fixed_helper(Self::FRAC_NBITS, Self::INT_NBITS);
                 let mut new_overflow = false;
                 let bits = if_signed_unsigned!(
                     $Signedness,

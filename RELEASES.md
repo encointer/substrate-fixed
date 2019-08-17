@@ -11,6 +11,13 @@ Version 0.4.3 (unreleased)
   * The *fixed* crate now requires rustc version 1.34.0 or later.
   * The following methods are now `const` functions:
       * `min_value`, `max_value`, `from_bits`, `to_bits`
+	  * `count_ones`, `count_zeros`, `leading_zeros`, `trailing_zeros`
+        `rotate_left`, `rotate_right`
+	  * `wrapping_neg`, `wrapping_add`, `wrapping_sub`,
+        `wrapping_mul_int`, `wrapping_shl`, `wrapping_shr`
+	  * `overflowing_neg`, `overflowing_add`, `overflowing_sub`,
+        `overflowing_mul_int`, `overflowing_shl`, `overflowing_shr`
+      * `is_positive`, `is_negative`
 
 Version 0.4.2 (2019-08-16)
 ==========================

@@ -108,7 +108,7 @@ let f = Fix::from_bits(0b11_0010);
 assert_eq!(f.count_ones(), 3);
 ```
 ";
-                $Fixed => fn count_ones(self) -> u32
+                $Fixed => const fn count_ones(self) -> u32
             );
             delegate!(
                 "Returns the number of zeros in the binary
@@ -123,7 +123,7 @@ let f = Fix::from_bits(!0b11_0010);
 assert_eq!(f.count_zeros(), 3);
 ```
 ";
-                $Fixed => fn count_zeros(self) -> u32
+                $Fixed => const fn count_zeros(self) -> u32
             );
             delegate!(
                 "Returns the number of leading zeros in the binary
@@ -138,7 +138,7 @@ let f = Fix::from_bits(0b10_0000);
 assert_eq!(f.leading_zeros(), ", $s_nbits, " - 6);
 ```
 ";
-                $Fixed => fn leading_zeros(self) -> u32
+                $Fixed => const fn leading_zeros(self) -> u32
             );
             delegate!(
                 "Returns the number of trailing zeros in the binary
@@ -153,7 +153,7 @@ let f = Fix::from_bits(0b10_0000);
 assert_eq!(f.trailing_zeros(), 5);
 ```
 ";
-                $Fixed => fn trailing_zeros(self) -> u32
+                $Fixed => const fn trailing_zeros(self) -> u32
             );
             delegate!(
                 "Shifts to the left by *n* bits, wrapping the
@@ -170,7 +170,7 @@ assert_eq!(bits.rotate_left(3), rot);
 assert_eq!(Fix::from_bits(bits).rotate_left(3), Fix::from_bits(rot));
 ```
 ";
-                $Fixed => fn rotate_left(self, n: u32)
+                $Fixed => const fn rotate_left(self, n: u32)
             );
             delegate!(
                 "Shifts to the right by *n* bits, wrapping the
@@ -187,7 +187,7 @@ assert_eq!(bits.rotate_right(3), rot);
 assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
 ```
 ";
-                $Fixed => fn rotate_right(self, n: u32)
+                $Fixed => const fn rotate_right(self, n: u32)
             );
 
             if_signed! {
@@ -479,7 +479,7 @@ assert_eq!(Fix::from_num(5).saturating_neg(), Fix::from_num(0));",
                 }
             );
 
-            delegate!(
+            comment!(
                 "Saturating addition. Returns the sum, saturating on overflow.
 
 # Examples
@@ -491,10 +491,13 @@ assert_eq!(Fix::from_num(3).saturating_add(Fix::from_num(2)), Fix::from_num(5));
 assert_eq!(Fix::max_value().saturating_add(Fix::from_num(1)), Fix::max_value());
 ```
 ";
-                $Fixed => fn saturating_add(self, rhs)
+                #[inline]
+                pub fn saturating_add(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                    Self::from_bits(self.to_bits().saturating_add(rhs.to_bits()))
+                }
             );
 
-            delegate!(
+            comment!(
                 "Saturating subtraction. Returns the difference, saturating on overflow.
 
 # Examples
@@ -513,7 +516,10 @@ assert_eq!(Fix::from_num(0).saturating_sub(Fix::from_num(1)), Fix::from_num(0));
                 "
 ```
 ";
-                $Fixed => fn saturating_sub(self, rhs)
+                #[inline]
+                pub fn saturating_sub(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                    Self::from_bits(self.to_bits().saturating_sub(rhs.to_bits()))
+                }
             );
 
             comment!(
@@ -557,7 +563,7 @@ assert_eq!(Fix::min_value().saturating_abs(), Fix::max_value());
                 );
             }
 
-            delegate!(
+            comment!(
                 "Wrapping negation. Returns the negated value, wrapping on overflow.
 
 ",
@@ -586,10 +592,13 @@ assert_eq!(Fix::from_num(5).wrapping_neg(), Fix::from_bits(neg_five_bits));",
                 "
 ```
 ";
-                $Fixed => fn wrapping_neg(self)
+                #[inline]
+                pub const fn wrapping_neg(self) -> $Fixed<Frac> {
+                    Self::from_bits(self.to_bits().wrapping_neg())
+                }
             );
 
-            delegate!(
+            comment!(
                 "Wrapping addition. Returns the sum, wrapping on overflow.
 
 # Examples
@@ -605,10 +614,13 @@ assert_eq!(Fix::max_value().wrapping_add(one), ",
                 "one_minus_bit);
 ```
 ";
-                $Fixed => fn wrapping_add(self, rhs)
+                #[inline]
+                pub const fn wrapping_add(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                    Self::from_bits(self.to_bits().wrapping_add(rhs.to_bits()))
+                }
             );
 
-            delegate!(
+            comment!(
                 "Wrapping subtraction. Returns the difference, wrapping on overflow.
 
 # Examples
@@ -629,7 +641,10 @@ assert_eq!(Fix::from_num(0)",
                 ".wrapping_sub(one), Fix::max_value() - one_minus_bit);
 ```
 ";
-                $Fixed => fn wrapping_sub(self, rhs)
+                #[inline]
+                pub const fn wrapping_sub(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                    Self::from_bits(self.to_bits().wrapping_sub(rhs.to_bits()))
+                }
             );
 
             comment!(
@@ -646,7 +661,7 @@ assert_eq!(Fix::max_value().wrapping_mul_int(4), wrapped);
 ```
 ";
                 #[inline]
-                pub fn wrapping_mul_int(self, rhs: $Inner) -> $Fixed<Frac> {
+                pub const fn wrapping_mul_int(self, rhs: $Inner) -> $Fixed<Frac> {
                     Self::from_bits(self.to_bits().wrapping_mul(rhs))
                 }
             );
@@ -741,7 +756,7 @@ assert_eq!((Fix::from_num(1) / 2).wrapping_shl(3), Fix::from_num(4));
 assert_eq!((Fix::from_num(1) / 2).wrapping_shl(3 + ", $s_nbits, "), Fix::from_num(4));
 ```
 ";
-                $Fixed => fn wrapping_shl(self, rhs: u32)
+                $Fixed => const fn wrapping_shl(self, rhs: u32)
             );
 
             delegate!(
@@ -757,7 +772,7 @@ assert_eq!((Fix::from_num(4)).wrapping_shr(3), Fix::from_num(1) / 2);
 assert_eq!((Fix::from_num(4)).wrapping_shr(3 + ", $s_nbits, "), Fix::from_num(1) / 2);
 ```
 ";
-                $Fixed => fn wrapping_shr(self, rhs: u32)
+                $Fixed => const fn wrapping_shr(self, rhs: u32)
             );
 
             if_signed! {
@@ -816,7 +831,7 @@ assert_eq!(Fix::from_num(5).overflowing_neg(), (Fix::from_bits(neg_five_bits), t
 [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
                 #[inline]
-                pub fn overflowing_neg(self) -> ($Fixed<Frac>, bool) {
+                pub const fn overflowing_neg(self) -> ($Fixed<Frac>, bool) {
                     let (ans, o) = self.to_bits().overflowing_neg();
                     (Self::from_bits(ans), o)
                 }
@@ -845,7 +860,7 @@ assert_eq!(Fix::max_value().overflowing_add(one), (",
 [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
                 #[inline]
-                pub fn overflowing_add(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
+                pub const fn overflowing_add(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
                     let (ans, o) = self.to_bits().overflowing_add(rhs.to_bits());
                     (Self::from_bits(ans), o)
                 }
@@ -879,7 +894,7 @@ assert_eq!(Fix::from_num(0)",
 [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
                 #[inline]
-                pub fn overflowing_sub(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
+                pub const fn overflowing_sub(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
                     let (ans, o) = self.to_bits().overflowing_sub(rhs.to_bits());
                     (Self::from_bits(ans), o)
                 }
@@ -905,7 +920,7 @@ assert_eq!(Fix::max_value().overflowing_mul_int(4), (wrapped, true));
 [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
                 #[inline]
-                pub fn overflowing_mul_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
+                pub const fn overflowing_mul_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
                     let (ans, o) = self.to_bits().overflowing_mul(rhs);
                     (Self::from_bits(ans), o)
                 }
@@ -1016,7 +1031,7 @@ assert_eq!((Fix::from_num(1) / 2).overflowing_shl(3 + ", $s_nbits, "), (Fix::fro
 [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
                 #[inline]
-                pub fn overflowing_shl(self, rhs: u32) -> ($Fixed<Frac>, bool) {
+                pub const fn overflowing_shl(self, rhs: u32) -> ($Fixed<Frac>, bool) {
                     let (ans, o) = self.to_bits().overflowing_shl(rhs);
                     (Self::from_bits(ans), o)
                 }
@@ -1042,7 +1057,7 @@ assert_eq!((Fix::from_num(4)).overflowing_shr(3 + ", $s_nbits, "), (Fix::from_nu
 [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
                 #[inline]
-                pub fn overflowing_shr(self, rhs: u32) -> ($Fixed<Frac>, bool) {
+                pub const fn overflowing_shr(self, rhs: u32) -> ($Fixed<Frac>, bool) {
                     let (ans, o) = self.to_bits().overflowing_shr(rhs);
                     (Self::from_bits(ans), o)
                 }
@@ -1081,7 +1096,7 @@ assert_eq!(Fix::min_value().overflowing_abs(), (Fix::min_value(), true));
 
             if_unsigned! {
                 $Signedness;
-                delegate!(
+                comment!(
                     "Returns [`true`][`bool`] if the fixed-point number is
 2<sup><i>k</i></sup> for some integer <i>k</i>.
 
@@ -1100,7 +1115,10 @@ assert!(half.is_power_of_two());
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 ";
-                    $Fixed => fn is_power_of_two(self) -> bool
+                    #[inline]
+                    pub fn is_power_of_two(self) -> bool {
+                        self.to_bits().is_power_of_two()
+                    }
                 );
 
                 delegate!(
@@ -1172,7 +1190,7 @@ assert!(!Fix::from_num(-5).is_positive());
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 ";
-                    $Fixed => fn is_positive(self) -> bool
+                    $Fixed => const fn is_positive(self) -> bool
                 );
 
                 delegate!(
@@ -1190,7 +1208,7 @@ assert!(Fix::from_num(-5).is_negative());
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 ";
-                    $Fixed => fn is_negative(self) -> bool
+                    $Fixed => const fn is_negative(self) -> bool
                 );
             }
         }

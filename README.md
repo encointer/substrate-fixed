@@ -53,12 +53,40 @@ Various conversion methods are available:
 
   * The [*fixed* crate] now requires rustc version 1.34.0 or later.
   * The following methods are now `const` functions:
-      * `min_value`, `max_value`, `from_bits`, `to_bits`
+      * [`min_value`], [`max_value`], [`from_bits`], [`to_bits`]
+	  * [`count_ones`], [`count_zeros`], [`leading_zeros`],
+        [`trailing_zeros`] [`rotate_left`], [`rotate_right`]
+	  * [`wrapping_neg`], [`wrapping_add`], [`wrapping_sub`],
+        [`wrapping_mul_int`], [`wrapping_shl`], [`wrapping_shr`]
+	  * [`overflowing_neg`], [`overflowing_add`], [`overflowing_sub`],
+        [`overflowing_mul_int`], [`overflowing_shl`],
+        [`overflowing_shr`]
+      * [`is_positive`], [`is_negative`]
 
+[`count_ones`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.count_ones
+[`count_zeros`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.count_zeros
 [`from_bits`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.from_bits
+[`is_negative`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.is_negative
+[`is_positive`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.is_positive
+[`leading_zeros`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.leading_zeros
 [`max_value`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.max_value
 [`min_value`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.min_value
+[`overflowing_add`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.overflowing_add
+[`overflowing_mul_int`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.overflowing_mul_int
+[`overflowing_neg`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.overflowing_neg
+[`overflowing_shl`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.overflowing_shl
+[`overflowing_shr`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.overflowing_shr
+[`overflowing_sub`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.overflowing_sub
+[`rotate_left`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.rotate_left
+[`rotate_right`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.rotate_right
 [`to_bits`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.to_bits
+[`trailing_zeros`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.trailing_zeros
+[`wrapping_add`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_add
+[`wrapping_mul_int`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_mul_int
+[`wrapping_neg`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_neg
+[`wrapping_shl`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_shl
+[`wrapping_shr`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_shr
+[`wrapping_sub`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_sub
 
 ### Version 0.4.2 news (2019-08-16)
 

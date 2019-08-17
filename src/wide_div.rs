@@ -129,7 +129,6 @@ neg_abs_hi_lo! { i8: u8, i16: u16, i32: u32, i64: u64, i128: u128 }
 
 pub trait WideDivRem<U>: Sized {
     fn div_rem_from(self, dividend: (Self, U)) -> ((Self, U), Self);
-    fn lo_div_from(self, dividend_hi: Self, dividend_lo: U) -> Self;
 }
 
 macro_rules! unsigned_wide_div_rem {
@@ -145,17 +144,6 @@ macro_rules! unsigned_wide_div_rem {
                 let q0h = r.div_half(d, n0.hi());
                 let q0l = r.div_half(d, n0.lo());
                 ((q1h.up_lo(q1l), q0h.up_lo(q0l)), r.unnormalize(zeros))
-            }
-            #[inline]
-            fn lo_div_from(self, dividend_hi: Self, dividend_lo: $U) -> Self {
-                let (mut n1, mut n0, mut d) = (dividend_hi, dividend_lo, self);
-                let (mut r, _) = d.normalize(&mut n1, &mut n0);
-
-                let _ = r.div_half(d, n1.hi());
-                let _ = r.div_half(d, n1.lo());
-                let q0h = r.div_half(d, n0.hi());
-                let q0l = r.div_half(d, n0.lo());
-                q0h.up_lo(q0l)
             }
         }
     )* };
@@ -173,10 +161,6 @@ macro_rules! signed_wide_div_rem {
                     NegAbsHiLo::from_neg_abs(n_neg != d_neg, q),
                     IntHelper::from_neg_abs(n_neg, r),
                 )
-            }
-            #[inline]
-            fn lo_div_from(self, _dividend_hi: Self, _dividend_lo: $U) -> Self {
-                unreachable!()
             }
         }
     )* };

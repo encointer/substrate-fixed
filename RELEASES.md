@@ -9,6 +9,7 @@ Version 0.4.3 (unreleased)
 ==========================
 
   * The *fixed* crate now requires rustc version 1.34.0 or later.
+  * Parsing strings now rounds to the nearest with ties rounding to even.
   * The following methods are now `const` functions:
       * `min_value`, `max_value`, `from_bits`, `to_bits`
 	  * `count_ones`, `count_zeros`, `leading_zeros`, `trailing_zeros`

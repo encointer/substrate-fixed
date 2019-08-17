@@ -51,6 +51,7 @@ Various conversion methods are available:
 
 ### Version 0.4.3 news (unreleased)
 
+  * The [*fixed* crate] now requires rustc version 1.34.0 or later.
   * The following methods are now `const` functions:
       * `min_value`, `max_value`, `from_bits`, `to_bits`
 
@@ -203,7 +204,7 @@ adding this to your crate root (usually *lib.rs* or *main.rs*):
 extern crate fixed;
 ```
 
-The *fixed* crate requires rustc version 1.31.0 or later.
+The *fixed* crate requires rustc version 1.34.0 or later.
 
 ## Optional features
 

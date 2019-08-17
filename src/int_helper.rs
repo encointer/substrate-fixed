@@ -42,6 +42,7 @@ where
     const ZERO: Self;
 
     fn is_negative(self) -> bool;
+    fn is_odd(self) -> bool;
     fn checked_add(self, val: Self) -> Option<Self>;
     fn checked_mul(self, val: Self) -> Option<Self>;
     fn overflowing_add(self, val: Self) -> (Self, bool);
@@ -115,6 +116,11 @@ macro_rules! sealed_int {
             }
 
             #[inline]
+            fn is_odd(self) -> bool {
+                self & 1 != 0
+            }
+
+            #[inline]
             fn neg_abs(self) -> (bool, Self::Unsigned) {
                 (false, self)
             }
@@ -175,6 +181,11 @@ macro_rules! sealed_int {
             #[inline]
             fn is_negative(self) -> bool {
                 self < 0
+            }
+
+            #[inline]
+            fn is_odd(self) -> bool {
+                self & 1 != 0
             }
 
             #[inline]

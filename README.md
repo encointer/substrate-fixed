@@ -89,6 +89,7 @@ Various conversion methods are available:
 [`wrapping_neg`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_neg
 [`wrapping_shl`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_shl
 [`wrapping_shr`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_shr
+[`wrapping_sub`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_sub
 
 ### Version 0.4.2 news (2019-08-16)
 

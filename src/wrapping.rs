@@ -124,10 +124,10 @@ impl<F: Fixed> Wrapping<F> {
     /// use fixed::{types::I8F8, Wrapping};
     /// // 9999.5 = 15.5 + 256 × n
     /// let check = Wrapping(I8F8::from_num(15.5));
-    /// assert_eq!(Wrapping::<I8F8>::wrapping_from_str("9999.5"), Ok(check));
+    /// assert_eq!(Wrapping::<I8F8>::from_str("9999.5"), Ok(check));
     /// ```
     #[inline]
-    pub fn wrapping_from_str(src: &str) -> Result<Self, ParseFixedError> {
+    pub fn from_str(src: &str) -> Result<Self, ParseFixedError> {
         F::wrapping_from_str(src).map(Wrapping)
     }
 
@@ -138,10 +138,10 @@ impl<F: Fixed> Wrapping<F> {
     /// ```rust
     /// use fixed::{types::I8F8, Wrapping};
     /// let check = Wrapping(I8F8::from_bits(0b1110001 << (8 - 1)));
-    /// assert_eq!(Wrapping::<I8F8>::wrapping_from_str_binary("101100111000.1"), Ok(check));
+    /// assert_eq!(Wrapping::<I8F8>::from_str_binary("101100111000.1"), Ok(check));
     /// ```
     #[inline]
-    pub fn wrapping_from_str_binary(src: &str) -> Result<Self, ParseFixedError> {
+    pub fn from_str_binary(src: &str) -> Result<Self, ParseFixedError> {
         F::wrapping_from_str_binary(src).map(Wrapping)
     }
 
@@ -152,10 +152,10 @@ impl<F: Fixed> Wrapping<F> {
     /// ```rust
     /// use fixed::{types::I8F8, Wrapping};
     /// let check = Wrapping(I8F8::from_bits(0o1654 << (8 - 3)));
-    /// assert_eq!(Wrapping::<I8F8>::wrapping_from_str_octal("7165.4"), Ok(check));
+    /// assert_eq!(Wrapping::<I8F8>::from_str_octal("7165.4"), Ok(check));
     /// ```
     #[inline]
-    pub fn wrapping_from_str_octal(src: &str) -> Result<Self, ParseFixedError> {
+    pub fn from_str_octal(src: &str) -> Result<Self, ParseFixedError> {
         F::wrapping_from_str_octal(src).map(Wrapping)
     }
 
@@ -166,10 +166,10 @@ impl<F: Fixed> Wrapping<F> {
     /// ```rust
     /// use fixed::{types::I8F8, Wrapping};
     /// let check = Wrapping(I8F8::from_bits(0xFFE));
-    /// assert_eq!(Wrapping::<I8F8>::wrapping_from_str_hex("C0F.FE"), Ok(check));
+    /// assert_eq!(Wrapping::<I8F8>::from_str_hex("C0F.FE"), Ok(check));
     /// ```
     #[inline]
-    pub fn wrapping_from_str_hex(src: &str) -> Result<Self, ParseFixedError> {
+    pub fn from_str_hex(src: &str) -> Result<Self, ParseFixedError> {
         F::wrapping_from_str_hex(src).map(Wrapping)
     }
 

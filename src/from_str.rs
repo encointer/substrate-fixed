@@ -29,18 +29,21 @@ use core::{
     str::FromStr,
 };
 
-fn bin_str_int_to_bin<I>(bytes: &[u8]) -> Option<I>
+fn bin_str_int_to_bin<I>(bytes: &[u8]) -> (I, bool)
 where
     I: IntHelper<IsSigned = False> + From<u8>,
-    I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
-    let mut acc = I::from(bytes[0] - b'0');
-    let mut leading_zeros = acc.leading_zeros();
-    for &byte in &bytes[1..] {
-        leading_zeros = leading_zeros.checked_sub(1)?;
+    let max_len = I::NBITS as usize;
+    let (bytes, overflow) = if bytes.len() > max_len {
+        (&bytes[(bytes.len() - max_len)..], true)
+    } else {
+        (bytes, false)
+    };
+    let mut acc = I::from(0);
+    for &byte in bytes {
         acc = (acc << 1) + I::from(byte - b'0');
     }
-    Some(acc)
+    (acc, overflow)
 }
 
 fn bin_str_frac_to_bin<I>(bytes: &[u8], nbits: u32) -> Option<I>
@@ -73,18 +76,28 @@ where
     Some(acc << rem_bits)
 }
 
-fn oct_str_int_to_bin<I>(bytes: &[u8]) -> Option<I>
+fn oct_str_int_to_bin<I>(bytes: &[u8]) -> (I, bool)
 where
     I: IntHelper<IsSigned = False> + From<u8>,
-    I: Shl<u32, Output = I> + Shr<u32, Output = I> + Add<Output = I>,
 {
+    let max_len = (I::NBITS as usize + 2) / 3;
+    let (bytes, mut overflow) = if bytes.len() > max_len {
+        (&bytes[(bytes.len() - max_len)..], true)
+    } else {
+        (bytes, false)
+    };
     let mut acc = I::from(bytes[0] - b'0');
-    let mut leading_zeros = acc.leading_zeros();
+    if bytes.len() == max_len {
+        let first_max_bits = I::NBITS - (max_len as u32 - 1) * 3;
+        let first_max = (I::from(1) << first_max_bits) - I::from(1);
+        if acc > first_max {
+            overflow = true;
+        }
+    }
     for &byte in &bytes[1..] {
-        leading_zeros = leading_zeros.checked_sub(3)?;
         acc = (acc << 3) + I::from(byte - b'0');
     }
-    Some(acc)
+    (acc, overflow)
 }
 
 fn oct_str_frac_to_bin<I>(bytes: &[u8], nbits: u32) -> Option<I>
@@ -127,18 +140,28 @@ fn unchecked_hex_digit(byte: u8) -> u8 {
     (byte & 0x0f) + if byte >= 0x40 { 9 } else { 0 }
 }
 
-fn hex_str_int_to_bin<I>(bytes: &[u8]) -> Option<I>
+fn hex_str_int_to_bin<I>(bytes: &[u8]) -> (I, bool)
 where
     I: IntHelper<IsSigned = False> + From<u8>,
-    I: Shl<u32, Output = I> + Add<Output = I>,
 {
+    let max_len = (I::NBITS as usize + 3) / 4;
+    let (bytes, mut overflow) = if bytes.len() > max_len {
+        (&bytes[(bytes.len() - max_len)..], true)
+    } else {
+        (bytes, false)
+    };
     let mut acc = I::from(unchecked_hex_digit(bytes[0]));
-    let mut leading_zeros = acc.leading_zeros();
+    if bytes.len() == max_len {
+        let first_max_bits = I::NBITS - (max_len as u32 - 1) * 4;
+        let first_max = (I::from(1) << first_max_bits) - I::from(1);
+        if acc > first_max {
+            overflow = true;
+        }
+    }
     for &byte in &bytes[1..] {
-        leading_zeros = leading_zeros.checked_sub(4)?;
         acc = (acc << 4) + I::from(unchecked_hex_digit(byte));
     }
-    Some(acc)
+    (acc, overflow)
 }
 
 fn hex_str_frac_to_bin<I>(bytes: &[u8], nbits: u32) -> Option<I>
@@ -173,18 +196,24 @@ where
     Some(acc << rem_bits)
 }
 
-fn dec_str_int_to_bin<I>(bytes: &[u8]) -> Option<I>
+fn dec_str_int_to_bin<I>(bytes: &[u8]) -> (I, bool)
 where
     I: IntHelper<IsSigned = False> + From<u8>,
 {
-    debug_assert!(!bytes.is_empty());
+    let max_effective_len = I::NBITS as usize;
+    let (bytes, mut overflow) = if bytes.len() > max_effective_len {
+        (&bytes[(bytes.len() - max_effective_len)..], true)
+    } else {
+        (bytes, false)
+    };
     let mut acc = I::from(0);
     for &byte in bytes {
-        acc = acc
-            .checked_mul(I::from(10))?
-            .checked_add(I::from(byte - b'0'))?;
+        let (mul, mul_overflow) = acc.overflowing_mul(I::from(10));
+        let (add, add_overflow) = mul.overflowing_add(I::from(byte - b'0'));
+        acc = add;
+        overflow = overflow || mul_overflow || add_overflow;
     }
-    Some(acc)
+    (acc, overflow)
 }
 
 enum Round {
@@ -293,7 +322,7 @@ macro_rules! impl_dec_to_bin {
                     } else {
                         (false, &bytes[..$dec], 1)
                     };
-                let val = dec_str_int_to_bin::<$Double>(slice).unwrap() * pad;
+                let val = dec_str_int_to_bin::<$Double>(slice).0 * pad;
                 (val, is_short)
             }
         }
@@ -370,17 +399,17 @@ impl DecToBin for u128 {
 
     fn parse_is_short(bytes: &[u8]) -> ((u128, u128), bool) {
         if let Some(rem) = 27usize.checked_sub(bytes.len()) {
-            let hi = dec_str_int_to_bin::<u128>(bytes).unwrap() * 10u128.pow(rem as u32);
+            let hi = dec_str_int_to_bin::<u128>(bytes).0 * 10u128.pow(rem as u32);
             ((hi, 0), true)
         } else {
-            let hi = dec_str_int_to_bin::<u128>(&bytes[..27]).unwrap();
+            let hi = dec_str_int_to_bin::<u128>(&bytes[..27]).0;
 
             let (is_short, slice, pad) = if let Some(rem) = 54usize.checked_sub(bytes.len()) {
                 (true, &bytes[27..], 10u128.pow(rem as u32))
             } else {
                 (false, &bytes[27..54], 1)
             };
-            let lo = dec_str_int_to_bin::<u128>(slice).unwrap() * pad;
+            let lo = dec_str_int_to_bin::<u128>(slice).0 * pad;
             ((hi, lo), is_short)
         }
     }
@@ -529,7 +558,7 @@ impl Display for ParseFixedError {
 }
 
 // also trims zeros at start of int and at end of frac
-fn parse_bounds(bytes: &[u8], can_be_neg: bool, radix: u32) -> Result<Parse<'_>, ParseFixedError> {
+fn parse_bounds(bytes: &[u8], radix: u32) -> Result<Parse<'_>, ParseFixedError> {
     let mut sign: Option<bool> = None;
     let mut trimmed_int_start: Option<usize> = None;
     let mut point: Option<usize> = None;
@@ -546,7 +575,7 @@ fn parse_bounds(bytes: &[u8], can_be_neg: bool, radix: u32) -> Result<Parse<'_>,
                 continue;
             }
             (b'-', _) => {
-                if !can_be_neg || sign.is_some() || point.is_some() || has_any_digit {
+                if sign.is_some() || point.is_some() || has_any_digit {
                     return Err(ParseErrorKind::InvalidDigit.into());
                 }
                 sign = Some(true);
@@ -601,6 +630,55 @@ fn frac_is_half(bytes: &[u8], radix: u32) -> bool {
 pub(crate) trait FromStrRadix: Sized {
     type Err;
     fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::Err>;
+    fn saturating_from_str_radix(s: &str, radix: u32) -> Result<Self, Self::Err>;
+    fn wrapping_from_str_radix(s: &str, radix: u32) -> Result<Self, Self::Err>;
+    fn overflowing_from_str_radix(s: &str, radix: u32) -> Result<(Self, bool), Self::Err>;
+}
+
+macro_rules! impl_from_str_traits {
+    ($Fixed:ident($Bits:ident), $LeEqU:ident; fn $from:ident) => {
+        impl<Frac: $LeEqU> FromStr for $Fixed<Frac> {
+            type Err = ParseFixedError;
+            #[inline]
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                Self::from_str_radix(s, 10)
+            }
+        }
+        impl<Frac: $LeEqU> FromStrRadix for $Fixed<Frac> {
+            type Err = ParseFixedError;
+            #[inline]
+            fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::Err> {
+                match Self::overflowing_from_str_radix(s, radix) {
+                    Ok((val, false)) => Ok(val),
+                    Ok((_, true)) => Err(ParseErrorKind::Overflow.into()),
+                    Err(e) => Err(e),
+                }
+            }
+            #[inline]
+            fn saturating_from_str_radix(s: &str, radix: u32) -> Result<Self, Self::Err> {
+                match Self::overflowing_from_str_radix(s, radix) {
+                    Ok((val, false)) => Ok(val),
+                    Ok((_, true)) => {
+                        if s.starts_with('-') {
+                            Ok(Self::min_value())
+                        } else {
+                            Ok(Self::max_value())
+                        }
+                    }
+                    Err(e) => Err(e),
+                }
+            }
+            #[inline]
+            fn wrapping_from_str_radix(s: &str, radix: u32) -> Result<Self, Self::Err> {
+                Self::overflowing_from_str_radix(s, radix).map(|(val, _)| val)
+            }
+            #[inline]
+            fn overflowing_from_str_radix(s: &str, radix: u32) -> Result<(Self, bool), Self::Err> {
+                $from(s.as_bytes(), radix, Self::INT_NBITS, Self::FRAC_NBITS)
+                    .map(|(bits, overflow)| (Self::from_bits(bits), overflow))
+            }
+        }
+    };
 }
 
 macro_rules! impl_from_str {
@@ -612,55 +690,22 @@ macro_rules! impl_from_str {
         fn $get_int:ident, ($get_int_half:ident, $attempt_int_half:expr);
         fn $get_frac:ident, ($get_frac_half:ident, $attempt_frac_half:expr);
     ) => {
-        impl<Frac: $LeEqU> FromStr for $FixedI<Frac> {
-            type Err = ParseFixedError;
-            #[inline]
-            fn from_str(s: &str) -> Result<Self, Self::Err> {
-                $from_i(s.as_bytes(), 10, Self::INT_NBITS, Self::FRAC_NBITS).map(Self::from_bits)
-            }
-        }
-        impl<Frac: $LeEqU> FromStrRadix for $FixedI<Frac> {
-            type Err = ParseFixedError;
-            #[inline]
-            fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::Err> {
-                $from_i(s.as_bytes(), radix, Self::INT_NBITS, Self::FRAC_NBITS).map(Self::from_bits)
-            }
-        }
-        impl<Frac: $LeEqU> FromStr for $FixedU<Frac> {
-            type Err = ParseFixedError;
-            #[inline]
-            fn from_str(s: &str) -> Result<Self, Self::Err> {
-                $from_u(s.as_bytes(), 10, Self::INT_NBITS, Self::FRAC_NBITS).map(Self::from_bits)
-            }
-        }
-        impl<Frac: $LeEqU> FromStrRadix for $FixedU<Frac> {
-            type Err = ParseFixedError;
-            #[inline]
-            fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::Err> {
-                $from_u(s.as_bytes(), radix, Self::INT_NBITS, Self::FRAC_NBITS).map(Self::from_bits)
-            }
-        }
+        impl_from_str_traits! { $FixedI($BitsI), $LeEqU; fn $from_i }
+        impl_from_str_traits! { $FixedU($BitsU), $LeEqU; fn $from_u }
 
         fn $from_i(
             bytes: &[u8],
             radix: u32,
             int_nbits: u32,
             frac_nbits: u32,
-        ) -> Result<$BitsI, ParseFixedError> {
-            let (neg, abs) = $get_int_frac(bytes, true, radix, int_nbits, frac_nbits)?;
-            if neg {
-                if abs > $BitsU::MSB {
-                    Err(ParseErrorKind::Overflow.into())
-                } else {
-                    Ok(abs.wrapping_neg() as $BitsI)
-                }
-            } else {
-                if abs > $BitsU::MSB - 1 {
-                    Err(ParseErrorKind::Overflow.into())
-                } else {
-                    Ok(abs as $BitsI)
-                }
+        ) -> Result<($BitsI, bool), ParseFixedError> {
+            let (neg, abs, mut overflow) = $get_int_frac(bytes, radix, int_nbits, frac_nbits)?;
+            let max_abs = $BitsU::MSB - if !neg { 1 } else { 0 };
+            if abs > max_abs {
+                overflow = true;
             }
+            let abs = if neg { abs.wrapping_neg() } else { abs } as $BitsI;
+            Ok((abs, overflow))
         }
 
         fn $from_u(
@@ -668,62 +713,75 @@ macro_rules! impl_from_str {
             radix: u32,
             int_nbits: u32,
             frac_nbits: u32,
-        ) -> Result<$BitsU, ParseFixedError> {
-            let (_, abs) = $get_int_frac(bytes, false, radix, int_nbits, frac_nbits)?;
-            Ok(abs)
+        ) -> Result<($BitsU, bool), ParseFixedError> {
+            let (neg, abs, mut overflow) = $get_int_frac(bytes, radix, int_nbits, frac_nbits)?;
+            if neg && abs > 0 {
+                overflow = true;
+            }
+            let abs = if neg { abs.wrapping_neg() } else { abs };
+            Ok((abs, overflow))
         }
 
         fn $get_int_frac(
             bytes: &[u8],
-            can_be_neg: bool,
             radix: u32,
             int_nbits: u32,
             frac_nbits: u32,
-        ) -> Result<(bool, $BitsU), ParseFixedError> {
-            let Parse { neg, int, frac } = parse_bounds(bytes, can_be_neg, radix)?;
-            let int_val = $get_int(int, radix, int_nbits).ok_or(ParseErrorKind::Overflow)?;
+        ) -> Result<(bool, $BitsU, bool), ParseFixedError> {
+            let Parse { neg, int, frac } = parse_bounds(bytes, radix)?;
+            let (int_val, mut overflow) = $get_int(int, radix, int_nbits);
             let (frac_val, frac_overflow) = match $get_frac(frac, radix, frac_nbits) {
                 Some(val) => (val, false),
                 None => (0, true),
             };
-            if frac_overflow && int_nbits == 0 {
-                return Err(ParseErrorKind::Overflow.into());
-            }
-            let val = int_val | frac_val;
-            // round up if int is odd, frac_nbits is 0, and frac_bytes is exactly half
+            let mut val = int_val | frac_val;
+            // frac_overflow does not catch the case where:
+            //  1. int is odd
+            //  2. frac_nbits is 0
+            //  3. frac_bytes is exactly half, e.g. "5" for decimal
+            // In this case, get_frac returns 0.5 rounded to even 0.0,
+            // as it does not have a way to know that int is odd.
             if frac_overflow || (int_val.is_odd() && frac_nbits == 0 && frac_is_half(frac, radix)) {
-                val.checked_add(1 << frac_nbits)
-                    .map(|val| (neg, val))
-                    .ok_or(ParseErrorKind::Overflow.into())
-            } else {
-                Ok((neg, val))
+                let (new_val, new_overflow) = if int_nbits == 0 {
+                    (val, true)
+                } else {
+                    val.overflowing_add(1 << frac_nbits)
+                };
+                if new_overflow {
+                    overflow = true;
+                }
+                val = new_val;
             }
+            Ok((neg, val, overflow))
         }
 
-        fn $get_int(int: &[u8], radix: u32, nbits: u32) -> Option<$BitsU> {
+        fn $get_int(int: &[u8], radix: u32, nbits: u32) -> ($BitsU, bool) {
             const HALF: u32 = <$BitsU as IntHelper>::NBITS / 2;
             if $attempt_int_half && nbits <= HALF {
-                return $get_int_half(int, radix, nbits).map(|x| $BitsU::from(x) << HALF);
+                let (half, overflow) = $get_int_half(int, radix, nbits);
+                return ($BitsU::from(half) << HALF, overflow);
             }
 
             if int.is_empty() {
-                return Some(0);
-            } else if nbits == 0 {
-                return None;
+                return (0, false);
             }
-            let parsed_int: $BitsU = match radix {
-                2 => bin_str_int_to_bin(int)?,
-                8 => oct_str_int_to_bin(int)?,
-                16 => hex_str_int_to_bin(int)?,
-                10 => dec_str_int_to_bin(int)?,
-                _ => unreachable!(),
+            let (mut parsed_int, mut overflow): ($BitsU, bool) = match radix {
+                2 => bin_str_int_to_bin(int),
+                8 => oct_str_int_to_bin(int),
+                16 => hex_str_int_to_bin(int),
+                _ => dec_str_int_to_bin(int),
             };
             let remove_bits = <$BitsU as IntHelper>::NBITS - nbits;
-            if remove_bits > 0 && (parsed_int >> nbits) != 0 {
-                None
-            } else {
-                Some(parsed_int << remove_bits)
+            if nbits == 0 {
+                overflow = true;
+                parsed_int = 0;
+            } else if remove_bits > 0 {
+                if (parsed_int >> nbits) != 0 {
+                    overflow = true;
+                }
+                parsed_int <<= remove_bits;
             }
+            (parsed_int, overflow)
         }
 
         fn $get_frac(frac: &[u8], radix: u32, nbits: u32) -> Option<$BitsU> {
@@ -916,625 +974,680 @@ mod tests {
 
     #[test]
     fn check_parse_bounds() {
-        let Parse { neg, int, frac } = parse_bounds(b"-12.34", true, 10).unwrap();
+        let Parse { neg, int, frac } = parse_bounds(b"-12.34", 10).unwrap();
         assert_eq!((neg, int, frac), (true, &b"12"[..], &b"34"[..]));
-        let Parse { neg, int, frac } = parse_bounds(b"012.", true, 10).unwrap();
+        let Parse { neg, int, frac } = parse_bounds(b"012.", 10).unwrap();
         assert_eq!((neg, int, frac), (false, &b"12"[..], &b""[..]));
-        let Parse { neg, int, frac } = parse_bounds(b"+.340", false, 10).unwrap();
+        let Parse { neg, int, frac } = parse_bounds(b"+.340", 10).unwrap();
         assert_eq!((neg, int, frac), (false, &b""[..], &b"34"[..]));
-        let Parse { neg, int, frac } = parse_bounds(b"0", false, 10).unwrap();
+        let Parse { neg, int, frac } = parse_bounds(b"0", 10).unwrap();
         assert_eq!((neg, int, frac), (false, &b""[..], &b""[..]));
-        let Parse { neg, int, frac } = parse_bounds(b"-.C1A0", true, 16).unwrap();
+        let Parse { neg, int, frac } = parse_bounds(b"-.C1A0", 16).unwrap();
         assert_eq!((neg, int, frac), (true, &b""[..], &b"C1A"[..]));
 
-        let ParseFixedError { kind } = parse_bounds(b"0 ", true, 10).unwrap_err();
+        let ParseFixedError { kind } = parse_bounds(b"0 ", 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::InvalidDigit);
-        let ParseFixedError { kind } = parse_bounds(b"+.", true, 10).unwrap_err();
+        let ParseFixedError { kind } = parse_bounds(b"+.", 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::NoDigits);
-        let ParseFixedError { kind } = parse_bounds(b".1.", true, 10).unwrap_err();
+        let ParseFixedError { kind } = parse_bounds(b".1.", 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::TooManyPoints);
-        let ParseFixedError { kind } = parse_bounds(b"1+2", true, 10).unwrap_err();
+        let ParseFixedError { kind } = parse_bounds(b"1+2", 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::InvalidDigit);
-        let ParseFixedError { kind } = parse_bounds(b"1-2", true, 10).unwrap_err();
-        assert_eq!(kind, ParseErrorKind::InvalidDigit);
-        let ParseFixedError { kind } = parse_bounds(b"-12", false, 10).unwrap_err();
+        let ParseFixedError { kind } = parse_bounds(b"1-2", 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::InvalidDigit);
     }
 
-    fn assert_ok<F>(s: &str, bits: F::Bits)
-    where
-        F: Fixed + FromStr<Err = ParseFixedError>,
-        F::Bits: Eq + Debug,
-    {
-        match F::from_str(s) {
-            Ok(f) => assert_eq!(f.to_bits(), bits, "parsed {} as {}", s, f),
-            Err(e) => panic!("could not parse {}: {}", s, e),
-        }
-    }
-    fn assert_er<F>(s: &str, kind: ParseErrorKind)
-    where
-        F: Fixed + FromStr<Err = ParseFixedError>,
-    {
-        match F::from_str(s) {
-            Ok(f) => panic!("incorrectly parsed {} as {}", s, f),
-            Err(ParseFixedError { kind: err }) => assert_eq!(err, kind),
-        }
-    }
-
-    fn assert_ok_radix<F>(s: &str, radix: u32, bits: F::Bits)
+    fn assert_ok<F>(s: &str, radix: u32, bits: F::Bits, overflow: bool)
     where
         F: Fixed + FromStrRadix<Err = ParseFixedError>,
         F::Bits: Eq + Debug,
     {
-        match <F as FromStrRadix>::from_str_radix(s, radix) {
-            Ok(f) => assert_eq!(f.to_bits(), bits, "parsed {} as {}", s, f),
+        match F::overflowing_from_str_radix(s, radix) {
+            Ok((f, o)) => {
+                assert_eq!(f.to_bits(), bits, "{} -> ({}, {})", s, f, o);
+                assert_eq!(o, overflow, "{} -> ({}, {})", s, f, o);
+            }
             Err(e) => panic!("could not parse {}: {}", s, e),
-        }
-    }
-    fn assert_er_radix<F>(s: &str, radix: u32, kind: ParseErrorKind)
-    where
-        F: Fixed + FromStrRadix<Err = ParseFixedError>,
-    {
-        match <F as FromStrRadix>::from_str_radix(s, radix) {
-            Ok(f) => panic!("incorrectly parsed {} as {}", s, f),
-            Err(ParseFixedError { kind: err }) => assert_eq!(err, kind),
         }
     }
 
     #[test]
     fn check_i8_u8_from_str() {
-        assert_er::<I0F8>("-1", ParseErrorKind::Overflow);
-        assert_er::<I0F8>("-0.502", ParseErrorKind::Overflow);
-        assert_ok::<I0F8>("-0.501", -0x80);
-        assert_ok::<I0F8>("0.498", 0x7F);
-        assert_er::<I0F8>("0.499", ParseErrorKind::Overflow);
-        assert_er::<I0F8>("1", ParseErrorKind::Overflow);
+        assert_ok::<I0F8>("-1", 10, 0x00, true);
+        assert_ok::<I0F8>("-0.502", 10, 0x7F, true);
+        assert_ok::<I0F8>("-0.501", 10, -0x80, false);
+        assert_ok::<I0F8>("0.498", 10, 0x7F, false);
+        assert_ok::<I0F8>("0.499", 10, -0x80, true);
+        assert_ok::<I0F8>("1", 10, 0x00, true);
 
-        assert_er::<I4F4>("-8.04", ParseErrorKind::Overflow);
-        assert_ok::<I4F4>("-8.03", -0x80);
-        assert_ok::<I4F4>("7.96", 0x7F);
-        assert_er::<I4F4>("7.97", ParseErrorKind::Overflow);
+        assert_ok::<I4F4>("-8.04", 10, 0x7F, true);
+        assert_ok::<I4F4>("-8.03", 10, -0x80, false);
+        assert_ok::<I4F4>("7.96", 10, 0x7F, false);
+        assert_ok::<I4F4>("7.97", 10, -0x80, true);
 
-        assert_er::<I8F0>("-128.501", ParseErrorKind::Overflow);
+        assert_ok::<I8F0>("-128.501", 10, 0x7F, true);
         // exact tie, round up to even
-        assert_ok::<I8F0>("-128.5", -0x80);
-        assert_ok::<I8F0>("127.499", 0x7F);
+        assert_ok::<I8F0>("-128.5", 10, -0x80, false);
+        assert_ok::<I8F0>("127.499", 10, 0x7F, false);
         // exact tie, round up to even
-        assert_er::<I8F0>("127.5", ParseErrorKind::Overflow);
+        assert_ok::<I8F0>("127.5", 10, -0x80, true);
 
-        assert_er::<U0F8>("-0", ParseErrorKind::InvalidDigit);
-        assert_ok::<U0F8>("0.498", 0x7F);
-        assert_ok::<U0F8>("0.499", 0x80);
-        assert_ok::<U0F8>("0.998", 0xFF);
-        assert_er::<U0F8>("0.999", ParseErrorKind::Overflow);
-        assert_er::<U0F8>("1", ParseErrorKind::Overflow);
+        assert_ok::<U0F8>("-0", 10, 0x00, false);
+        assert_ok::<U0F8>("0.498", 10, 0x7F, false);
+        assert_ok::<U0F8>("0.499", 10, 0x80, false);
+        assert_ok::<U0F8>("0.998", 10, 0xFF, false);
+        assert_ok::<U0F8>("0.999", 10, 0x00, true);
+        assert_ok::<U0F8>("1", 10, 0x00, true);
 
-        assert_ok::<U4F4>("7.96", 0x7F);
-        assert_ok::<U4F4>("7.97", 0x80);
-        assert_ok::<U4F4>("15.96", 0xFF);
-        assert_er::<U4F4>("15.97", ParseErrorKind::Overflow);
+        assert_ok::<U4F4>("7.96", 10, 0x7F, false);
+        assert_ok::<U4F4>("7.97", 10, 0x80, false);
+        assert_ok::<U4F4>("15.96", 10, 0xFF, false);
+        assert_ok::<U4F4>("15.97", 10, 0x00, true);
 
-        assert_ok::<U8F0>("127.499", 0x7F);
+        assert_ok::<U8F0>("127.499", 10, 0x7F, false);
         // exact tie, round up to even
-        assert_ok::<U8F0>("127.5", 0x80);
-        assert_ok::<U8F0>("255.499", 0xFF);
+        assert_ok::<U8F0>("127.5", 10, 0x80, false);
+        assert_ok::<U8F0>("255.499", 10, 0xFF, false);
         // exact tie, round up to even
-        assert_er::<U8F0>("255.5", ParseErrorKind::Overflow);
+        assert_ok::<U8F0>("255.5", 10, 0x00, true);
     }
 
     #[test]
     fn check_i16_u16_from_str() {
-        assert_er::<I0F16>("-1", ParseErrorKind::Overflow);
-        assert_er::<I0F16>("-0.500008", ParseErrorKind::Overflow);
-        assert_ok::<I0F16>("-0.500007", -0x8000);
-        assert_ok::<I0F16>("+0.499992", 0x7FFF);
-        assert_er::<I0F16>("+0.499993", ParseErrorKind::Overflow);
-        assert_er::<I0F16>("1", ParseErrorKind::Overflow);
+        assert_ok::<I0F16>("-1", 10, 0x00, true);
+        assert_ok::<I0F16>("-0.500008", 10, 0x7FFF, true);
+        assert_ok::<I0F16>("-0.500007", 10, -0x8000, false);
+        assert_ok::<I0F16>("+0.499992", 10, 0x7FFF, false);
+        assert_ok::<I0F16>("+0.499993", 10, -0x8000, true);
+        assert_ok::<I0F16>("1", 10, 0x0000, true);
 
-        assert_er::<I8F8>("-128.002", ParseErrorKind::Overflow);
-        assert_ok::<I8F8>("-128.001", -0x8000);
-        assert_ok::<I8F8>("+127.998", 0x7FFF);
-        assert_er::<I8F8>("+127.999", ParseErrorKind::Overflow);
+        assert_ok::<I8F8>("-128.002", 10, 0x7FFF, true);
+        assert_ok::<I8F8>("-128.001", 10, -0x8000, false);
+        assert_ok::<I8F8>("+127.998", 10, 0x7FFF, false);
+        assert_ok::<I8F8>("+127.999", 10, -0x8000, true);
 
-        assert_er::<I16F0>("-32768.500001", ParseErrorKind::Overflow);
+        assert_ok::<I16F0>("-32768.500001", 10, 0x7FFF, true);
         // exact tie, round up to even
-        assert_ok::<I16F0>("-32768.5", -0x8000);
-        assert_ok::<I16F0>("+32767.499999", 0x7FFF);
+        assert_ok::<I16F0>("-32768.5", 10, -0x8000, false);
+        assert_ok::<I16F0>("+32767.499999", 10, 0x7FFF, false);
         // exact tie, round up to even
-        assert_er::<I16F0>("+32767.5", ParseErrorKind::Overflow);
+        assert_ok::<I16F0>("+32767.5", 10, -0x8000, true);
 
-        assert_er::<U0F16>("-0", ParseErrorKind::InvalidDigit);
-        assert_ok::<U0F16>("0.499992", 0x7FFF);
-        assert_ok::<U0F16>("0.499993", 0x8000);
-        assert_ok::<U0F16>("0.999992", 0xFFFF);
-        assert_er::<U0F16>("0.999993", ParseErrorKind::Overflow);
-        assert_er::<U0F16>("1", ParseErrorKind::Overflow);
+        assert_ok::<U0F16>("-0", 10, 0x0000, false);
+        assert_ok::<U0F16>("0.499992", 10, 0x7FFF, false);
+        assert_ok::<U0F16>("0.499993", 10, 0x8000, false);
+        assert_ok::<U0F16>("0.999992", 10, 0xFFFF, false);
+        assert_ok::<U0F16>("0.999993", 10, 0x0000, true);
+        assert_ok::<U0F16>("1", 10, 0x0000, true);
 
-        assert_ok::<U8F8>("127.998", 0x7FFF);
-        assert_ok::<U8F8>("127.999", 0x8000);
-        assert_ok::<U8F8>("255.998", 0xFFFF);
-        assert_er::<U8F8>("255.999", ParseErrorKind::Overflow);
+        assert_ok::<U8F8>("127.998", 10, 0x7FFF, false);
+        assert_ok::<U8F8>("127.999", 10, 0x8000, false);
+        assert_ok::<U8F8>("255.998", 10, 0xFFFF, false);
+        assert_ok::<U8F8>("255.999", 10, 0x0000, true);
 
-        assert_ok::<U16F0>("32767.499999", 0x7FFF);
+        assert_ok::<U16F0>("32767.499999", 10, 0x7FFF, false);
         // exact tie, round up to even
-        assert_ok::<U16F0>("32767.5", 0x8000);
-        assert_ok::<U16F0>("65535.499999", 0xFFFF);
+        assert_ok::<U16F0>("32767.5", 10, 0x8000, false);
+        assert_ok::<U16F0>("65535.499999", 10, 0xFFFF, false);
         // exact tie, round up to even
-        assert_er::<U16F0>("65535.5", ParseErrorKind::Overflow);
+        assert_ok::<U16F0>("65535.5", 10, 0x0000, true);
     }
 
     #[test]
     fn check_i32_u32_from_str() {
-        assert_er::<I0F32>("-1", ParseErrorKind::Overflow);
-        assert_er::<I0F32>("-0.5000000002", ParseErrorKind::Overflow);
-        assert_ok::<I0F32>("-0.5000000001", -0x8000_0000);
-        assert_ok::<I0F32>("0.4999999998", 0x7FFF_FFFF);
-        assert_er::<I0F32>("0.4999999999", ParseErrorKind::Overflow);
-        assert_er::<I0F32>("1", ParseErrorKind::Overflow);
+        assert_ok::<I0F32>("-1", 10, 0x0000_0000, true);
+        assert_ok::<I0F32>("-0.5000000002", 10, 0x7FFF_FFFF, true);
+        assert_ok::<I0F32>("-0.5000000001", 10, -0x8000_0000, false);
+        assert_ok::<I0F32>("0.4999999998", 10, 0x7FFF_FFFF, false);
+        assert_ok::<I0F32>("0.4999999999", 10, -0x8000_0000, true);
+        assert_ok::<I0F32>("1", 10, 0x0000_0000, true);
 
-        assert_er::<I16F16>("-32768.000008", ParseErrorKind::Overflow);
-        assert_ok::<I16F16>("-32768.000007", -0x8000_0000);
-        assert_ok::<I16F16>("32767.999992", 0x7FFF_FFFF);
-        assert_er::<I16F16>("32767.999993", ParseErrorKind::Overflow);
+        assert_ok::<I16F16>("-32768.000008", 10, 0x7FFF_FFFF, true);
+        assert_ok::<I16F16>("-32768.000007", 10, -0x8000_0000, false);
+        assert_ok::<I16F16>("32767.999992", 10, 0x7FFF_FFFF, false);
+        assert_ok::<I16F16>("32767.999993", 10, -0x8000_0000, true);
 
-        assert_er::<I32F0>("-2147483648.5000000001", ParseErrorKind::Overflow);
+        assert_ok::<I32F0>("-2147483648.5000000001", 10, 0x7FFF_FFFF, true);
         // exact tie, round up to even
-        assert_ok::<I32F0>("-2147483648.5", -0x8000_0000);
-        assert_ok::<I32F0>("2147483647.4999999999", 0x7FFF_FFFF);
+        assert_ok::<I32F0>("-2147483648.5", 10, -0x8000_0000, false);
+        assert_ok::<I32F0>("2147483647.4999999999", 10, 0x7FFF_FFFF, false);
         // exact tie, round up to even
-        assert_er::<I32F0>("2147483647.5", ParseErrorKind::Overflow);
+        assert_ok::<I32F0>("2147483647.5", 10, -0x8000_0000, true);
 
-        assert_er::<U0F32>("-0", ParseErrorKind::InvalidDigit);
-        assert_ok::<U0F32>("0.4999999998", 0x7FFF_FFFF);
-        assert_ok::<U0F32>("0.4999999999", 0x8000_0000);
-        assert_ok::<U0F32>("0.9999999998", 0xFFFF_FFFF);
-        assert_er::<U0F32>("0.9999999999", ParseErrorKind::Overflow);
-        assert_er::<U0F32>("1", ParseErrorKind::Overflow);
+        assert_ok::<U0F32>("-0", 10, 0x0000_0000, false);
+        assert_ok::<U0F32>("0.4999999998", 10, 0x7FFF_FFFF, false);
+        assert_ok::<U0F32>("0.4999999999", 10, 0x8000_0000, false);
+        assert_ok::<U0F32>("0.9999999998", 10, 0xFFFF_FFFF, false);
+        assert_ok::<U0F32>("0.9999999999", 10, 0x0000_0000, true);
+        assert_ok::<U0F32>("1", 10, 0x0000_0000, true);
 
-        assert_ok::<U16F16>("32767.999992", 0x7FFF_FFFF);
-        assert_ok::<U16F16>("32767.999993", 0x8000_0000);
-        assert_ok::<U16F16>("65535.999992", 0xFFFF_FFFF);
-        assert_er::<U16F16>("65535.999993", ParseErrorKind::Overflow);
+        assert_ok::<U16F16>("32767.999992", 10, 0x7FFF_FFFF, false);
+        assert_ok::<U16F16>("32767.999993", 10, 0x8000_0000, false);
+        assert_ok::<U16F16>("65535.999992", 10, 0xFFFF_FFFF, false);
+        assert_ok::<U16F16>("65535.999993", 10, 0x0000_0000, true);
 
-        assert_ok::<U32F0>("2147483647.4999999999", 0x7FFF_FFFF);
+        assert_ok::<U32F0>("2147483647.4999999999", 10, 0x7FFF_FFFF, false);
         // exact tie, round up to even
-        assert_ok::<U32F0>("2147483647.5", 0x8000_0000);
-        assert_ok::<U32F0>("4294967295.4999999999", 0xFFFF_FFFF);
+        assert_ok::<U32F0>("2147483647.5", 10, 0x8000_0000, false);
+        assert_ok::<U32F0>("4294967295.4999999999", 10, 0xFFFF_FFFF, false);
         // exact tie, round up to even
-        assert_er::<U32F0>("4294967295.5", ParseErrorKind::Overflow);
-    }
-
-    #[test]
-    fn check_i16_u16_from_str_binary() {
-        assert_er_radix::<I0F16>("-1", 2, ParseErrorKind::Overflow);
-        assert_er_radix::<I0F16>("-0.100000000000000011", 2, ParseErrorKind::Overflow);
-        assert_ok_radix::<I0F16>("-0.100000000000000010", 2, -0x8000);
-        assert_ok_radix::<I0F16>("-0.011111111111111110", 2, -0x8000);
-        assert_ok_radix::<I0F16>("+0.011111111111111101", 2, 0x7FFF);
-        assert_er_radix::<I0F16>("+0.011111111111111110", 2, ParseErrorKind::Overflow);
-        assert_er_radix::<I0F16>("1", 2, ParseErrorKind::Overflow);
-
-        assert_er_radix::<I8F8>("-10000000.0000000011", 2, ParseErrorKind::Overflow);
-        assert_ok_radix::<I8F8>("-10000000.0000000010", 2, -0x8000);
-        assert_ok_radix::<I8F8>("-01111111.1111111110", 2, -0x8000);
-        assert_ok_radix::<I8F8>("+01111111.1111111101", 2, 0x7FFF);
-        assert_er_radix::<I8F8>("+01111111.1111111110", 2, ParseErrorKind::Overflow);
-
-        assert_er_radix::<I16F0>("-1000000000000000.11", 2, ParseErrorKind::Overflow);
-        assert_ok_radix::<I16F0>("-1000000000000000.10", 2, -0x8000);
-        assert_ok_radix::<I16F0>("-0111111111111111.10", 2, -0x8000);
-        assert_ok_radix::<I16F0>("+0111111111111111.01", 2, 0x7FFF);
-        assert_er_radix::<I16F0>("+0111111111111111.10", 2, ParseErrorKind::Overflow);
-
-        assert_er_radix::<U0F16>("-0", 2, ParseErrorKind::InvalidDigit);
-        assert_ok_radix::<U0F16>("0.011111111111111101", 2, 0x7FFF);
-        assert_ok_radix::<U0F16>("0.011111111111111110", 2, 0x8000);
-        assert_ok_radix::<U0F16>("0.111111111111111101", 2, 0xFFFF);
-        assert_er_radix::<U0F16>("0.111111111111111110", 2, ParseErrorKind::Overflow);
-        assert_er_radix::<U0F16>("1", 2, ParseErrorKind::Overflow);
-
-        assert_ok_radix::<U8F8>("01111111.1111111101", 2, 0x7FFF);
-        assert_ok_radix::<U8F8>("01111111.1111111110", 2, 0x8000);
-        assert_ok_radix::<U8F8>("11111111.1111111101", 2, 0xFFFF);
-        assert_er_radix::<U8F8>("11111111.1111111110", 2, ParseErrorKind::Overflow);
-
-        assert_ok_radix::<U16F0>("0111111111111111.01", 2, 0x7FFF);
-        assert_ok_radix::<U16F0>("0111111111111111.10", 2, 0x8000);
-        assert_ok_radix::<U16F0>("1111111111111111.01", 2, 0xFFFF);
-        assert_er_radix::<U16F0>("1111111111111111.10", 2, ParseErrorKind::Overflow);
-    }
-
-    #[test]
-    fn check_i16_u16_from_str_octal() {
-        assert_er_radix::<I0F16>("-1", 8, ParseErrorKind::Overflow);
-        assert_er_radix::<I0F16>("-0.400003", 8, ParseErrorKind::Overflow);
-        assert_ok_radix::<I0F16>("-0.400002", 8, -0x8000);
-        assert_ok_radix::<I0F16>("-0.377776", 8, -0x8000);
-        assert_ok_radix::<I0F16>("+0.377775", 8, 0x7FFF);
-        assert_er_radix::<I0F16>("+0.377776", 8, ParseErrorKind::Overflow);
-        assert_er_radix::<I0F16>("1", 8, ParseErrorKind::Overflow);
-
-        assert_er_radix::<I8F8>("-200.0011", 8, ParseErrorKind::Overflow);
-        assert_ok_radix::<I8F8>("-200.0010", 8, -0x8000);
-        assert_ok_radix::<I8F8>("-177.7770", 8, -0x8000);
-        assert_ok_radix::<I8F8>("+177.7767", 8, 0x7FFF);
-        assert_er_radix::<I8F8>("+177.7770", 8, ParseErrorKind::Overflow);
-
-        assert_er_radix::<I16F0>("-100000.5", 8, ParseErrorKind::Overflow);
-        assert_ok_radix::<I16F0>("-100000.4", 8, -0x8000);
-        assert_ok_radix::<I16F0>("-077777.4", 8, -0x8000);
-        assert_ok_radix::<I16F0>("+077777.3", 8, 0x7FFF);
-        assert_er_radix::<I16F0>("+077777.4", 8, ParseErrorKind::Overflow);
-
-        assert_er_radix::<U0F16>("-0", 8, ParseErrorKind::InvalidDigit);
-        assert_ok_radix::<U0F16>("0.377775", 8, 0x7FFF);
-        assert_ok_radix::<U0F16>("0.377776", 8, 0x8000);
-        assert_ok_radix::<U0F16>("0.777775", 8, 0xFFFF);
-        assert_er_radix::<U0F16>("0.777776", 8, ParseErrorKind::Overflow);
-        assert_er_radix::<U0F16>("1", 8, ParseErrorKind::Overflow);
-
-        assert_ok_radix::<U8F8>("177.7767", 8, 0x7FFF);
-        assert_ok_radix::<U8F8>("177.7770", 8, 0x8000);
-        assert_ok_radix::<U8F8>("377.7767", 8, 0xFFFF);
-        assert_er_radix::<U8F8>("377.7770", 8, ParseErrorKind::Overflow);
-
-        assert_ok_radix::<U16F0>("077777.3", 8, 0x7FFF);
-        assert_ok_radix::<U16F0>("077777.4", 8, 0x8000);
-        assert_ok_radix::<U16F0>("177777.3", 8, 0xFFFF);
-        assert_er_radix::<U16F0>("177777.4", 8, ParseErrorKind::Overflow);
-    }
-
-    #[test]
-    fn check_i16_u16_from_str_hex() {
-        assert_er_radix::<I0F16>("-1", 16, ParseErrorKind::Overflow);
-        assert_er_radix::<I0F16>("-0.80009", 16, ParseErrorKind::Overflow);
-        assert_ok_radix::<I0F16>("-0.80008", 16, -0x8000);
-        assert_ok_radix::<I0F16>("-0.7FFF8", 16, -0x8000);
-        assert_ok_radix::<I0F16>("+0.7FFF7", 16, 0x7FFF);
-        assert_er_radix::<I0F16>("+0.7FFF8", 16, ParseErrorKind::Overflow);
-        assert_er_radix::<I0F16>("1", 16, ParseErrorKind::Overflow);
-
-        assert_er_radix::<I8F8>("-80.009", 16, ParseErrorKind::Overflow);
-        assert_ok_radix::<I8F8>("-80.008", 16, -0x8000);
-        assert_ok_radix::<I8F8>("-7F.FF8", 16, -0x8000);
-        assert_ok_radix::<I8F8>("+7F.FF7", 16, 0x7FFF);
-        assert_er_radix::<I8F8>("+7F.FF8", 16, ParseErrorKind::Overflow);
-
-        assert_er_radix::<I16F0>("-8000.9", 16, ParseErrorKind::Overflow);
-        assert_ok_radix::<I16F0>("-8000.8", 16, -0x8000);
-        assert_ok_radix::<I16F0>("-7FFF.8", 16, -0x8000);
-        assert_ok_radix::<I16F0>("+7FFF.7", 16, 0x7FFF);
-        assert_er_radix::<I16F0>("+7FFF.8", 16, ParseErrorKind::Overflow);
-
-        assert_er_radix::<U0F16>("-0", 16, ParseErrorKind::InvalidDigit);
-        assert_ok_radix::<U0F16>("0.7FFF7", 16, 0x7FFF);
-        assert_ok_radix::<U0F16>("0.7FFF8", 16, 0x8000);
-        assert_ok_radix::<U0F16>("0.FFFF7", 16, 0xFFFF);
-        assert_er_radix::<U0F16>("0.FFFF8", 16, ParseErrorKind::Overflow);
-        assert_er_radix::<U0F16>("1", 16, ParseErrorKind::Overflow);
-
-        assert_ok_radix::<U8F8>("7F.FF7", 16, 0x7FFF);
-        assert_ok_radix::<U8F8>("7F.FF8", 16, 0x8000);
-        assert_ok_radix::<U8F8>("FF.FF7", 16, 0xFFFF);
-        assert_er_radix::<U8F8>("FF.FF8", 16, ParseErrorKind::Overflow);
-
-        assert_ok_radix::<U16F0>("7FFF.7", 16, 0x7FFF);
-        assert_ok_radix::<U16F0>("7FFF.8", 16, 0x8000);
-        assert_ok_radix::<U16F0>("FFFF.7", 16, 0xFFFF);
-        assert_er_radix::<U16F0>("FFFF.8", 16, ParseErrorKind::Overflow);
+        assert_ok::<U32F0>("4294967295.5", 10, 0x0000_0000, true);
     }
 
     #[test]
     fn check_i64_u64_from_str() {
-        assert_er::<I0F64>("-1", ParseErrorKind::Overflow);
-        assert_er::<I0F64>("-0.50000000000000000003", ParseErrorKind::Overflow);
-        assert_ok::<I0F64>("-0.50000000000000000002", -0x8000_0000_0000_0000);
-        assert_ok::<I0F64>("0.49999999999999999997", 0x7FFF_FFFF_FFFF_FFFF);
-        assert_er::<I0F64>("0.49999999999999999998", ParseErrorKind::Overflow);
-        assert_er::<I0F64>("1", ParseErrorKind::Overflow);
+        assert_ok::<I0F64>("-1", 10, 0x0000_0000_0000_0000, true);
+        assert_ok::<I0F64>("-0.50000000000000000003", 10, 0x7FFF_FFFF_FFFF_FFFF, true);
+        assert_ok::<I0F64>("-0.50000000000000000002", 10, -0x8000_0000_0000_0000, false);
+        assert_ok::<I0F64>("+0.49999999999999999997", 10, 0x7FFF_FFFF_FFFF_FFFF, false);
+        assert_ok::<I0F64>("+0.49999999999999999998", 10, -0x8000_0000_0000_0000, true);
+        assert_ok::<I0F64>("1", 10, 0x0000_0000_0000_0000, true);
 
-        assert_er::<I32F32>("-2147483648.0000000002", ParseErrorKind::Overflow);
-        assert_ok::<I32F32>("-2147483648.0000000001", -0x8000_0000_0000_0000);
-        assert_ok::<I32F32>("2147483647.9999999998", 0x7FFF_FFFF_FFFF_FFFF);
-        assert_er::<I32F32>("2147483647.9999999999", ParseErrorKind::Overflow);
+        assert_ok::<I32F32>("-2147483648.0000000002", 10, 0x7FFF_FFFF_FFFF_FFFF, true);
+        assert_ok::<I32F32>("-2147483648.0000000001", 10, -0x8000_0000_0000_0000, false);
+        assert_ok::<I32F32>("2147483647.9999999998", 10, 0x7FFF_FFFF_FFFF_FFFF, false);
+        assert_ok::<I32F32>("2147483647.9999999999", 10, -0x8000_0000_0000_0000, true);
 
-        assert_er::<I64F0>(
+        assert_ok::<I64F0>(
             "-9223372036854775808.50000000000000000001",
-            ParseErrorKind::Overflow,
+            10,
+            0x7FFF_FFFF_FFFF_FFFF,
+            true,
         );
         // exact tie, round up to even
-        assert_ok::<I64F0>("-9223372036854775808.5", -0x8000_0000_0000_0000);
+        assert_ok::<I64F0>("-9223372036854775808.5", 10, -0x8000_0000_0000_0000, false);
         assert_ok::<I64F0>(
             "9223372036854775807.49999999999999999999",
+            10,
             0x7FFF_FFFF_FFFF_FFFF,
+            false,
         );
         // exact tie, round up to even
-        assert_er::<I64F0>("9223372036854775807.5", ParseErrorKind::Overflow);
+        assert_ok::<I64F0>("9223372036854775807.5", 10, -0x8000_0000_0000_0000, true);
 
-        assert_er::<U0F64>("-0", ParseErrorKind::InvalidDigit);
-        assert_ok::<U0F64>("0.49999999999999999997", 0x7FFF_FFFF_FFFF_FFFF);
-        assert_ok::<U0F64>("0.49999999999999999998", 0x8000_0000_0000_0000);
-        assert_ok::<U0F64>("0.99999999999999999997", 0xFFFF_FFFF_FFFF_FFFF);
-        assert_er::<U0F64>("0.99999999999999999998", ParseErrorKind::Overflow);
-        assert_er::<U0F64>("1", ParseErrorKind::Overflow);
+        assert_ok::<U0F64>("-0", 10, 0x0000_0000_0000_0000, false);
+        assert_ok::<U0F64>("0.49999999999999999997", 10, 0x7FFF_FFFF_FFFF_FFFF, false);
+        assert_ok::<U0F64>("0.49999999999999999998", 10, 0x8000_0000_0000_0000, false);
+        assert_ok::<U0F64>("0.99999999999999999997", 10, 0xFFFF_FFFF_FFFF_FFFF, false);
+        assert_ok::<U0F64>("0.99999999999999999998", 10, 0x0000_0000_0000_0000, true);
+        assert_ok::<U0F64>("1", 10, 0x0000_0000_0000_0000, true);
 
-        assert_ok::<U32F32>("2147483647.9999999998", 0x7FFF_FFFF_FFFF_FFFF);
-        assert_ok::<U32F32>("2147483647.9999999999", 0x8000_0000_0000_0000);
-        assert_ok::<U32F32>("4294967295.9999999998", 0xFFFF_FFFF_FFFF_FFFF);
-        assert_er::<U32F32>("4294967295.9999999999", ParseErrorKind::Overflow);
+        assert_ok::<U32F32>("2147483647.9999999998", 10, 0x7FFF_FFFF_FFFF_FFFF, false);
+        assert_ok::<U32F32>("2147483647.9999999999", 10, 0x8000_0000_0000_0000, false);
+        assert_ok::<U32F32>("4294967295.9999999998", 10, 0xFFFF_FFFF_FFFF_FFFF, false);
+        assert_ok::<U32F32>("4294967295.9999999999", 10, 0x0000_0000_0000_0000, true);
 
         assert_ok::<U64F0>(
             "9223372036854775807.49999999999999999999",
+            10,
             0x7FFF_FFFF_FFFF_FFFF,
+            false,
         );
         // exact tie, round up to even
-        assert_ok::<U64F0>("9223372036854775807.5", 0x8000_0000_0000_0000);
+        assert_ok::<U64F0>("9223372036854775807.5", 10, 0x8000_0000_0000_0000, false);
         assert_ok::<U64F0>(
             "18446744073709551615.49999999999999999999",
+            10,
             0xFFFF_FFFF_FFFF_FFFF,
+            false,
         );
         // exact tie, round up to even
-        assert_er::<U64F0>("18446744073709551615.5", ParseErrorKind::Overflow);
+        assert_ok::<U64F0>("18446744073709551615.5", 10, 0x0000_0000_0000_0000, true);
     }
 
     #[test]
     fn check_i128_u128_from_str() {
-        assert_er::<I0F128>("-1", ParseErrorKind::Overflow);
-        assert_er::<I0F128>(
+        assert_ok::<I0F128>("-1", 10, 0x0000_0000_0000_0000_0000_0000_0000_0000, true);
+        assert_ok::<I0F128>(
             "-0.500000000000000000000000000000000000002",
-            ParseErrorKind::Overflow,
+            10,
+            0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            true,
         );
         assert_ok::<I0F128>(
             "-0.500000000000000000000000000000000000001",
+            10,
             -0x8000_0000_0000_0000_0000_0000_0000_0000,
+            false,
         );
         assert_ok::<I0F128>(
             "0.499999999999999999999999999999999999998",
+            10,
             0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            false,
         );
-        assert_er::<I0F128>(
+        assert_ok::<I0F128>(
             "0.499999999999999999999999999999999999999",
-            ParseErrorKind::Overflow,
+            10,
+            -0x8000_0000_0000_0000_0000_0000_0000_0000,
+            true,
         );
-        assert_er::<I0F128>("1", ParseErrorKind::Overflow);
+        assert_ok::<I0F128>("1", 10, 0x0000_0000_0000_0000_0000_0000_0000_0000, true);
 
-        assert_er::<I64F64>(
+        assert_ok::<I64F64>(
             "-9223372036854775808.00000000000000000003",
-            ParseErrorKind::Overflow,
+            10,
+            0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            true,
         );
         assert_ok::<I64F64>(
             "-9223372036854775808.00000000000000000002",
+            10,
             -0x8000_0000_0000_0000_0000_0000_0000_0000,
+            false,
         );
         assert_ok::<I64F64>(
             "9223372036854775807.99999999999999999997",
+            10,
             0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            false,
         );
-        assert_er::<I64F64>(
+        assert_ok::<I64F64>(
             "9223372036854775807.99999999999999999998",
-            ParseErrorKind::Overflow,
+            10,
+            -0x8000_0000_0000_0000_0000_0000_0000_0000,
+            true,
         );
 
-        // exact tie, round up to even
-        assert_er::<I128F0>(
+        assert_ok::<I128F0>(
             "-170141183460469231731687303715884105728.5000000000000000000000000000000000000001",
-            ParseErrorKind::Overflow,
+            10,
+            0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            true,
         );
+        // exact tie, round up to even
         assert_ok::<I128F0>(
             "-170141183460469231731687303715884105728.5",
+            10,
             -0x8000_0000_0000_0000_0000_0000_0000_0000,
+            false,
         );
         assert_ok::<I128F0>(
             "170141183460469231731687303715884105727.4999999999999999999999999999999999999999",
+            10,
             0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            false,
         );
         // exact tie, round up to even
-        assert_er::<I128F0>(
+        assert_ok::<I128F0>(
             "170141183460469231731687303715884105727.5",
-            ParseErrorKind::Overflow,
+            10,
+            -0x8000_0000_0000_0000_0000_0000_0000_0000,
+            true,
         );
 
-        assert_er::<U0F128>("-0", ParseErrorKind::InvalidDigit);
+        assert_ok::<U0F128>("-0", 10, 0x0000_0000_0000_0000_0000_0000_0000_0000, false);
         assert_ok::<U0F128>(
             "0.499999999999999999999999999999999999998",
+            10,
             0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            false,
         );
         assert_ok::<U0F128>(
             "0.499999999999999999999999999999999999999",
+            10,
             0x8000_0000_0000_0000_0000_0000_0000_0000,
+            false,
         );
         assert_ok::<U0F128>(
             "0.999999999999999999999999999999999999998",
+            10,
             0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            false,
         );
-        assert_er::<U0F128>(
+        assert_ok::<U0F128>(
             "0.999999999999999999999999999999999999999",
-            ParseErrorKind::Overflow,
+            10,
+            0x0000_0000_0000_0000_0000_0000_0000_0000,
+            true,
         );
-        assert_er::<U0F128>("1", ParseErrorKind::Overflow);
+        assert_ok::<U0F128>("1", 10, 0x0000_0000_0000_0000_0000_0000_0000_0000, true);
 
         assert_ok::<U64F64>(
             "9223372036854775807.99999999999999999997",
+            10,
             0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            false,
         );
         assert_ok::<U64F64>(
             "9223372036854775807.99999999999999999998",
+            10,
             0x8000_0000_0000_0000_0000_0000_0000_0000,
+            false,
         );
         assert_ok::<U64F64>(
             "18446744073709551615.99999999999999999997",
+            10,
             0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            false,
         );
-        assert_er::<U64F64>(
+        assert_ok::<U64F64>(
             "18446744073709551615.99999999999999999998",
-            ParseErrorKind::Overflow,
+            10,
+            0x0000_0000_0000_0000_0000_0000_0000_0000,
+            true,
         );
 
         assert_ok::<U128F0>(
             "170141183460469231731687303715884105727.4999999999999999999999999999999999999999",
+            10,
             0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            false,
         );
         // exact tie, round up to even
         assert_ok::<U128F0>(
             "170141183460469231731687303715884105727.5",
+            10,
             0x8000_0000_0000_0000_0000_0000_0000_0000,
+            false,
         );
         assert_ok::<U128F0>(
             "340282366920938463463374607431768211455.4999999999999999999999999999999999999999",
+            10,
             0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            false,
         );
         // exact tie, round up to even
-        assert_er::<U128F0>(
+        assert_ok::<U128F0>(
             "340282366920938463463374607431768211455.5",
-            ParseErrorKind::Overflow,
+            10,
+            0x0000_0000_0000_0000_0000_0000_0000_0000,
+            true,
         );
     }
 
     #[test]
+    fn check_i16_u16_from_str_binary() {
+        assert_ok::<I0F16>("-1", 2, 0x0000, true);
+        assert_ok::<I0F16>("-0.100000000000000011", 2, 0x7FFF, true);
+        assert_ok::<I0F16>("-0.100000000000000010", 2, -0x8000, false);
+        assert_ok::<I0F16>("-0.011111111111111110", 2, -0x8000, false);
+        assert_ok::<I0F16>("+0.011111111111111101", 2, 0x7FFF, false);
+        assert_ok::<I0F16>("+0.011111111111111110", 2, -0x8000, true);
+        assert_ok::<I0F16>("1", 2, 0x0000, true);
+
+        assert_ok::<I8F8>("-10000000.0000000011", 2, 0x7FFF, true);
+        assert_ok::<I8F8>("-10000000.0000000010", 2, -0x8000, false);
+        assert_ok::<I8F8>("-01111111.1111111110", 2, -0x8000, false);
+        assert_ok::<I8F8>("+01111111.1111111101", 2, 0x7FFF, false);
+        assert_ok::<I8F8>("+01111111.1111111110", 2, -0x8000, true);
+
+        assert_ok::<I16F0>("-1000000000000000.11", 2, 0x7FFF, true);
+        assert_ok::<I16F0>("-1000000000000000.10", 2, -0x8000, false);
+        assert_ok::<I16F0>("-0111111111111111.10", 2, -0x8000, false);
+        assert_ok::<I16F0>("+0111111111111111.01", 2, 0x7FFF, false);
+        assert_ok::<I16F0>("+0111111111111111.10", 2, -0x8000, true);
+
+        assert_ok::<U0F16>("-0", 2, 0x0000, false);
+        assert_ok::<U0F16>("0.011111111111111101", 2, 0x7FFF, false);
+        assert_ok::<U0F16>("0.011111111111111110", 2, 0x8000, false);
+        assert_ok::<U0F16>("0.111111111111111101", 2, 0xFFFF, false);
+        assert_ok::<U0F16>("0.111111111111111110", 2, 0x0000, true);
+        assert_ok::<U0F16>("1", 2, 0x0000, true);
+
+        assert_ok::<U8F8>("01111111.1111111101", 2, 0x7FFF, false);
+        assert_ok::<U8F8>("01111111.1111111110", 2, 0x8000, false);
+        assert_ok::<U8F8>("11111111.1111111101", 2, 0xFFFF, false);
+        assert_ok::<U8F8>("11111111.1111111110", 2, 0x0000, true);
+
+        assert_ok::<U16F0>("0111111111111111.01", 2, 0x7FFF, false);
+        assert_ok::<U16F0>("0111111111111111.10", 2, 0x8000, false);
+        assert_ok::<U16F0>("1111111111111111.01", 2, 0xFFFF, false);
+        assert_ok::<U16F0>("1111111111111111.10", 2, 0x0000, true);
+    }
+
+    #[test]
+    fn check_i16_u16_from_str_octal() {
+        assert_ok::<I0F16>("-1", 8, 0x0000, true);
+        assert_ok::<I0F16>("-0.400003", 8, 0x7FFF, true);
+        assert_ok::<I0F16>("-0.400002", 8, -0x8000, false);
+        assert_ok::<I0F16>("-0.377776", 8, -0x8000, false);
+        assert_ok::<I0F16>("+0.377775", 8, 0x7FFF, false);
+        assert_ok::<I0F16>("+0.377776", 8, -0x8000, true);
+        assert_ok::<I0F16>("1", 8, 0x0000, true);
+
+        assert_ok::<I8F8>("-200.0011", 8, 0x7FFF, true);
+        assert_ok::<I8F8>("-200.0010", 8, -0x8000, false);
+        assert_ok::<I8F8>("-177.7770", 8, -0x8000, false);
+        assert_ok::<I8F8>("+177.7767", 8, 0x7FFF, false);
+        assert_ok::<I8F8>("+177.7770", 8, -0x8000, true);
+
+        assert_ok::<I16F0>("-100000.5", 8, 0x7FFF, true);
+        assert_ok::<I16F0>("-100000.4", 8, -0x8000, false);
+        assert_ok::<I16F0>("-077777.4", 8, -0x8000, false);
+        assert_ok::<I16F0>("+077777.3", 8, 0x7FFF, false);
+        assert_ok::<I16F0>("+077777.4", 8, -0x8000, true);
+
+        assert_ok::<U0F16>("-0", 8, 0x0000, false);
+        assert_ok::<U0F16>("0.377775", 8, 0x7FFF, false);
+        assert_ok::<U0F16>("0.377776", 8, 0x8000, false);
+        assert_ok::<U0F16>("0.777775", 8, 0xFFFF, false);
+        assert_ok::<U0F16>("0.777776", 8, 0x0000, true);
+        assert_ok::<U0F16>("1", 8, 0x0000, true);
+
+        assert_ok::<U8F8>("177.7767", 8, 0x7FFF, false);
+        assert_ok::<U8F8>("177.7770", 8, 0x8000, false);
+        assert_ok::<U8F8>("377.7767", 8, 0xFFFF, false);
+        assert_ok::<U8F8>("377.7770", 8, 0x0000, true);
+
+        assert_ok::<U16F0>("077777.3", 8, 0x7FFF, false);
+        assert_ok::<U16F0>("077777.4", 8, 0x8000, false);
+        assert_ok::<U16F0>("177777.3", 8, 0xFFFF, false);
+        assert_ok::<U16F0>("177777.4", 8, 0x0000, true);
+    }
+
+    #[test]
+    fn check_i16_u16_from_str_hex() {
+        assert_ok::<I0F16>("-1", 16, 0x0000, true);
+        assert_ok::<I0F16>("-0.80009", 16, 0x7FFF, true);
+        assert_ok::<I0F16>("-0.80008", 16, -0x8000, false);
+        assert_ok::<I0F16>("-0.7FFF8", 16, -0x8000, false);
+        assert_ok::<I0F16>("+0.7FFF7", 16, 0x7FFF, false);
+        assert_ok::<I0F16>("+0.7FFF8", 16, -0x8000, true);
+        assert_ok::<I0F16>("1", 16, 0x0000, true);
+
+        assert_ok::<I8F8>("-80.009", 16, 0x7FFF, true);
+        assert_ok::<I8F8>("-80.008", 16, -0x8000, false);
+        assert_ok::<I8F8>("-7F.FF8", 16, -0x8000, false);
+        assert_ok::<I8F8>("+7F.FF7", 16, 0x7FFF, false);
+        assert_ok::<I8F8>("+7F.FF8", 16, -0x8000, true);
+
+        assert_ok::<I16F0>("-8000.9", 16, 0x7FFF, true);
+        assert_ok::<I16F0>("-8000.8", 16, -0x8000, false);
+        assert_ok::<I16F0>("-7FFF.8", 16, -0x8000, false);
+        assert_ok::<I16F0>("+7FFF.7", 16, 0x7FFF, false);
+        assert_ok::<I16F0>("+7FFF.8", 16, -0x8000, true);
+
+        assert_ok::<U0F16>("-0", 16, 0x0000, false);
+        assert_ok::<U0F16>("0.7FFF7", 16, 0x7FFF, false);
+        assert_ok::<U0F16>("0.7FFF8", 16, 0x8000, false);
+        assert_ok::<U0F16>("0.FFFF7", 16, 0xFFFF, false);
+        assert_ok::<U0F16>("0.FFFF8", 16, 0x0000, true);
+        assert_ok::<U0F16>("1", 16, 0x0000, true);
+
+        assert_ok::<U8F8>("7F.FF7", 16, 0x7FFF, false);
+        assert_ok::<U8F8>("7F.FF8", 16, 0x8000, false);
+        assert_ok::<U8F8>("FF.FF7", 16, 0xFFFF, false);
+        assert_ok::<U8F8>("FF.FF8", 16, 0x0000, true);
+
+        assert_ok::<U16F0>("7FFF.7", 16, 0x7FFF, false);
+        assert_ok::<U16F0>("7FFF.8", 16, 0x8000, false);
+        assert_ok::<U16F0>("FFFF.7", 16, 0xFFFF, false);
+        assert_ok::<U16F0>("FFFF.8", 16, 0x0000, true);
+    }
+
+    #[test]
     fn check_i128_u128_from_str_hex() {
-        assert_er_radix::<I0F128>("-1", 16, ParseErrorKind::Overflow);
-        assert_er_radix::<I0F128>(
+        assert_ok::<I0F128>("-1", 16, 0x0000_0000_0000_0000_0000_0000_0000_0000, true);
+        assert_ok::<I0F128>(
             "-0.800000000000000000000000000000009",
             16,
-            ParseErrorKind::Overflow,
+            0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            true,
         );
-        assert_ok_radix::<I0F128>(
+        assert_ok::<I0F128>(
             "-0.800000000000000000000000000000008",
             16,
             -0x8000_0000_0000_0000_0000_0000_0000_0000,
+            false,
         );
-        assert_ok_radix::<I0F128>(
+        assert_ok::<I0F128>(
             "-0.7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF8",
             16,
             -0x8000_0000_0000_0000_0000_0000_0000_0000,
+            false,
         );
-        assert_ok_radix::<I0F128>(
+        assert_ok::<I0F128>(
             "+0.7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7",
             16,
             0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            false,
         );
-        assert_er_radix::<I0F128>(
+        assert_ok::<I0F128>(
             "+0.7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF8",
             16,
-            ParseErrorKind::Overflow,
+            -0x8000_0000_0000_0000_0000_0000_0000_0000,
+            true,
         );
-        assert_er_radix::<I0F128>("1", 16, ParseErrorKind::Overflow);
+        assert_ok::<I0F128>("1", 16, 0x0000_0000_0000_0000_0000_0000_0000_0000, true);
 
-        assert_er_radix::<I64F64>(
+        assert_ok::<I64F64>(
             "-8000000000000000.00000000000000009",
             16,
-            ParseErrorKind::Overflow,
+            0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            true,
         );
-        assert_ok_radix::<I64F64>(
+        assert_ok::<I64F64>(
             "-8000000000000000.00000000000000008",
             16,
             -0x8000_0000_0000_0000_0000_0000_0000_0000,
+            false,
         );
-        assert_ok_radix::<I64F64>(
+        assert_ok::<I64F64>(
             "-7FFFFFFFFFFFFFFF.FFFFFFFFFFFFFFFF8",
             16,
             -0x8000_0000_0000_0000_0000_0000_0000_0000,
+            false,
         );
-        assert_ok_radix::<I64F64>(
+        assert_ok::<I64F64>(
             "+7FFFFFFFFFFFFFFF.FFFFFFFFFFFFFFFF7",
             16,
             0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            false,
         );
-        assert_er_radix::<I64F64>(
+        assert_ok::<I64F64>(
             "+7FFFFFFFFFFFFFFF.FFFFFFFFFFFFFFFF8",
             16,
-            ParseErrorKind::Overflow,
+            -0x8000_0000_0000_0000_0000_0000_0000_0000,
+            true,
         );
 
-        assert_er_radix::<I128F0>(
+        assert_ok::<I128F0>(
             "-80000000000000000000000000000000.9",
             16,
-            ParseErrorKind::Overflow,
+            0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            true,
         );
-        assert_ok_radix::<I128F0>(
+        assert_ok::<I128F0>(
             "-80000000000000000000000000000000.8",
             16,
             -0x8000_0000_0000_0000_0000_0000_0000_0000,
+            false,
         );
-        assert_ok_radix::<I128F0>(
+        assert_ok::<I128F0>(
             "-7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.8",
             16,
             -0x8000_0000_0000_0000_0000_0000_0000_0000,
+            false,
         );
-        assert_ok_radix::<I128F0>(
+        assert_ok::<I128F0>(
             "+7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.7",
             16,
             0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            false,
         );
-        assert_er_radix::<I128F0>(
+        assert_ok::<I128F0>(
             "+7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.8",
             16,
-            ParseErrorKind::Overflow,
+            -0x8000_0000_0000_0000_0000_0000_0000_0000,
+            true,
         );
 
-        assert_er_radix::<U0F128>("-0", 16, ParseErrorKind::InvalidDigit);
-        assert_ok_radix::<U0F128>(
+        assert_ok::<U0F128>("-0", 16, 0x0000_0000_0000_0000_0000_0000_0000_0000, false);
+        assert_ok::<U0F128>(
             "0.7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7",
             16,
             0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            false,
         );
-        assert_ok_radix::<U0F128>(
+        assert_ok::<U0F128>(
             "0.7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF8",
             16,
             0x8000_0000_0000_0000_0000_0000_0000_0000,
+            false,
         );
-        assert_ok_radix::<U0F128>(
+        assert_ok::<U0F128>(
             "0.FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7",
             16,
             0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            false,
         );
-        assert_er_radix::<U0F128>(
+        assert_ok::<U0F128>(
             "0.FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF8",
             16,
-            ParseErrorKind::Overflow,
+            0x0000_0000_0000_0000_0000_0000_0000_0000,
+            true,
         );
-        assert_er_radix::<U0F128>("1", 16, ParseErrorKind::Overflow);
+        assert_ok::<U0F128>("1", 16, 0x0000_0000_0000_0000_0000_0000_0000_0000, true);
 
-        assert_ok_radix::<U64F64>(
+        assert_ok::<U64F64>(
             "7FFFFFFFFFFFFFFF.FFFFFFFFFFFFFFFF7",
             16,
             0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            false,
         );
-        assert_ok_radix::<U64F64>(
+        assert_ok::<U64F64>(
             "7FFFFFFFFFFFFFFF.FFFFFFFFFFFFFFFF8",
             16,
             0x8000_0000_0000_0000_0000_0000_0000_0000,
+            false,
         );
-        assert_ok_radix::<U64F64>(
+        assert_ok::<U64F64>(
             "FFFFFFFFFFFFFFFF.FFFFFFFFFFFFFFFF7",
             16,
             0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            false,
         );
-        assert_er_radix::<U64F64>(
+        assert_ok::<U64F64>(
             "FFFFFFFFFFFFFFFF.FFFFFFFFFFFFFFFF8",
             16,
-            ParseErrorKind::Overflow,
+            0x0000_0000_0000_0000_0000_0000_0000_0000,
+            true,
         );
 
-        assert_ok_radix::<U128F0>(
+        assert_ok::<U128F0>(
             "7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.7",
             16,
             0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            false,
         );
-        assert_ok_radix::<U128F0>(
+        assert_ok::<U128F0>(
             "7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.8",
             16,
             0x8000_0000_0000_0000_0000_0000_0000_0000,
+            false,
         );
-        assert_ok_radix::<U128F0>(
+        assert_ok::<U128F0>(
             "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.7",
             16,
             0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF,
+            false,
         );
-        assert_er_radix::<U128F0>(
+        assert_ok::<U128F0>(
             "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.8",
             16,
-            ParseErrorKind::Overflow,
+            0x0000_0000_0000_0000_0000_0000_0000_0000,
+            true,
         );
     }
 
@@ -1612,101 +1725,131 @@ mod tests {
                        71527807097273331945965109401885939632848021574318408966064453125";
 
         let frac_0_8 = make_fraction_strings(&max_int_0, eps_8);
-        assert_ok::<U0F8>(&frac_0_8.zero, 0);
-        assert_ok::<U0F8>(&frac_0_8.gt_0, 1);
-        assert_ok::<U0F8>(&frac_0_8.max, !0);
-        assert_er::<U0F8>(&frac_0_8.over, ParseErrorKind::Overflow);
+        assert_ok::<U0F8>(&frac_0_8.zero, 10, 0, false);
+        assert_ok::<U0F8>(&frac_0_8.gt_0, 10, 1, false);
+        assert_ok::<U0F8>(&frac_0_8.max, 10, !0, false);
+        assert_ok::<U0F8>(&frac_0_8.over, 10, 0, true);
 
         let frac_4_4 = make_fraction_strings(&max_int_4, eps_4);
-        assert_ok::<U4F4>(&frac_4_4.zero, 0);
-        assert_ok::<U4F4>(&frac_4_4.gt_0, 1);
-        assert_ok::<U4F4>(&frac_4_4.max, !0);
-        assert_er::<U4F4>(&frac_4_4.over, ParseErrorKind::Overflow);
+        assert_ok::<U4F4>(&frac_4_4.zero, 10, 0, false);
+        assert_ok::<U4F4>(&frac_4_4.gt_0, 10, 1, false);
+        assert_ok::<U4F4>(&frac_4_4.max, 10, !0, false);
+        assert_ok::<U4F4>(&frac_4_4.over, 10, 0, true);
 
         let frac_8_0 = make_fraction_strings(&max_int_8, eps_0);
-        assert_ok::<U8F0>(&frac_8_0.zero, 0);
-        assert_ok::<U8F0>(&frac_8_0.gt_0, 1);
-        assert_ok::<U8F0>(&frac_8_0.max, !0);
-        assert_er::<U8F0>(&frac_8_0.over, ParseErrorKind::Overflow);
+        assert_ok::<U8F0>(&frac_8_0.zero, 10, 0, false);
+        assert_ok::<U8F0>(&frac_8_0.gt_0, 10, 1, false);
+        assert_ok::<U8F0>(&frac_8_0.max, 10, !0, false);
+        assert_ok::<U8F0>(&frac_8_0.over, 10, 0, true);
 
         let frac_0_32 = make_fraction_strings(&max_int_0, eps_32);
-        assert_ok::<U0F32>(&frac_0_32.zero, 0);
-        assert_ok::<U0F32>(&frac_0_32.gt_0, 1);
-        assert_ok::<U0F32>(&frac_0_32.max, !0);
-        assert_er::<U0F32>(&frac_0_32.over, ParseErrorKind::Overflow);
+        assert_ok::<U0F32>(&frac_0_32.zero, 10, 0, false);
+        assert_ok::<U0F32>(&frac_0_32.gt_0, 10, 1, false);
+        assert_ok::<U0F32>(&frac_0_32.max, 10, !0, false);
+        assert_ok::<U0F32>(&frac_0_32.over, 10, 0, true);
 
         let frac_4_28 = make_fraction_strings(&max_int_4, eps_28);
-        assert_ok::<U4F28>(&frac_4_28.zero, 0);
-        assert_ok::<U4F28>(&frac_4_28.gt_0, 1);
-        assert_ok::<U4F28>(&frac_4_28.max, !0);
-        assert_er::<U4F28>(&frac_4_28.over, ParseErrorKind::Overflow);
+        assert_ok::<U4F28>(&frac_4_28.zero, 10, 0, false);
+        assert_ok::<U4F28>(&frac_4_28.gt_0, 10, 1, false);
+        assert_ok::<U4F28>(&frac_4_28.max, 10, !0, false);
+        assert_ok::<U4F28>(&frac_4_28.over, 10, 0, true);
 
         let frac_16_16 = make_fraction_strings(&max_int_16, eps_16);
-        assert_ok::<U16F16>(&frac_16_16.zero, 0);
-        assert_ok::<U16F16>(&frac_16_16.gt_0, 1);
-        assert_ok::<U16F16>(&frac_16_16.max, !0);
-        assert_er::<U16F16>(&frac_16_16.over, ParseErrorKind::Overflow);
+        assert_ok::<U16F16>(&frac_16_16.zero, 10, 0, false);
+        assert_ok::<U16F16>(&frac_16_16.gt_0, 10, 1, false);
+        assert_ok::<U16F16>(&frac_16_16.max, 10, !0, false);
+        assert_ok::<U16F16>(&frac_16_16.over, 10, 0, true);
 
         let frac_28_4 = make_fraction_strings(&max_int_28, eps_4);
-        assert_ok::<U28F4>(&frac_28_4.zero, 0);
-        assert_ok::<U28F4>(&frac_28_4.gt_0, 1);
-        assert_ok::<U28F4>(&frac_28_4.max, !0);
-        assert_er::<U28F4>(&frac_28_4.over, ParseErrorKind::Overflow);
+        assert_ok::<U28F4>(&frac_28_4.zero, 10, 0, false);
+        assert_ok::<U28F4>(&frac_28_4.gt_0, 10, 1, false);
+        assert_ok::<U28F4>(&frac_28_4.max, 10, !0, false);
+        assert_ok::<U28F4>(&frac_28_4.over, 10, 0, true);
 
         let frac_32_0 = make_fraction_strings(&max_int_32, eps_0);
-        assert_ok::<U32F0>(&frac_32_0.zero, 0);
-        assert_ok::<U32F0>(&frac_32_0.gt_0, 1);
-        assert_ok::<U32F0>(&frac_32_0.max, !0);
-        assert_er::<U32F0>(&frac_32_0.over, ParseErrorKind::Overflow);
+        assert_ok::<U32F0>(&frac_32_0.zero, 10, 0, false);
+        assert_ok::<U32F0>(&frac_32_0.gt_0, 10, 1, false);
+        assert_ok::<U32F0>(&frac_32_0.max, 10, !0, false);
+        assert_ok::<U32F0>(&frac_32_0.over, 10, 0, true);
 
         let frac_0_128 = make_fraction_strings(&max_int_0, eps_128);
-        assert_ok::<U0F128>(&frac_0_128.zero, 0);
-        assert_ok::<U0F128>(&frac_0_128.gt_0, 1);
-        assert_ok::<U0F128>(&frac_0_128.max, !0);
-        assert_er::<U0F128>(&frac_0_128.over, ParseErrorKind::Overflow);
+        assert_ok::<U0F128>(&frac_0_128.zero, 10, 0, false);
+        assert_ok::<U0F128>(&frac_0_128.gt_0, 10, 1, false);
+        assert_ok::<U0F128>(&frac_0_128.max, 10, !0, false);
+        assert_ok::<U0F128>(&frac_0_128.over, 10, 0, true);
 
         let frac_4_124 = make_fraction_strings(&max_int_4, eps_124);
-        assert_ok::<U4F124>(&frac_4_124.zero, 0);
-        assert_ok::<U4F124>(&frac_4_124.gt_0, 1);
-        assert_ok::<U4F124>(&frac_4_124.max, !0);
-        assert_er::<U4F124>(&frac_4_124.over, ParseErrorKind::Overflow);
+        assert_ok::<U4F124>(&frac_4_124.zero, 10, 0, false);
+        assert_ok::<U4F124>(&frac_4_124.gt_0, 10, 1, false);
+        assert_ok::<U4F124>(&frac_4_124.max, 10, !0, false);
+        assert_ok::<U4F124>(&frac_4_124.over, 10, 0, true);
 
         let frac_64_64 = make_fraction_strings(&max_int_64, eps_64);
-        assert_ok::<U64F64>(&frac_64_64.zero, 0);
-        assert_ok::<U64F64>(&frac_64_64.gt_0, 1);
-        assert_ok::<U64F64>(&frac_64_64.max, !0);
-        assert_er::<U64F64>(&frac_64_64.over, ParseErrorKind::Overflow);
+        assert_ok::<U64F64>(&frac_64_64.zero, 10, 0, false);
+        assert_ok::<U64F64>(&frac_64_64.gt_0, 10, 1, false);
+        assert_ok::<U64F64>(&frac_64_64.max, 10, !0, false);
+        assert_ok::<U64F64>(&frac_64_64.over, 10, 0, true);
 
         let frac_124_4 = make_fraction_strings(&max_int_124, eps_4);
-        assert_ok::<U124F4>(&frac_124_4.zero, 0);
-        assert_ok::<U124F4>(&frac_124_4.gt_0, 1);
-        assert_ok::<U124F4>(&frac_124_4.max, !0);
-        assert_er::<U124F4>(&frac_124_4.over, ParseErrorKind::Overflow);
+        assert_ok::<U124F4>(&frac_124_4.zero, 10, 0, false);
+        assert_ok::<U124F4>(&frac_124_4.gt_0, 10, 1, false);
+        assert_ok::<U124F4>(&frac_124_4.max, 10, !0, false);
+        assert_ok::<U124F4>(&frac_124_4.over, 10, 0, true);
 
         let frac_128_0 = make_fraction_strings(&max_int_128, eps_0);
-        assert_ok::<U128F0>(&frac_128_0.zero, 0);
-        assert_ok::<U128F0>(&frac_128_0.gt_0, 1);
-        assert_ok::<U128F0>(&frac_128_0.max, !0);
-        assert_er::<U128F0>(&frac_128_0.over, ParseErrorKind::Overflow);
+        assert_ok::<U128F0>(&frac_128_0.zero, 10, 0, false);
+        assert_ok::<U128F0>(&frac_128_0.gt_0, 10, 1, false);
+        assert_ok::<U128F0>(&frac_128_0.max, 10, !0, false);
+        assert_ok::<U128F0>(&frac_128_0.over, 10, 0, true);
 
         // some other cases
         // 13/32 = 6.5/16, to even 6/16
-        assert_ok::<U4F4>("0.40624999999999999999999999999999999999999999999999", 0x06);
-        assert_ok::<U4F4>("0.40625", 0x06);
-        assert_ok::<U4F4>("0.40625000000000000000000000000000000000000000000001", 0x07);
+        assert_ok::<U4F4>(
+            "0.40624999999999999999999999999999999999999999999999",
+            10,
+            0x06,
+            false,
+        );
+        assert_ok::<U4F4>("0.40625", 10, 0x06, false);
+        assert_ok::<U4F4>(
+            "0.40625000000000000000000000000000000000000000000001",
+            10,
+            0x07,
+            false,
+        );
         // 14/32 = 7/16
-        assert_ok::<U4F4>("0.4375", 0x07);
+        assert_ok::<U4F4>("0.4375", 10, 0x07, false);
         // 15/32 = 7.5/16, to even 8/16
-        assert_ok::<U4F4>("0.46874999999999999999999999999999999999999999999999", 0x07);
-        assert_ok::<U4F4>("0.46875", 0x08);
-        assert_ok::<U4F4>("0.46875000000000000000000000000000000000000000000001", 0x08);
+        assert_ok::<U4F4>(
+            "0.46874999999999999999999999999999999999999999999999",
+            10,
+            0x07,
+            false,
+        );
+        assert_ok::<U4F4>("0.46875", 10, 0x08, false);
+        assert_ok::<U4F4>(
+            "0.46875000000000000000000000000000000000000000000001",
+            10,
+            0x08,
+            false,
+        );
         // 16/32 = 8/16
-        assert_ok::<U4F4>("0.5", 0x08);
+        assert_ok::<U4F4>("0.5", 10, 0x08, false);
         // 17/32 = 8.5/16, to even 8/16
-        assert_ok::<U4F4>("0.53124999999999999999999999999999999999999999999999", 0x08);
-        assert_ok::<U4F4>("0.53125", 0x08);
-        assert_ok::<U4F4>("0.53125000000000000000000000000000000000000000000001", 0x09);
+        assert_ok::<U4F4>(
+            "0.53124999999999999999999999999999999999999999999999",
+            10,
+            0x08,
+            false,
+        );
+        assert_ok::<U4F4>("0.53125", 10, 0x08, false);
+        assert_ok::<U4F4>(
+            "0.53125000000000000000000000000000000000000000000001",
+            10,
+            0x09,
+            false,
+        );
         // 18/32 = 9/16
-        assert_ok::<U4F4>("0.5625", 0x09);
+        assert_ok::<U4F4>("0.5625", 10, 0x09, false);
     }
 }

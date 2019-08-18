@@ -23,7 +23,7 @@ use crate::{
 use core::{
     cmp::Ordering,
     fmt::{Debug, Display},
-    ops::{BitAnd, BitOr, Not, Shl, Shr},
+    ops::{Add, BitAnd, BitOr, Not, Shl, Shr, Sub},
 };
 
 pub trait IntHelper
@@ -31,6 +31,7 @@ where
     Self: Copy + Ord + Debug + Display,
     Self: Shl<u32, Output = Self> + Shr<u32, Output = Self>,
     Self: Not<Output = Self> + BitAnd<Output = Self> + BitOr<Output = Self>,
+    Self: Add<Output = Self> + Sub<Output = Self>,
 {
     type NBits: Unsigned;
     type IsSigned: Bit;
@@ -46,6 +47,7 @@ where
     fn checked_add(self, val: Self) -> Option<Self>;
     fn checked_mul(self, val: Self) -> Option<Self>;
     fn overflowing_add(self, val: Self) -> (Self, bool);
+    fn overflowing_mul(self, val: Self) -> (Self, bool);
     fn leading_zeros(self) -> u32;
 
     fn to_fixed_helper(
@@ -86,6 +88,11 @@ macro_rules! sealed_int {
             #[inline]
             fn overflowing_add(self, val: $Int) -> ($Int, bool) {
                 self.overflowing_add(val)
+            }
+
+            #[inline]
+            fn overflowing_mul(self, val: $Int) -> ($Int, bool) {
+                self.overflowing_mul(val)
             }
 
             #[inline]

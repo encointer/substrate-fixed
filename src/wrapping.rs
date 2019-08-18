@@ -29,6 +29,7 @@ use core::{
         DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub,
         SubAssign,
     },
+    str::FromStr,
 };
 
 /// Provides intentionally wrapped arithmetic on fixed-point numbers.
@@ -114,21 +115,6 @@ impl<F: Fixed> Wrapping<F> {
     /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
     pub fn from_num<Src: ToFixed>(src: Src) -> Self {
         Wrapping(src.wrapping_to_fixed())
-    }
-
-    /// Converts a string slice containing decimal digits to a fixed-point number.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use fixed::{types::I8F8, Wrapping};
-    /// // 9999.5 = 15.5 + 256 × n
-    /// let check = Wrapping(I8F8::from_num(15.5));
-    /// assert_eq!(Wrapping::<I8F8>::from_str("9999.5"), Ok(check));
-    /// ```
-    #[inline]
-    pub fn from_str(src: &str) -> Result<Self, ParseFixedError> {
-        F::wrapping_from_str(src).map(Wrapping)
     }
 
     /// Converts a string slice containing binary digits to a fixed-point number.
@@ -257,6 +243,14 @@ impl<F: Fixed> From<F> for Wrapping<F> {
     #[inline]
     fn from(src: F) -> Wrapping<F> {
         Wrapping(src)
+    }
+}
+
+impl<F: Fixed> FromStr for Wrapping<F> {
+    type Err = ParseFixedError;
+    #[inline]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        F::wrapping_from_str(s).map(Wrapping)
     }
 }
 

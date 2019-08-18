@@ -11,8 +11,10 @@ Version 0.4.3 (unreleased)
   * The *fixed* crate now requires rustc version 1.34.0 or later.
   * Parsing strings now rounds to the nearest with ties rounding to even.
   * Checked versions of string parsing methods are now available as
-    inherent methods to all fixed-point numbers, as methods in the
-    `Fixed` trait, and as methods in the `Wrapping` wrapper.
+    inherent methods to all fixed-point numbers, and as methods in the
+    `Fixed` trait.
+  * `Wrapping` now has methods for parsing with wrapping, including
+    an implementation of `FromStr`.
   * The following methods are now `const` functions:
       * `min_value`, `max_value`, `from_bits`, `to_bits`
 	  * `count_ones`, `count_zeros`, `leading_zeros`, `trailing_zeros`

@@ -330,6 +330,82 @@ where
     /// Converts a string slice containing hexadecimal digits to a fixed-point number.
     fn from_str_hex(src: &str) -> Result<Self, ParseFixedError>;
 
+    /// Converts a string slice containing decimal digits to a
+    /// fixed-point number, saturating on overflow.
+    fn saturating_from_str(src: &str) -> Result<Self, ParseFixedError>;
+
+    /// Converts a string slice containing binary digits to a
+    /// fixed-point number, saturating on overflow.
+    fn saturating_from_str_binary(src: &str) -> Result<Self, ParseFixedError>;
+
+    /// Converts a string slice containing octal digits to a
+    /// fixed-point number, saturating on overflow.
+    fn saturating_from_str_octal(src: &str) -> Result<Self, ParseFixedError>;
+
+    /// Converts a string slice containing hexadecimal digits to a
+    /// fixed-point number, saturating on overflow.
+    fn saturating_from_str_hex(src: &str) -> Result<Self, ParseFixedError>;
+
+    /// Converts a string slice containing decimal digits to a
+    /// fixed-point number, wrapping on overflow.
+    fn wrapping_from_str(src: &str) -> Result<Self, ParseFixedError>;
+
+    /// Converts a string slice containing binary digits to a
+    /// fixed-point number, wrapping on overflow.
+    fn wrapping_from_str_binary(src: &str) -> Result<Self, ParseFixedError>;
+
+    /// Converts a string slice containing octal digits to a
+    /// fixed-point number, wrapping on overflow.
+    fn wrapping_from_str_octal(src: &str) -> Result<Self, ParseFixedError>;
+
+    /// Converts a string slice containing hexadecimal digits to a
+    /// fixed-point number, wrapping on overflow.
+    fn wrapping_from_str_hex(src: &str) -> Result<Self, ParseFixedError>;
+
+    /// Converts a string slice containing decimal digits to a
+    /// fixed-point number.
+    ///
+    /// Returns a [tuple] of the fixed-point number and a [`bool`],
+    /// indicating whether an overflow has occurred. On overflow, the
+    /// wrapped value is returned.
+    ///
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
+    fn overflowing_from_str(src: &str) -> Result<(Self, bool), ParseFixedError>;
+
+    /// Converts a string slice containing binary digits to a
+    /// fixed-point number.
+    ///
+    /// Returns a [tuple] of the fixed-point number and a [`bool`],
+    /// indicating whether an overflow has occurred. On overflow, the
+    /// wrapped value is returned.
+    ///
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
+    fn overflowing_from_str_binary(src: &str) -> Result<(Self, bool), ParseFixedError>;
+
+    /// Converts a string slice containing octal digits to a
+    /// fixed-point number.
+    ///
+    /// Returns a [tuple] of the fixed-point number and a [`bool`],
+    /// indicating whether an overflow has occurred. On overflow, the
+    /// wrapped value is returned.
+    ///
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
+    fn overflowing_from_str_octal(src: &str) -> Result<(Self, bool), ParseFixedError>;
+
+    /// Converts a string slice containing hexadecimal digits to a
+    /// fixed-point number.
+    ///
+    /// Returns a [tuple] of the fixed-point number and a [`bool`],
+    /// indicating whether an overflow has occurred. On overflow, the
+    /// wrapped value is returned.
+    ///
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
+    fn overflowing_from_str_hex(src: &str) -> Result<(Self, bool), ParseFixedError>;
+
     /// Returns the integer part.
     fn int(self) -> Self;
 
@@ -1321,6 +1397,42 @@ macro_rules! impl_fixed {
             trait_delegate! { fn from_str_binary(src: &str) -> Result<Self, ParseFixedError> }
             trait_delegate! { fn from_str_octal(src: &str) -> Result<Self, ParseFixedError> }
             trait_delegate! { fn from_str_hex(src: &str) -> Result<Self, ParseFixedError> }
+            trait_delegate! {
+                fn saturating_from_str(src: &str) -> Result<Self, ParseFixedError>
+            }
+            trait_delegate! {
+                fn saturating_from_str_binary(src: &str) -> Result<Self, ParseFixedError>
+            }
+            trait_delegate! {
+                fn saturating_from_str_octal(src: &str) -> Result<Self, ParseFixedError>
+            }
+            trait_delegate! {
+                fn saturating_from_str_hex(src: &str) -> Result<Self, ParseFixedError>
+            }
+            trait_delegate! {
+                fn wrapping_from_str(src: &str) -> Result<Self, ParseFixedError>
+            }
+            trait_delegate! {
+                fn wrapping_from_str_binary(src: &str) -> Result<Self, ParseFixedError>
+            }
+            trait_delegate! {
+                fn wrapping_from_str_octal(src: &str) -> Result<Self, ParseFixedError>
+            }
+            trait_delegate! {
+                fn wrapping_from_str_hex(src: &str) -> Result<Self, ParseFixedError>
+            }
+            trait_delegate! {
+                fn overflowing_from_str(src: &str) -> Result<(Self, bool), ParseFixedError>
+            }
+            trait_delegate! {
+                fn overflowing_from_str_binary(src: &str) -> Result<(Self, bool), ParseFixedError>
+            }
+            trait_delegate! {
+                fn overflowing_from_str_octal(src: &str) -> Result<(Self, bool), ParseFixedError>
+            }
+            trait_delegate! {
+                fn overflowing_from_str_hex(src: &str) -> Result<(Self, bool), ParseFixedError>
+            }
             trait_delegate! { fn int(self) -> Self }
             trait_delegate! { fn frac(self) -> Self }
             trait_delegate! { fn ceil(self) -> Self }

@@ -933,5 +933,377 @@ assert_eq!(neg, Ok(-check));
                 FromStrRadix::from_str_radix(src, 16)
             }
         );
+
+        comment!(
+            "Converts a string slice containing decimal digits to a fixed-point number,
+saturating on overflow.
+
+# Examples
+
+```rust
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "use fixed::types::I8F8;
+assert_eq!(I8F8::saturating_from_str(\"9999\"), Ok(I8F8::max_value()));
+assert_eq!(I8F8::saturating_from_str(\"-9999\"), Ok(I8F8::min_value()));
+",
+                "use fixed::types::U8F8;
+assert_eq!(U8F8::saturating_from_str(\"9999\"), Ok(U8F8::max_value()));
+assert_eq!(U8F8::saturating_from_str(\"-1\"), Ok(U8F8::from_num(0)));
+",
+            ),
+            "```
+";
+            #[inline]
+            pub fn saturating_from_str(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
+                FromStrRadix::saturating_from_str_radix(src, 10)
+            }
+        );
+
+        comment!(
+            "Converts a string slice containing binary digits to a fixed-point number,
+saturating on overflow.
+
+# Examples
+
+```rust
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "use fixed::types::I8F8;
+assert_eq!(I8F8::saturating_from_str_binary(\"101100111000\"), Ok(I8F8::max_value()));
+assert_eq!(I8F8::saturating_from_str_binary(\"-101100111000\"), Ok(I8F8::min_value()));
+",
+                "use fixed::types::U8F8;
+assert_eq!(U8F8::saturating_from_str_binary(\"101100111000\"), Ok(U8F8::max_value()));
+assert_eq!(U8F8::saturating_from_str_binary(\"-1\"), Ok(U8F8::from_num(0)));
+",
+            ),
+            "```
+";
+            #[inline]
+            pub fn saturating_from_str_binary(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
+                FromStrRadix::saturating_from_str_radix(src, 2)
+            }
+        );
+
+        comment!(
+            "Converts a string slice containing octal digits to a fixed-point number,
+saturating on overflow.
+
+# Examples
+
+```rust
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "use fixed::types::I8F8;
+assert_eq!(I8F8::saturating_from_str_octal(\"7777\"), Ok(I8F8::max_value()));
+assert_eq!(I8F8::saturating_from_str_octal(\"-7777\"), Ok(I8F8::min_value()));
+",
+                "use fixed::types::U8F8;
+assert_eq!(U8F8::saturating_from_str_octal(\"7777\"), Ok(U8F8::max_value()));
+assert_eq!(U8F8::saturating_from_str_octal(\"-1\"), Ok(U8F8::from_num(0)));
+",
+            ),
+            "```
+";
+            #[inline]
+            pub fn saturating_from_str_octal(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
+                FromStrRadix::saturating_from_str_radix(src, 8)
+            }
+        );
+
+        comment!(
+            "Converts a string slice containing hexadecimal digits to a fixed-point number,
+saturating on overflow.
+
+# Examples
+
+```rust
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "use fixed::types::I8F8;
+assert_eq!(I8F8::saturating_from_str_hex(\"FFFF\"), Ok(I8F8::max_value()));
+assert_eq!(I8F8::saturating_from_str_hex(\"-FFFF\"), Ok(I8F8::min_value()));
+",
+                "use fixed::types::U8F8;
+assert_eq!(U8F8::saturating_from_str_hex(\"FFFF\"), Ok(U8F8::max_value()));
+assert_eq!(U8F8::saturating_from_str_hex(\"-1\"), Ok(U8F8::from_num(0)));
+",
+            ),
+            "```
+";
+            #[inline]
+            pub fn saturating_from_str_hex(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
+                FromStrRadix::saturating_from_str_radix(src, 16)
+            }
+        );
+
+        comment!(
+            "Converts a string slice containing decimal digits to a fixed-point number,
+wrapping on overflow.
+
+# Examples
+
+```rust
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "use fixed::types::I8F8;
+// 9999.5 = 15.5 + 256 × n
+assert_eq!(I8F8::wrapping_from_str(\"9999.5\"), Ok(I8F8::from_num(15.5)));
+assert_eq!(I8F8::wrapping_from_str(\"-9999.5\"), Ok(I8F8::from_num(-15.5)));
+",
+                "use fixed::types::U8F8;
+// 9999.5 = 15.5 + 256 × n
+assert_eq!(U8F8::wrapping_from_str(\"9999.5\"), Ok(U8F8::from_num(15.5)));
+assert_eq!(U8F8::wrapping_from_str(\"-9999.5\"), Ok(U8F8::from_num(240.5)));
+",
+            ),
+            "```
+";
+            #[inline]
+            pub fn wrapping_from_str(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
+                FromStrRadix::wrapping_from_str_radix(src, 10)
+            }
+        );
+
+        comment!(
+            "Converts a string slice containing binary digits to a fixed-point number,
+wrapping on overflow.
+
+# Examples
+
+```rust
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "use fixed::types::I8F8;
+let check = I8F8::from_bits(0b1110001 << (8 - 1));
+assert_eq!(I8F8::wrapping_from_str_binary(\"101100111000.1\"), Ok(check));
+assert_eq!(I8F8::wrapping_from_str_binary(\"-101100111000.1\"), Ok(-check));
+",
+                "use fixed::types::U8F8;
+let check = U8F8::from_bits(0b1110001 << (8 - 1));
+assert_eq!(U8F8::wrapping_from_str_binary(\"101100111000.1\"), Ok(check));
+assert_eq!(U8F8::wrapping_from_str_binary(\"-101100111000.1\"), Ok(check.wrapping_neg()));
+",
+            ),
+            "```
+";
+            #[inline]
+            pub fn wrapping_from_str_binary(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
+                FromStrRadix::wrapping_from_str_radix(src, 2)
+            }
+        );
+
+        comment!(
+            "Converts a string slice containing octal digits to a fixed-point number,
+wrapping on overflow.
+
+# Examples
+
+```rust
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "use fixed::types::I8F8;
+let check = I8F8::from_bits(0o1654 << (8 - 3));
+assert_eq!(I8F8::wrapping_from_str_octal(\"7165.4\"), Ok(check));
+assert_eq!(I8F8::wrapping_from_str_octal(\"-7165.4\"), Ok(-check));
+",
+                "use fixed::types::U8F8;
+let check = U8F8::from_bits(0o1654 << (8 - 3));
+assert_eq!(U8F8::wrapping_from_str_octal(\"7165.4\"), Ok(check));
+assert_eq!(U8F8::wrapping_from_str_octal(\"-7165.4\"), Ok(check.wrapping_neg()));
+",
+            ),
+            "```
+";
+            #[inline]
+            pub fn wrapping_from_str_octal(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
+                FromStrRadix::wrapping_from_str_radix(src, 8)
+            }
+        );
+
+        comment!(
+            "Converts a string slice containing hexadecimal digits to a fixed-point number,
+wrapping on overflow.
+
+# Examples
+
+```rust
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "use fixed::types::I8F8;
+let check = I8F8::from_bits(0xFFE);
+assert_eq!(I8F8::wrapping_from_str_hex(\"C0F.FE\"), Ok(check));
+assert_eq!(I8F8::wrapping_from_str_hex(\"-C0F.FE\"), Ok(-check));
+",
+                "use fixed::types::U8F8;
+let check = U8F8::from_bits(0xFFE);
+assert_eq!(U8F8::wrapping_from_str_hex(\"C0F.FE\"), Ok(check));
+assert_eq!(U8F8::wrapping_from_str_hex(\"-C0F.FE\"), Ok(check.wrapping_neg()));
+",
+            ),
+            "```
+";
+            #[inline]
+            pub fn wrapping_from_str_hex(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
+                FromStrRadix::wrapping_from_str_radix(src, 16)
+            }
+        );
+
+        comment!(
+            "Converts a string slice containing decimal digits to a fixed-point number.
+
+Returns a [tuple] of the fixed-point number and a [`bool`] indicating
+whether an overflow has occurred. On overflow, the wrapped value is
+returned.
+
+# Examples
+
+```rust
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "use fixed::types::I8F8;
+assert_eq!(I8F8::overflowing_from_str(\"99.5\"), Ok((I8F8::from_num(99.5), false)));
+// 9999.5 = 15.5 + 256 × n
+assert_eq!(I8F8::overflowing_from_str(\"-9999.5\"), Ok((I8F8::from_num(-15.5), true)));
+",
+                "use fixed::types::U8F8;
+assert_eq!(U8F8::overflowing_from_str(\"99.5\"), Ok((U8F8::from_num(99.5), false)));
+// 9999.5 = 15.5 + 256 × n
+assert_eq!(U8F8::overflowing_from_str(\"9999.5\"), Ok((U8F8::from_num(15.5), true)));
+",
+            ),
+            "```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
+";
+            #[inline]
+            pub fn overflowing_from_str(
+                src: &str,
+            ) -> Result<($Fixed<Frac>, bool), ParseFixedError> {
+                FromStrRadix::overflowing_from_str_radix(src, 10)
+            }
+        );
+
+        comment!(
+            "Converts a string slice containing binary digits to a fixed-point number.
+
+Returns a [tuple] of the fixed-point number and a [`bool`] indicating
+whether an overflow has occurred. On overflow, the wrapped value is
+returned.
+
+# Examples
+
+```rust
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "use fixed::types::I8F8;
+let check = I8F8::from_bits(0b1110001 << (8 - 1));
+assert_eq!(I8F8::overflowing_from_str_binary(\"111000.1\"), Ok((check, false)));
+assert_eq!(I8F8::overflowing_from_str_binary(\"-101100111000.1\"), Ok((-check, true)));
+",
+                "use fixed::types::U8F8;
+let check = U8F8::from_bits(0b1110001 << (8 - 1));
+assert_eq!(U8F8::overflowing_from_str_binary(\"111000.1\"), Ok((check, false)));
+assert_eq!(U8F8::overflowing_from_str_binary(\"101100111000.1\"), Ok((check, true)));
+",
+            ),
+            "```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
+";
+            #[inline]
+            pub fn overflowing_from_str_binary(
+                src: &str,
+            ) -> Result<($Fixed<Frac>, bool), ParseFixedError> {
+                FromStrRadix::overflowing_from_str_radix(src, 2)
+            }
+        );
+
+        comment!(
+            "Converts a string slice containing octal digits to a fixed-point number.
+
+Returns a [tuple] of the fixed-point number and a [`bool`] indicating
+whether an overflow has occurred. On overflow, the wrapped value is
+returned.
+
+# Examples
+
+```rust
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "use fixed::types::I8F8;
+let check = I8F8::from_bits(0o1654 << (8 - 3));
+assert_eq!(I8F8::overflowing_from_str_octal(\"165.4\"), Ok((check, false)));
+assert_eq!(I8F8::overflowing_from_str_octal(\"-7165.4\"), Ok((-check, true)));
+",
+                "use fixed::types::U8F8;
+let check = U8F8::from_bits(0o1654 << (8 - 3));
+assert_eq!(U8F8::overflowing_from_str_octal(\"165.4\"), Ok((check, false)));
+assert_eq!(U8F8::overflowing_from_str_octal(\"7165.4\"), Ok((check, true)));
+",
+            ),
+            "```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
+";
+            #[inline]
+            pub fn overflowing_from_str_octal(
+                src: &str,
+            ) -> Result<($Fixed<Frac>, bool), ParseFixedError> {
+                FromStrRadix::overflowing_from_str_radix(src, 8)
+            }
+        );
+
+        comment!(
+            "Converts a string slice containing hexadecimal digits to a fixed-point number.
+
+Returns a [tuple] of the fixed-point number and a [`bool`] indicating
+whether an overflow has occurred. On overflow, the wrapped value is
+returned.
+
+# Examples
+
+```rust
+",
+            if_signed_unsigned!(
+                $Signedness,
+                "use fixed::types::I8F8;
+let check = I8F8::from_bits(0xFFE);
+assert_eq!(I8F8::overflowing_from_str_hex(\"F.FE\"), Ok((check, false)));
+assert_eq!(I8F8::overflowing_from_str_hex(\"-C0F.FE\"), Ok((-check, true)));
+",
+                "use fixed::types::U8F8;
+let check = U8F8::from_bits(0xFFE);
+assert_eq!(U8F8::overflowing_from_str_hex(\"F.FE\"), Ok((check, false)));
+assert_eq!(U8F8::overflowing_from_str_hex(\"C0F.FE\"), Ok((check, true)));
+",
+            ),
+            "```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
+";
+            #[inline]
+            pub fn overflowing_from_str_hex(
+                src: &str,
+            ) -> Result<($Fixed<Frac>, bool), ParseFixedError> {
+                FromStrRadix::overflowing_from_str_radix(src, 16)
+            }
+        );
     };
 }

@@ -14,6 +14,7 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
+    from_str::ParseFixedError,
     traits::{Fixed, FixedSigned, ToFixed},
     types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
@@ -113,6 +114,63 @@ impl<F: Fixed> Wrapping<F> {
     /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
     pub fn from_num<Src: ToFixed>(src: Src) -> Self {
         Wrapping(src.wrapping_to_fixed())
+    }
+
+    /// Converts a string slice containing decimal digits to a fixed-point number.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I8F8, Wrapping};
+    /// // 9999.5 = 15.5 + 256 × n
+    /// let check = Wrapping(I8F8::from_num(15.5));
+    /// assert_eq!(Wrapping::<I8F8>::wrapping_from_str("9999.5"), Ok(check));
+    /// ```
+    #[inline]
+    pub fn wrapping_from_str(src: &str) -> Result<Self, ParseFixedError> {
+        F::wrapping_from_str(src).map(Wrapping)
+    }
+
+    /// Converts a string slice containing binary digits to a fixed-point number.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I8F8, Wrapping};
+    /// let check = Wrapping(I8F8::from_bits(0b1110001 << (8 - 1)));
+    /// assert_eq!(Wrapping::<I8F8>::wrapping_from_str_binary("101100111000.1"), Ok(check));
+    /// ```
+    #[inline]
+    pub fn wrapping_from_str_binary(src: &str) -> Result<Self, ParseFixedError> {
+        F::wrapping_from_str_binary(src).map(Wrapping)
+    }
+
+    /// Converts a string slice containing octal digits to a fixed-point number.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I8F8, Wrapping};
+    /// let check = Wrapping(I8F8::from_bits(0o1654 << (8 - 3)));
+    /// assert_eq!(Wrapping::<I8F8>::wrapping_from_str_octal("7165.4"), Ok(check));
+    /// ```
+    #[inline]
+    pub fn wrapping_from_str_octal(src: &str) -> Result<Self, ParseFixedError> {
+        F::wrapping_from_str_octal(src).map(Wrapping)
+    }
+
+    /// Converts a string slice containing hexadecimal digits to a fixed-point number.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I8F8, Wrapping};
+    /// let check = Wrapping(I8F8::from_bits(0xFFE));
+    /// assert_eq!(Wrapping::<I8F8>::wrapping_from_str_hex("C0F.FE"), Ok(check));
+    /// ```
+    #[inline]
+    pub fn wrapping_from_str_hex(src: &str) -> Result<Self, ParseFixedError> {
+        F::wrapping_from_str_hex(src).map(Wrapping)
     }
 
     /// Wrapping ceil. Rounds to the next integer towards +∞, wrapping

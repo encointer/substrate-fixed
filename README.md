@@ -53,6 +53,9 @@ Various conversion methods are available:
 
   * The [*fixed* crate] now requires rustc version 1.34.0 or later.
   * Parsing strings now rounds to the nearest with ties rounding to even.
+  * Checked versions of string parsing methods are now available as
+    inherent methods to all fixed-point numbers, as methods in the
+    [`Fixed`] trait, and as methods in the [`Wrapping`] wrapper.
   * The following methods are now `const` functions:
       * [`min_value`], [`max_value`], [`from_bits`], [`to_bits`]
 	  * [`count_ones`], [`count_zeros`], [`leading_zeros`],
@@ -66,7 +69,9 @@ Various conversion methods are available:
   * The associated constants [`INT_NBITS`] and [`FRAC_NBITS`] were added.
 
 [`FRAC_NBITS`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#associatedconstant.FRAC_NBITS
+[`Fixed`]: https://docs.rs/fixed/0.4.2/fixed/traits/trait.Fixed.html
 [`INT_NBITS`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#associatedconstant.INT_NBITS
+[`Wrapping`]: https://docs.rs/fixed/0.4.2/fixed/struct.Wrapping.html
 [`count_ones`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.count_ones
 [`count_zeros`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.count_zeros
 [`from_bits`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.from_bits

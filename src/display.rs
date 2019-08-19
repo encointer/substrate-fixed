@@ -117,7 +117,15 @@ impl Radix2 {
     }
 }
 
-// returns the number of zeros at the end
+// Returns the number of zeros at the end.
+//
+// Note that rounding up may cause the number of integer bits to
+// increase. This has no effect on the precision argument as the
+// precision argument really means digits after the radix point. (And
+// also, for rounding to carry through to the most significant digit,
+// it would leave a long string of zeros in its wake, resulting in
+// something like "1000000" with no precision argument or
+// "1000000.000000" with an explicit precision argument.
 fn round_up_and_count_trailing_zeros<I>(frac_rem: I, buf: &mut [u8], mut has_frac: bool) -> usize
 where
     I: IntHelper<IsSigned = False>,
@@ -456,74 +464,11 @@ where
     fmt_dec_helper(F::frac_nbits(), parts(num), fmt)
 }
 
+#[allow(clippy::float_cmp)]
 #[cfg(test)]
 mod tests {
-    use crate::{frac::Unsigned, types::*, *};
-    use std::{
-        fmt::{Debug, Error as FmtError, Formatter, Result as FmtResult, Write},
-        format, mem,
-        string::String,
-    };
-
-    struct Buf([u8; 256]);
-    impl Buf {
-        fn new() -> Buf {
-            Buf([0u8; 256])
-        }
-        fn target(&mut self) -> BufSlice {
-            BufSlice(&mut self.0)
-        }
-    }
-
-    struct BufSlice<'a>(&'a mut [u8]);
-
-    impl<'a> Write for BufSlice<'a> {
-        fn write_str(&mut self, s: &str) -> FmtResult {
-            let s_len = s.len();
-            if s_len > self.0.len() {
-                Err(FmtError)
-            } else {
-                self.0[..s_len].copy_from_slice(s.as_bytes());
-                let rem = mem::replace(&mut self.0, &mut []);
-                self.0 = &mut rem[s_len..];
-                Ok(())
-            }
-        }
-    }
-
-    impl Eq for Buf {}
-
-    impl PartialEq<Buf> for Buf {
-        fn eq(&self, rhs: &Buf) -> bool {
-            self.0.iter().zip(rhs.0.iter()).all(|(a, b)| a == b)
-        }
-    }
-
-    impl Debug for Buf {
-        fn fmt(&self, f: &mut Formatter) -> FmtResult {
-            f.write_str("\"")?;
-            for &i in &self.0[..] {
-                if i == 0 {
-                    break;
-                } else if i < 0x20 || i > 0x7f {
-                    write!(f, "\\x{:02x}", i)?;
-                } else {
-                    f.write_char(i as char)?;
-                }
-            }
-            f.write_str("\"")
-        }
-    }
-
-    macro_rules! assert_eq_fmt {
-            (($f1:expr, $($arg1:tt)*), ($f2:expr, $($arg2:tt)*)) => {{
-                let mut buf1 = Buf::new();
-                write!(buf1.target(), $f1, $($arg1)*).unwrap();
-                let mut buf2 = Buf::new();
-                write!(buf2.target(), $f2, $($arg2)*).unwrap();
-                assert_eq!(buf1, buf2);
-            }};
-        }
+    use crate::types::*;
+    use std::{format, string::String};
 
     fn trim_frac_zeros(mut x: &str) -> &str {
         while x.ends_with('0') {
@@ -554,17 +499,15 @@ mod tests {
 
     #[test]
     fn hex() {
-        use crate::frac::U7 as Frac;
-        let frac = Frac::U32;
-        for i in 0..(1u32 << frac) {
+        for i in 0..(1u32 << 7) {
             let p = 0x1234_5678_9abc_def0u64 ^ u64::from(i);
             let n = -0x1234_5678_9abc_def0i64 ^ i64::from(i);
-            let f_p = FixedU64::<Frac>::from_bits(p);
-            let f_n = FixedI64::<Frac>::from_bits(n);
-            let mut check_p = format!("{:x}.{:02x}", p >> frac, (p & 0x7f) << 1);
+            let f_p = U57F7::from_bits(p);
+            let f_n = I57F7::from_bits(n);
+            let mut check_p = format!("{:x}.{:02x}", p >> 7, (p & 0x7f) << 1);
             up_frac_digits(&mut check_p, 1000);
             let trimmed_p = trim_frac_zeros(&check_p);
-            let mut check_n = format!("-{:x}.{:02x}", n.abs() >> frac, (n.abs() & 0x7f) << 1);
+            let mut check_n = format!("-{:x}.{:02x}", n.abs() >> 7, (n.abs() & 0x7f) << 1);
             up_frac_digits(&mut check_n, 1000);
             let trimmed_n = trim_frac_zeros(&check_n);
             assert_eq!(format!("{:.1000x}", f_p), check_p);
@@ -579,93 +522,82 @@ mod tests {
         for i in 0..(1 << 7) {
             // use 24 bits of precision to be like f32
             let bits = (!0u32 >> 8) ^ i;
-            let flt = (bits as f32) / 7f32.exp2();
             let fix = U25F7::from_bits(bits);
-            let check = format!("{}", flt);
-            assert_eq!(format!("{}", fix), trim_frac_zeros(&check));
+            let flt = (bits as f32) / 7f32.exp2();
+            assert_eq!(format!("{}", fix), format!("{}", flt));
+            assert_eq!(U25F7::from_num(flt), fix);
+            assert_eq!(fix.to_num::<f32>(), flt);
         }
     }
 
     #[test]
     fn display_frac() {
-        use crate::types::{I0F128, I0F16, I0F32, I0F64, I0F8, U0F128, U0F16, U0F32, U0F64, U0F8};
-        assert_eq_fmt!(
-            ("{:X}", I0F128::from_bits(!0)),
-            ("{}", "-0.00000000000000000000000000000001")
+        assert_eq!(
+            format!("{:X}", I0F128::from_bits(!0)),
+            "-0.00000000000000000000000000000001"
         );
-        assert_eq_fmt!(
-            ("{:X}", I0F64::from_bits(!0)),
-            ("{}", "-0.0000000000000001")
+        assert_eq!(format!("{:X}", I0F64::from_bits(!0)), "-0.0000000000000001");
+        assert_eq!(format!("{:X}", I0F32::from_bits(!0)), "-0.00000001");
+        assert_eq!(format!("{:X}", I0F16::from_bits(!0)), "-0.0001");
+        assert_eq!(format!("{:X}", I0F8::from_bits(!0)), "-0.01");
+        assert_eq!(
+            format!("{:X}", U0F128::from_bits(!0)),
+            "0.FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
         );
-        assert_eq_fmt!(("{:X}", I0F32::from_bits(!0)), ("{}", "-0.00000001"));
-        assert_eq_fmt!(("{:X}", I0F16::from_bits(!0)), ("{}", "-0.0001"));
-        assert_eq_fmt!(("{:X}", I0F8::from_bits(!0)), ("{}", "-0.01"));
-        assert_eq_fmt!(
-            ("{:X}", U0F128::from_bits(!0)),
-            ("{}", "0.FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
-        );
-        assert_eq_fmt!(("{:X}", U0F64::from_bits(!0)), ("{}", "0.FFFFFFFFFFFFFFFF"));
-        assert_eq_fmt!(("{:X}", U0F32::from_bits(!0)), ("{}", "0.FFFFFFFF"));
-        assert_eq_fmt!(("{:X}", U0F16::from_bits(!0)), ("{}", "0.FFFF"));
-        assert_eq_fmt!(("{:X}", U0F8::from_bits(!0)), ("{}", "0.FF"));
+        assert_eq!(format!("{:X}", U0F64::from_bits(!0)), "0.FFFFFFFFFFFFFFFF");
+        assert_eq!(format!("{:X}", U0F32::from_bits(!0)), "0.FFFFFFFF");
+        assert_eq!(format!("{:X}", U0F16::from_bits(!0)), "0.FFFF");
+        assert_eq!(format!("{:X}", U0F8::from_bits(!0)), "0.FF");
 
-        assert_eq_fmt!(
-            ("{}", I0F128::from_bits(!0)),
-            ("{}", "-0.000000000000000000000000000000000000003")
+        assert_eq!(
+            format!("{}", I0F128::from_bits(!0)),
+            "-0.000000000000000000000000000000000000003"
         );
-        assert_eq_fmt!(
-            ("{}", I0F64::from_bits(!0)),
-            ("{}", "-0.00000000000000000005")
+        assert_eq!(
+            format!("{}", I0F64::from_bits(!0)),
+            "-0.00000000000000000005"
         );
-        assert_eq_fmt!(("{}", I0F32::from_bits(!0)), ("{}", "-0.0000000002"));
-        assert_eq_fmt!(("{}", I0F16::from_bits(!0)), ("{}", "-0.00002"));
-        assert_eq_fmt!(("{}", I0F8::from_bits(!0)), ("{}", "-0.004"));
-        assert_eq_fmt!(
-            ("{}", U0F128::from_bits(!0)),
-            ("{}", "0.999999999999999999999999999999999999997")
+        assert_eq!(format!("{}", I0F32::from_bits(!0)), "-0.0000000002");
+        assert_eq!(format!("{}", I0F16::from_bits(!0)), "-0.00002");
+        assert_eq!(format!("{}", I0F8::from_bits(!0)), "-0.004");
+        assert_eq!(
+            format!("{}", U0F128::from_bits(!0)),
+            "0.999999999999999999999999999999999999997"
         );
-        assert_eq_fmt!(
-            ("{}", U0F64::from_bits(!0)),
-            ("{}", "0.99999999999999999995")
+        assert_eq!(
+            format!("{}", U0F64::from_bits(!0)),
+            "0.99999999999999999995"
         );
-        assert_eq_fmt!(("{}", U0F32::from_bits(!0)), ("{}", "0.9999999998"));
-        assert_eq_fmt!(("{}", U0F16::from_bits(!0)), ("{}", "0.99998"));
-        assert_eq_fmt!(("{}", U0F8::from_bits(!0)), ("{}", "0.996"));
+        assert_eq!(format!("{}", U0F32::from_bits(!0)), "0.9999999998");
+        assert_eq!(format!("{}", U0F16::from_bits(!0)), "0.99998");
+        assert_eq!(format!("{}", U0F8::from_bits(!0)), "0.996");
 
         // check overflow issues in <u128 as Mul10>::mul10
         let no_internal_overflow_bits = 0xe666_6666_6666_6665_ffff_ffff_ffff_ffffu128;
         let internal_overflow_bits = 0xe666_6666_6666_6666_ffff_ffff_ffff_ffffu128;
-        assert_eq_fmt!(
-            ("{:X}", U0F128::from_bits(no_internal_overflow_bits)),
-            ("{}", "0.E666666666666665FFFFFFFFFFFFFFFF")
+        assert_eq!(
+            format!("{:X}", U0F128::from_bits(no_internal_overflow_bits)),
+            "0.E666666666666665FFFFFFFFFFFFFFFF"
         );
-        assert_eq_fmt!(
-            ("{:X}", U0F128::from_bits(internal_overflow_bits)),
-            ("{}", "0.E666666666666666FFFFFFFFFFFFFFFF")
+        assert_eq!(
+            format!("{:X}", U0F128::from_bits(internal_overflow_bits)),
+            "0.E666666666666666FFFFFFFFFFFFFFFF"
         );
-        assert_eq_fmt!(
-            ("{}", U0F128::from_bits(no_internal_overflow_bits)),
-            ("{}", "0.899999999999999999978315956550289911317")
+        assert_eq!(
+            format!("{}", U0F128::from_bits(no_internal_overflow_bits)),
+            "0.899999999999999999978315956550289911317"
         );
-        assert_eq_fmt!(
-            ("{}", U0F128::from_bits(internal_overflow_bits)),
-            ("{}", "0.900000000000000000032526065174565133017")
+        assert_eq!(
+            format!("{}", U0F128::from_bits(internal_overflow_bits)),
+            "0.900000000000000000032526065174565133017"
         );
     }
 
     #[test]
-    fn check_ceil_log10_2_times() {
-        use super::ceil_log10_2_times;
-        for i in 0..=13_300 {
-            let check = (f64::from(i) * 2f64.log10()).ceil() as u32;
-            assert_eq!(ceil_log10_2_times(i), check);
-        }
-    }
-    #[test]
     fn close_to_round_decimal() {
         for i in 0..1000u16 {
-            // float has 24 bits of precision, so with use 1 for
-            // integer to leave exactly 23 for fraction
+            // f32 has 24 bits of precision, so we use 1 bit for the
+            // integer part to have exactly 23 bits for the fraction
             let float = f32::from(i + 1000) / 1000.;
             let fix = U9F23::from_num(float);
             let check = format!("1.{:03}", i);
@@ -674,6 +606,15 @@ mod tests {
             for prec in 0..10 {
                 assert_eq!(format!("{:.*}", prec, fix), format!("{:.*}", prec, float));
             }
+        }
+    }
+
+    #[test]
+    fn check_ceil_log10_2_times() {
+        use super::ceil_log10_2_times;
+        for i in 0..=13_300 {
+            let check = (f64::from(i) * 2f64.log10()).ceil() as u32;
+            assert_eq!(ceil_log10_2_times(i), check);
         }
     }
 }

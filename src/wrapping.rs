@@ -23,7 +23,6 @@ use crate::{
 use core::{
     fmt::{Display, Formatter, Result as FmtResult},
     iter::{Product, Sum},
-    num::Wrapping as CoreWrapping,
     ops::{
         Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div,
         DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub,
@@ -255,53 +254,186 @@ impl<F: Fixed> FromStr for Wrapping<F> {
 }
 
 macro_rules! op {
-    (
-        $Fixed:ident($LeEqU:ident)::$wrapping:ident,
-        $Op:ident $op:ident,
-        $OpAssign:ident $op_assign:ident
-    ) => {
-        impl<Frac: $LeEqU> $Op<Wrapping<$Fixed<Frac>>> for Wrapping<$Fixed<Frac>> {
-            type Output = Wrapping<$Fixed<Frac>>;
+    ($wrapping:ident, $Op:ident $op:ident, $OpAssign:ident $op_assign:ident) => {
+        impl<F: Fixed> $Op<Wrapping<F>> for Wrapping<F> {
+            type Output = Wrapping<F>;
             #[inline]
-            fn $op(self, other: Wrapping<$Fixed<Frac>>) -> Wrapping<$Fixed<Frac>> {
+            fn $op(self, other: Wrapping<F>) -> Wrapping<F> {
                 Wrapping((self.0).$wrapping(other.0))
             }
         }
-        impl<'a, Frac: $LeEqU> $Op<Wrapping<$Fixed<Frac>>> for &'a Wrapping<$Fixed<Frac>> {
-            type Output = Wrapping<$Fixed<Frac>>;
+        impl<'a, F: Fixed> $Op<Wrapping<F>> for &'a Wrapping<F> {
+            type Output = Wrapping<F>;
             #[inline]
-            fn $op(self, other: Wrapping<$Fixed<Frac>>) -> Wrapping<$Fixed<Frac>> {
+            fn $op(self, other: Wrapping<F>) -> Wrapping<F> {
                 Wrapping((self.0).$wrapping(other.0))
             }
         }
-        impl<'a, Frac: $LeEqU> $Op<&'a Wrapping<$Fixed<Frac>>> for Wrapping<$Fixed<Frac>> {
-            type Output = Wrapping<$Fixed<Frac>>;
+        impl<'a, F: Fixed> $Op<&'a Wrapping<F>> for Wrapping<F> {
+            type Output = Wrapping<F>;
             #[inline]
-            fn $op(self, other: &Wrapping<$Fixed<Frac>>) -> Wrapping<$Fixed<Frac>> {
+            fn $op(self, other: &Wrapping<F>) -> Wrapping<F> {
                 Wrapping((self.0).$wrapping(other.0))
             }
         }
-        impl<'a, 'b, Frac: $LeEqU> $Op<&'a Wrapping<$Fixed<Frac>>> for &'b Wrapping<$Fixed<Frac>> {
-            type Output = Wrapping<$Fixed<Frac>>;
+        impl<'a, 'b, F: Fixed> $Op<&'a Wrapping<F>> for &'b Wrapping<F> {
+            type Output = Wrapping<F>;
             #[inline]
-            fn $op(self, other: &Wrapping<$Fixed<Frac>>) -> Wrapping<$Fixed<Frac>> {
+            fn $op(self, other: &Wrapping<F>) -> Wrapping<F> {
                 Wrapping((self.0).$wrapping(other.0))
             }
         }
-        impl<Frac: $LeEqU> $OpAssign<Wrapping<$Fixed<Frac>>> for Wrapping<$Fixed<Frac>> {
+        impl<F: Fixed> $OpAssign<Wrapping<F>> for Wrapping<F> {
             #[inline]
-            fn $op_assign(&mut self, other: Wrapping<$Fixed<Frac>>) {
+            fn $op_assign(&mut self, other: Wrapping<F>) {
                 self.0 = (self.0).$wrapping(other.0);
             }
         }
-        impl<'a, Frac: $LeEqU> $OpAssign<&'a Wrapping<$Fixed<Frac>>> for Wrapping<$Fixed<Frac>> {
+        impl<'a, F: Fixed> $OpAssign<&'a Wrapping<F>> for Wrapping<F> {
             #[inline]
-            fn $op_assign(&mut self, other: &Wrapping<$Fixed<Frac>>) {
+            fn $op_assign(&mut self, other: &Wrapping<F>) {
                 self.0 = (self.0).$wrapping(other.0);
             }
         }
     };
 }
+
+macro_rules! op_sh {
+    (
+        $wrapping:ident, $Op:ident $op:ident, $OpAssign:ident $op_assign:ident;
+        $Rhs:ident $($as_u32:tt)*
+    ) => {
+        impl<F: Fixed> $Op<$Rhs> for Wrapping<F> {
+            type Output = Wrapping<F>;
+            #[inline]
+            fn $op(self, other: $Rhs) -> Wrapping<F> {
+                Wrapping((self.0).$wrapping(other $($as_u32)*))
+            }
+        }
+        impl<'a, F: Fixed> $Op<$Rhs> for &'a Wrapping<F> {
+            type Output = Wrapping<F>;
+            #[inline]
+            fn $op(self, other: $Rhs) -> Wrapping<F> {
+                Wrapping((self.0).$wrapping(other $($as_u32)*))
+            }
+        }
+        impl<'a, F: Fixed> $Op<&'a $Rhs> for Wrapping<F> {
+            type Output = Wrapping<F>;
+            #[inline]
+            fn $op(self, other: &$Rhs) -> Wrapping<F> {
+                Wrapping((self.0).$wrapping(*other $($as_u32)*))
+            }
+        }
+        impl<'a, 'b, F: Fixed> $Op<&'a $Rhs> for &'b Wrapping<F> {
+            type Output = Wrapping<F>;
+            #[inline]
+            fn $op(self, other: &$Rhs) -> Wrapping<F> {
+                Wrapping((self.0).$wrapping(*other $($as_u32)*))
+            }
+        }
+        impl<F: Fixed> $OpAssign<$Rhs> for Wrapping<F> {
+            #[inline]
+            fn $op_assign(&mut self, other: $Rhs) {
+                self.0 = (self.0).$wrapping(other $($as_u32)*);
+            }
+        }
+        impl<'a, F: Fixed> $OpAssign<&'a $Rhs> for Wrapping<F> {
+            #[inline]
+            fn $op_assign(&mut self, other: &$Rhs) {
+                self.0 = (self.0).$wrapping(*other $($as_u32)*);
+            }
+        }
+    };
+}
+
+impl<F: Fixed> Neg for Wrapping<F> {
+    type Output = Wrapping<F>;
+    #[inline]
+    fn neg(self) -> Wrapping<F> {
+        Wrapping((self.0).wrapping_neg())
+    }
+}
+
+impl<'a, F: Fixed> Neg for &'a Wrapping<F> {
+    type Output = Wrapping<F>;
+    #[inline]
+    fn neg(self) -> Wrapping<F> {
+        Wrapping((self.0).wrapping_neg())
+    }
+}
+op! { wrapping_add, Add add, AddAssign add_assign }
+op! { wrapping_sub, Sub sub, SubAssign sub_assign }
+op! { wrapping_mul, Mul mul, MulAssign mul_assign }
+op! { wrapping_div, Div div, DivAssign div_assign }
+
+impl<F: Fixed> Not for Wrapping<F> {
+    type Output = Wrapping<F>;
+    #[inline]
+    fn not(self) -> Wrapping<F> {
+        Wrapping((self.0).not())
+    }
+}
+impl<'a, F: Fixed> Not for &'a Wrapping<F> {
+    type Output = Wrapping<F>;
+    #[inline]
+    fn not(self) -> Wrapping<F> {
+        Wrapping((self.0).not())
+    }
+}
+op! { bitand, BitAnd bitand, BitAndAssign bitand_assign }
+op! { bitor, BitOr bitor, BitOrAssign bitor_assign }
+op! { bitxor, BitXor bitxor, BitXorAssign bitxor_assign }
+
+op_sh! { wrapping_shl, Shl shl, ShlAssign shl_assign; usize as u32 }
+op_sh! { wrapping_shr, Shr shr, ShrAssign shr_assign; usize as u32 }
+op_sh! { wrapping_shl, Shl shl, ShlAssign shl_assign; u32 }
+op_sh! { wrapping_shr, Shr shr, ShrAssign shr_assign; u32 }
+
+impl<F: Fixed> Sum<Wrapping<F>> for Wrapping<F> {
+    fn sum<I>(iter: I) -> Wrapping<F>
+    where
+        I: Iterator<Item = Wrapping<F>>,
+    {
+        iter.fold(Wrapping(F::from_num(0)), Add::add)
+    }
+}
+
+impl<'a, F: 'a + Fixed> Sum<&'a Wrapping<F>> for Wrapping<F> {
+    fn sum<I>(iter: I) -> Wrapping<F>
+    where
+        I: Iterator<Item = &'a Wrapping<F>>,
+    {
+        iter.fold(Wrapping(F::from_num(0)), Add::add)
+    }
+}
+
+impl<F: Fixed> Product<Wrapping<F>> for Wrapping<F> {
+    fn product<I>(mut iter: I) -> Wrapping<F>
+    where
+        I: Iterator<Item = Wrapping<F>>,
+    {
+        match iter.next() {
+            None => Wrapping(1.wrapping_to_fixed()),
+            Some(first) => iter.fold(first, Mul::mul),
+        }
+    }
+}
+
+impl<'a, F: 'a + Fixed> Product<&'a Wrapping<F>> for Wrapping<F> {
+    fn product<I>(mut iter: I) -> Wrapping<F>
+    where
+        I: Iterator<Item = &'a Wrapping<F>>,
+    {
+        match iter.next() {
+            None => Wrapping(1.wrapping_to_fixed()),
+            Some(first) => iter.fold(*first, Mul::mul),
+        }
+    }
+}
+
+// The following cannot be implemented for Wrapping<F> where F: Fixed,
+// otherwise there will be a conflicting implementation error, so we
+// need to implement on typed direcly.
 
 macro_rules! op_bits {
     (
@@ -353,125 +485,13 @@ macro_rules! op_bits {
     };
 }
 
-macro_rules! op_sh {
-    (
-        $Fixed:ident($LeEqU:ident),
-        $Op:ident $op:ident,
-        $OpAssign:ident $op_assign:ident
-    ) => {
-        impl<Frac: $LeEqU> $Op<usize> for Wrapping<$Fixed<Frac>> {
-            type Output = Wrapping<$Fixed<Frac>>;
-            #[inline]
-            fn $op(self, other: usize) -> Wrapping<$Fixed<Frac>> {
-                Wrapping($Fixed::from_bits(
-                    CoreWrapping((self.0).to_bits()).$op(other).0,
-                ))
-            }
-        }
-        impl<Frac: $LeEqU> $OpAssign<usize> for Wrapping<$Fixed<Frac>> {
-            #[inline]
-            fn $op_assign(&mut self, other: usize) {
-                self.0 = (self.0).$op(other);
-            }
-        }
-        impl<'a, Frac: $LeEqU> $OpAssign<&'a usize> for Wrapping<$Fixed<Frac>> {
-            #[inline]
-            fn $op_assign(&mut self, other: &usize) {
-                self.0 = (self.0).$op(*other);
-            }
-        }
-    };
-}
-
 macro_rules! ops {
     ($Fixed:ident($LeEqU:ident, $Bits:ident)) => {
-        impl<Frac: $LeEqU> Neg for Wrapping<$Fixed<Frac>> {
-            type Output = Wrapping<$Fixed<Frac>>;
-            #[inline]
-            fn neg(self) -> Wrapping<$Fixed<Frac>> {
-                Wrapping((self.0).wrapping_neg())
-            }
-        }
-        impl<'a, Frac: $LeEqU> Neg for &'a Wrapping<$Fixed<Frac>> {
-            type Output = Wrapping<$Fixed<Frac>>;
-            #[inline]
-            fn neg(self) -> Wrapping<$Fixed<Frac>> {
-                Wrapping((self.0).wrapping_neg())
-            }
-        }
-        op! { $Fixed($LeEqU)::wrapping_add, Add add, AddAssign add_assign }
-        op! { $Fixed($LeEqU)::wrapping_sub, Sub sub, SubAssign sub_assign }
-        op! { $Fixed($LeEqU)::wrapping_mul, Mul mul, MulAssign mul_assign }
-        op! { $Fixed($LeEqU)::wrapping_div, Div div, DivAssign div_assign }
         op_bits! { $Fixed($LeEqU)::wrapping_mul_int, $Bits, Mul mul, MulAssign mul_assign }
         op_bits! { $Fixed($LeEqU)::wrapping_div_int, $Bits, Div div, DivAssign div_assign }
         op_bits! { $Fixed($LeEqU)::wrapping_rem_int, $Bits, Rem rem, RemAssign rem_assign }
-
-        impl<Frac: $LeEqU> Not for Wrapping<$Fixed<Frac>> {
-            type Output = Wrapping<$Fixed<Frac>>;
-            #[inline]
-            fn not(self) -> Wrapping<$Fixed<Frac>> {
-                Wrapping((self.0).not())
-            }
-        }
-        impl<'a, Frac: $LeEqU> Not for &'a Wrapping<$Fixed<Frac>> {
-            type Output = Wrapping<$Fixed<Frac>>;
-            #[inline]
-            fn not(self) -> Wrapping<$Fixed<Frac>> {
-                Wrapping((self.0).not())
-            }
-        }
-        op! { $Fixed($LeEqU)::bitand, BitAnd bitand, BitAndAssign bitand_assign }
-        op! { $Fixed($LeEqU)::bitor, BitOr bitor, BitOrAssign bitor_assign }
-        op! { $Fixed($LeEqU)::bitxor, BitXor bitxor, BitXorAssign bitxor_assign }
-
-        op_sh! { $Fixed($LeEqU), Shl shl, ShlAssign shl_assign }
-        op_sh! { $Fixed($LeEqU), Shr shr, ShrAssign shr_assign }
-
-        impl<Frac: $LeEqU> Sum<Wrapping<$Fixed<Frac>>> for Wrapping<$Fixed<Frac>> {
-            fn sum<I>(iter: I) -> Wrapping<$Fixed<Frac>>
-            where
-                I: Iterator<Item = Wrapping<$Fixed<Frac>>>,
-            {
-                iter.fold(Wrapping($Fixed::from_bits(0)), Add::add)
-            }
-        }
-
-        impl<'a, Frac: 'a + $LeEqU> Sum<&'a Wrapping<$Fixed<Frac>>> for Wrapping<$Fixed<Frac>> {
-            fn sum<I>(iter: I) -> Wrapping<$Fixed<Frac>>
-            where
-                I: Iterator<Item = &'a Wrapping<$Fixed<Frac>>>,
-            {
-                iter.fold(Wrapping($Fixed::from_bits(0)), Add::add)
-            }
-        }
-
-        impl<Frac: $LeEqU> Product<Wrapping<$Fixed<Frac>>> for Wrapping<$Fixed<Frac>> {
-            fn product<I>(mut iter: I) -> Wrapping<$Fixed<Frac>>
-            where
-                I: Iterator<Item = Wrapping<$Fixed<Frac>>>,
-            {
-                match iter.next() {
-                    None => Wrapping(1.wrapping_to_fixed()),
-                    Some(first) => iter.fold(first, Mul::mul),
-                }
-            }
-        }
-
-        impl<'a, Frac: 'a + $LeEqU> Product<&'a Wrapping<$Fixed<Frac>>> for Wrapping<$Fixed<Frac>> {
-            fn product<I>(mut iter: I) -> Wrapping<$Fixed<Frac>>
-            where
-                I: Iterator<Item = &'a Wrapping<$Fixed<Frac>>>,
-            {
-                match iter.next() {
-                    None => Wrapping(1.wrapping_to_fixed()),
-                    Some(first) => iter.fold(*first, Mul::mul),
-                }
-            }
-        }
     };
 }
-
 ops! { FixedI8(LeEqU8, i8) }
 ops! { FixedI16(LeEqU16, i16) }
 ops! { FixedI32(LeEqU32, i32) }

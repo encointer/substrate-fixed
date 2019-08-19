@@ -9,7 +9,13 @@ Version 0.4.3 (unreleased)
 ==========================
 
   * The *fixed* crate now requires rustc version 1.34.0 or later.
-  * Parsing strings now rounds to the nearest with ties rounding to even.
+  * The precision is now handled when formatting fixed-point numbers;
+    the precision is handled in the same way as for primitive
+    floating-point numbers in the standard library.
+  * The precision argument is no longer ignored handled when
+    formatting fixed-point numbers; the precision should now be
+    handled in the same way as for primitive floating-point numbers in
+    the standard library.
   * Checked versions of string parsing methods are now available as
     inherent methods to all fixed-point numbers, and as methods in the
     `Fixed` trait.

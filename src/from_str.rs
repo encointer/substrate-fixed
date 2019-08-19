@@ -437,7 +437,7 @@ where
 
     // add_5 is to add rounding when all bits are used
     let (mut boundary, mut add_5) = if nbits == 0 {
-        (one << (I::NBITS - 1), false)
+        (I::MSB, false)
     } else if dump_bits == 0 {
         (floor, true)
     } else {

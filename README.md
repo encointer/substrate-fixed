@@ -52,6 +52,10 @@ Various conversion methods are available:
 ### Version 0.4.3 news (unreleased)
 
   * The [*fixed* crate] now requires rustc version 1.34.0 or later.
+  * The precision argument is no longer ignored handled when
+    formatting fixed-point numbers; the precision should now be
+    handled in the same way as for primitive floating-point numbers in
+    the standard library.
   * Parsing strings now rounds to the nearest with ties rounding to even.
   * Checked versions of string parsing methods are now available as
     inherent methods to all fixed-point numbers, and as methods in the
@@ -200,18 +204,18 @@ use fixed::types::I4F4;
 let a = I4F4::from_num(1);
 // multiplication and division by integers are possible
 let ans1 = a / 5 * 17;
-// 1 / 5 × 17 = 3 2/5 (3.4), but we get 3 3/16 (3.19)
+// 1 / 5 × 17 = 3 2/5 (3.4), but we get 3 3/16 (≈3.2)
 assert_eq!(ans1, I4F4::from_bits((3 << 4) + 3));
-assert_eq!(ans1.to_string(), "3.19");
+assert_eq!(ans1.to_string(), "3.2");
 
 // −8 ≤ I4F12 < 8 with steps of 1/4096 (about 0.0002)
 use fixed::types::I4F12;
 let wider_a = I4F12::from(a);
 let wider_ans = wider_a / 5 * 17;
 let ans2 = I4F4::from_num(wider_ans);
-// now the answer is the much closer 3 6/16 (3.38)
+// now the answer is the much closer 3 6/16 (≈3.4)
 assert_eq!(ans2, I4F4::from_bits((3 << 4) + 6));
-assert_eq!(ans2.to_string(), "3.38");
+assert_eq!(ans2.to_string(), "3.4");
 ```
 
 The second example shows some precision and conversion issues. The low

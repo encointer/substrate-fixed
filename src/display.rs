@@ -22,7 +22,7 @@ use crate::{
     FixedU8,
 };
 use core::{
-    cmp::{self, Ordering},
+    cmp::{self},
     fmt::{
         Alignment, Binary, Debug, Display, Formatter, LowerHex, Octal, Result as FmtResult,
         UpperHex,
@@ -87,7 +87,6 @@ enum Radix2 {
     UpHex,
 }
 impl Radix2 {
-    #[inline]
     fn digit_bits(self) -> u32 {
         match self {
             Radix2::Bin => 1,
@@ -96,7 +95,6 @@ impl Radix2 {
             Radix2::UpHex => 4,
         }
     }
-    #[inline]
     fn prefix(self) -> &'static str {
         match self {
             Radix2::Bin => "0b",
@@ -105,7 +103,6 @@ impl Radix2 {
             Radix2::UpHex => "0x",
         }
     }
-    #[inline]
     fn encode_digits(self, digits: &mut [u8]) {
         for digit in digits.iter_mut() {
             if *digit < 10 {
@@ -120,6 +117,38 @@ impl Radix2 {
     }
 }
 
+// returns the number of zeros at the end
+fn round_up_and_count_trailing_zeros<I>(frac_rem: I, buf: &mut [u8], mut has_frac: bool) -> usize
+where
+    I: IntHelper<IsSigned = False>,
+{
+    let mut trailing_zeros = 0;
+    if frac_rem > I::MSB || (frac_rem == I::MSB && buf.last().unwrap().is_odd()) {
+        for b in buf.iter_mut().rev() {
+            if *b < 9 {
+                *b += 1;
+                break;
+            }
+            if *b == b'.' {
+                has_frac = false;
+                continue;
+            }
+            *b = 0;
+            if has_frac {
+                trailing_zeros += 1;
+            }
+        }
+    } else if has_frac {
+        for b in buf.iter().rev() {
+            if *b != 0 {
+                break;
+            }
+            trailing_zeros += 1;
+        }
+    }
+    trailing_zeros
+}
+
 fn fmt_radix2_helper<I>(
     (is_neg, mut int, mut frac): (bool, I, I),
     radix: Radix2,
@@ -130,7 +159,7 @@ where
 {
     let digit_bits = radix.digit_bits();
     let compl_digit_bits = I::NBITS - digit_bits;
-    let int_digit_mask = !(!I::ZERO << digit_bits);
+    let int_digit_mask = !((!I::ZERO) << digit_bits);
     // 128 binary digits, one radix point, one leading zero.
     // The leading zero has two purposes:
     //  1. If there are no integer bits, we still want to print "0." instead of ".".
@@ -139,10 +168,12 @@ where
 
     // buf[1..int_digits + 1] => significant integer digits (could be b"")
     let int_digits = ((I::NBITS - int.leading_zeros() + digit_bits - 1) / digit_bits) as usize;
-    for b in buf[1..int_digits + 1].iter_mut().rev() {
+    for b in buf[1..=int_digits].iter_mut().rev() {
+        debug_assert!(int != I::ZERO);
         *b = (int & int_digit_mask).lower_byte();
         int = int >> digit_bits;
     }
+    debug_assert!(int == I::ZERO);
 
     // buf[int_digits + 1..int_digits + 2] => b"."
     buf[int_digits + 1] = b'.';
@@ -164,27 +195,13 @@ where
             break;
         }
     }
-    let least_significant_index = if frac_digits > 0 {
-        int_digits + frac_digits + 1
+    let (has_frac, len) = if frac_digits > 0 {
+        (true, int_digits + frac_digits + 2)
     } else {
-        int_digits
+        (false, int_digits + 1)
     };
-    let round_up = frac > I::MSB || (frac == I::MSB && buf[least_significant_index].is_odd());
-    if round_up {
-        for b in buf[0..int_digits + frac_digits + 2].iter_mut().rev() {
-            if *b < int_digit_mask.lower_byte() {
-                *b += 1;
-                break;
-            }
-            if *b == b'.' {
-                continue;
-            }
-            *b = 0;
-            if frac_digits > 0 {
-                frac_digits -= 1;
-            }
-        }
-    }
+    let trailing_zeros = round_up_and_count_trailing_zeros(frac, &mut buf[..len], has_frac);
+    frac_digits -= trailing_zeros;
     let end_zeros = fmt.precision().map(|x| x - frac_digits).unwrap_or(0);
     let begin = if buf[0] > 0 || buf[1] == b'.' { 0 } else { 1 };
     let end = if frac_digits > 0 {
@@ -200,7 +217,6 @@ where
     pad(is_neg, radix.prefix(), str_buf, end_zeros, fmt)
 }
 
-#[inline]
 fn parts<F: Fixed>(
     num: F,
 ) -> (
@@ -222,7 +238,6 @@ where
     }
 }
 
-#[inline]
 fn fmt_radix2<F: Fixed>(num: F, radix: Radix2, fmt: &mut Formatter) -> FmtResult
 where
     F::Bits: IntHelper,
@@ -282,31 +297,19 @@ impl_fmt! { FixedI32(LeEqU32) }
 impl_fmt! { FixedI64(LeEqU64) }
 impl_fmt! { FixedI128(LeEqU128) }
 
-fn dec_int_digits(int_bits: u32) -> u32 {
-    assert!(int_bits < 299);
-    if int_bits == 0 {
-        return 0;
-    }
-    let i = if int_bits >= 196 {
-        12
-    } else if int_bits >= 103 {
-        11
-    } else {
-        10
-    };
-    (int_bits * 3 + i) / 10
+// approximate ceil(i × log_10 2), works up to 13300
+fn ceil_log10_2_times(int_bits: u32) -> u32 {
+    assert!(int_bits <= 13_300);
+    // log_10 2 = 0.301_029_995_664
+    (int_bits * 30_103 + 99_999) / 100_000
 }
 
-fn dec_frac_digits(frac_bits: u32) -> u32 {
-    assert!(frac_bits < 299);
-    let i = if frac_bits >= 196 {
-        12
-    } else if frac_bits >= 103 {
-        11
-    } else {
-        10
-    };
-    (frac_bits * 3 + i) / 10
+fn encode_decimal_digits(digits: &mut [u8]) {
+    for digit in digits.iter_mut() {
+        if *digit < 10 {
+            *digit += b'0';
+        }
+    }
 }
 
 pub(crate) trait Mul10: Sized {
@@ -351,123 +354,111 @@ trait FmtDecHelper: IntHelper {
     fn take_frac_digit(&mut self) -> u8;
 }
 
-macro_rules! fmt_dec_helper {
-    ($($UInner:ty)*) => { $(
-        impl FmtDecHelper for $UInner {
-            #[inline]
-            fn take_int_digit(&mut self) -> u8 {
-                let ret = (*self % 10) as u8;
-                *self /= 10;
-                ret
-            }
-
-            #[inline]
-            fn take_frac_digit(&mut self) -> u8 {
-                self.mul10_assign()
-            }
-        }
-    )* };
-}
-
-fmt_dec_helper! { u8 u16 u32 u64 u128 }
-
-fn fmt_dec_helper<F: FmtDecHelper>(
-    frac_bits: u32,
-    (is_neg, mut int, mut frac): (bool, F, F),
+fn fmt_dec_helper<I>(
+    frac_nbits: u32,
+    (is_neg, mut int, mut frac): (bool, I, I),
     fmt: &mut Formatter,
-) -> FmtResult {
-    let int_bits = F::NBITS - frac_bits;
-    // 40 int digits
-    // + 128 frac digits
-    // + 1 dec point,
-    // + 1 leading zero or padding for carry due to rounding up,
-    // = 170
-    let mut buf: [u8; 170] = [0; 170];
-    let max_int_digits = dec_int_digits(int_bits);
-    let req_frac_digits = dec_frac_digits(frac_bits);
-    // precision is limited to frac bits, which would always print
-    // exact non-rounded number anyway
-    let frac_digits = if let Some(prec) = fmt.precision().map(|x| x as u32) {
-        if prec > frac_bits {
-            frac_bits
-        } else {
-            prec
-        }
+) -> FmtResult
+where
+    I: IntHelper<IsSigned = False> + Mul10 + From<u8>,
+{
+    // For integer part, one decimal digit is always enough for one bit.
+    // For fractional part, the same holds as 10 is a multiple of 2.
+    // We need a maximum 128 digits, one decimal point, one leading zero.
+    // The leading zero has two purposes:
+    //  1. If there are no integer bits, we still want to print "0." instead of ".".
+    //  2. If rounding causes a carry, we can carry into this extra zero.
+    let mut buf = [0u8; 130];
+
+    // buf[1..int_digits + 1 ] => significant integer digits (could be b"")
+    let int_digits = ceil_log10_2_times(I::NBITS - int.leading_zeros()) as usize;
+    for b in buf[1..=int_digits].iter_mut().rev() {
+        debug_assert!(int != I::ZERO);
+        *b = (int % I::from(10)).lower_byte();
+        int = int / I::from(10);
+    }
+    debug_assert!(int == I::ZERO);
+
+    // buf[int_digits + 1..int_digits + 2] => b"."
+    buf[int_digits + 1] = b'.';
+
+    // buf[int_digits + 2..int_digits + frac_digits + 2] => fractional digits
+    let precision = fmt.precision();
+    let mut frac_digits = if let Some(precision) = precision {
+        let significant = (I::NBITS - frac.trailing_zeros()) as usize;
+        cmp::min(significant, precision)
     } else {
-        req_frac_digits
+        ceil_log10_2_times(frac_nbits) as usize
     };
-    let mut int_start;
-    let frac_start;
-    if max_int_digits == 0 {
-        buf[0] = b'0';
-        buf[1] = b'.';
-        int_start = 0;
-        frac_start = 2;
+    // add_5 is to add rounding when all bits are used
+    let (mut boundary, mut add_5) = if frac_nbits == I::NBITS {
+        (I::ZERO, true)
     } else {
-        // pad by one in case rounding results in another digit
-        int_start = max_int_digits + 1;
-        buf[int_start as usize] = b'.';
-        frac_start = int_start + 1;
-        for r in buf[1..int_start as usize].iter_mut().rev() {
-            *r = b'0' + int.take_int_digit();
-            int_start -= 1;
-            if int == F::ZERO {
+        ((I::from(1) << (I::NBITS - frac_nbits - 1)), false)
+    };
+    for (i, b) in buf[int_digits + 2..int_digits + frac_digits + 2]
+        .iter_mut()
+        .enumerate()
+    {
+        *b = frac.mul10_assign();
+
+        // Check if very close to zero, to avoid things like 0.19999999 and 0.20000001.
+        // This takes place even if we have a precision.
+        if frac < I::from(10) || frac.wrapping_neg() < I::from(10) {
+            frac_digits = i + 1;
+            break;
+        }
+
+        // in last digit, check will overflow so that mul10_assign() returns non-zero
+        if precision.is_none() {
+            let boundary_overflow = boundary.mul10_assign();
+            if add_5 {
+                boundary = boundary + I::from(5);
+                add_5 = false;
+            }
+            debug_assert!(boundary_overflow == 0 || frac_digits == i + 1);
+            let _ = boundary_overflow;
+            // if boundary_overflow, the following condition has no
+            // effect, so we don't care whether it's taken or not
+            if frac < boundary || frac.wrapping_neg() < boundary {
+                frac_digits = i + 1;
                 break;
             }
         }
     }
-    let end;
-    if frac_digits == 0 {
-        end = frac_start - 1;
+    let (has_frac, len) = if frac_digits > 0 {
+        (true, int_digits + frac_digits + 2)
     } else {
-        end = frac_start + frac_digits;
-        for r in buf[frac_start as usize..end as usize].iter_mut() {
-            *r = b'0' + frac.take_frac_digit();
-        }
-        // check for rounding up
-        let round_up = match frac.cmp(&F::MSB) {
-            Ordering::Less => false,
-            Ordering::Greater => true,
-            Ordering::Equal => {
-                let last_digit = buf[(end - 1) as usize];
-                debug_assert!(b'0' <= last_digit && last_digit <= b'9');
-                // round up only if odd, so that we round to even
-                (last_digit & 1) != 0
-            }
-        };
-        if round_up {
-            let mut done = false;
-            for r in buf[int_start as usize..end as usize].iter_mut().rev() {
-                if *r == b'9' {
-                    *r = b'0';
-                } else if *r != b'.' {
-                    *r += 1;
-                    done = true;
-                    break;
-                }
-            }
-            if !done {
-                int_start -= 1;
-                buf[int_start as usize] = b'1';
-            }
-        }
-    }
-    let buf = str::from_utf8(&buf[int_start as usize..end as usize]).unwrap();
-    fmt.pad_integral(!is_neg, "", buf)
+        (false, int_digits + 1)
+    };
+    let trailing_zeros = round_up_and_count_trailing_zeros(frac, &mut buf[..len], has_frac);
+    frac_digits -= trailing_zeros;
+    let end_zeros = fmt.precision().map(|x| x - frac_digits).unwrap_or(0);
+    let begin = if buf[0] > 0 || buf[1] == b'.' { 0 } else { 1 };
+    let end = if frac_digits > 0 {
+        int_digits + frac_digits + 2
+    } else if end_zeros > 0 {
+        int_digits + 2
+    } else {
+        int_digits + 1
+    };
+    let used_buf = &mut buf[begin..end];
+    encode_decimal_digits(used_buf);
+    let str_buf = str::from_utf8(used_buf).unwrap();
+    pad(is_neg, "", str_buf, end_zeros, fmt)
 }
 
-#[inline]
 fn fmt_dec<F: Fixed>(num: F, fmt: &mut Formatter) -> FmtResult
 where
     F::Bits: IntHelper,
-    <F::Bits as IntHelper>::Unsigned: FmtDecHelper,
+    <F::Bits as IntHelper>::Unsigned: IntHelper<IsSigned = False> + Mul10 + From<u8>,
 {
     fmt_dec_helper(F::frac_nbits(), parts(num), fmt)
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{frac::Unsigned, *};
+    use crate::{frac::Unsigned, types::*, *};
     use std::{
         fmt::{Debug, Error as FmtError, Formatter, Result as FmtResult, Write},
         format, mem,
@@ -525,14 +516,14 @@ mod tests {
     }
 
     macro_rules! assert_eq_fmt {
-        (($f1:expr, $($arg1:tt)*), ($f2:expr, $($arg2:tt)*)) => {{
-            let mut buf1 = Buf::new();
-            write!(buf1.target(), $f1, $($arg1)*).unwrap();
-            let mut buf2 = Buf::new();
-            write!(buf2.target(), $f2, $($arg2)*).unwrap();
-            assert_eq!(buf1, buf2);
-        }};
-    }
+            (($f1:expr, $($arg1:tt)*), ($f2:expr, $($arg2:tt)*)) => {{
+                let mut buf1 = Buf::new();
+                write!(buf1.target(), $f1, $($arg1)*).unwrap();
+                let mut buf2 = Buf::new();
+                write!(buf2.target(), $f2, $($arg2)*).unwrap();
+                assert_eq!(buf1, buf2);
+            }};
+        }
 
     fn trim_frac_zeros(mut x: &str) -> &str {
         while x.ends_with('0') {
@@ -545,22 +536,18 @@ mod tests {
     }
 
     fn up_frac_digits(x: &mut String, frac_digits: usize) {
-        match x.find('.') {
-            Some(point) => match frac_digits.checked_sub(x.len() - point - 1) {
-                Some(additional) => {
-                    x.reserve(additional);
-                    for _ in 0..additional {
-                        x.push('0');
-                    }
-                }
-                None => {}
-            },
-            None => {
-                x.reserve(frac_digits + 1);
-                x.push('.');
-                for _ in 0..frac_digits {
+        if let Some(point) = x.find('.') {
+            if let Some(additional) = frac_digits.checked_sub(x.len() - point - 1) {
+                x.reserve(additional);
+                for _ in 0..additional {
                     x.push('0');
                 }
+            }
+        } else {
+            x.reserve(frac_digits + 1);
+            x.push('.');
+            for _ in 0..frac_digits {
+                x.push('0');
             }
         }
     }
@@ -589,13 +576,13 @@ mod tests {
 
     #[test]
     fn dec() {
-        use crate::frac::U7 as Frac;
-        let frac = Frac::U32;
-        for i in 0..(1 << frac) {
-            let bits = !0u32 ^ i;
-            let flt = f64::from(bits) / f64::from(frac).exp2();
-            let fix = FixedU32::<Frac>::from_bits(bits);
-            assert_eq_fmt!(("{}", fix), ("{:.3}", flt));
+        for i in 0..(1 << 7) {
+            // use 24 bits of precision to be like f32
+            let bits = (!0u32 >> 8) ^ i;
+            let flt = (bits as f32) / 7f32.exp2();
+            let fix = U25F7::from_bits(bits);
+            let check = format!("{}", flt);
+            assert_eq!(format!("{}", fix), trim_frac_zeros(&check));
         }
     }
 
@@ -666,54 +653,27 @@ mod tests {
         );
     }
 
-    fn pow(base: u32, mut exp: u32) -> f64 {
-        let mut mult = f64::from(base);
-        let mut result = 1.0;
-        loop {
-            if exp % 2 != 0 {
-                result *= mult;
-            }
-            exp /= 2;
-            if exp == 0 {
-                break;
-            }
-            mult *= mult;
-        }
-        result
-    }
-
     #[test]
-    fn dec_int_digits() {
-        use super::dec_int_digits;
-        assert_eq!(dec_int_digits(0), 0);
-        assert_eq!(dec_int_digits(1), 1);
-        for int_bits in 2..299 {
-            let check = (pow(2, int_bits) - 1.0).log10().ceil() as u32;
-            assert_eq!(dec_int_digits(int_bits), check, "int_bits {}", int_bits);
+    fn check_ceil_log10_2_times() {
+        use super::ceil_log10_2_times;
+        for i in 0..=13_300 {
+            let check = (f64::from(i) * 2f64.log10()).ceil() as u32;
+            assert_eq!(ceil_log10_2_times(i), check);
         }
     }
-
     #[test]
-    fn dec_frac_digits() {
-        use super::dec_frac_digits;
-        for frac_bits in 0..299 {
-            let error = 1.0 / pow(10, dec_frac_digits(frac_bits));
-            let error_with_one_less_dec_digit = error * 10.0;
-            let delta = 1.0 / pow(2, frac_bits);
-            assert!(
-                error < delta,
-                "frac_bits {}, error {:e}, delta {:e}",
-                frac_bits,
-                error,
-                delta
-            );
-            assert!(
-                error_with_one_less_dec_digit >= delta,
-                "frac_bits {}, error with one less digit {:e}, delta {:e}",
-                frac_bits,
-                error_with_one_less_dec_digit,
-                delta
-            );
+    fn close_to_round_decimal() {
+        for i in 0..1000u16 {
+            // float has 24 bits of precision, so with use 1 for
+            // integer to leave exactly 23 for fraction
+            let float = f32::from(i + 1000) / 1000.;
+            let fix = U9F23::from_num(float);
+            let check = format!("1.{:03}", i);
+            assert_eq!(format!("{}", fix), trim_frac_zeros(&check));
+            assert_eq!(format!("{}", fix), format!("{}", float));
+            for prec in 0..10 {
+                assert_eq!(format!("{:.*}", prec, fix), format!("{:.*}", prec, float));
+            }
         }
     }
 }

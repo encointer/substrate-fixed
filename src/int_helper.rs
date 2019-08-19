@@ -23,7 +23,7 @@ use crate::{
 use core::{
     cmp::Ordering,
     fmt::{Debug, Display},
-    ops::{Add, BitAnd, BitOr, Not, Shl, Shr, Sub},
+    ops::{Add, BitAnd, BitOr, Div, Not, Rem, Shl, Shr, Sub},
 };
 
 pub trait IntHelper
@@ -31,7 +31,7 @@ where
     Self: Copy + Ord + Debug + Display,
     Self: Shl<u32, Output = Self> + Shr<u32, Output = Self>,
     Self: Not<Output = Self> + BitAnd<Output = Self> + BitOr<Output = Self>,
-    Self: Add<Output = Self> + Sub<Output = Self>,
+    Self: Add<Output = Self> + Sub<Output = Self> + Div<Output = Self> + Rem<Output = Self>,
 {
     type NBits: Unsigned;
     type IsSigned: Bit;
@@ -42,8 +42,10 @@ where
     const MSB: Self;
     const ZERO: Self;
 
+    fn asf64(self) -> f64;
     fn is_negative(self) -> bool;
     fn is_odd(self) -> bool;
+    fn wrapping_neg(self) -> Self;
     fn checked_add(self, val: Self) -> Option<Self>;
     fn checked_mul(self, val: Self) -> Option<Self>;
     fn overflowing_add(self, val: Self) -> (Self, bool);
@@ -76,6 +78,12 @@ macro_rules! sealed_int {
 
             const MSB: $Int = 1 << (Self::NBITS - 1);
             const ZERO: $Int = 0;
+
+            fn asf64(self) -> f64 { self as f64 }
+            #[inline]
+            fn wrapping_neg(self) -> $Int {
+                self.wrapping_neg()
+            }
 
             #[inline]
             fn checked_add(self, val: $Int) -> Option<$Int> {

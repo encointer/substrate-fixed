@@ -49,6 +49,8 @@ where
     fn overflowing_add(self, val: Self) -> (Self, bool);
     fn overflowing_mul(self, val: Self) -> (Self, bool);
     fn leading_zeros(self) -> u32;
+    fn trailing_zeros(self) -> u32;
+    fn lower_byte(self) -> u8;
 
     fn to_fixed_helper(
         self,
@@ -98,6 +100,16 @@ macro_rules! sealed_int {
             #[inline]
             fn leading_zeros(self) -> u32 {
                 self.leading_zeros()
+            }
+
+            #[inline]
+            fn trailing_zeros(self) -> u32 {
+                self.trailing_zeros()
+            }
+
+            #[inline]
+            fn lower_byte(self) -> u8 {
+                self as u8
             }
 
             #[inline]

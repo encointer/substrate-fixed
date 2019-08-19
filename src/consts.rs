@@ -25,7 +25,7 @@ number, and are rounded down at that precision.
 use fixed::{consts, types::I8F8};
 let tau = I8F8::from_num(consts::TAU);
 println!("τ = 2π with eight binary places is {:b}", tau);
-assert_eq!(format!("{:b}", tau), "110.01001000");
+assert_eq!(format!("{:.8b}", tau), "110.01001000");
 ```
 */
 

@@ -16,13 +16,13 @@
 use crate::{
     from_str::ParseFixedError,
     traits::{Fixed, FixedSigned, ToFixed},
-    types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
 use core::{
     fmt::{Display, Formatter, Result as FmtResult},
     iter::{Product, Sum},
+    mem,
     ops::{
         Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div,
         DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub,
@@ -209,7 +209,9 @@ impl<F: Fixed> Wrapping<F> {
     pub fn round(self) -> Wrapping<F> {
         Wrapping(self.0.wrapping_round())
     }
+}
 
+impl<F: FixedSigned> Wrapping<F> {
     /// Wrapping absolute value. Returns the absolute value, wrapping
     /// on overflow.
     ///
@@ -223,10 +225,7 @@ impl<F: Fixed> Wrapping<F> {
     /// assert_eq!(Wrapping(I16F16::from_num(-5)).abs(), Wrapping(I16F16::from_num(5)));
     /// assert_eq!(Wrapping(I16F16::min_value()).abs(), Wrapping(I16F16::min_value()));
     /// ```
-    pub fn abs(self) -> Wrapping<F>
-    where
-        F: FixedSigned,
-    {
+    pub fn abs(self) -> Wrapping<F> {
         Wrapping(self.0.wrapping_abs())
     }
 }
@@ -298,48 +297,139 @@ macro_rules! op {
     };
 }
 
-macro_rules! op_rhs {
-    (
-        $wrapping:ident($Rhs:ty), $Op:ident $op:ident, $OpAssign:ident $op_assign:ident
-    ) => {
-        impl<F: Fixed> $Op<$Rhs> for Wrapping<F> {
+macro_rules! op_bitwise {
+    ($Op:ident $op:ident, $OpAssign:ident $op_assign:ident) => {
+        impl<F> $Op<Wrapping<F>> for Wrapping<F>
+        where
+            F: $Op<F, Output = F>,
+        {
             type Output = Wrapping<F>;
             #[inline]
-            fn $op(self, other: $Rhs) -> Wrapping<F> {
-                Wrapping((self.0).$wrapping(other))
+            fn $op(self, other: Wrapping<F>) -> Wrapping<F> {
+                Wrapping((self.0).$op(other.0))
             }
         }
-        impl<'a, F: Fixed> $Op<$Rhs> for &'a Wrapping<F> {
+        impl<'a, F> $Op<Wrapping<F>> for &'a Wrapping<F>
+        where
+            &'a F: $Op<F, Output = F>,
+        {
             type Output = Wrapping<F>;
             #[inline]
-            fn $op(self, other: $Rhs) -> Wrapping<F> {
-                Wrapping((self.0).$wrapping(other))
+            fn $op(self, other: Wrapping<F>) -> Wrapping<F> {
+                Wrapping((self.0).$op(other.0))
             }
         }
-        impl<'a, F: Fixed> $Op<&'a $Rhs> for Wrapping<F> {
+        impl<'a, F> $Op<&'a Wrapping<F>> for Wrapping<F>
+        where
+            F: $Op<&'a F, Output = F>,
+        {
             type Output = Wrapping<F>;
             #[inline]
-            fn $op(self, other: &$Rhs) -> Wrapping<F> {
-                Wrapping((self.0).$wrapping(*other))
+            fn $op(self, other: &'a Wrapping<F>) -> Wrapping<F> {
+                Wrapping((self.0).$op(&other.0))
             }
         }
-        impl<'a, 'b, F: Fixed> $Op<&'a $Rhs> for &'b Wrapping<F> {
+        impl<'a, 'b, F> $Op<&'a Wrapping<F>> for &'b Wrapping<F>
+        where
+            &'b F: $Op<&'a F, Output = F>,
+        {
             type Output = Wrapping<F>;
             #[inline]
-            fn $op(self, other: &$Rhs) -> Wrapping<F> {
-                Wrapping((self.0).$wrapping(*other))
+            fn $op(self, other: &'a Wrapping<F>) -> Wrapping<F> {
+                Wrapping((self.0).$op(&other.0))
             }
         }
-        impl<F: Fixed> $OpAssign<$Rhs> for Wrapping<F> {
+        impl<F> $OpAssign<Wrapping<F>> for Wrapping<F>
+        where
+            F: $OpAssign<F>,
+        {
             #[inline]
-            fn $op_assign(&mut self, other: $Rhs) {
-                self.0 = (self.0).$wrapping(other);
+            fn $op_assign(&mut self, other: Wrapping<F>) {
+                (self.0).$op_assign(other.0);
             }
         }
-        impl<'a, F: Fixed> $OpAssign<&'a $Rhs> for Wrapping<F> {
+        impl<'a, F> $OpAssign<&'a Wrapping<F>> for Wrapping<F>
+        where
+            F: $OpAssign<&'a F>,
+        {
             #[inline]
-            fn $op_assign(&mut self, other: &$Rhs) {
-                self.0 = (self.0).$wrapping(*other);
+            fn $op_assign(&mut self, other: &'a Wrapping<F>) {
+                (self.0).$op_assign(&other.0);
+            }
+        }
+    };
+}
+
+macro_rules! op_shift {
+    ($Op:ident $op:ident, $OpAssign:ident $op_assign:ident) => {
+        impl<F> $Op<u32> for Wrapping<F>
+        where
+            F: $Op<u32, Output = F>,
+        {
+            type Output = Wrapping<F>;
+            #[allow(clippy::suspicious_op_assign_impl)]
+            #[inline]
+            fn $op(self, other: u32) -> Wrapping<F> {
+                let nbits = mem::size_of::<F>() as u32 * 8;
+                Wrapping((self.0).$op(other % nbits))
+            }
+        }
+        impl<'a, F> $Op<u32> for &'a Wrapping<F>
+        where
+            &'a F: $Op<u32, Output = F>,
+        {
+            type Output = Wrapping<F>;
+            #[allow(clippy::suspicious_op_assign_impl)]
+            #[inline]
+            fn $op(self, other: u32) -> Wrapping<F> {
+                let nbits = mem::size_of::<F>() as u32 * 8;
+                Wrapping((self.0).$op(other % nbits))
+            }
+        }
+        impl<'a, F> $Op<&'a u32> for Wrapping<F>
+        where
+            F: $Op<u32, Output = F>,
+        {
+            type Output = Wrapping<F>;
+            #[allow(clippy::suspicious_op_assign_impl)]
+            #[inline]
+            fn $op(self, other: &u32) -> Wrapping<F> {
+                let nbits = mem::size_of::<F>() as u32 * 8;
+                Wrapping((self.0).$op(*other % nbits))
+            }
+        }
+        impl<'a, 'b, F> $Op<&'a u32> for &'b Wrapping<F>
+        where
+            &'b F: $Op<u32, Output = F>,
+        {
+            type Output = Wrapping<F>;
+            #[allow(clippy::suspicious_op_assign_impl)]
+            #[inline]
+            fn $op(self, other: &u32) -> Wrapping<F> {
+                let nbits = mem::size_of::<F>() as u32 * 8;
+                Wrapping((self.0).$op(*other % nbits))
+            }
+        }
+        impl<F> $OpAssign<u32> for Wrapping<F>
+        where
+            F: $OpAssign<u32>,
+        {
+            #[allow(clippy::suspicious_op_assign_impl)]
+            #[inline]
+            fn $op_assign(&mut self, other: u32) {
+                let nbits = mem::size_of::<F>() as u32 * 8;
+                (self.0).$op_assign(other % nbits);
+            }
+        }
+        impl<'a, F> $OpAssign<&'a u32> for Wrapping<F>
+        where
+            F: $OpAssign<u32>,
+        {
+            #[allow(clippy::suspicious_op_assign_impl)]
+            #[inline]
+            fn $op_assign(&mut self, other: &u32) {
+                let nbits = mem::size_of::<F>() as u32 * 8;
+                (self.0).$op_assign(*other % nbits);
             }
         }
     };
@@ -365,26 +455,32 @@ op! { wrapping_sub, Sub sub, SubAssign sub_assign }
 op! { wrapping_mul, Mul mul, MulAssign mul_assign }
 op! { wrapping_div, Div div, DivAssign div_assign }
 
-impl<F: Fixed> Not for Wrapping<F> {
+impl<F> Not for Wrapping<F>
+where
+    F: Not<Output = F>,
+{
     type Output = Wrapping<F>;
     #[inline]
     fn not(self) -> Wrapping<F> {
         Wrapping((self.0).not())
     }
 }
-impl<'a, F: Fixed> Not for &'a Wrapping<F> {
+impl<'a, F> Not for &'a Wrapping<F>
+where
+    &'a F: Not<Output = F>,
+{
     type Output = Wrapping<F>;
     #[inline]
     fn not(self) -> Wrapping<F> {
         Wrapping((self.0).not())
     }
 }
-op! { bitand, BitAnd bitand, BitAndAssign bitand_assign }
-op! { bitor, BitOr bitor, BitOrAssign bitor_assign }
-op! { bitxor, BitXor bitxor, BitXorAssign bitxor_assign }
+op_bitwise! { BitAnd bitand, BitAndAssign bitand_assign }
+op_bitwise! { BitOr bitor, BitOrAssign bitor_assign }
+op_bitwise! { BitXor bitxor, BitXorAssign bitxor_assign }
 
-op_rhs! { wrapping_shl(u32), Shl shl, ShlAssign shl_assign }
-op_rhs! { wrapping_shr(u32), Shr shr, ShrAssign shr_assign }
+op_shift! { Shl shl, ShlAssign shl_assign }
+op_shift! { Shr shr, ShrAssign shr_assign }
 
 impl<F: Fixed> Sum<Wrapping<F>> for Wrapping<F> {
     fn sum<I>(iter: I) -> Wrapping<F>
@@ -429,51 +525,61 @@ impl<'a, F: 'a + Fixed> Product<&'a Wrapping<F>> for Wrapping<F> {
 }
 
 // The following cannot be implemented for Wrapping<F> where F: Fixed,
-// otherwise there will be a conflicting implementation error, so we
-// need to implement on typed direcly.
+// otherwise there will be a conflicting implementation error. For
+// example we cannot implement both these without triggering E0119:
+//
+//     impl<F: Fixed> Op<F::Bits> for Wrapping<F> { /* ... */ }
+//     impl<'a, F: Fixed> Op<&'a F::Bits> for Wrapping<F> { /* ... */ }
+//
+// To work around this, we provide implementations like this:
+//
+//     impl<Frac> Op<i8> for Wrapping<FixedI8<Frac>> { /* ... */ }
+//     impl<'a, Frac> Op<&'a i8> for Wrapping<FixedI8<Frac>> { /* ... */ }
+//     impl<Frac> Op<i16> for Wrapping<FixedI16<Frac>> { /* ... */ }
+//     impl<'a, Frac> Op<&'a i16> for Wrapping<FixedI16<Frac>> { /* ... */ }
+//     ...
 
 macro_rules! op_bits {
     (
-        $Fixed:ident($LeEqU:ident)::$wrapping:ident,
-        $Bits:ident,
+        $Fixed:ident($Bits:ident)::$wrapping:ident,
         $Op:ident $op:ident,
         $OpAssign:ident $op_assign:ident
     ) => {
-        impl<Frac: $LeEqU> $Op<$Bits> for Wrapping<$Fixed<Frac>> {
+        impl<Frac> $Op<$Bits> for Wrapping<$Fixed<Frac>> {
             type Output = Wrapping<$Fixed<Frac>>;
             #[inline]
             fn $op(self, other: $Bits) -> Wrapping<$Fixed<Frac>> {
                 Wrapping((self.0).$wrapping(other))
             }
         }
-        impl<'a, Frac: $LeEqU> $Op<$Bits> for &'a Wrapping<$Fixed<Frac>> {
+        impl<'a, Frac> $Op<$Bits> for &'a Wrapping<$Fixed<Frac>> {
             type Output = Wrapping<$Fixed<Frac>>;
             #[inline]
             fn $op(self, other: $Bits) -> Wrapping<$Fixed<Frac>> {
                 Wrapping((self.0).$wrapping(other))
             }
         }
-        impl<'a, Frac: $LeEqU> $Op<&'a $Bits> for Wrapping<$Fixed<Frac>> {
+        impl<'a, Frac> $Op<&'a $Bits> for Wrapping<$Fixed<Frac>> {
             type Output = Wrapping<$Fixed<Frac>>;
             #[inline]
             fn $op(self, other: &$Bits) -> Wrapping<$Fixed<Frac>> {
                 Wrapping((self.0).$wrapping(*other))
             }
         }
-        impl<'a, 'b, Frac: $LeEqU> $Op<&'a $Bits> for &'b Wrapping<$Fixed<Frac>> {
+        impl<'a, 'b, Frac> $Op<&'a $Bits> for &'b Wrapping<$Fixed<Frac>> {
             type Output = Wrapping<$Fixed<Frac>>;
             #[inline]
             fn $op(self, other: &$Bits) -> Wrapping<$Fixed<Frac>> {
                 Wrapping((self.0).$wrapping(*other))
             }
         }
-        impl<Frac: $LeEqU> $OpAssign<$Bits> for Wrapping<$Fixed<Frac>> {
+        impl<Frac> $OpAssign<$Bits> for Wrapping<$Fixed<Frac>> {
             #[inline]
             fn $op_assign(&mut self, other: $Bits) {
                 self.0 = (self.0).$wrapping(other);
             }
         }
-        impl<'a, Frac: $LeEqU> $OpAssign<&'a $Bits> for Wrapping<$Fixed<Frac>> {
+        impl<'a, Frac> $OpAssign<&'a $Bits> for Wrapping<$Fixed<Frac>> {
             #[inline]
             fn $op_assign(&mut self, other: &$Bits) {
                 self.0 = (self.0).$wrapping(*other);
@@ -483,19 +589,19 @@ macro_rules! op_bits {
 }
 
 macro_rules! ops {
-    ($Fixed:ident($LeEqU:ident, $Bits:ident)) => {
-        op_bits! { $Fixed($LeEqU)::wrapping_mul_int, $Bits, Mul mul, MulAssign mul_assign }
-        op_bits! { $Fixed($LeEqU)::wrapping_div_int, $Bits, Div div, DivAssign div_assign }
-        op_bits! { $Fixed($LeEqU)::wrapping_rem_int, $Bits, Rem rem, RemAssign rem_assign }
+    ($Fixed:ident($Bits:ident)) => {
+        op_bits! { $Fixed($Bits)::wrapping_mul_int, Mul mul, MulAssign mul_assign }
+        op_bits! { $Fixed($Bits)::wrapping_div_int, Div div, DivAssign div_assign }
+        op_bits! { $Fixed($Bits)::wrapping_rem_int, Rem rem, RemAssign rem_assign }
     };
 }
-ops! { FixedI8(LeEqU8, i8) }
-ops! { FixedI16(LeEqU16, i16) }
-ops! { FixedI32(LeEqU32, i32) }
-ops! { FixedI64(LeEqU64, i64) }
-ops! { FixedI128(LeEqU128, i128) }
-ops! { FixedU8(LeEqU8, u8) }
-ops! { FixedU16(LeEqU16, u16) }
-ops! { FixedU32(LeEqU32, u32) }
-ops! { FixedU64(LeEqU64, u64) }
-ops! { FixedU128(LeEqU128, u128) }
+ops! { FixedI8(i8) }
+ops! { FixedI16(i16) }
+ops! { FixedI32(i32) }
+ops! { FixedI64(i64) }
+ops! { FixedI128(i128) }
+ops! { FixedU8(u8) }
+ops! { FixedU16(u16) }
+ops! { FixedU32(u32) }
+ops! { FixedU64(u64) }
+ops! { FixedU128(u128) }

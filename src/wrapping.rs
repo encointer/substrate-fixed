@@ -62,7 +62,7 @@ impl<F: Fixed> Wrapping<F> {
     ///     to even.
     ///   * Any other number `src` for which [`ToFixed`] is implemented, in
     ///     which case this method returns
-    ///     <code>[Wrapping][`Wrapping`]&lt;[src.wrapping_to_fixed()][`wrapping_to_fixed`]&gt;</code>.
+    ///     <code>[Wrapping][`Wrapping`]([src.wrapping_to_fixed()][`wrapping_to_fixed`])</code>.
     ///
     /// # Panics
     ///
@@ -298,49 +298,48 @@ macro_rules! op {
     };
 }
 
-macro_rules! op_sh {
+macro_rules! op_rhs {
     (
-        $wrapping:ident, $Op:ident $op:ident, $OpAssign:ident $op_assign:ident;
-        $Rhs:ident $($as_u32:tt)*
+        $wrapping:ident($Rhs:ty), $Op:ident $op:ident, $OpAssign:ident $op_assign:ident
     ) => {
         impl<F: Fixed> $Op<$Rhs> for Wrapping<F> {
             type Output = Wrapping<F>;
             #[inline]
             fn $op(self, other: $Rhs) -> Wrapping<F> {
-                Wrapping((self.0).$wrapping(other $($as_u32)*))
+                Wrapping((self.0).$wrapping(other))
             }
         }
         impl<'a, F: Fixed> $Op<$Rhs> for &'a Wrapping<F> {
             type Output = Wrapping<F>;
             #[inline]
             fn $op(self, other: $Rhs) -> Wrapping<F> {
-                Wrapping((self.0).$wrapping(other $($as_u32)*))
+                Wrapping((self.0).$wrapping(other))
             }
         }
         impl<'a, F: Fixed> $Op<&'a $Rhs> for Wrapping<F> {
             type Output = Wrapping<F>;
             #[inline]
             fn $op(self, other: &$Rhs) -> Wrapping<F> {
-                Wrapping((self.0).$wrapping(*other $($as_u32)*))
+                Wrapping((self.0).$wrapping(*other))
             }
         }
         impl<'a, 'b, F: Fixed> $Op<&'a $Rhs> for &'b Wrapping<F> {
             type Output = Wrapping<F>;
             #[inline]
             fn $op(self, other: &$Rhs) -> Wrapping<F> {
-                Wrapping((self.0).$wrapping(*other $($as_u32)*))
+                Wrapping((self.0).$wrapping(*other))
             }
         }
         impl<F: Fixed> $OpAssign<$Rhs> for Wrapping<F> {
             #[inline]
             fn $op_assign(&mut self, other: $Rhs) {
-                self.0 = (self.0).$wrapping(other $($as_u32)*);
+                self.0 = (self.0).$wrapping(other);
             }
         }
         impl<'a, F: Fixed> $OpAssign<&'a $Rhs> for Wrapping<F> {
             #[inline]
             fn $op_assign(&mut self, other: &$Rhs) {
-                self.0 = (self.0).$wrapping(*other $($as_u32)*);
+                self.0 = (self.0).$wrapping(*other);
             }
         }
     };
@@ -384,10 +383,8 @@ op! { bitand, BitAnd bitand, BitAndAssign bitand_assign }
 op! { bitor, BitOr bitor, BitOrAssign bitor_assign }
 op! { bitxor, BitXor bitxor, BitXorAssign bitxor_assign }
 
-op_sh! { wrapping_shl, Shl shl, ShlAssign shl_assign; usize as u32 }
-op_sh! { wrapping_shr, Shr shr, ShrAssign shr_assign; usize as u32 }
-op_sh! { wrapping_shl, Shl shl, ShlAssign shl_assign; u32 }
-op_sh! { wrapping_shr, Shr shr, ShrAssign shr_assign; u32 }
+op_rhs! { wrapping_shl(u32), Shl shl, ShlAssign shl_assign }
+op_rhs! { wrapping_shr(u32), Shr shr, ShrAssign shr_assign }
 
 impl<F: Fixed> Sum<Wrapping<F>> for Wrapping<F> {
     fn sum<I>(iter: I) -> Wrapping<F>

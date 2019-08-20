@@ -22,10 +22,12 @@ number, and are rounded down at that precision.
 # Examples
 
 ```rust
-use fixed::{consts, types::I8F8};
-let tau = I8F8::from_num(consts::TAU);
-println!("τ = 2π with eight binary places is {:b}", tau);
+use fixed::{consts, types::I4F28};
+let tau = I4F28::from_num(consts::TAU);
+println!("τ = 2π with eight binary places is {:.8b}", tau);
 assert_eq!(format!("{:.8b}", tau), "110.01001000");
+println!("τ = 2π with six decimal places is {:.8}", tau);
+assert_eq!(format!("{:.8}", tau), "6.28318531");
 ```
 */
 

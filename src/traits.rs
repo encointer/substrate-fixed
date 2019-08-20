@@ -87,7 +87,7 @@ depending on the crate’s [optional features].
 "
 }
 
-/// This trait provides common methods to all fixed-point numbers.
+/// This trait provides methods common to all fixed-point numbers.
 ///
 /// It can be helpful when writing generic code that makes use of
 /// fixed-point numbers.
@@ -755,140 +755,149 @@ where
     fn overflowing_shr(self, rhs: u32) -> (Self, bool);
 
     /// Multiplication by an integer.
-    #[deprecated(since = "0.4.1", note = "use `Mul<Self::Bits>` trait instead")]
+    #[deprecated(
+        since = "0.4.1",
+        note = "use `lhs * rhs` instead of `lhs.mul_int(rhs)`"
+    )]
     #[inline]
     fn mul_int(self, rhs: Self::Bits) -> Self {
         self * rhs
     }
 
     /// Division by an integer.
-    #[deprecated(since = "0.4.1", note = "use `Div<Self::Bits>` trait instead")]
+    #[deprecated(
+        since = "0.4.1",
+        note = "use `lhs / rhs` instead of `lhs.div_int(rhs)`"
+    )]
     #[inline]
     fn div_int(self, rhs: Self::Bits) -> Self {
         self / rhs
     }
 
     /// Remainder for division by an integer.
-    #[deprecated(since = "0.4.1", note = "use `Rem<Self::Bits>` trait instead")]
+    #[deprecated(
+        since = "0.4.1",
+        note = "use `lhs % rhs` instead of `lhs.rem_int(rhs)`"
+    )]
     #[inline]
     fn rem_int(self, rhs: Self::Bits) -> Self {
         self % rhs
     }
 
     /// Creates a fixed-point number from another number.
-    #[deprecated(since = "0.4.2", note = "replaced by from_num")]
+    #[deprecated(since = "0.4.2", note = "replaced by `from_num`")]
     #[inline]
     fn from_int<Src: ToFixed>(src: Src) -> Self {
         src.to_fixed()
     }
 
     /// Converts a fixed-point number to another number.
-    #[deprecated(since = "0.4.2", note = "replaced by from_num")]
+    #[deprecated(since = "0.4.2", note = "replaced by `to_num`")]
     #[inline]
     fn to_int<Dst: FromFixed>(self) -> Dst {
         Dst::from_fixed(self)
     }
 
     /// Creates a fixed-point number from another number.
-    #[deprecated(since = "0.4.2", note = "replaced by from_num")]
+    #[deprecated(since = "0.4.2", note = "replaced by `from_num`")]
     #[inline]
     fn from_float<Src: ToFixed>(src: Src) -> Self {
         src.to_fixed()
     }
 
     /// Converts a fixed-point number to another number.
-    #[deprecated(since = "0.4.2", note = "replaced by from_num")]
+    #[deprecated(since = "0.4.2", note = "replaced by `to_num`")]
     #[inline]
     fn to_float<Dst: FromFixed>(self) -> Dst {
         Dst::from_fixed(self)
     }
 
     /// Creates a fixed-point number from another number.
-    #[deprecated(since = "0.4.2", note = "replaced by checked_from_num")]
+    #[deprecated(since = "0.4.2", note = "replaced by `checked_from_num`")]
     #[inline]
     fn checked_from_int<Src: ToFixed>(src: Src) -> Option<Self> {
         src.checked_to_fixed()
     }
 
     /// Converts a fixed-point number to another number.
-    #[deprecated(since = "0.4.2", note = "replaced by checked_from_num")]
+    #[deprecated(since = "0.4.2", note = "replaced by `checked_to_num`")]
     #[inline]
     fn checked_to_int<Dst: FromFixed>(self) -> Option<Dst> {
         Dst::checked_from_fixed(self)
     }
 
     /// Creates a fixed-point number from another number.
-    #[deprecated(since = "0.4.2", note = "replaced by checked_from_num")]
+    #[deprecated(since = "0.4.2", note = "replaced by `checked_from_num`")]
     #[inline]
     fn checked_from_float<Src: ToFixed>(src: Src) -> Option<Self> {
         src.checked_to_fixed()
     }
 
     /// Creates a fixed-point number from another number.
-    #[deprecated(since = "0.4.2", note = "replaced by saturating_from_num")]
+    #[deprecated(since = "0.4.2", note = "replaced by `saturating_from_num`")]
     #[inline]
     fn saturating_from_int<Src: ToFixed>(src: Src) -> Self {
         src.saturating_to_fixed()
     }
 
     /// Converts a fixed-point number to another number.
-    #[deprecated(since = "0.4.2", note = "replaced by saturating_from_num")]
+    #[deprecated(since = "0.4.2", note = "replaced by `saturating_to_num`")]
     #[inline]
     fn saturating_to_int<Dst: FromFixed>(self) -> Dst {
         Dst::saturating_from_fixed(self)
     }
 
     /// Creates a fixed-point number from another number.
-    #[deprecated(since = "0.4.2", note = "replaced by saturating_from_num")]
+    #[deprecated(since = "0.4.2", note = "replaced by `saturating_from_num`")]
     #[inline]
     fn saturating_from_float<Src: ToFixed>(src: Src) -> Self {
         src.saturating_to_fixed()
     }
 
     /// Creates a fixed-point number from another number.
-    #[deprecated(since = "0.4.2", note = "replaced by wrapping_from_num")]
+    #[deprecated(since = "0.4.2", note = "replaced by `wrapping_from_num`")]
     #[inline]
     fn wrapping_from_int<Src: ToFixed>(src: Src) -> Self {
         src.wrapping_to_fixed()
     }
 
     /// Converts a fixed-point number to another number.
-    #[deprecated(since = "0.4.2", note = "replaced by wrapping_from_num")]
+    #[deprecated(since = "0.4.2", note = "replaced by `wrapping_to_num`")]
     #[inline]
     fn wrapping_to_int<Dst: FromFixed>(self) -> Dst {
         Dst::wrapping_from_fixed(self)
     }
 
     /// Creates a fixed-point number from another number.
-    #[deprecated(since = "0.4.2", note = "replaced by wrapping_from_num")]
+    #[deprecated(since = "0.4.2", note = "replaced by `wrapping_from_num`")]
     #[inline]
     fn wrapping_from_float<Src: ToFixed>(src: Src) -> Self {
         src.wrapping_to_fixed()
     }
 
     /// Creates a fixed-point number from another number.
-    #[deprecated(since = "0.4.2", note = "replaced by overflowing_from_num")]
+    #[deprecated(since = "0.4.2", note = "replaced by `overflowing_from_num`")]
     #[inline]
     fn overflowing_from_int<Src: ToFixed>(src: Src) -> (Self, bool) {
         src.overflowing_to_fixed()
     }
 
     /// Converts a fixed-point number to another number.
-    #[deprecated(since = "0.4.2", note = "replaced by overflowing_from_num")]
+    #[deprecated(since = "0.4.2", note = "replaced by `overflowing_to_num`")]
     #[inline]
     fn overflowing_to_int<Dst: FromFixed>(self) -> (Dst, bool) {
         Dst::overflowing_from_fixed(self)
     }
 
     /// Creates a fixed-point number from another number.
-    #[deprecated(since = "0.4.2", note = "replaced by overflowing_from_num")]
+    #[deprecated(since = "0.4.2", note = "replaced by `overflowing_from_num`")]
     #[inline]
     fn overflowing_from_float<Src: ToFixed>(src: Src) -> (Self, bool) {
         src.overflowing_to_fixed()
     }
 }
 
-/// This trait provides common methods to all signed fixed-point numbers.
+/// This trait provides methods common to all signed fixed-point numbers.
 pub trait FixedSigned: Fixed + Neg<Output = Self> {
     /// Returns the absolute value.
     fn abs(self) -> Self;
@@ -950,7 +959,7 @@ pub trait FixedSigned: Fixed + Neg<Output = Self> {
     fn is_negative(self) -> bool;
 }
 
-/// This trait provides common methods to all unsigned fixed-point numbers.
+/// This trait provides methods common to all unsigned fixed-point numbers.
 pub trait FixedUnsigned: Fixed {
     /// Returns [`true`][`bool`] if the fixed-point number is
     /// 2<sup><i>k</i></sup> for some integer <i>k</i>.

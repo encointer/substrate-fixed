@@ -45,16 +45,23 @@ fixed-point numbers.
 Various conversion methods are available:
 
   * All lossless infallible conversions between fixed-point numbers
-    and numeric primitives are implemented. That is, you can use
-    [`From`] or [`Into`] for the conversions that always work without
-    losing any bits.
-  * For infallible conversions that are not lossless because the
-    source type may have more fractional bits than the destination
-    type, [`LossyFrom`] and [`LossyInto`] can be used; these will
-    truncate any excess fractional bits in the source value.
-  * Checked conversions are provided between all types using the
-    [`FromFixed`] and [`ToFixed`] traits, or using the inherent methods
-    in the fixed-point types themselves.
+    and numeric primitives are implemented. You can use [`From`] or
+    [`Into`] for conversions that always work without losing any bits.
+  * For lossy infallible conversions between fixed-point numbers and
+    numeric primitives, where the source type may have more fractional
+    bits than the destination type, the [`LossyFrom`] and
+    [`LossyInto`] traits can be used. Excess fractional bits are
+    truncated.
+  * Checked conversions are provided between fixed-point numbers and
+    numeric primitives using the [`FromFixed`] and [`ToFixed`] traits,
+    or using the [`from_num`] and [`to_num`] methods.
+  * Fixed-point numbers can be parsed from decimal strings using
+    [`FromStr`], or from binary, octal or hexadecimal using the
+    [`from_str_binary`], [`from_str_octal`] or [`from_str_hex`]
+    methods. The result is rounded to the nearest, ties to even.
+  * Fixed-point numbers can be converted to strings using [`Display`],
+    [`Binary`], [`Octal`], [`LowerHex`] and [`UpperHex`]. The output
+    is rounded to the nearest, ties to even.
 
 ## Quick examples
 
@@ -80,31 +87,31 @@ all combinations of integer and fractional bits adding up to a total
 of eight, 16, 32, 64 or 128 bits.
 
 ```rust
-// −8 ≤ I4F4 < 8 with steps of 1/16 (about 0.06)
+// −8 ≤ I4F4 < 8 with steps of 1/16 (~0.06)
 use fixed::types::I4F4;
 let a = I4F4::from_num(1);
 // multiplication and division by integers are possible
 let ans1 = a / 5 * 17;
-// 1 / 5 × 17 = 3 2/5 (3.4), but we get 3 3/16 (≈3.2)
+// 1 / 5 × 17 = 3 2/5 (3.4), but we get 3 3/16 (~3.2)
 assert_eq!(ans1, I4F4::from_bits((3 << 4) + 3));
 assert_eq!(ans1.to_string(), "3.2");
 
-// −8 ≤ I4F12 < 8 with steps of 1/4096 (about 0.0002)
+// −8 ≤ I4F12 < 8 with steps of 1/4096 (~0.0002)
 use fixed::types::I4F12;
 let wider_a = I4F12::from(a);
 let wider_ans = wider_a / 5 * 17;
 let ans2 = I4F4::from_num(wider_ans);
-// now the answer is the much closer 3 6/16 (≈3.4)
+// now the answer is the much closer 3 6/16 (~3.4)
 assert_eq!(ans2, I4F4::from_bits((3 << 4) + 6));
 assert_eq!(ans2.to_string(), "3.4");
 ```
 
 The second example shows some precision and conversion issues. The low
 precision of `a` means that `a / 5` is 3⁄16 instead of 1⁄5, leading to
-an inaccurate result `ans1` = 3 3⁄16 (3.19). With a higher precision,
+an inaccurate result `ans1` = 3 3⁄16 (~3.2). With a higher precision,
 we get `wider_a / 5` equal to 819⁄4096, leading to a more accurate
 intermediate result `wider_ans` = 3 1635⁄4096. When we convert back to
-four fractional bits, we get `ans2` = 3 6⁄16 (3.38).
+four fractional bits, we get `ans2` = 3 6⁄16 (~3.4).
 
 Note that we can convert from [`I4F4`] to [`I4F12`] using [`From`], as
 the target type has the same number of integer bits and a larger
@@ -120,13 +127,6 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 ```toml
 [dependencies]
 fixed = "0.4.2"
-```
-
-If you are using the 2015 Rust edition, you also need to declare it by
-adding this to your crate root (usually *lib.rs* or *main.rs*):
-
-```rust
-extern crate fixed;
 ```
 
 The *fixed* crate requires rustc version 1.34.0 or later.
@@ -174,6 +174,8 @@ additional terms or conditions.
 [*typenum* crate]: https://crates.io/crates/typenum
 [LICENSE-APACHE]: https://www.apache.org/licenses/LICENSE-2.0
 [LICENSE-MIT]: https://opensource.org/licenses/MIT
+[`Binary`]: https://doc.rust-lang.org/nightly/std/fmt/trait.Binary.html
+[`Display`]: https://doc.rust-lang.org/nightly/std/fmt/trait.Display.html
 [`FixedI128`]: struct.FixedI128.html
 [`FixedI16`]: struct.FixedI16.html
 [`FixedI32`]: struct.FixedI32.html
@@ -185,6 +187,7 @@ additional terms or conditions.
 [`FixedU64`]: struct.FixedU64.html
 [`FixedU8`]: struct.FixedU8.html
 [`FromFixed`]: traits/trait.FromFixed.html
+[`FromStr`]: https://doc.rust-lang.org/nightly/std/str/trait.FromStr.html
 [`From`]: https://doc.rust-lang.org/nightly/std/convert/trait.From.html
 [`I20F12`]: types/type.I20F12.html
 [`I4F12`]: types/type.I4F12.html
@@ -192,11 +195,18 @@ additional terms or conditions.
 [`Into`]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
 [`LossyFrom`]: traits/trait.LossyFrom.html
 [`LossyInto`]: traits/trait.LossyInto.html
+[`LowerHex`]: https://doc.rust-lang.org/nightly/std/fmt/trait.LowerHex.html
+[`Octal`]: https://doc.rust-lang.org/nightly/std/fmt/trait.Octal.html
 [`ToFixed`]: traits/trait.ToFixed.html
-[`U20F12`]: types/type.U20F12.html
-[`f16`]: https://docs.rs/half/^1/half/struct.f16.html
 [`U12`]: types/extra/type.U12.html
-[`from_num`]: struct.FixedI8.html#method.from_num
+[`U20F12`]: types/type.U20F12.html
+[`UpperHex`]: https://doc.rust-lang.org/nightly/std/fmt/trait.UpperHex.html
+[`f16`]: https://docs.rs/half/^1/half/struct.f16.html
+[`from_num`]: struct.FixedI32.html#method.from_num
+[`from_str_binary`]: struct.FixedI32.html#method.from_str_binary
+[`from_str_hex`]: struct.FixedI32.html#method.from_str_hex
+[`from_str_octal`]: struct.FixedI32.html#method.from_str_octal
+[`to_num`]: struct.FixedI32.html#method.to_num
 [const generics]: https://github.com/rust-lang/rust/issues/44580
 */
 #![no_std]

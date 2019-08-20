@@ -41,7 +41,7 @@ pub trait Int: Copy {}
 pub trait Float: Copy {}
 
 /// This trait is implemented for all the fixed-point types.
-#[deprecated(since = "0.4.2", note = "use traits::Fixed instead")]
+#[deprecated(since = "0.4.2", note = "use `traits::Fixed` instead")]
 pub trait Fixed: TraitsFixed {}
 
 impl Int for i8 {}

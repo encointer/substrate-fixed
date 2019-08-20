@@ -25,7 +25,7 @@ use crate::{
 
 pub mod extra;
 
-#[deprecated(since = "0.4.3", note = "replaced by types in fixed::types::extra")]
+#[deprecated(since = "0.4.3")]
 pub use crate::types::extra::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8};
 
 /*

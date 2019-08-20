@@ -18,9 +18,9 @@ This module reexports items from the [*typenum* crate].
 
 [*typenum* crate]: https://crates.io/crates/typenum
 */
-#![deprecated(since = "0.4.3", note = "replaced by fixed::types::extra")]
+#![deprecated(since = "0.4.3", note = "replaced by `fixed::types::extra`")]
 
-#[deprecated(since = "0.4.3", note = "replaced by types in fixed::types::extra")]
+#[deprecated(since = "0.4.3")]
 pub use crate::types::extra::{
     Diff, IsLessOrEqual, True, Unsigned, U0, U1, U10, U100, U101, U102, U103, U104, U105, U106,
     U107, U108, U109, U11, U110, U111, U112, U113, U114, U115, U116, U117, U118, U119, U12, U120,
@@ -31,5 +31,5 @@ pub use crate::types::extra::{
     U73, U74, U75, U76, U77, U78, U79, U8, U80, U81, U82, U83, U84, U85, U86, U87, U88, U89, U9,
     U90, U91, U92, U93, U94, U95, U96, U97, U98, U99,
 };
-#[deprecated(since = "0.4.3", note = "replaced by types in fixed::types::extra")]
+#[deprecated(since = "0.4.3")]
 pub use typenum::IsGreaterOrEqual;

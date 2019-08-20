@@ -361,78 +361,81 @@ macro_rules! op_bitwise {
 }
 
 macro_rules! op_shift {
-    ($Op:ident $op:ident, $OpAssign:ident $op_assign:ident) => {
-        impl<F> $Op<u32> for Wrapping<F>
+    (
+        $Op:ident $op:ident, $OpAssign:ident $op_assign:ident;
+        $($Rhs:ident),*
+    ) => { $(
+        impl<F> $Op<$Rhs> for Wrapping<F>
         where
             F: $Op<u32, Output = F>,
         {
             type Output = Wrapping<F>;
             #[allow(clippy::suspicious_op_assign_impl)]
             #[inline]
-            fn $op(self, other: u32) -> Wrapping<F> {
+            fn $op(self, other: $Rhs) -> Wrapping<F> {
                 let nbits = mem::size_of::<F>() as u32 * 8;
-                Wrapping((self.0).$op(other % nbits))
+                Wrapping((self.0).$op(other as u32 % nbits))
             }
         }
-        impl<'a, F> $Op<u32> for &'a Wrapping<F>
+        impl<'a, F> $Op<$Rhs> for &'a Wrapping<F>
         where
             &'a F: $Op<u32, Output = F>,
         {
             type Output = Wrapping<F>;
             #[allow(clippy::suspicious_op_assign_impl)]
             #[inline]
-            fn $op(self, other: u32) -> Wrapping<F> {
+            fn $op(self, other: $Rhs) -> Wrapping<F> {
                 let nbits = mem::size_of::<F>() as u32 * 8;
-                Wrapping((self.0).$op(other % nbits))
+                Wrapping((self.0).$op(other as u32 % nbits))
             }
         }
-        impl<'a, F> $Op<&'a u32> for Wrapping<F>
+        impl<'a, F> $Op<&'a $Rhs> for Wrapping<F>
         where
             F: $Op<u32, Output = F>,
         {
             type Output = Wrapping<F>;
             #[allow(clippy::suspicious_op_assign_impl)]
             #[inline]
-            fn $op(self, other: &u32) -> Wrapping<F> {
+            fn $op(self, other: &$Rhs) -> Wrapping<F> {
                 let nbits = mem::size_of::<F>() as u32 * 8;
-                Wrapping((self.0).$op(*other % nbits))
+                Wrapping((self.0).$op(*other as u32 % nbits))
             }
         }
-        impl<'a, 'b, F> $Op<&'a u32> for &'b Wrapping<F>
+        impl<'a, 'b, F> $Op<&'a $Rhs> for &'b Wrapping<F>
         where
             &'b F: $Op<u32, Output = F>,
         {
             type Output = Wrapping<F>;
             #[allow(clippy::suspicious_op_assign_impl)]
             #[inline]
-            fn $op(self, other: &u32) -> Wrapping<F> {
+            fn $op(self, other: &$Rhs) -> Wrapping<F> {
                 let nbits = mem::size_of::<F>() as u32 * 8;
-                Wrapping((self.0).$op(*other % nbits))
+                Wrapping((self.0).$op(*other as u32 % nbits))
             }
         }
-        impl<F> $OpAssign<u32> for Wrapping<F>
+        impl<F> $OpAssign<$Rhs> for Wrapping<F>
         where
             F: $OpAssign<u32>,
         {
             #[allow(clippy::suspicious_op_assign_impl)]
             #[inline]
-            fn $op_assign(&mut self, other: u32) {
+            fn $op_assign(&mut self, other: $Rhs) {
                 let nbits = mem::size_of::<F>() as u32 * 8;
-                (self.0).$op_assign(other % nbits);
+                (self.0).$op_assign(other as u32 % nbits);
             }
         }
-        impl<'a, F> $OpAssign<&'a u32> for Wrapping<F>
+        impl<'a, F> $OpAssign<&'a $Rhs> for Wrapping<F>
         where
             F: $OpAssign<u32>,
         {
             #[allow(clippy::suspicious_op_assign_impl)]
             #[inline]
-            fn $op_assign(&mut self, other: &u32) {
+            fn $op_assign(&mut self, other: &$Rhs) {
                 let nbits = mem::size_of::<F>() as u32 * 8;
-                (self.0).$op_assign(*other % nbits);
+                (self.0).$op_assign(*other as u32 % nbits);
             }
         }
-    };
+    )* };
 }
 
 impl<F: Fixed> Neg for Wrapping<F> {
@@ -479,8 +482,14 @@ op_bitwise! { BitAnd bitand, BitAndAssign bitand_assign }
 op_bitwise! { BitOr bitor, BitOrAssign bitor_assign }
 op_bitwise! { BitXor bitxor, BitXorAssign bitxor_assign }
 
-op_shift! { Shl shl, ShlAssign shl_assign }
-op_shift! { Shr shr, ShrAssign shr_assign }
+op_shift! {
+    Shl shl, ShlAssign shl_assign;
+    i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize
+}
+op_shift! {
+    Shr shr, ShrAssign shr_assign;
+    i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize
+}
 
 impl<F: Fixed> Sum<Wrapping<F>> for Wrapping<F> {
     fn sum<I>(iter: I) -> Wrapping<F>

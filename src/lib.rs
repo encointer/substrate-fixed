@@ -54,14 +54,16 @@ Various conversion methods are available:
     truncated.
   * Checked conversions are provided between fixed-point numbers and
     numeric primitives using the [`FromFixed`] and [`ToFixed`] traits,
-    or using the [`from_num`] and [`to_num`] methods.
+    or using the [`from_num`] and [`to_num`] methods and their checked
+    versions.
   * Fixed-point numbers can be parsed from decimal strings using
     [`FromStr`], or from binary, octal or hexadecimal using the
     [`from_str_binary`], [`from_str_octal`] or [`from_str_hex`]
-    methods. The result is rounded to the nearest, ties to even.
+    methods. The result is rounded to the nearest, with ties rounded
+    to even.
   * Fixed-point numbers can be converted to strings using [`Display`],
     [`Binary`], [`Octal`], [`LowerHex`] and [`UpperHex`]. The output
-    is rounded to the nearest, ties to even.
+    is rounded to the nearest, with ties rounded to even.
 
 ## Quick examples
 
@@ -126,7 +128,7 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 
 ```toml
 [dependencies]
-fixed = "0.4.2"
+fixed = "0.4.3"
 ```
 
 The *fixed* crate requires rustc version 1.34.0 or later.
@@ -146,7 +148,7 @@ To enable features, you can add the dependency like this to
 
 ```toml
 [dependencies.fixed]
-version = "0.4.2"
+version = "0.4.3"
 features = ["f16", "serde"]
 ```
 
@@ -211,7 +213,7 @@ additional terms or conditions.
 */
 #![no_std]
 #![warn(missing_docs)]
-#![doc(html_root_url = "https://docs.rs/fixed/0.4.2")]
+#![doc(html_root_url = "https://docs.rs/fixed/0.4.3")]
 #![doc(test(attr(deny(warnings))))]
 #![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
 #![allow(clippy::type_repetition_in_bounds)]

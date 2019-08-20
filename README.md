@@ -45,25 +45,27 @@ Various conversion methods are available:
     truncated.
   * Checked conversions are provided between fixed-point numbers and
     numeric primitives using the [`FromFixed`] and [`ToFixed`] traits,
-    or using the [`from_num`] and [`to_num`] methods.
+    or using the [`from_num`] and [`to_num`] methods and their checked
+    versions.
   * Fixed-point numbers can be parsed from decimal strings using
     [`FromStr`], or from binary, octal or hexadecimal using the
     [`from_str_binary`], [`from_str_octal`] or [`from_str_hex`]
-    methods. The result is rounded to the nearest, ties to even.
+    methods. The result is rounded to the nearest, with ties rounded
+    to even.
   * Fixed-point numbers can be converted to strings using [`Display`],
     [`Binary`], [`Octal`], [`LowerHex`] and [`UpperHex`]. The output
-    is rounded to the nearest, ties to even.
+    is rounded to the nearest, with ties rounded to even.
 
 ## What’s new
 
-### Version 0.4.3 news (unreleased)
+### Version 0.4.3 news (2019-08-20)
 
   * The [*fixed* crate] now requires rustc version 1.34.0 or later.
-  * The precision argument is no longer ignored handled when
-    formatting fixed-point numbers; the precision should now be
-    handled in the same way as for primitive floating-point numbers in
-    the standard library.
-  * Parsing strings now rounds to the nearest with ties rounding to even.
+  * The precision argument is no longer ignored when formatting
+    fixed-point numbers; precision should now be handled the same as
+    for primitive floating-point numbers in the standard library.
+  * Parsing strings now rounds to the nearest with ties rounded to
+    even.
   * Checked versions of string parsing methods are now available as
     inherent methods to all fixed-point numbers, and as methods in the
     [`Fixed`] trait.
@@ -80,35 +82,38 @@ Various conversion methods are available:
         [`overflowing_shr`]
       * [`is_positive`], [`is_negative`]
   * The associated constants [`INT_NBITS`] and [`FRAC_NBITS`] were added.
+  * The reexports in the `frac` module and the `LeEqU*` traits were
+    moved into the new [`types::extra`] module.
 
-[`FRAC_NBITS`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#associatedconstant.FRAC_NBITS
-[`Fixed`]: https://docs.rs/fixed/0.4.2/fixed/traits/trait.Fixed.html
-[`INT_NBITS`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#associatedconstant.INT_NBITS
-[`Wrapping`]: https://docs.rs/fixed/0.4.2/fixed/struct.Wrapping.html
-[`count_ones`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.count_ones
-[`count_zeros`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.count_zeros
-[`from_bits`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.from_bits
-[`is_negative`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.is_negative
-[`is_positive`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.is_positive
-[`leading_zeros`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.leading_zeros
-[`max_value`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.max_value
-[`min_value`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.min_value
-[`overflowing_add`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.overflowing_add
-[`overflowing_mul_int`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.overflowing_mul_int
-[`overflowing_neg`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.overflowing_neg
-[`overflowing_shl`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.overflowing_shl
-[`overflowing_shr`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.overflowing_shr
-[`overflowing_sub`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.overflowing_sub
-[`rotate_left`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.rotate_left
-[`rotate_right`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.rotate_right
-[`to_bits`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.to_bits
-[`trailing_zeros`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.trailing_zeros
-[`wrapping_add`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_add
-[`wrapping_mul_int`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_mul_int
-[`wrapping_neg`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_neg
-[`wrapping_shl`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_shl
-[`wrapping_shr`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_shr
-[`wrapping_sub`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.wrapping_sub
+[`FRAC_NBITS`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#associatedconstant.FRAC_NBITS
+[`Fixed`]: https://docs.rs/fixed/0.4.3/fixed/traits/trait.Fixed.html
+[`INT_NBITS`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#associatedconstant.INT_NBITS
+[`Wrapping`]: https://docs.rs/fixed/0.4.3/fixed/struct.Wrapping.html
+[`count_ones`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.count_ones
+[`count_zeros`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.count_zeros
+[`from_bits`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.from_bits
+[`is_negative`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.is_negative
+[`is_positive`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.is_positive
+[`leading_zeros`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.leading_zeros
+[`max_value`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.max_value
+[`min_value`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.min_value
+[`overflowing_add`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.overflowing_add
+[`overflowing_mul_int`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.overflowing_mul_int
+[`overflowing_neg`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.overflowing_neg
+[`overflowing_shl`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.overflowing_shl
+[`overflowing_shr`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.overflowing_shr
+[`overflowing_sub`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.overflowing_sub
+[`rotate_left`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.rotate_left
+[`rotate_right`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.rotate_right
+[`to_bits`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.to_bits
+[`trailing_zeros`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.trailing_zeros
+[`types::extra`]: https://docs.rs/fixed/0.4.3/fixed/types/extra/index.html
+[`wrapping_add`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.wrapping_add
+[`wrapping_mul_int`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.wrapping_mul_int
+[`wrapping_neg`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.wrapping_neg
+[`wrapping_shl`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.wrapping_shl
+[`wrapping_shr`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.wrapping_shr
+[`wrapping_sub`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.wrapping_sub
 
 ### Version 0.4.2 news (2019-08-16)
 
@@ -124,8 +129,8 @@ Various conversion methods are available:
     with four fractional bits, 0.96874999… (just below 31⁄32) and
     0.96875 (31⁄32) are now parsed correctly as 0.9375 (15⁄16) and 1.0.
 
-[`Wrapping::from_num`]: https://docs.rs/fixed/0.4.2/fixed/struct.Wrapping.html#method.from_num
-[`Wrapping`]: https://docs.rs/fixed/0.4.2/fixed/struct.Wrapping.html
+[`Wrapping::from_num`]: https://docs.rs/fixed/0.4.3/fixed/struct.Wrapping.html#method.from_num
+[`Wrapping`]: https://docs.rs/fixed/0.4.3/fixed/struct.Wrapping.html
 
 ### Version 0.4.1 news (2019-08-12)
 
@@ -157,16 +162,16 @@ Various conversion methods are available:
   * [@jean-airoldie](https://gitlab.com/jean-airoldie)
   * [@tspiteri](https://gitlab.com/tspiteri)
 
-[`FixedSigned`]: https://docs.rs/fixed/0.4.2/fixed/traits/trait.FixedSigned.html
-[`FixedUnsigned`]: https://docs.rs/fixed/0.4.2/fixed/traits/trait.FixedUnsigned.html
-[`Fixed`]: https://docs.rs/fixed/0.4.2/fixed/traits/trait.Fixed.html
-[`Float`]: https://docs.rs/fixed/0.4.2/fixed/sealed/trait.Float.html
-[`Int`]: https://docs.rs/fixed/0.4.2/fixed/sealed/trait.Int.html
-[`consts`]: https://docs.rs/fixed/0.4.2/fixed/consts/index.html
-[`saturating_abs`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.saturating_abs
-[`saturating_neg`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.saturating_neg
-[`signum`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.signum
-[`traits`]: https://docs.rs/fixed/0.4.2/fixed/traits/index.html
+[`FixedSigned`]: https://docs.rs/fixed/0.4.3/fixed/traits/trait.FixedSigned.html
+[`FixedUnsigned`]: https://docs.rs/fixed/0.4.3/fixed/traits/trait.FixedUnsigned.html
+[`Fixed`]: https://docs.rs/fixed/0.4.3/fixed/traits/trait.Fixed.html
+[`Float`]: https://docs.rs/fixed/0.4.3/fixed/sealed/trait.Float.html
+[`Int`]: https://docs.rs/fixed/0.4.3/fixed/sealed/trait.Int.html
+[`consts`]: https://docs.rs/fixed/0.4.3/fixed/consts/index.html
+[`saturating_abs`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.saturating_abs
+[`saturating_neg`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.saturating_neg
+[`signum`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.signum
+[`traits`]: https://docs.rs/fixed/0.4.3/fixed/traits/index.html
 
 ### Other releases
 
@@ -237,7 +242,7 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 
 ```toml
 [dependencies]
-fixed = "0.4.2"
+fixed = "0.4.3"
 ```
 
 The *fixed* crate requires rustc version 1.34.0 or later.
@@ -257,7 +262,7 @@ To enable features, you can add the dependency like this to
 
 ```toml
 [dependencies.fixed]
-version = "0.4.2"
+version = "0.4.3"
 features = ["f16", "serde"]
 ```
 
@@ -287,35 +292,35 @@ additional terms or conditions.
 [LICENSE-MIT]: https://opensource.org/licenses/MIT
 [`Binary`]: https://doc.rust-lang.org/nightly/std/fmt/trait.Binary.html
 [`Display`]: https://doc.rust-lang.org/nightly/std/fmt/trait.Display.html
-[`FixedI128`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI128.html
-[`FixedI16`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI16.html
-[`FixedI32`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html
-[`FixedI64`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI64.html
-[`FixedI8`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI8.html
-[`FixedU128`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedU128.html
-[`FixedU16`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedU16.html
-[`FixedU32`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedU32.html
-[`FixedU64`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedU64.html
-[`FixedU8`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedU8.html
-[`FromFixed`]: https://docs.rs/fixed/0.4.2/fixed/traits/trait.FromFixed.html
+[`FixedI128`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI128.html
+[`FixedI16`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI16.html
+[`FixedI32`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html
+[`FixedI64`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI64.html
+[`FixedI8`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI8.html
+[`FixedU128`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedU128.html
+[`FixedU16`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedU16.html
+[`FixedU32`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedU32.html
+[`FixedU64`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedU64.html
+[`FixedU8`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedU8.html
+[`FromFixed`]: https://docs.rs/fixed/0.4.3/fixed/traits/trait.FromFixed.html
 [`FromStr`]: https://doc.rust-lang.org/nightly/std/str/trait.FromStr.html
 [`From`]: https://doc.rust-lang.org/nightly/std/convert/trait.From.html
-[`I20F12`]: https://docs.rs/fixed/0.4.2/fixed/types/type.I20F12.html
-[`I4F12`]: https://docs.rs/fixed/0.4.2/fixed/types/type.I4F12.html
-[`I4F4`]: https://docs.rs/fixed/0.4.2/fixed/types/type.I4F4.html
+[`I20F12`]: https://docs.rs/fixed/0.4.3/fixed/types/type.I20F12.html
+[`I4F12`]: https://docs.rs/fixed/0.4.3/fixed/types/type.I4F12.html
+[`I4F4`]: https://docs.rs/fixed/0.4.3/fixed/types/type.I4F4.html
 [`Into`]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
-[`LossyFrom`]: https://docs.rs/fixed/0.4.2/fixed/traits/trait.LossyFrom.html
-[`LossyInto`]: https://docs.rs/fixed/0.4.2/fixed/traits/trait.LossyInto.html
+[`LossyFrom`]: https://docs.rs/fixed/0.4.3/fixed/traits/trait.LossyFrom.html
+[`LossyInto`]: https://docs.rs/fixed/0.4.3/fixed/traits/trait.LossyInto.html
 [`LowerHex`]: https://doc.rust-lang.org/nightly/std/fmt/trait.LowerHex.html
 [`Octal`]: https://doc.rust-lang.org/nightly/std/fmt/trait.Octal.html
-[`ToFixed`]: https://docs.rs/fixed/0.4.2/fixed/traits/trait.ToFixed.html
-[`U12`]: https://docs.rs/fixed/0.4.2/fixed/types/extra/type.U12.html
-[`U20F12`]: https://docs.rs/fixed/0.4.2/fixed/types/type.U20F12.html
+[`ToFixed`]: https://docs.rs/fixed/0.4.3/fixed/traits/trait.ToFixed.html
+[`U12`]: https://docs.rs/fixed/0.4.3/fixed/types/extra/type.U12.html
+[`U20F12`]: https://docs.rs/fixed/0.4.3/fixed/types/type.U20F12.html
 [`UpperHex`]: https://doc.rust-lang.org/nightly/std/fmt/trait.UpperHex.html
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html
-[`from_num`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.from_num
-[`from_str_binary`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.from_str_binary
-[`from_str_hex`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.from_str_hex
-[`from_str_octal`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.from_str_octal
-[`to_num`]: https://docs.rs/fixed/0.4.2/fixed/struct.FixedI32.html#method.to_num
+[`from_num`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.from_num
+[`from_str_binary`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.from_str_binary
+[`from_str_hex`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.from_str_hex
+[`from_str_octal`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.from_str_octal
+[`to_num`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.to_num
 [const generics]: https://github.com/rust-lang/rust/issues/44580

@@ -5,17 +5,15 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
-Version 0.4.3 (unreleased)
+Version 0.4.3 (2019-08-20)
 ==========================
 
   * The *fixed* crate now requires rustc version 1.34.0 or later.
-  * The precision is now handled when formatting fixed-point numbers;
-    the precision is handled in the same way as for primitive
-    floating-point numbers in the standard library.
-  * The precision argument is no longer ignored handled when
-    formatting fixed-point numbers; the precision should now be
-    handled in the same way as for primitive floating-point numbers in
-    the standard library.
+  * The precision argument is no longer ignored when formatting
+    fixed-point numbers; precision should now be handled the same as
+    for primitive floating-point numbers in the standard library.
+  * Parsing strings now rounds to the nearest with ties rounded to
+    even.
   * Checked versions of string parsing methods are now available as
     inherent methods to all fixed-point numbers, and as methods in the
     `Fixed` trait.
@@ -31,6 +29,8 @@ Version 0.4.3 (unreleased)
         `overflowing_mul_int`, `overflowing_shl`, `overflowing_shr`
       * `is_positive`, `is_negative`
   * The associated constants `INT_NBITS` and `FRAC_NBITS` were added.
+  * The reexports in the `frac` module and the `LeEqU*` traits were
+    moved into the new `types::extra` module.
 
 Version 0.4.2 (2019-08-16)
 ==========================

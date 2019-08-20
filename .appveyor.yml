@@ -37,7 +37,7 @@ test_script:
   - cargo +beta-%TARGET% check --all-targets --features fail-on-warnings
   - cargo +beta-%TARGET% test --release --features "fail-on-warnings f16 serde"
   - cargo +beta-%TARGET% fmt -- --check
-  - cargo +1.34.2-%TARGET% test --features "fail-on-warnings f16 serde"
+  - cargo +1.34.2-%TARGET% test --lib --features "fail-on-warnings f16 serde"
 
 after_test:
   - C:\msys64\usr\bin\bash -c "if [ -d ""$USERPROFILE/.cargo/registry/cache"" ]; then cd ""$USERPROFILE/.cargo/registry""; /c/msys64/usr/bin/find cache -name \*.crate; fi"

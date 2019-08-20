@@ -16,7 +16,7 @@
 use crate::{
     helpers::{FloatHelper, FloatKind, IntHelper, Widest},
     traits::Fixed,
-    types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
+    types::extra::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
@@ -405,8 +405,8 @@ mod tests {
     #[test]
     fn cmp_signed() {
         use core::cmp::Ordering::*;
-        let neg1_16 = FixedI32::<frac::U16>::from_num(-1);
-        let neg1_20 = FixedI32::<frac::U20>::from_num(-1);
+        let neg1_16 = FixedI32::<types::extra::U16>::from_num(-1);
+        let neg1_20 = FixedI32::<types::extra::U20>::from_num(-1);
         let mut a = neg1_16;
         let mut b = neg1_20;
         // a = ffff.0000 = -1, b = fff.00000 = -1
@@ -458,8 +458,8 @@ mod tests {
     #[test]
     fn cmp_unsigned() {
         use core::cmp::Ordering::*;
-        let one_16 = FixedU32::<frac::U16>::from_num(1);
-        let one_20 = FixedU32::<frac::U20>::from_num(1);
+        let one_16 = FixedU32::<types::extra::U16>::from_num(1);
+        let one_20 = FixedU32::<types::extra::U20>::from_num(1);
         let mut a = one_16;
         let mut b = one_20;
         // a = 0001.0000 = 1, b = 001.00000 = 1

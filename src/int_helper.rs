@@ -14,9 +14,9 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
-    frac::{Bit, False, True, Unsigned, U0, U128, U16, U32, U64, U8},
     helpers::{ToFixedHelper, Widest},
     traits::Fixed,
+    types::extra::{Bit, False, True, Unsigned, U0, U128, U16, U32, U64, U8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };

@@ -14,14 +14,15 @@
 // <https://opensource.org/licenses/MIT>.
 
 /*!
-This module reexports items from the [*typenum* crate].
+Extra types that do not need to be handled directly.
+
+These types are mostly reexports from the [*typenum* crate].
 
 [*typenum* crate]: https://crates.io/crates/typenum
 */
-#![deprecated(since = "0.4.3", note = "replaced by fixed::types::extra")]
 
-#[deprecated(since = "0.4.3", note = "replaced by types in fixed::types::extra")]
-pub use crate::types::extra::{
+pub(crate) use typenum::{Bit, False};
+pub use typenum::{
     Diff, IsLessOrEqual, True, Unsigned, U0, U1, U10, U100, U101, U102, U103, U104, U105, U106,
     U107, U108, U109, U11, U110, U111, U112, U113, U114, U115, U116, U117, U118, U119, U12, U120,
     U121, U122, U123, U124, U125, U126, U127, U128, U13, U14, U15, U16, U17, U18, U19, U2, U20,
@@ -31,5 +32,19 @@ pub use crate::types::extra::{
     U73, U74, U75, U76, U77, U78, U79, U8, U80, U81, U82, U83, U84, U85, U86, U87, U88, U89, U9,
     U90, U91, U92, U93, U94, U95, U96, U97, U98, U99,
 };
-#[deprecated(since = "0.4.3", note = "replaced by types in fixed::types::extra")]
-pub use typenum::IsGreaterOrEqual;
+
+/// Implemented for all [`Unsigned`](trait.Unsigned.html) integers ≤ 8.
+pub trait LeEqU8: Unsigned + IsLessOrEqual<U8, Output = True> {}
+impl<T: Unsigned + IsLessOrEqual<U8, Output = True>> LeEqU8 for T {}
+/// Implemented for all [`Unsigned`](trait.Unsigned.html) integers ≤ 16.
+pub trait LeEqU16: Unsigned + IsLessOrEqual<U16, Output = True> {}
+impl<T: Unsigned + IsLessOrEqual<U16, Output = True>> LeEqU16 for T {}
+/// Implemented for all [`Unsigned`](trait.Unsigned.html) integers ≤ 32.
+pub trait LeEqU32: Unsigned + IsLessOrEqual<U32, Output = True> {}
+impl<T: Unsigned + IsLessOrEqual<U32, Output = True>> LeEqU32 for T {}
+/// Implemented for all [`Unsigned`](trait.Unsigned.html) integers ≤ 64.
+pub trait LeEqU64: Unsigned + IsLessOrEqual<U64, Output = True> {}
+impl<T: Unsigned + IsLessOrEqual<U64, Output = True>> LeEqU64 for T {}
+/// Implemented for all [`Unsigned`](trait.Unsigned.html) integers ≤ 128.
+pub trait LeEqU128: Unsigned + IsLessOrEqual<U128, Output = True> {}
+impl<T: Unsigned + IsLessOrEqual<U128, Output = True>> LeEqU128 for T {}

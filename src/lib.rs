@@ -74,7 +74,7 @@ assert_eq!(six_and_third.ceil(), 7);
 
 The type [`I20F12`] is a 32-bit fixed-point signed number with 20
 integer bits and 12 fractional bits. It is an alias to
-<code>[FixedI32][`FixedI32`]&lt;[frac::U12][`frac::U12`]&gt;</code>.
+<code>[FixedI32][`FixedI32`]&lt;[U12][`U12`]&gt;</code>.
 The unsigned counterpart would be [`U20F12`]. Aliases are provided for
 all combinations of integer and fractional bits adding up to a total
 of eight, 16, 32, 64 or 128 bits.
@@ -195,7 +195,7 @@ additional terms or conditions.
 [`ToFixed`]: traits/trait.ToFixed.html
 [`U20F12`]: types/type.U20F12.html
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html
-[`frac::U12`]: frac/type.U12.html
+[`U12`]: types/extra/type.U12.html
 [`from_num`]: struct.FixedI8.html#method.from_num
 [const generics]: https://github.com/rust-lang/rust/issues/44580
 */
@@ -233,7 +233,7 @@ use crate::{
     arith::MulDivDir,
     from_str::FromStrRadix,
     traits::{FromFixed, ToFixed},
-    types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
+    types::extra::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
 };
 pub use crate::{from_str::ParseFixedError, wrapping::Wrapping};
 use core::{
@@ -301,7 +301,7 @@ are implemented by the Rust compiler.
 # Examples
 
 ```rust
-use fixed::{frac::U3, ", $s_fixed, "};
+use fixed::{types::extra::U3, ", $s_fixed, "};
 let eleven = ", $s_fixed, "::<U3>::from_num(11);
 assert_eq!(eleven, ", $s_fixed, "::<U3>::from_bits(11 << 3));
 assert_eq!(eleven, 11);

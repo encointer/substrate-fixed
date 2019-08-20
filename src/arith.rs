@@ -16,7 +16,7 @@
 use crate::{
     helpers::IntHelper,
     traits::ToFixed,
-    types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
+    types::extra::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     wide_div::WideDivRem,
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
@@ -718,11 +718,11 @@ mul_div_fallback! { i128, u128, Signed }
 
 #[cfg(test)]
 mod tests {
-    use crate::{frac::Unsigned, *};
+    use crate::{types::extra::Unsigned, *};
 
     #[test]
     fn fixed_u16() {
-        use crate::frac::U7 as Frac;
+        use crate::types::extra::U7 as Frac;
         let frac = Frac::U32;
         let a = 12;
         let b = 4;
@@ -742,7 +742,7 @@ mod tests {
 
     #[test]
     fn fixed_i16() {
-        use crate::frac::U7 as Frac;
+        use crate::types::extra::U7 as Frac;
         let frac = Frac::U32;
         let a = 12;
         let b = 4;
@@ -766,7 +766,7 @@ mod tests {
 
     #[test]
     fn fixed_u128() {
-        use crate::frac::U7 as Frac;
+        use crate::types::extra::U7 as Frac;
         let frac = Frac::U32;
         let a = 0x0003_4567_89ab_cdef_0123_4567_89ab_cdef_u128;
         let b = 5;
@@ -788,7 +788,7 @@ mod tests {
 
     #[test]
     fn fixed_i128() {
-        use crate::frac::U7 as Frac;
+        use crate::types::extra::U7 as Frac;
         let frac = Frac::U32;
         let a = 0x0003_4567_89ab_cdef_0123_4567_89ab_cdef_i128;
         let b = 5;

@@ -43,7 +43,7 @@ it panics; if wrapping is required use [`wrapping_from_num`] instead.
 # Examples
 
 ```rust
-use fixed::{frac::U4, types::I16F16, ", $s_fixed, "};
+use fixed::{types::extra::U4, types::I16F16, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
 
 // 1.75 is 1.11 in binary
@@ -123,7 +123,7 @@ it panics; if wrapping is required use [`wrapping_to_num`] instead.
 # Examples
 
 ```rust
-use fixed::{frac::U4, types::I30F2, ", $s_fixed, "};
+use fixed::{types::extra::U4, types::I30F2, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
 
 // 1.75 is 1.11 in binary
@@ -202,7 +202,7 @@ The other number can be:
 
 ```rust
 use fixed::{
-    frac::{U2, U4},
+    types::extra::{U2, U4},
     types::I16F16,
     ", $s_fixed, ",
 };
@@ -288,7 +288,7 @@ The other number can be:
 
 ```rust
 use fixed::{
-    frac::{U0, U4, U6},
+    types::extra::{U0, U4, U6},
     types::I16F16,
     ", $s_fixed, ",
 };
@@ -377,7 +377,7 @@ This method panics if the value is a floating-point [NaN].
 
 ```rust
 use fixed::{
-    frac::{U2, U4},
+    types::extra::{U2, U4},
     types::I16F16,
     ", $s_fixed, ",
 };
@@ -461,7 +461,7 @@ The other number can be:
 
 ```rust
 use fixed::{
-    frac::{U0, U4, U6},
+    types::extra::{U0, U4, U6},
     types::I16F16,
     ", $s_fixed, ",
 };
@@ -545,7 +545,7 @@ For floating-point numbers, panics if the value is not [finite].
 
 ```rust
 use fixed::{
-    frac::{U0, U4},
+    types::extra::{U0, U4},
     types::I16F16,
     ", $s_fixed, ",
 };
@@ -621,7 +621,7 @@ The other number can be:
 
 ```rust
 use fixed::{
-    frac::{U0, U4, U6},
+    types::extra::{U0, U4, U6},
     types::I16F16,
     ", $s_fixed, ",
 };
@@ -708,7 +708,7 @@ For floating-point numbers, panics if the value is not [finite].
 
 ```rust
 use fixed::{
-    frac::{U0, U4},
+    types::extra::{U0, U4},
     types::I16F16,
     ", $s_fixed, ",
 };
@@ -790,7 +790,7 @@ The other number can be:
 
 ```rust
 use fixed::{
-    frac::{U0, U4, U6},
+    types::extra::{U0, U4, U6},
     types::I16F16,
     ", $s_fixed, ",
 };
@@ -859,7 +859,7 @@ assert_eq!(one_point_625.overflowing_to_num::<f32>(), (1.625f32, false));
 # Examples
 
 ```rust
-use fixed::{frac::U4, ", $s_fixed, "};
+use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
 // 1.75 is 1.11 in binary
 let f = Fix::from_str_binary(\"1.11\");
@@ -886,7 +886,7 @@ assert_eq!(neg, Ok(-check));
 # Examples
 
 ```rust
-use fixed::{frac::U4, ", $s_fixed, "};
+use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
 // 1.75 is 1.11 in binary, 1.6 in octal
 let f = Fix::from_str_octal(\"1.6\");
@@ -913,7 +913,7 @@ assert_eq!(neg, Ok(-check));
 # Examples
 
 ```rust
-use fixed::{frac::U4, ", $s_fixed, "};
+use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
 // 1.75 is 1.11 in binary, 1.C in hexadecimal
 let f = Fix::from_str_hex(\"1.C\");

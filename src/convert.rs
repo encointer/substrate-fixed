@@ -14,10 +14,12 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
-    frac::{Diff, IsLessOrEqual, True, U0, U1, U127, U128, U15, U16, U31, U32, U63, U64, U7, U8},
     helpers::IntHelper,
     traits::LossyFrom,
-    types::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
+    types::extra::{
+        Diff, IsLessOrEqual, LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8, True, U0, U1, U127, U128,
+        U15, U16, U31, U32, U63, U64, U7, U8,
+    },
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
@@ -700,21 +702,21 @@ fn _compile_fail_tests() {}
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::float_cmp))]
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use crate::types::*;
 
     #[test]
     fn expanding_from_unsigned() {
-        type L8 = FixedU8<frac::U0>;
-        type LL16 = FixedU16<frac::U0>;
-        type LH16 = FixedU16<frac::U8>;
-        type LL128 = FixedU128<frac::U0>;
-        type LH128 = FixedU128<frac::U120>;
+        type L8 = U8F0;
+        type LL16 = U16F0;
+        type LH16 = U8F8;
+        type LL128 = U128F0;
+        type LH128 = U8F120;
 
-        type H8 = FixedU8<frac::U8>;
-        type HL16 = FixedU16<frac::U8>;
-        type HH16 = FixedU16<frac::U16>;
-        type HL128 = FixedU128<frac::U8>;
-        type HH128 = FixedU128<frac::U128>;
+        type H8 = U0F8;
+        type HL16 = U8F8;
+        type HH16 = U0F16;
+        type HL128 = U120F8;
+        type HH128 = U0F128;
 
         let vals: &[u8] = &[0x00, 0x7f, 0x80, 0xff];
         for &val in vals {
@@ -739,17 +741,17 @@ mod tests {
 
     #[test]
     fn expanding_from_signed() {
-        type L8 = FixedI8<frac::U0>;
-        type LL16 = FixedI16<frac::U0>;
-        type LH16 = FixedI16<frac::U8>;
-        type LL128 = FixedI128<frac::U0>;
-        type LH128 = FixedI128<frac::U120>;
+        type L8 = I8F0;
+        type LL16 = I16F0;
+        type LH16 = I8F8;
+        type LL128 = I128F0;
+        type LH128 = I8F120;
 
-        type H8 = FixedI8<frac::U8>;
-        type HL16 = FixedI16<frac::U8>;
-        type HH16 = FixedI16<frac::U16>;
-        type HL128 = FixedI128<frac::U8>;
-        type HH128 = FixedI128<frac::U128>;
+        type H8 = I0F8;
+        type HL16 = I8F8;
+        type HH16 = I0F16;
+        type HL128 = I120F8;
+        type HH128 = I0F128;
 
         let vals: &[i8] = &[0x00, 0x7f, -0x80, -0x01];
         for &val in vals {
@@ -774,17 +776,17 @@ mod tests {
 
     #[test]
     fn expanding_from_unsigned_to_signed() {
-        type L8 = FixedU8<frac::U0>;
-        type LL16 = FixedI16<frac::U0>;
-        type LH16 = FixedI16<frac::U7>;
-        type LL128 = FixedI128<frac::U0>;
-        type LH128 = FixedI128<frac::U119>;
+        type L8 = U8F0;
+        type LL16 = I16F0;
+        type LH16 = I9F7;
+        type LL128 = I128F0;
+        type LH128 = I9F119;
 
-        type H8 = FixedU8<frac::U8>;
-        type HL16 = FixedI16<frac::U8>;
-        type HH16 = FixedI16<frac::U15>;
-        type HL128 = FixedI128<frac::U8>;
-        type HH128 = FixedI128<frac::U127>;
+        type H8 = U0F8;
+        type HL16 = I8F8;
+        type HH16 = I1F15;
+        type HL128 = I120F8;
+        type HH128 = I1F127;
 
         let vals: &[u8] = &[0x00, 0x7f, 0x80, 0xff];
         for &val in vals {
@@ -809,17 +811,17 @@ mod tests {
 
     #[test]
     fn from_bool() {
-        assert_eq!(FixedI8::<frac::U6>::from(true), 1);
-        assert_eq!(FixedI8::<frac::U6>::from(false), 0);
-        assert_eq!(FixedI128::<frac::U64>::from(true), 1);
-        assert_eq!(FixedU128::<frac::U127>::from(true), 1);
+        assert_eq!(I2F6::from(true), 1);
+        assert_eq!(I2F6::from(false), 0);
+        assert_eq!(I64F64::from(true), 1);
+        assert_eq!(U1F127::from(true), 1);
     }
 
     #[test]
     fn to_size() {
-        let min_i24 = FixedI32::<frac::U8>::min_value();
-        let max_i24 = FixedI32::<frac::U8>::max_value();
-        let max_u24 = FixedU32::<frac::U8>::max_value();
+        let min_i24 = I24F8::min_value();
+        let max_i24 = I24F8::max_value();
+        let max_u24 = U24F8::max_value();
         assert_eq!(min_i24.overflowing_to_num::<isize>(), (!0 << 23, false));
         assert_eq!(max_i24.overflowing_to_num::<isize>(), (!(!0 << 23), false));
         assert_eq!(max_u24.overflowing_to_num::<isize>(), (!(!0 << 24), false));
@@ -827,9 +829,9 @@ mod tests {
         assert_eq!(max_i24.overflowing_to_num::<usize>(), (!(!0 << 23), false));
         assert_eq!(max_u24.overflowing_to_num::<usize>(), (!(!0 << 24), false));
 
-        let min_i56 = FixedI64::<frac::U8>::min_value();
-        let max_i56 = FixedI64::<frac::U8>::max_value();
-        let max_u56 = FixedU64::<frac::U8>::max_value();
+        let min_i56 = I56F8::min_value();
+        let max_i56 = I56F8::max_value();
+        let max_u56 = U56F8::max_value();
         #[cfg(target_pointer_width = "32")]
         {
             assert_eq!(min_i56.overflowing_to_num::<isize>(), (0, true));
@@ -849,9 +851,9 @@ mod tests {
             assert_eq!(max_u56.overflowing_to_num::<usize>(), (!(!0 << 56), false));
         }
 
-        let min_i120 = FixedI128::<frac::U8>::min_value();
-        let max_i120 = FixedI128::<frac::U8>::max_value();
-        let max_u120 = FixedU128::<frac::U8>::max_value();
+        let min_i120 = I120F8::min_value();
+        let max_i120 = I120F8::max_value();
+        let max_u120 = U120F8::max_value();
         assert_eq!(min_i120.overflowing_to_num::<isize>(), (0, true));
         assert_eq!(max_i120.overflowing_to_num::<isize>(), (!0, true));
         assert_eq!(max_u120.overflowing_to_num::<isize>(), (!0, true));
@@ -862,7 +864,7 @@ mod tests {
 
     #[test]
     fn signed_from_float() {
-        type Fix = FixedI8<frac::U4>;
+        type Fix = I4F4;
         // 1.1 -> 0001.1000
         assert_eq!(Fix::from_num(3.0 / 2.0), Fix::from_bits(24));
         // 0.11 -> 0000.1100
@@ -920,7 +922,7 @@ mod tests {
 
     #[test]
     fn unsigned_from_num() {
-        type Fix = FixedU8<frac::U4>;
+        type Fix = U4F4;
         // 1.1 -> 0001.1000
         assert_eq!(Fix::from_num(3.0 / 2.0), Fix::from_bits(24));
         // 0.11 -> 0000.1100
@@ -959,10 +961,10 @@ mod tests {
     fn to_f16() {
         use half::f16;
         for u in 0x00..=0xff {
-            let fu = FixedU8::<frac::U7>::from_bits(u);
+            let fu = U1F7::from_bits(u);
             assert_eq!(fu.to_num::<f16>(), f16::from_f32(f32::from(u) / 128.0));
             let i = u as i8;
-            let fi = FixedI8::<frac::U7>::from_bits(i);
+            let fi = I1F7::from_bits(i);
             assert_eq!(fi.to_num::<f16>(), f16::from_f32(f32::from(i) / 128.0));
 
             for hi in &[
@@ -975,10 +977,10 @@ mod tests {
                 0xffff_ff00,
             ] {
                 let uu = *hi | u32::from(u);
-                let fuu = FixedU32::<frac::U7>::from_bits(uu);
+                let fuu = U25F7::from_bits(uu);
                 assert_eq!(fuu.to_num::<f16>(), f16::from_f32(uu as f32 / 128.0));
                 let ii = uu as i32;
-                let fii = FixedI32::<frac::U7>::from_bits(ii);
+                let fii = I25F7::from_bits(ii);
                 assert_eq!(fii.to_num::<f16>(), f16::from_f32(ii as f32 / 128.0));
             }
 
@@ -992,10 +994,10 @@ mod tests {
                 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
             ] {
                 let uu = *hi | u128::from(u);
-                let fuu = FixedU128::<frac::U7>::from_bits(uu);
+                let fuu = U121F7::from_bits(uu);
                 assert_eq!(fuu.to_num::<f16>(), f16::from_f64(uu as f64 / 128.0));
                 let ii = uu as i128;
-                let fii = FixedI128::<frac::U7>::from_bits(ii);
+                let fii = I121F7::from_bits(ii);
                 assert_eq!(fii.to_num::<f16>(), f16::from_f64(ii as f64 / 128.0));
             }
         }
@@ -1004,10 +1006,10 @@ mod tests {
     #[test]
     fn to_f32() {
         for u in 0x00..=0xff {
-            let fu = FixedU8::<frac::U7>::from_bits(u);
+            let fu = U1F7::from_bits(u);
             assert_eq!(fu.to_num::<f32>(), f32::from(u) / 128.0);
             let i = u as i8;
-            let fi = FixedI8::<frac::U7>::from_bits(i);
+            let fi = I1F7::from_bits(i);
             assert_eq!(fi.to_num::<f32>(), f32::from(i) / 128.0);
 
             for hi in &[
@@ -1020,10 +1022,10 @@ mod tests {
                 0xffff_ff00,
             ] {
                 let uu = *hi | u32::from(u);
-                let fuu = FixedU32::<frac::U7>::from_bits(uu);
+                let fuu = U25F7::from_bits(uu);
                 assert_eq!(fuu.to_num::<f32>(), uu as f32 / 128.0);
                 let ii = uu as i32;
-                let fii = FixedI32::<frac::U7>::from_bits(ii);
+                let fii = I25F7::from_bits(ii);
                 assert_eq!(fii.to_num::<f32>(), ii as f32 / 128.0);
             }
 
@@ -1037,10 +1039,10 @@ mod tests {
                 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
             ] {
                 let uu = *hi | u128::from(u);
-                let fuu = FixedU128::<frac::U7>::from_bits(uu);
+                let fuu = U121F7::from_bits(uu);
                 assert_eq!(fuu.to_num::<f32>(), (uu as f64 / 128.0) as f32);
                 let ii = uu as i128;
-                let fii = FixedI128::<frac::U7>::from_bits(ii);
+                let fii = I121F7::from_bits(ii);
                 assert_eq!(fii.to_num::<f32>(), (ii as f64 / 128.0) as f32);
             }
         }
@@ -1050,7 +1052,7 @@ mod tests {
     fn to_infinite_f32() {
         // too_large is 1.ffff_ffff_ffff... << 127,
         // which will be rounded to 1.0 << 128.
-        let too_large = FixedU128::<frac::U0>::max_value();
+        let too_large = U128F0::max_value();
         assert_eq!(too_large.count_ones(), 128);
         assert!(too_large.to_num::<f32>().is_infinite());
 
@@ -1064,12 +1066,12 @@ mod tests {
 
         // not_too_large is 1.ffff_feff_ffff... << 127,
         // which will be rounded to 1.ffff_fe << 127.
-        let not_too_large = still_too_large - FixedU128::from_bits(1);
+        let not_too_large = still_too_large - U128F0::from_bits(1);
         assert_eq!(not_too_large.count_ones(), 127);
         assert!(!not_too_large.to_num::<f32>().is_infinite());
 
         // min_128 is -1.0 << 127.
-        let min_i128 = FixedI128::<frac::U0>::min_value();
+        let min_i128 = I128F0::min_value();
         assert_eq!(min_i128.count_ones(), 1);
         assert_eq!(min_i128.to_num::<f32>(), -(127f32.exp2()));
     }
@@ -1077,10 +1079,10 @@ mod tests {
     #[test]
     fn to_f64() {
         for u in 0x00..=0xff {
-            let fu = FixedU8::<frac::U7>::from_bits(u);
+            let fu = U1F7::from_bits(u);
             assert_eq!(fu.to_num::<f64>(), f64::from(u) / 128.0);
             let i = u as i8;
-            let fi = FixedI8::<frac::U7>::from_bits(i);
+            let fi = I1F7::from_bits(i);
             assert_eq!(fi.to_num::<f64>(), f64::from(i) / 128.0);
 
             for hi in &[
@@ -1093,10 +1095,10 @@ mod tests {
                 0xffff_ffff_ffff_ff00,
             ] {
                 let uu = *hi | u64::from(u);
-                let fuu = FixedU64::<frac::U7>::from_bits(uu);
+                let fuu = U57F7::from_bits(uu);
                 assert_eq!(fuu.to_num::<f64>(), uu as f64 / 128.0);
                 let ii = uu as i64;
-                let fii = FixedI64::<frac::U7>::from_bits(ii);
+                let fii = I57F7::from_bits(ii);
                 assert_eq!(fii.to_num::<f64>(), ii as f64 / 128.0);
             }
 
@@ -1110,10 +1112,10 @@ mod tests {
                 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
             ] {
                 let uu = *hi | u128::from(u);
-                let fuu = FixedU128::<frac::U7>::from_bits(uu);
+                let fuu = U121F7::from_bits(uu);
                 assert_eq!(fuu.to_num::<f64>(), uu as f64 / 128.0);
                 let ii = uu as i128;
-                let fii = FixedI128::<frac::U7>::from_bits(ii);
+                let fii = I121F7::from_bits(ii);
                 assert_eq!(fii.to_num::<f64>(), ii as f64 / 128.0);
             }
         }

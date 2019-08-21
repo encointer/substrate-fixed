@@ -303,7 +303,7 @@ macro_rules! fixed {
         $Fixed:ident[$s_fixed:expr]($Inner:ty[$s_inner:expr], $LeEqU:tt, $s_nbits:expr),
         $UInner:ty, $Signedness:tt
     ) => {
-        comment!(
+        comment! {
             $description,
             " number with `Frac` fractional bits.
 
@@ -334,7 +334,7 @@ assert_eq!(two_point_75.to_string(), \"2.8\");
                 bits: $Inner,
                 phantom: PhantomData<Frac>,
             }
-        );
+        }
 
         impl<Frac> Clone for $Fixed<Frac> {
             #[inline]
@@ -353,7 +353,7 @@ assert_eq!(two_point_75.to_string(), \"2.8\");
             fn default() -> Self {
                 $Fixed {
                     bits: Default::default(),
-                    phantom: PhantomData
+                    phantom: PhantomData,
                 }
             }
         }

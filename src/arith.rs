@@ -641,7 +641,7 @@ macro_rules! mul_div_fallback {
                     let dir = if !overflow {
                         Ordering::Equal
                     } else {
-                        if_signed_unsigned!(
+                        if_signed_unsigned! {
                             $Signedness,
                             if (self < 0) == (rhs < 0) {
                                 Ordering::Less
@@ -649,7 +649,7 @@ macro_rules! mul_div_fallback {
                                 Ordering::Greater
                             },
                             Ordering::Less,
-                        )
+                        }
                     };
                     (ans, dir)
                 } else {
@@ -678,7 +678,7 @@ macro_rules! mul_div_fallback {
                     let dir = if !overflow {
                         Ordering::Equal
                     } else {
-                        if_signed_unsigned!(
+                        if_signed_unsigned! {
                             $Signedness,
                             if (self < 0) == (rhs < 0) {
                                 Ordering::Less
@@ -686,7 +686,7 @@ macro_rules! mul_div_fallback {
                                 Ordering::Greater
                             },
                             Ordering::Less,
-                        )
+                        }
                     };
                     (ans, dir)
                 } else {

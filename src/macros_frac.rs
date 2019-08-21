@@ -20,7 +20,7 @@ macro_rules! fixed_frac {
         $UInner:ty, $Signedness:tt
     ) => {
         impl<Frac: $LeEqU> $Fixed<Frac> {
-            comment!(
+            comment! {
                 "The number of integer bits.
 
 # Examples
@@ -32,9 +32,9 @@ assert_eq!(Fix::INT_NBITS, ", $s_nbits, " - 6);
 ```
 ";
                 pub const INT_NBITS: u32 = mem::size_of::<$Inner>() as u32 * 8 - Self::FRAC_NBITS;
-            );
+            }
 
-            comment!(
+            comment! {
                 "The number of fractional bits.
 
 # Examples
@@ -46,7 +46,7 @@ assert_eq!(Fix::FRAC_NBITS, 6);
 ```
 ";
                 pub const FRAC_NBITS: u32 = Frac::U32;
-            );
+            }
 
             // some other useful constants for internal use:
 
@@ -61,7 +61,7 @@ assert_eq!(Fix::FRAC_NBITS, 6);
             const FRAC_MSB: $Inner =
                 Self::FRAC_MASK ^ ((Self::FRAC_MASK as $UInner) >> 1) as $Inner;
 
-            comment!(
+            comment! {
                 "Returns the number of integer bits.
 
 # Examples
@@ -76,9 +76,9 @@ assert_eq!(Fix::int_nbits(), ", $s_nbits, " - 6);
                 pub fn int_nbits() -> u32 {
                     Self::INT_NBITS
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Returns the number of fractional bits.
 
 # Examples
@@ -93,14 +93,14 @@ assert_eq!(Fix::frac_nbits(), 6);
                 pub fn frac_nbits() -> u32 {
                     Self::FRAC_NBITS
                 }
-            );
+            }
 
             fixed_from_to! { $Fixed[$s_fixed]($Inner[$s_inner], $s_nbits), $Signedness }
             fixed_round! { $Fixed[$s_fixed]($s_nbits), $Signedness }
 
             if_signed! {
                 $Signedness;
-                comment!(
+                comment! {
                     "Returns a number representing the sign of `self`.
 
 # Panics
@@ -134,10 +134,10 @@ assert_eq!(Fix::from_num(-5).signum(), -1);
                             Ordering::Less => Self::from_num(-1),
                         }
                     }
-                );
+                }
             }
 
-            comment!(
+            comment! {
                 "Checked multiplication. Returns the product, or [`None`] on overflow.
 
 # Examples
@@ -159,9 +159,9 @@ assert_eq!(Fix::max_value().checked_mul(Fix::from_num(2)), None);
                         _ => None,
                     }
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Checked division. Returns the quotient, or [`None`] if
 the divisor is zero or on overflow.
 
@@ -187,9 +187,9 @@ assert_eq!(Fix::max_value().checked_div(Fix::from_num(1) / 2), None);
                         _ => None,
                     }
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Saturating multiplication. Returns the product, saturating on overflow.
 
 # Examples
@@ -210,9 +210,9 @@ assert_eq!(Fix::max_value().saturating_mul(Fix::from_num(2)), Fix::max_value());
                         Ordering::Greater => Self::min_value(),
                     }
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Saturating division. Returns the quotient, saturating on overflow.
 
 # Panics
@@ -238,9 +238,9 @@ assert_eq!(Fix::max_value().saturating_div(one_half), Fix::max_value());
                         Ordering::Greater => Self::min_value(),
                     }
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Wrapping multiplication. Returns the product, wrapping on overflow.
 
 # Examples
@@ -258,9 +258,9 @@ assert_eq!(Fix::max_value().wrapping_mul(Fix::from_num(4)), wrapped);
                     let (ans, _) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
                     Self::from_bits(ans)
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Wrapping division. Returns the quotient, wrapping on overflow.
 
 # Panics
@@ -284,9 +284,9 @@ assert_eq!(Fix::max_value().wrapping_div(quarter), wrapped);
                     let (ans, _) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
                     Self::from_bits(ans)
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Overflowing multiplication.
 
 Returns a [tuple] of the product and a [`bool`] indicating whether an
@@ -310,9 +310,9 @@ assert_eq!(Fix::max_value().overflowing_mul(Fix::from_num(4)), (wrapped, true));
                     let (ans, dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
                     (Self::from_bits(ans), dir != Ordering::Equal)
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Overflowing division.
 
 Returns a [tuple] of the quotient and a [`bool`] indicating whether an
@@ -339,7 +339,7 @@ assert_eq!(Fix::max_value().overflowing_div(quarter), (wrapped, true));
                     let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
                     (Self::from_bits(ans), dir != Ordering::Equal)
                 }
-            );
+            }
 
             fixed_deprecated! { $Fixed($Inner) }
         }

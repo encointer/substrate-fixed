@@ -15,11 +15,11 @@
 
 macro_rules! fixed_round {
     ($Fixed:ident[$s_fixed:expr]($s_nbits:expr), $Signedness:tt) => {
-        comment!(
+        comment! {
             "Returns the integer part.
 
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "Note that since the numbers are stored in two’s
 complement, negative numbers with non-zero fractional parts will be
@@ -27,7 +27,7 @@ rounded towards −∞, except in the case where there are no integer
 bits, that is `", $s_fixed, "<U", $s_nbits, ">`, where the return value is always zero.
 
 ",
-            ),
+            },
             "# Examples
 
 ```rust
@@ -39,27 +39,27 @@ let two = Fix::from_num(2);
 let two_and_quarter = two + two / 8;
 assert_eq!(two_and_quarter.int(), two);
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "// 1101.0000
 let three = Fix::from_num(3);
 // 1101.1100
 assert_eq!((-two_and_quarter).int(), -three);
 ",
-            ),
+            },
             "```
 ";
             #[inline]
             pub fn int(self) -> $Fixed<Frac> {
                 Self::from_bits(self.to_bits() & Self::INT_MASK)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Returns the fractional part.
 
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "Note that since the numbers are stored in two’s
 complement, the returned fraction will be non-negative for negative
@@ -68,7 +68,7 @@ numbers, except in the case where there are no integer bits, that is
 `self`.
 
 ",
-            ),
+            },
             "# Examples
 
 ```rust
@@ -80,23 +80,23 @@ let quarter = Fix::from_num(1) / 4;
 let two_and_quarter = quarter * 9;
 assert_eq!(two_and_quarter.frac(), quarter);
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "// 0000.1100
 let three_quarters = quarter * 3;
 // 1101.1100
 assert_eq!((-two_and_quarter).frac(), three_quarters);
 ",
-            ),
+            },
             "```
 ";
             #[inline]
             pub fn frac(self) -> $Fixed<Frac> {
                 Self::from_bits(self.to_bits() & Self::FRAC_MASK)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Rounds to the next integer towards +∞.
 
 # Panics
@@ -114,11 +114,11 @@ type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.ceil(), Fix::from_num(3));
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "assert_eq!((-two_half).ceil(), Fix::from_num(-2));
 ",
-            ),
+            },
             "```
 
 [`wrapping_ceil`]: #method.wrapping_ceil
@@ -130,13 +130,13 @@ assert_eq!(two_half.ceil(), Fix::from_num(3));
                 let _ = overflow;
                 ceil
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Rounds to the next integer towards −∞.
 
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "# Panics
 
@@ -148,7 +148,7 @@ it panics; if wrapping is required use [`wrapping_floor`] instead.
 Overflow can only occur when there are zero integer bits.
 
 ",
-            ),
+            },
             "# Examples
 
 ```rust
@@ -157,11 +157,11 @@ type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.floor(), Fix::from_num(2));
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "assert_eq!((-two_half).floor(), Fix::from_num(-3));
 ",
-            ),
+            },
             "```
 
 [`wrapping_floor`]: #method.wrapping_floor
@@ -173,9 +173,9 @@ assert_eq!(two_half.floor(), Fix::from_num(2));
                 let _ = overflow;
                 floor
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Rounds to the nearest integer, with ties rounded away
 from zero.
 
@@ -190,15 +190,15 @@ it panics; if wrapping is required use [`wrapping_round`] instead.
 
 ```rust
 use fixed::{types::extra::U4, ", $s_fixed, "};
-type Fix = ", $s_fixed, r"<U4>;
+type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.round(), Fix::from_num(3));
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "assert_eq!((-two_half).round(), Fix::from_num(-3));
 ",
-            ),
+            },
             "```
 
 [`wrapping_round`]: #method.wrapping_round
@@ -210,9 +210,9 @@ assert_eq!(two_half.round(), Fix::from_num(3));
                 let _ = overflow;
                 round
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Checked ceil. Rounds to the next integer towards +∞,
 returning [`None`] on overflow.
 
@@ -224,11 +224,11 @@ type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.checked_ceil(), Some(Fix::from_num(3)));
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "assert_eq!((-two_half).checked_ceil(), Some(Fix::from_num(-2)));
 ",
-            ),
+            },
             "assert!(Fix::max_value().checked_ceil().is_none());
 ```
 
@@ -239,24 +239,24 @@ assert_eq!(two_half.checked_ceil(), Some(Fix::from_num(3)));
                 let (ceil, overflow) = self.overflowing_ceil();
                 if overflow { None } else { Some(ceil) }
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Checked floor. Rounds to the next integer towards −∞.",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "Returns [`None`] on overflow.
 
 Overflow can only occur when there are zero integer bits.",
                 "Always returns [`Some`] for unsigned values.",
-            ),
+            },
             "
 
 # Examples
 
 ```rust
 use fixed::{",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 concat!(
                     "
@@ -265,28 +265,28 @@ use fixed::{",
 ",
                 ),
                 concat!("types::extra::U4, ", $s_fixed),
-            ),
+            },
             "};
 type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.checked_floor(), Some(Fix::from_num(2)));
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "assert_eq!((-two_half).checked_floor(), Some(Fix::from_num(-3)));
 type AllFrac = ", $s_fixed, "<U", $s_nbits, ">;
 assert!(AllFrac::min_value().checked_floor().is_none());
 ",
-            ),
+            },
             "```
 ",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "
 [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None",
                 "
 [`Some`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.Some",
-            ),
+            },
             "
 ";
             #[inline]
@@ -294,9 +294,9 @@ assert!(AllFrac::min_value().checked_floor().is_none());
                 let (floor, overflow) = self.overflowing_floor();
                 if overflow { None } else { Some(floor) }
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Checked round. Rounds to the nearest integer, with ties
 rounded away from zero, returning [`None`] on overflow.
 
@@ -308,11 +308,11 @@ type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.checked_round(), Some(Fix::from_num(3)));
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "assert_eq!((-two_half).checked_round(), Some(Fix::from_num(-3)));
 ",
-            ),
+            },
             "assert!(Fix::max_value().checked_round().is_none());
 ```
 
@@ -323,9 +323,9 @@ assert_eq!(two_half.checked_round(), Some(Fix::from_num(3)));
                 let (round, overflow) = self.overflowing_round();
                 if overflow { None } else { Some(round) }
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Saturating ceil. Rounds to the next integer towards +∞,
 saturating on overflow.
 
@@ -337,11 +337,11 @@ type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.saturating_ceil(), Fix::from_num(3));
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "assert_eq!((-two_half).saturating_ceil(), Fix::from_num(-2));
 ",
-            ),
+            },
             "assert_eq!(Fix::max_value().saturating_ceil(), Fix::max_value());
 ```
 ";
@@ -350,24 +350,24 @@ assert_eq!(two_half.saturating_ceil(), Fix::from_num(3));
                 let (ceil, overflow) = self.overflowing_ceil();
                 if overflow { Self::max_value() } else { ceil }
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Saturating floor. Rounds to the next integer towards −∞",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 ", saturating on overflow.
 
 Overflow can only occur when there are zero integer bits.",
                 ". Cannot overflow for unsigned values.",
-            ),
+            },
             "
 
 # Examples
 
 ```rust
 use fixed::{",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 concat!(
                     "
@@ -376,19 +376,19 @@ use fixed::{",
 ",
                 ),
                 concat!("types::extra::U4, ", $s_fixed),
-            ),
+            },
             "};
 type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.saturating_floor(), Fix::from_num(2));
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "assert_eq!((-two_half).saturating_floor(), Fix::from_num(-3));
 type AllFrac = ", $s_fixed, "<U", $s_nbits, ">;
 assert_eq!(AllFrac::min_value().saturating_floor(), AllFrac::min_value());
 ",
-            ),
+            },
             "```
 ";
             #[inline]
@@ -396,9 +396,9 @@ assert_eq!(AllFrac::min_value().saturating_floor(), AllFrac::min_value());
                 let (floor, overflow) = self.overflowing_floor();
                 if overflow { Self::min_value() } else { floor }
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Saturating round. Rounds to the nearest integer, with
 ties rounded away from zero, and saturating on overflow.
 
@@ -410,11 +410,11 @@ type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.saturating_round(), Fix::from_num(3));
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "assert_eq!((-two_half).saturating_round(), Fix::from_num(-3));
 ",
-            ),
+            },
             "assert_eq!(Fix::max_value().saturating_round(), Fix::max_value());
 ```
 ";
@@ -428,9 +428,9 @@ assert_eq!(two_half.saturating_round(), Fix::from_num(3));
                 let (round, overflow) = self.overflowing_round();
                 if overflow { saturated } else { round }
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Wrapping ceil. Rounds to the next integer towards +∞,
 wrapping on overflow.
 
@@ -442,11 +442,11 @@ type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.wrapping_ceil(), Fix::from_num(3));
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "assert_eq!((-two_half).wrapping_ceil(), Fix::from_num(-2));
 ",
-            ),
+            },
             "assert_eq!(Fix::max_value().wrapping_ceil(), Fix::min_value());
 ```
 ";
@@ -454,24 +454,24 @@ assert_eq!(two_half.wrapping_ceil(), Fix::from_num(3));
             pub fn wrapping_ceil(self) -> $Fixed<Frac> {
                 self.overflowing_ceil().0
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Wrapping floor. Rounds to the next integer towards −∞",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 ", wrapping on overflow.
 
 Overflow can only occur when there are zero integer bits.",
                 ". Cannot overflow for unsigned values.",
-            ),
+            },
             "
 
 # Examples
 
 ```rust
 use fixed::{",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 concat!(
                     "
@@ -480,28 +480,28 @@ use fixed::{",
 ",
                 ),
                 concat!("types::extra::U4, ", $s_fixed),
-            ),
+            },
             "};
 type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.wrapping_floor(), Fix::from_num(2));
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "assert_eq!((-two_half).wrapping_floor(), Fix::from_num(-3));
 type AllFrac = ", $s_fixed, "<U", $s_nbits, ">;
 assert_eq!(AllFrac::min_value().wrapping_floor(), AllFrac::from_num(0));
 ",
-            ),
+            },
             "```
 ";
             #[inline]
             pub fn wrapping_floor(self) -> $Fixed<Frac> {
                 self.overflowing_floor().0
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Wrapping round. Rounds to the next integer to the
 nearest, with ties rounded away from zero, and wrapping on overflow.
 
@@ -513,11 +513,11 @@ type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.wrapping_round(), Fix::from_num(3));
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "assert_eq!((-two_half).wrapping_round(), Fix::from_num(-3));
 ",
-            ),
+            },
             "assert_eq!(Fix::max_value().wrapping_round(), Fix::min_value());
 ```
 ";
@@ -525,9 +525,9 @@ assert_eq!(two_half.wrapping_round(), Fix::from_num(3));
             pub fn wrapping_round(self) -> $Fixed<Frac> {
                 self.overflowing_round().0
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Overflowing ceil. Rounds to the next integer towards +∞.
 
 Returns a [tuple] of the fixed-point number and a [`bool`], indicating
@@ -542,11 +542,11 @@ type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.overflowing_ceil(), (Fix::from_num(3), false));
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "assert_eq!((-two_half).overflowing_ceil(), (Fix::from_num(-2), false));
 "
-            ),
+            },
             "assert_eq!(Fix::max_value().overflowing_ceil(), (Fix::min_value(), true));
 ```
 
@@ -571,27 +571,27 @@ assert_eq!(two_half.overflowing_ceil(), (Fix::from_num(3), false));
                 }
                 int.overflowing_add(increment)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Overflowing floor. Rounds to the next integer towards −∞.
 
 Returns a [tuple] of the fixed-point number and
 ",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "a [`bool`], indicating whether an overflow has
 occurred. On overflow, the wrapped value isreturned. Overflow can only
 occur when there are zero integer bits.",
                 "[`false`][`bool`].",
-            ),
+            },
             "
 
 # Examples
 
 ```rust
 use fixed::{",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 concat!(
                     "
@@ -600,19 +600,19 @@ use fixed::{",
 ",
                 ),
                 concat!("types::extra::U4, ", $s_fixed),
-            ),
+            },
             "};
 type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.overflowing_floor(), (Fix::from_num(2), false));
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "assert_eq!((-two_half).overflowing_floor(), (Fix::from_num(-3), false));
 type AllFrac = ", $s_fixed, "<U", $s_nbits, ">;
 assert_eq!(AllFrac::min_value().overflowing_floor(), (AllFrac::from_num(0), true));
 ",
-            ),
+            },
             "```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
@@ -629,9 +629,9 @@ assert_eq!(AllFrac::min_value().overflowing_floor(), (AllFrac::from_num(0), true
                 }
                 (int, false)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Overflowing round. Rounds to the next integer to the
 nearest, with ties rounded away from zero.
 
@@ -647,11 +647,11 @@ type Fix = ", $s_fixed, "<U4>;
 let two_half = Fix::from_num(5) / 2;
 assert_eq!(two_half.overflowing_round(), (Fix::from_num(3), false));
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "assert_eq!((-two_half).overflowing_round(), (Fix::from_num(-3), false));
 ",
-            ),
+            },
             "assert_eq!(Fix::max_value().overflowing_round(), (Fix::min_value(), true));
 ```
 
@@ -693,6 +693,6 @@ assert_eq!(two_half.overflowing_round(), (Fix::from_num(3), false));
                     int.overflowing_add(increment)
                 }
             }
-        );
+        }
     };
 }

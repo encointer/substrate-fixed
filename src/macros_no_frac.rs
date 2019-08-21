@@ -20,7 +20,7 @@ macro_rules! fixed_no_frac {
         $UInner:ty, $Signedness:tt
     ) => {
         impl<Frac> $Fixed<Frac> {
-            comment!(
+            comment! {
                 "Returns the smallest value that can be represented.
 
 # Examples
@@ -35,9 +35,9 @@ assert_eq!(Fix::min_value(), Fix::from_bits(", $s_inner, "::min_value()));
                 pub const fn min_value() -> $Fixed<Frac> {
                     Self::from_bits(<$Inner>::min_value())
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Returns the largest value that can be represented.
 
 # Examples
@@ -52,9 +52,9 @@ assert_eq!(Fix::max_value(), Fix::from_bits(", $s_inner, "::max_value()));
                 pub const fn max_value() -> $Fixed<Frac> {
                     Self::from_bits(<$Inner>::max_value())
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Creates a fixed-point number that has a bitwise
 representation identical to the given integer.
 
@@ -74,9 +74,9 @@ assert_eq!(Fix::from_bits(0b10_0000), 2);
                         phantom: PhantomData,
                     }
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Creates an integer that has a bitwise representation
 identical to the given fixed-point number.
 
@@ -93,9 +93,9 @@ assert_eq!(Fix::from_num(2).to_bits(), 0b10_0000);
                 pub const fn to_bits(self) -> $Inner {
                     self.bits
                 }
-            );
+            }
 
-            delegate!(
+            delegate! {
                 "Returns the number of ones in the binary
 representation.
 
@@ -109,8 +109,8 @@ assert_eq!(f.count_ones(), 3);
 ```
 ";
                 $Fixed => const fn count_ones(self) -> u32
-            );
-            delegate!(
+            }
+            delegate! {
                 "Returns the number of zeros in the binary
 representation.
 
@@ -124,8 +124,8 @@ assert_eq!(f.count_zeros(), 3);
 ```
 ";
                 $Fixed => const fn count_zeros(self) -> u32
-            );
-            delegate!(
+            }
+            delegate! {
                 "Returns the number of leading zeros in the binary
 representation.
 
@@ -139,8 +139,8 @@ assert_eq!(f.leading_zeros(), ", $s_nbits, " - 6);
 ```
 ";
                 $Fixed => const fn leading_zeros(self) -> u32
-            );
-            delegate!(
+            }
+            delegate! {
                 "Returns the number of trailing zeros in the binary
 representation.
 
@@ -154,8 +154,8 @@ assert_eq!(f.trailing_zeros(), 5);
 ```
 ";
                 $Fixed => const fn trailing_zeros(self) -> u32
-            );
-            delegate!(
+            }
+            delegate! {
                 "Shifts to the left by *n* bits, wrapping the
 truncated bits to the right end.
 
@@ -171,8 +171,8 @@ assert_eq!(Fix::from_bits(bits).rotate_left(3), Fix::from_bits(rot));
 ```
 ";
                 $Fixed => const fn rotate_left(self, n: u32)
-            );
-            delegate!(
+            }
+            delegate! {
                 "Shifts to the right by *n* bits, wrapping the
 truncated bits to the left end.
 
@@ -188,11 +188,11 @@ assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
 ```
 ";
                 $Fixed => const fn rotate_right(self, n: u32)
-            );
+            }
 
             if_signed! {
                 $Signedness;
-                comment!(
+                comment! {
                     "Returns the absolute value.
 
 # Examples
@@ -210,7 +210,7 @@ assert_eq!(minus_five.abs(), five);
                     pub const fn abs(self) -> $Fixed<Frac> {
                         Self::from_bits((self.to_bits() ^ self.repeat_sign()) - self.repeat_sign())
                     }
-                );
+                }
 
                 #[inline]
                 const fn repeat_sign(self) -> $Inner {
@@ -218,15 +218,15 @@ assert_eq!(minus_five.abs(), five);
                 }
             }
 
-            comment!(
+            comment! {
                 "Checked negation. Returns the negated value, or [`None`] on overflow.
 
 ",
-                if_signed_unsigned!(
+                if_signed_unsigned! {
                     $Signedness,
                     "Overflow can only occur when negating the minimum value.",
                     "Only zero can be negated without overflow.",
-                ),
+                },
                 "
 
 # Examples
@@ -235,13 +235,13 @@ assert_eq!(minus_five.abs(), five);
 use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
 ",
-                if_signed_unsigned!(
+                if_signed_unsigned! {
                     $Signedness,
                     "assert_eq!(Fix::from_num(5).checked_neg(), Some(Fix::from_num(-5)));
 assert_eq!(Fix::min_value().checked_neg(), None);",
                     "assert_eq!(Fix::from_num(0).checked_neg(), Some(Fix::from_num(0)));
 assert_eq!(Fix::from_num(5).checked_neg(), None);",
-                ),
+                },
                 "
 ```
 
@@ -251,9 +251,9 @@ assert_eq!(Fix::from_num(5).checked_neg(), None);",
                 pub fn checked_neg(self) -> Option<$Fixed<Frac>> {
                     self.to_bits().checked_neg().map(Self::from_bits)
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Checked addition. Returns the sum, or [`None`] on overflow.
 
 # Examples
@@ -272,9 +272,9 @@ assert_eq!(Fix::max_value().checked_add(one), None);
                 pub fn checked_add(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
                     self.to_bits().checked_add(rhs.to_bits()).map(Self::from_bits)
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Checked subtraction. Returns the difference, or [`None`] on overflow.
 
 # Examples
@@ -293,9 +293,9 @@ assert_eq!(Fix::min_value().checked_sub(one), None);
                 pub fn checked_sub(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
                     self.to_bits().checked_sub(rhs.to_bits()).map(Self::from_bits)
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Checked multiplication by an integer. Returns the
 product, or [`None`] on overflow.
 
@@ -314,16 +314,16 @@ assert_eq!(Fix::max_value().checked_mul_int(2), None);
                 pub fn checked_mul_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
                     self.to_bits().checked_mul(rhs).map(Self::from_bits)
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Checked division by an integer. Returns the quotient, or
 [`None`] if the divisor is zero",
-                if_signed_unsigned!(
+                if_signed_unsigned! {
                     $Signedness,
                     " or if the division results in overflow.",
                     ".",
-                ),
+                },
                 "
 
 # Examples
@@ -334,11 +334,11 @@ type Fix = ", $s_fixed, "<U4>;
 assert_eq!(Fix::max_value().checked_div_int(1), Some(Fix::max_value()));
 assert_eq!(Fix::from_num(1).checked_div_int(0), None);
 ",
-                if_signed_else_empty_str!(
+                if_signed_else_empty_str! {
                     $Signedness,
                     "assert_eq!(Fix::min_value().checked_div_int(-1), None);
 ",
-                ),
+                },
                 "```
 
 [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
@@ -347,16 +347,16 @@ assert_eq!(Fix::from_num(1).checked_div_int(0), None);
                 pub fn checked_div_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
                     self.to_bits().checked_div(rhs).map(Self::from_bits)
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Checked fixed-point remainder for division by an integer.
 Returns the remainder, or [`None`] if the divisor is zero",
-                if_signed_unsigned!(
+                if_signed_unsigned! {
                     $Signedness,
                     " or if the division results in overflow.",
                     ".",
-                ),
+                },
                 "
 
 # Examples
@@ -368,11 +368,11 @@ type Fix = ", $s_fixed, "<U4>;
 assert_eq!(Fix::from_bits(0b10101).checked_rem_int(8), Some(Fix::from_bits(0b101)));
 assert_eq!(Fix::from_num(1).checked_rem_int(0), None);
 ",
-                if_signed_else_empty_str!(
+                if_signed_else_empty_str! {
                     $Signedness,
                     "assert_eq!(Fix::min_value().checked_rem_int(-1), None);
 ",
-                ),
+                },
                 "```
 
 [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
@@ -381,9 +381,9 @@ assert_eq!(Fix::from_num(1).checked_rem_int(0), None);
                 pub fn checked_rem_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
                     self.to_bits().checked_rem(rhs).map(Self::from_bits)
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Checked shift left. Returns the shifted number,
 or [`None`] if `rhs` ≥ ", $s_nbits, ".
 
@@ -402,9 +402,9 @@ assert_eq!((Fix::from_num(1) / 2).checked_shl(", $s_nbits, "), None);
                 pub fn checked_shl(self, rhs: u32) -> Option<$Fixed<Frac>> {
                     self.to_bits().checked_shl(rhs).map(Self::from_bits)
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Checked shift right. Returns the shifted number,
 or [`None`] if `rhs` ≥ ", $s_nbits, ".
 
@@ -423,11 +423,11 @@ assert_eq!(Fix::from_num(4).checked_shr(", $s_nbits, "), None);
                 pub fn checked_shr(self, rhs: u32) -> Option<$Fixed<Frac>> {
                     self.to_bits().checked_shr(rhs).map(Self::from_bits)
                 }
-            );
+            }
 
             if_signed! {
                 $Signedness;
-                comment!(
+                comment! {
                     "Checked absolute value. Returns the absolute value, or [`None`] on overflow.
 
 Overflow can only occur when trying to find the absolute value of the minimum value.
@@ -447,18 +447,18 @@ assert_eq!(Fix::min_value().checked_abs(), None);
                     pub fn checked_abs(self) -> Option<$Fixed<Frac>> {
                         self.to_bits().checked_abs().map(Self::from_bits)
                     }
-                );
+                }
             }
 
-            comment!(
+            comment! {
                 "Saturating negation. Returns the negated value, saturating on overflow.
 
 ",
-                if_signed_unsigned!(
+                if_signed_unsigned! {
                     $Signedness,
                     "Overflow can only occur when negating the minimum value.",
                     "This method always returns zero.",
-                ),
+                },
                 "
 
 # Examples
@@ -467,27 +467,27 @@ assert_eq!(Fix::min_value().checked_abs(), None);
 use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
 ",
-                if_signed_unsigned!(
+                if_signed_unsigned! {
                     $Signedness,
                     "assert_eq!(Fix::from_num(5).saturating_neg(), Fix::from_num(-5));
 assert_eq!(Fix::min_value().saturating_neg(), Fix::max_value());",
                     "assert_eq!(Fix::from_num(0).saturating_neg(), Fix::from_num(0));
 assert_eq!(Fix::from_num(5).saturating_neg(), Fix::from_num(0));",
-                ),
+                },
                 "
 ```
 ";
                 #[inline]
                 pub fn saturating_neg(self) -> $Fixed<Frac> {
-                    if_signed_unsigned!(
+                    if_signed_unsigned! {
                         $Signedness,
                         self.checked_neg().unwrap_or(Self::max_value()),
                         Self::from_bits(0),
-                    )
+                    }
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Saturating addition. Returns the sum, saturating on overflow.
 
 # Examples
@@ -503,9 +503,9 @@ assert_eq!(Fix::max_value().saturating_add(Fix::from_num(1)), Fix::max_value());
                 pub fn saturating_add(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
                     Self::from_bits(self.to_bits().saturating_add(rhs.to_bits()))
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Saturating subtraction. Returns the difference, saturating on overflow.
 
 # Examples
@@ -514,13 +514,13 @@ assert_eq!(Fix::max_value().saturating_add(Fix::from_num(1)), Fix::max_value());
 use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
 ",
-                if_signed_unsigned!(
+                if_signed_unsigned! {
                     $Signedness,
                     "assert_eq!(Fix::from_num(1).saturating_sub(Fix::from_num(3)), Fix::from_num(-2));
 assert_eq!(Fix::min_value().saturating_sub(Fix::from_num(1)), Fix::min_value());",
                     "assert_eq!(Fix::from_num(5).saturating_sub(Fix::from_num(3)), Fix::from_num(2));
 assert_eq!(Fix::from_num(0).saturating_sub(Fix::from_num(1)), Fix::from_num(0));",
-                ),
+                },
                 "
 ```
 ";
@@ -528,9 +528,9 @@ assert_eq!(Fix::from_num(0).saturating_sub(Fix::from_num(1)), Fix::from_num(0));
                 pub fn saturating_sub(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
                     Self::from_bits(self.to_bits().saturating_sub(rhs.to_bits()))
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Saturating multiplication by an integer. Returns the product, saturating on overflow.
 
 # Examples
@@ -546,11 +546,11 @@ assert_eq!(Fix::max_value().saturating_mul_int(2), Fix::max_value());
                 pub fn saturating_mul_int(self, rhs: $Inner) -> $Fixed<Frac> {
                     Self::from_bits(self.to_bits().saturating_mul(rhs))
                 }
-            );
+            }
 
             if_signed! {
                 $Signedness;
-                comment!(
+                comment! {
                     "Saturating absolute value. Returns the absolute value, saturating on overflow.
 
 Overflow can only occur when trying to find the absolute value of the minimum value.
@@ -568,18 +568,18 @@ assert_eq!(Fix::min_value().saturating_abs(), Fix::max_value());
                     pub fn saturating_abs(self) -> $Fixed<Frac> {
                         self.checked_abs().unwrap_or(Self::max_value())
                     }
-                );
+                }
             }
 
-            comment!(
+            comment! {
                 "Wrapping negation. Returns the negated value, wrapping on overflow.
 
 ",
-                if_signed_unsigned!(
+                if_signed_unsigned! {
                     $Signedness,
                     "Overflow can only occur when negating the minimum value.",
                     "Only zero can be negated without overflow.",
-                ),
+                },
                 "
 
 # Examples
@@ -588,7 +588,7 @@ assert_eq!(Fix::min_value().saturating_abs(), Fix::max_value());
 use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
 ",
-                if_signed_unsigned!(
+                if_signed_unsigned! {
                     $Signedness,
                     "assert_eq!(Fix::from_num(5).wrapping_neg(), Fix::from_num(-5));
 assert_eq!(Fix::min_value().wrapping_neg(), Fix::min_value());",
@@ -596,7 +596,7 @@ assert_eq!(Fix::min_value().wrapping_neg(), Fix::min_value());",
 assert_eq!(Fix::from_num(5).wrapping_neg(), Fix::wrapping_from_num(-5));
 let neg_five_bits = !Fix::from_num(5).to_bits() + 1;
 assert_eq!(Fix::from_num(5).wrapping_neg(), Fix::from_bits(neg_five_bits));",
-                ),
+                },
                 "
 ```
 ";
@@ -604,9 +604,9 @@ assert_eq!(Fix::from_num(5).wrapping_neg(), Fix::from_bits(neg_five_bits));",
                 pub const fn wrapping_neg(self) -> $Fixed<Frac> {
                     Self::from_bits(self.to_bits().wrapping_neg())
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Wrapping addition. Returns the sum, wrapping on overflow.
 
 # Examples
@@ -618,7 +618,7 @@ let one = Fix::from_num(1);
 let one_minus_bit = one - Fix::from_bits(1);
 assert_eq!(Fix::from_num(3).wrapping_add(Fix::from_num(2)), Fix::from_num(5));
 assert_eq!(Fix::max_value().wrapping_add(one), ",
-                if_signed_else_empty_str!($Signedness, "Fix::min_value() + "),
+                if_signed_else_empty_str! { $Signedness, "Fix::min_value() + " },
                 "one_minus_bit);
 ```
 ";
@@ -626,9 +626,9 @@ assert_eq!(Fix::max_value().wrapping_add(one), ",
                 pub const fn wrapping_add(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
                     Self::from_bits(self.to_bits().wrapping_add(rhs.to_bits()))
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Wrapping subtraction. Returns the difference, wrapping on overflow.
 
 # Examples
@@ -639,13 +639,13 @@ type Fix = ", $s_fixed, "<U4>;
 let one = Fix::from_num(1);
 let one_minus_bit = one - Fix::from_bits(1);
 ",
-                if_signed_unsigned!(
+                if_signed_unsigned! {
                     $Signedness,
                     "assert_eq!(Fix::from_num(3).wrapping_sub(Fix::from_num(5)), Fix::from_num(-2));
 assert_eq!(Fix::min_value()",
                     "assert_eq!(Fix::from_num(5).wrapping_sub(Fix::from_num(3)), Fix::from_num(2));
 assert_eq!(Fix::from_num(0)",
-                ),
+                },
                 ".wrapping_sub(one), Fix::max_value() - one_minus_bit);
 ```
 ";
@@ -653,9 +653,9 @@ assert_eq!(Fix::from_num(0)",
                 pub const fn wrapping_sub(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
                     Self::from_bits(self.to_bits().wrapping_sub(rhs.to_bits()))
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Wrapping multiplication by an integer. Returns the product, wrapping on overflow.
 
 # Examples
@@ -672,11 +672,11 @@ assert_eq!(Fix::max_value().wrapping_mul_int(4), wrapped);
                 pub const fn wrapping_mul_int(self, rhs: $Inner) -> $Fixed<Frac> {
                     Self::from_bits(self.to_bits().wrapping_mul(rhs))
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Wrapping division by an integer. Returns the quotient",
-                if_signed_unsigned!(
+                if_signed_unsigned! {
                     $Signedness,
                     ", wrapping on overflow.
 
@@ -684,7 +684,7 @@ Overflow can only occur when dividing the minimum value by −1.",
                     ".
 
 Can never overflow for unsigned values.",
-                ),
+                },
                 "
 
 # Panics
@@ -700,22 +700,22 @@ type Fix = ", $s_fixed, "<U4>;
 let one_point_5 = Fix::from_bits(0b11 << (4 - 1));
 assert_eq!(Fix::from_num(3).wrapping_div_int(2), one_point_5);
 ",
-                if_signed_else_empty_str!(
+                if_signed_else_empty_str! {
                     $Signedness,
                     "assert_eq!(Fix::min_value().wrapping_div_int(-1), Fix::min_value());
 ",
-                ),
+                },
                 "```
 ";
                 #[inline]
                 pub fn wrapping_div_int(self, rhs: $Inner) -> $Fixed<Frac> {
                     Self::from_bits(self.to_bits().wrapping_div(rhs))
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Wrapping fixed-point remainder for division by an integer. Returns the remainder",
-                if_signed_unsigned!(
+                if_signed_unsigned! {
                     $Signedness,
                     ", wrapping on overflow.
 
@@ -723,7 +723,7 @@ Overflow can only occur when dividing the minimum value by −1.",
                     ".
 
 Can never overflow for unsigned values.",
-                ),
+                },
                 "
 
 # Panics
@@ -738,20 +738,20 @@ type Fix = ", $s_fixed, "<U4>;
 // binary 1.0101 / 8 = binary 0.0010 remainder 0.0101
 assert_eq!(Fix::from_bits(0b10101).wrapping_rem_int(8), Fix::from_bits(0b101));
 ",
-                if_signed_else_empty_str!(
+                if_signed_else_empty_str! {
                     $Signedness,
                     "assert_eq!(Fix::min_value().wrapping_rem_int(-1), 0);
 ",
-                ),
+                },
                 "```
 ";
                 #[inline]
                 pub fn wrapping_rem_int(self, rhs: $Inner) -> $Fixed<Frac> {
                     Self::from_bits(self.to_bits().wrapping_rem(rhs))
                 }
-            );
+            }
 
-            delegate!(
+            delegate! {
                 "Wrapping shift left. Wraps `rhs` if `rhs` ≥ ", $s_nbits, ",
 then shifts and returns the number.
 
@@ -765,9 +765,9 @@ assert_eq!((Fix::from_num(1) / 2).wrapping_shl(3 + ", $s_nbits, "), Fix::from_nu
 ```
 ";
                 $Fixed => const fn wrapping_shl(self, rhs: u32)
-            );
+            }
 
-            delegate!(
+            delegate! {
                 "Wrapping shift right. Wraps `rhs` if `rhs` ≥ ", $s_nbits, ",
 then shifts and returns the number.
 
@@ -781,11 +781,11 @@ assert_eq!((Fix::from_num(4)).wrapping_shr(3 + ", $s_nbits, "), Fix::from_num(1)
 ```
 ";
                 $Fixed => const fn wrapping_shr(self, rhs: u32)
-            );
+            }
 
             if_signed! {
                 $Signedness;
-                comment!(
+                comment! {
                     "Wrapping absolute value. Returns the absolute value, wrapping on overflow.
 
 Overflow can only occur when trying to find the absolute value of the minimum value.
@@ -805,21 +805,21 @@ assert_eq!(Fix::min_value().wrapping_abs(), Fix::min_value());
                             (self.to_bits() ^ self.repeat_sign()).wrapping_sub(self.repeat_sign()),
                         )
                     }
-                );
+                }
             }
 
-            comment!(
+            comment! {
                 "Overflowing negation.
 
 Returns a [tuple] of the negated value and a [`bool`] indicating whether
 an overflow has occurred. On overflow, the wrapped value is returned.
 
 ",
-                if_signed_unsigned!(
+                if_signed_unsigned! {
                     $Signedness,
                     "Overflow can only occur when negating the minimum value.",
                     "Only zero can be negated without overflow.",
-                ),
+                },
                 "
 
 # Examples
@@ -828,7 +828,7 @@ an overflow has occurred. On overflow, the wrapped value is returned.
 use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
 ",
-                if_signed_unsigned!(
+                if_signed_unsigned! {
                     $Signedness,
                     "assert_eq!(Fix::from_num(5).overflowing_neg(), (Fix::from_num(-5), false));
 assert_eq!(Fix::min_value().overflowing_neg(), (Fix::min_value(), true));",
@@ -836,7 +836,7 @@ assert_eq!(Fix::min_value().overflowing_neg(), (Fix::min_value(), true));",
 assert_eq!(Fix::from_num(5).overflowing_neg(), Fix::overflowing_from_num(-5));
 let neg_five_bits = !Fix::from_num(5).to_bits() + 1;
 assert_eq!(Fix::from_num(5).overflowing_neg(), (Fix::from_bits(neg_five_bits), true));",
-                ),
+                },
                 "
 ```
 
@@ -848,9 +848,9 @@ assert_eq!(Fix::from_num(5).overflowing_neg(), (Fix::from_bits(neg_five_bits), t
                     let (ans, o) = self.to_bits().overflowing_neg();
                     (Self::from_bits(ans), o)
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Overflowing addition.
 
 Returns a [tuple] of the sum and a [`bool`] indicating whether an
@@ -865,7 +865,7 @@ let one = Fix::from_num(1);
 let one_minus_bit = one - Fix::from_bits(1);
 assert_eq!(Fix::from_num(3).overflowing_add(Fix::from_num(2)), (Fix::from_num(5), false));
 assert_eq!(Fix::max_value().overflowing_add(one), (",
-                if_signed_else_empty_str!($Signedness, "Fix::min_value() + "),
+                if_signed_else_empty_str! { $Signedness, "Fix::min_value() + " },
                 "one_minus_bit, true));
 ```
 
@@ -877,9 +877,9 @@ assert_eq!(Fix::max_value().overflowing_add(one), (",
                     let (ans, o) = self.to_bits().overflowing_add(rhs.to_bits());
                     (Self::from_bits(ans), o)
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Overflowing subtraction.
 
 Returns a [tuple] of the difference and a [`bool`] indicating whether an
@@ -893,13 +893,13 @@ type Fix = ", $s_fixed, "<U4>;
 let one = Fix::from_num(1);
 let one_minus_bit = one - Fix::from_bits(1);
 ",
-                if_signed_unsigned!(
+                if_signed_unsigned! {
                     $Signedness,
                     "assert_eq!(Fix::from_num(3).overflowing_sub(Fix::from_num(5)), (Fix::from_num(-2), false));
 assert_eq!(Fix::min_value()",
                     "assert_eq!(Fix::from_num(5).overflowing_sub(Fix::from_num(3)), (Fix::from_num(2), false));
 assert_eq!(Fix::from_num(0)",
-                ),
+                },
                 ".overflowing_sub(one), (Fix::max_value() - one_minus_bit, true));
 ```
 
@@ -911,9 +911,9 @@ assert_eq!(Fix::from_num(0)",
                     let (ans, o) = self.to_bits().overflowing_sub(rhs.to_bits());
                     (Self::from_bits(ans), o)
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Overflowing multiplication by an integer.
 
 Returns a [tuple] of the product and a [`bool`] indicating whether an
@@ -937,19 +937,19 @@ assert_eq!(Fix::max_value().overflowing_mul_int(4), (wrapped, true));
                     let (ans, o) = self.to_bits().overflowing_mul(rhs);
                     (Self::from_bits(ans), o)
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Overflowing division by an integer.
 
 Returns a [tuple] of the quotient and ",
-                if_signed_unsigned!(
+                if_signed_unsigned! {
                     $Signedness,
                     "a [`bool`] indicating whether an overflow has
 occurred. On overflow, the wrapped value is returned. Overflow can
 only occur when dividing the minimum value by −1.",
                     "[`false`][`bool`], as the division can never overflow for unsigned values.",
-                ),
+                },
                 "
 
 # Panics
@@ -965,11 +965,11 @@ type Fix = ", $s_fixed, "<U4>;
 let one_point_5 = Fix::from_bits(0b11 << (4 - 1));
 assert_eq!(Fix::from_num(3).overflowing_div_int(2), (one_point_5, false));
 ",
-                if_signed_else_empty_str!(
+                if_signed_else_empty_str! {
                     $Signedness,
                     "assert_eq!(Fix::min_value().overflowing_div_int(-1), (Fix::min_value(), true));
 ",
-                ),
+                },
                 "```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
@@ -980,19 +980,19 @@ assert_eq!(Fix::from_num(3).overflowing_div_int(2), (one_point_5, false));
                     let (ans, o) = self.to_bits().overflowing_div(rhs);
                     (Self::from_bits(ans), o)
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Overflowing fixed-point remainder for division by an integer.
 
 Returns a [tuple] of the remainder and ",
-                if_signed_unsigned!(
+                if_signed_unsigned! {
                     $Signedness,
                     "a [`bool`] indicating whether an overflow has
 occurred. On overflow, the wrapped value is returned. Overflow can
 only occur when dividing the minimum value by −1.",
                     "[`false`][`bool`], as the division can never overflow for unsigned values.",
-                ),
+                },
                 "
 
 # Panics
@@ -1007,11 +1007,11 @@ type Fix = ", $s_fixed, "<U4>;
 // binary 1.0101 / 8 = binary 0.0010 remainder 0.0101
 assert_eq!(Fix::from_bits(0b10101).overflowing_rem_int(8), (Fix::from_bits(0b101), false));
 ",
-                if_signed_else_empty_str!(
+                if_signed_else_empty_str! {
                     $Signedness,
                     "assert_eq!(Fix::min_value().overflowing_rem_int(-1), (Fix::from_num(0), true));
 ",
-                ),
+                },
                 "```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
@@ -1022,9 +1022,9 @@ assert_eq!(Fix::from_bits(0b10101).overflowing_rem_int(8), (Fix::from_bits(0b101
                     let (ans, o) = self.to_bits().overflowing_rem(rhs);
                     (Self::from_bits(ans), o)
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Overflowing shift left.
 
 Returns a [tuple] of the shifted value and a [`bool`] indicating whether
@@ -1048,9 +1048,9 @@ assert_eq!((Fix::from_num(1) / 2).overflowing_shl(3 + ", $s_nbits, "), (Fix::fro
                     let (ans, o) = self.to_bits().overflowing_shl(rhs);
                     (Self::from_bits(ans), o)
                 }
-            );
+            }
 
-            comment!(
+            comment! {
                 "Overflowing shift right.
 
 Returns a [tuple] of the shifted value and a [`bool`] indicating whether
@@ -1074,11 +1074,11 @@ assert_eq!((Fix::from_num(4)).overflowing_shr(3 + ", $s_nbits, "), (Fix::from_nu
                     let (ans, o) = self.to_bits().overflowing_shr(rhs);
                     (Self::from_bits(ans), o)
                 }
-            );
+            }
 
             if_signed! {
                 $Signedness;
-                comment!(
+                comment! {
                     "Overflowing absolute value.
 
 Returns a [tuple] of the absolute value and a [`bool`] indicating
@@ -1105,12 +1105,12 @@ assert_eq!(Fix::min_value().overflowing_abs(), (Fix::min_value(), true));
                             .overflowing_sub(self.repeat_sign());
                         (Self::from_bits(ans), o)
                     }
-                );
+                }
             }
 
             if_unsigned! {
                 $Signedness;
-                comment!(
+                comment! {
                     "Returns [`true`][`bool`] if the fixed-point number is
 2<sup><i>k</i></sup> for some integer <i>k</i>.
 
@@ -1133,9 +1133,9 @@ assert!(half.is_power_of_two());
                     pub fn is_power_of_two(self) -> bool {
                         self.to_bits().is_power_of_two()
                     }
-                );
+                }
 
-                delegate!(
+                delegate! {
                     "Returns the smallest power of two ≥ `self`.
 
 # Panics
@@ -1159,9 +1159,9 @@ assert_eq!(half.next_power_of_two(), half);
 ```
 ";
                     $Fixed => fn next_power_of_two(self)
-                );
+                }
 
-                comment!(
+                comment! {
                     "Returns the smallest power of two ≥ `self`, or
 [`None`] if the next power of two is too large to represent.
 
@@ -1184,12 +1184,12 @@ assert!(Fix::max_value().checked_next_power_of_two().is_none());
                     pub fn checked_next_power_of_two(self) -> Option<$Fixed<Frac>> {
                         self.to_bits().checked_next_power_of_two().map(Self::from_bits)
                     }
-                );
+                }
             }
 
             if_signed! {
                 $Signedness;
-                delegate!(
+                delegate! {
                     "Returns [`true`][`bool`] if the number is > 0.
 
 # Examples
@@ -1205,9 +1205,9 @@ assert!(!Fix::from_num(-5).is_positive());
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 ";
                     $Fixed => const fn is_positive(self) -> bool
-                );
+                }
 
-                delegate!(
+                delegate! {
                     "Returns [`true`][`bool`] if the number is < 0.
 
 # Examples
@@ -1223,7 +1223,7 @@ assert!(Fix::from_num(-5).is_negative());
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 ";
                     $Fixed => const fn is_negative(self) -> bool
-                );
+                }
             }
         }
     };

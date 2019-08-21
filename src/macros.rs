@@ -35,7 +35,7 @@ macro_rules! if_signed_unsigned {
         $unsigned
     };
     ($Signedness:tt, $signed:expr, $unsigned:expr,) => {
-        if_signed_unsigned!($Signedness, $signed, $unsigned)
+        if_signed_unsigned! { $Signedness, $signed, $unsigned }
     };
 }
 

@@ -15,7 +15,7 @@
 
 macro_rules! fixed_from_to {
     ($Fixed:ident[$s_fixed:expr]($Inner:ty[$s_inner:expr], $s_nbits:expr), $Signedness:tt) => {
-        comment!(
+        comment! {
             "Creates a fixed-point number from another number.
 
 The other number can be:
@@ -52,20 +52,20 @@ assert_eq!(Fix::from_num(src), Fix::from_bits(0b111 << (4 - 2)));
 
 assert_eq!(Fix::from_num(3i32), Fix::from_bits(3 << 4));
 assert_eq!(Fix::from_num(",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "-3i64), Fix::from_bits(-",
                 "3i64), Fix::from_bits(",
-            ),
+            },
             "3 << 4));
 
 assert_eq!(Fix::from_num(1.75f32), Fix::from_bits(0b111 << (4 - 2)));
 assert_eq!(Fix::from_num(",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "-1.75f64), Fix::from_bits(-",
                 "1.75f64), Fix::from_bits(",
-            ),
+            },
             "0b111 << (4-2)));
 ```
 
@@ -94,9 +94,9 @@ assert_eq!(Fix::from_num(",
             pub fn from_num<Src: ToFixed>(src: Src) -> $Fixed<Frac> {
                 src.to_fixed()
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a fixed-point number to another number.
 
 The other number can be:
@@ -136,22 +136,22 @@ assert_eq!((src >> 2u32).to_num::<I30F2>(), I30F2::from_bits(1));
 let two_point_5 = Fix::from_bits(0b101 << (4 - 1));
 assert_eq!(two_point_5.to_num::<i32>(), 2);
 assert_eq!(",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "(-two_point_5).to_num::<i64>(), -3",
                 "two_point_5.to_num::<i64>(), 2",
-            ),
+            },
             ");
 
 // 1.625 is 1.101 in binary
 let one_point_625 = Fix::from_bits(0b1101 << (4 - 3));
 assert_eq!(one_point_625.to_num::<f32>(), 1.625f32);
 assert_eq!(",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "(-one_point_625).to_num::<f64>(), -",
                 "one_point_625.to_num::<f64>(), "
-            ),
+            },
             "1.625f64);
 ```
 
@@ -179,9 +179,9 @@ assert_eq!(",
             pub fn to_num<Dst: FromFixed>(self) -> Dst {
                 Dst::from_fixed(self)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Creates a fixed-point number from another number if it
 fits, otherwise returns [`None`].
 
@@ -218,11 +218,11 @@ assert_eq!(Fix::checked_from_num(3), Some(Fix::from_bits(3 << 4)));
 let too_large = ", $s_inner, "::max_value();
 assert!(Fix::checked_from_num(too_large).is_none());
 let too_small = ",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 concat!($s_inner, "::min_value()"),
                 "-1",
-            ),
+            },
             ";
 assert!(Fix::checked_from_num(too_small).is_none());
 
@@ -230,11 +230,11 @@ assert!(Fix::checked_from_num(too_small).is_none());
 let expected = Fix::from_bits(0b111 << (4 - 2));
 assert_eq!(Fix::checked_from_num(1.75f32), Some(expected));
 assert_eq!(Fix::checked_from_num(",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "-1.75f64), Some(-",
                 "1.75f64), Some(",
-            ),
+            },
             "expected));
 assert!(Fix::checked_from_num(2e38).is_none());
 assert!(Fix::checked_from_num(std::f64::NAN).is_none());
@@ -264,9 +264,9 @@ assert!(Fix::checked_from_num(std::f64::NAN).is_none());
             pub fn checked_from_num<Src: ToFixed>(src: Src) -> Option<$Fixed<Frac>> {
                 src.checked_to_fixed()
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a fixed-point number to another number if it
 fits, otherwise returns [`None`].
 
@@ -305,19 +305,19 @@ assert!(Fix::max_value().checked_to_num::<TooFewIntBits>().is_none());
 let two_point_5 = Fix::from_bits(0b101 << (4 - 1));
 assert_eq!(two_point_5.checked_to_num::<i32>(), Some(2));
 assert_eq!(",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "(-two_point_5).checked_to_num::<i64>(), Some(-3",
                 "two_point_5.checked_to_num::<i64>(), Some(2",
-            ),
+            },
             "));
 type AllInt = ", $s_fixed, "<U0>;
 assert!(AllInt::",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "from_bits(-1).checked_to_num::<u",
                 "max_value().checked_to_num::<i",
-            ),
+            },
             $s_nbits, ">().is_none());
 
 // 1.625 is 1.101 in binary
@@ -349,9 +349,9 @@ assert_eq!(one_point_625.checked_to_num::<f32>(), Some(1.625f32));
             pub fn checked_to_num<Dst: FromFixed>(self) -> Option<Dst> {
                 Dst::checked_from_fixed(self)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Creates a fixed-point number from another number,
 saturating if it does not fit.
 
@@ -391,11 +391,11 @@ assert_eq!(Fix::saturating_from_num(too_large), Fix::max_value());
 
 assert_eq!(Fix::saturating_from_num(3), Fix::from_bits(3 << 4));
 let too_small = ",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 concat!($s_inner, "::min_value()"),
                 "-1",
-            ),
+            },
             ";
 assert_eq!(Fix::saturating_from_num(too_small), Fix::min_value());
 
@@ -403,11 +403,11 @@ assert_eq!(Fix::saturating_from_num(too_small), Fix::min_value());
 let expected = Fix::from_bits(0b111 << (4 - 2));
 assert_eq!(Fix::saturating_from_num(1.75f32), expected);
 assert_eq!(Fix::saturating_from_num(",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "-1.75f64), -",
                 "1.75f64), ",
-            ),
+            },
             "expected);
 assert_eq!(Fix::saturating_from_num(2e38), Fix::max_value());
 assert_eq!(Fix::saturating_from_num(std::f64::NEG_INFINITY), Fix::min_value());
@@ -437,9 +437,9 @@ assert_eq!(Fix::saturating_from_num(std::f64::NEG_INFINITY), Fix::min_value());
             pub fn saturating_from_num<Src: ToFixed>(src: Src) -> $Fixed<Frac> {
                 src.saturating_to_fixed()
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a fixed-point number to another number,
 saturating the value if it does not fit.
 
@@ -480,14 +480,14 @@ let two_point_5 = Fix::from_bits(0b101 << (4 - 1));
 assert_eq!(two_point_5.saturating_to_num::<i32>(), 2);
 type AllInt = ", $s_fixed, "<U0>;
 assert_eq!(",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 concat!("AllInt::from_bits(-1).saturating_to_num::<u", $s_nbits, ">(), 0"),
                 concat!(
                     "AllInt::max_value().saturating_to_num::<i", $s_nbits, ">(), ",
                     "i", $s_nbits, "::max_value()",
                 ),
-            ),
+            },
             ");
 
 // 1.625 is 1.101 in binary
@@ -518,9 +518,9 @@ assert_eq!(one_point_625.saturating_to_num::<f32>(), 1.625f32);
             pub fn saturating_to_num<Dst: FromFixed>(self) -> Dst {
                 Dst::saturating_from_fixed(self)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Creates a fixed-point number from another number,
 wrapping the value on overflow.
 
@@ -597,9 +597,9 @@ assert_eq!(Fix::wrapping_from_num(large), wrapped);
             pub fn wrapping_from_num<Src: ToFixed>(src: Src) -> $Fixed<Frac> {
                 src.wrapping_to_fixed()
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a fixed-point number to another number,
 wrapping the value on overflow.
 
@@ -640,14 +640,14 @@ let two_point_5 = Fix::from_bits(0b101 << (4 - 1));
 assert_eq!(two_point_5.wrapping_to_num::<i32>(), 2);
 type AllInt = ", $s_fixed, "<U0>;
 assert_eq!(",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 concat!(
                     "AllInt::from_bits(-1).wrapping_to_num::<u", $s_nbits, ">(), ",
                     "u", $s_nbits, "::max_value()",
                 ),
                 concat!("AllInt::max_value().wrapping_to_num::<i", $s_nbits, ">(), -1"),
-            ),
+            },
             ");
 
 // 1.625 is 1.101 in binary
@@ -678,9 +678,9 @@ assert_eq!(one_point_625.wrapping_to_num::<f32>(), 1.625f32);
             pub fn wrapping_to_num<Dst: FromFixed>(self) -> Dst {
                 Dst::wrapping_from_fixed(self)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Creates a fixed-point number from another number.
 
 Returns a [tuple] of the fixed-point number and a [`bool`] indicating
@@ -764,9 +764,9 @@ assert_eq!(Fix::overflowing_from_num(large), (wrapped, true));
             pub fn overflowing_from_num<Src: ToFixed>(src: Src) -> ($Fixed<Frac>, bool) {
                 src.overflowing_to_fixed()
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a fixed-point number to another number.
 
 Returns a [tuple] of the number and a [`bool`] indicating whether an
@@ -808,17 +808,17 @@ assert_eq!(Fix::max_value().overflowing_to_num::<TooFewIntBits>(), (wrapped, tru
 let two_point_5 = Fix::from_bits(0b101 << (4 - 1));
 assert_eq!(two_point_5.overflowing_to_num::<i32>(), (2, false));
 let does_not_fit = ", $s_fixed, "::<U0>::",
-            if_signed_unsigned!($Signedness, "from_bits(-1)", "max_value()"),
+            if_signed_unsigned! { $Signedness, "from_bits(-1)", "max_value()" },
             ";
 let wrapped = ",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 concat!("1u", $s_nbits, ".wrapping_neg()"),
                 concat!("-1i", $s_nbits),
-            ),
+            },
             ";
 assert_eq!(does_not_fit.overflowing_to_num::<",
-            if_signed_unsigned!($Signedness, "u", "i"),
+            if_signed_unsigned! { $Signedness, "u", "i" },
             $s_nbits, ">(), (wrapped, true));
 
 // 1.625 is 1.101 in binary
@@ -851,9 +851,9 @@ assert_eq!(one_point_625.overflowing_to_num::<f32>(), (1.625f32, false));
             pub fn overflowing_to_num<Dst: FromFixed>(self) -> (Dst, bool) {
                 Dst::overflowing_from_fixed(self)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a string slice containing binary digits to a fixed-point number.
 
 # Examples
@@ -866,21 +866,21 @@ let f = Fix::from_str_binary(\"1.11\");
 let check = Fix::from_bits(0b111 << (4 - 2));
 assert_eq!(f, Ok(check));
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "let neg = Fix::from_str_binary(\"-1.11\");
 assert_eq!(neg, Ok(-check));
 ",
-            ),
+            },
             "```
 ";
             #[inline]
             pub fn from_str_binary(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
                 FromStrRadix::from_str_radix(src, 2)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a string slice containing octal digits to a fixed-point number.
 
 # Examples
@@ -893,21 +893,21 @@ let f = Fix::from_str_octal(\"1.6\");
 let check = Fix::from_bits(0b111 << (4 - 2));
 assert_eq!(f, Ok(check));
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "let neg = Fix::from_str_octal(\"-1.6\");
 assert_eq!(neg, Ok(-check));
 ",
-            ),
+            },
             "```
 ";
             #[inline]
             pub fn from_str_octal(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
                 FromStrRadix::from_str_radix(src, 8)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a string slice containing hexadecimal digits to a fixed-point number.
 
 # Examples
@@ -920,21 +920,21 @@ let f = Fix::from_str_hex(\"1.C\");
 let check = Fix::from_bits(0b111 << (4 - 2));
 assert_eq!(f, Ok(check));
 ",
-            if_signed_else_empty_str!(
+            if_signed_else_empty_str! {
                 $Signedness,
                 "let neg = Fix::from_str_hex(\"-1.C\");
 assert_eq!(neg, Ok(-check));
 ",
-            ),
+            },
             "```
 ";
             #[inline]
             pub fn from_str_hex(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
                 FromStrRadix::from_str_radix(src, 16)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a string slice containing decimal digits to a fixed-point number,
 saturating on overflow.
 
@@ -942,7 +942,7 @@ saturating on overflow.
 
 ```rust
 ",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "use fixed::types::I8F8;
 assert_eq!(I8F8::saturating_from_str(\"9999\"), Ok(I8F8::max_value()));
@@ -952,16 +952,16 @@ assert_eq!(I8F8::saturating_from_str(\"-9999\"), Ok(I8F8::min_value()));
 assert_eq!(U8F8::saturating_from_str(\"9999\"), Ok(U8F8::max_value()));
 assert_eq!(U8F8::saturating_from_str(\"-1\"), Ok(U8F8::from_num(0)));
 ",
-            ),
+            },
             "```
 ";
             #[inline]
             pub fn saturating_from_str(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
                 FromStrRadix::saturating_from_str_radix(src, 10)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a string slice containing binary digits to a fixed-point number,
 saturating on overflow.
 
@@ -969,7 +969,7 @@ saturating on overflow.
 
 ```rust
 ",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "use fixed::types::I8F8;
 assert_eq!(I8F8::saturating_from_str_binary(\"101100111000\"), Ok(I8F8::max_value()));
@@ -979,16 +979,16 @@ assert_eq!(I8F8::saturating_from_str_binary(\"-101100111000\"), Ok(I8F8::min_val
 assert_eq!(U8F8::saturating_from_str_binary(\"101100111000\"), Ok(U8F8::max_value()));
 assert_eq!(U8F8::saturating_from_str_binary(\"-1\"), Ok(U8F8::from_num(0)));
 ",
-            ),
+            },
             "```
 ";
             #[inline]
             pub fn saturating_from_str_binary(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
                 FromStrRadix::saturating_from_str_radix(src, 2)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a string slice containing octal digits to a fixed-point number,
 saturating on overflow.
 
@@ -996,7 +996,7 @@ saturating on overflow.
 
 ```rust
 ",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "use fixed::types::I8F8;
 assert_eq!(I8F8::saturating_from_str_octal(\"7777\"), Ok(I8F8::max_value()));
@@ -1006,16 +1006,16 @@ assert_eq!(I8F8::saturating_from_str_octal(\"-7777\"), Ok(I8F8::min_value()));
 assert_eq!(U8F8::saturating_from_str_octal(\"7777\"), Ok(U8F8::max_value()));
 assert_eq!(U8F8::saturating_from_str_octal(\"-1\"), Ok(U8F8::from_num(0)));
 ",
-            ),
+            },
             "```
 ";
             #[inline]
             pub fn saturating_from_str_octal(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
                 FromStrRadix::saturating_from_str_radix(src, 8)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a string slice containing hexadecimal digits to a fixed-point number,
 saturating on overflow.
 
@@ -1023,7 +1023,7 @@ saturating on overflow.
 
 ```rust
 ",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "use fixed::types::I8F8;
 assert_eq!(I8F8::saturating_from_str_hex(\"FFFF\"), Ok(I8F8::max_value()));
@@ -1033,16 +1033,16 @@ assert_eq!(I8F8::saturating_from_str_hex(\"-FFFF\"), Ok(I8F8::min_value()));
 assert_eq!(U8F8::saturating_from_str_hex(\"FFFF\"), Ok(U8F8::max_value()));
 assert_eq!(U8F8::saturating_from_str_hex(\"-1\"), Ok(U8F8::from_num(0)));
 ",
-            ),
+            },
             "```
 ";
             #[inline]
             pub fn saturating_from_str_hex(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
                 FromStrRadix::saturating_from_str_radix(src, 16)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a string slice containing decimal digits to a fixed-point number,
 wrapping on overflow.
 
@@ -1050,7 +1050,7 @@ wrapping on overflow.
 
 ```rust
 ",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "use fixed::types::I8F8;
 // 9999.5 = 15.5 + 256 × n
@@ -1062,16 +1062,16 @@ assert_eq!(I8F8::wrapping_from_str(\"-9999.5\"), Ok(I8F8::from_num(-15.5)));
 assert_eq!(U8F8::wrapping_from_str(\"9999.5\"), Ok(U8F8::from_num(15.5)));
 assert_eq!(U8F8::wrapping_from_str(\"-9999.5\"), Ok(U8F8::from_num(240.5)));
 ",
-            ),
+            },
             "```
 ";
             #[inline]
             pub fn wrapping_from_str(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
                 FromStrRadix::wrapping_from_str_radix(src, 10)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a string slice containing binary digits to a fixed-point number,
 wrapping on overflow.
 
@@ -1079,7 +1079,7 @@ wrapping on overflow.
 
 ```rust
 ",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "use fixed::types::I8F8;
 let check = I8F8::from_bits(0b1110001 << (8 - 1));
@@ -1091,16 +1091,16 @@ let check = U8F8::from_bits(0b1110001 << (8 - 1));
 assert_eq!(U8F8::wrapping_from_str_binary(\"101100111000.1\"), Ok(check));
 assert_eq!(U8F8::wrapping_from_str_binary(\"-101100111000.1\"), Ok(check.wrapping_neg()));
 ",
-            ),
+            },
             "```
 ";
             #[inline]
             pub fn wrapping_from_str_binary(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
                 FromStrRadix::wrapping_from_str_radix(src, 2)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a string slice containing octal digits to a fixed-point number,
 wrapping on overflow.
 
@@ -1108,7 +1108,7 @@ wrapping on overflow.
 
 ```rust
 ",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "use fixed::types::I8F8;
 let check = I8F8::from_bits(0o1654 << (8 - 3));
@@ -1120,16 +1120,16 @@ let check = U8F8::from_bits(0o1654 << (8 - 3));
 assert_eq!(U8F8::wrapping_from_str_octal(\"7165.4\"), Ok(check));
 assert_eq!(U8F8::wrapping_from_str_octal(\"-7165.4\"), Ok(check.wrapping_neg()));
 ",
-            ),
+            },
             "```
 ";
             #[inline]
             pub fn wrapping_from_str_octal(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
                 FromStrRadix::wrapping_from_str_radix(src, 8)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a string slice containing hexadecimal digits to a fixed-point number,
 wrapping on overflow.
 
@@ -1137,7 +1137,7 @@ wrapping on overflow.
 
 ```rust
 ",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "use fixed::types::I8F8;
 let check = I8F8::from_bits(0xFFE);
@@ -1149,16 +1149,16 @@ let check = U8F8::from_bits(0xFFE);
 assert_eq!(U8F8::wrapping_from_str_hex(\"C0F.FE\"), Ok(check));
 assert_eq!(U8F8::wrapping_from_str_hex(\"-C0F.FE\"), Ok(check.wrapping_neg()));
 ",
-            ),
+            },
             "```
 ";
             #[inline]
             pub fn wrapping_from_str_hex(src: &str) -> Result<$Fixed<Frac>, ParseFixedError> {
                 FromStrRadix::wrapping_from_str_radix(src, 16)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a string slice containing decimal digits to a fixed-point number.
 
 Returns a [tuple] of the fixed-point number and a [`bool`] indicating
@@ -1169,7 +1169,7 @@ returned.
 
 ```rust
 ",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "use fixed::types::I8F8;
 assert_eq!(I8F8::overflowing_from_str(\"99.5\"), Ok((I8F8::from_num(99.5), false)));
@@ -1181,7 +1181,7 @@ assert_eq!(U8F8::overflowing_from_str(\"99.5\"), Ok((U8F8::from_num(99.5), false
 // 9999.5 = 15.5 + 256 × n
 assert_eq!(U8F8::overflowing_from_str(\"9999.5\"), Ok((U8F8::from_num(15.5), true)));
 ",
-            ),
+            },
             "```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
@@ -1193,9 +1193,9 @@ assert_eq!(U8F8::overflowing_from_str(\"9999.5\"), Ok((U8F8::from_num(15.5), tru
             ) -> Result<($Fixed<Frac>, bool), ParseFixedError> {
                 FromStrRadix::overflowing_from_str_radix(src, 10)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a string slice containing binary digits to a fixed-point number.
 
 Returns a [tuple] of the fixed-point number and a [`bool`] indicating
@@ -1206,7 +1206,7 @@ returned.
 
 ```rust
 ",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "use fixed::types::I8F8;
 let check = I8F8::from_bits(0b1110001 << (8 - 1));
@@ -1218,7 +1218,7 @@ let check = U8F8::from_bits(0b1110001 << (8 - 1));
 assert_eq!(U8F8::overflowing_from_str_binary(\"111000.1\"), Ok((check, false)));
 assert_eq!(U8F8::overflowing_from_str_binary(\"101100111000.1\"), Ok((check, true)));
 ",
-            ),
+            },
             "```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
@@ -1230,9 +1230,9 @@ assert_eq!(U8F8::overflowing_from_str_binary(\"101100111000.1\"), Ok((check, tru
             ) -> Result<($Fixed<Frac>, bool), ParseFixedError> {
                 FromStrRadix::overflowing_from_str_radix(src, 2)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a string slice containing octal digits to a fixed-point number.
 
 Returns a [tuple] of the fixed-point number and a [`bool`] indicating
@@ -1243,7 +1243,7 @@ returned.
 
 ```rust
 ",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "use fixed::types::I8F8;
 let check = I8F8::from_bits(0o1654 << (8 - 3));
@@ -1255,7 +1255,7 @@ let check = U8F8::from_bits(0o1654 << (8 - 3));
 assert_eq!(U8F8::overflowing_from_str_octal(\"165.4\"), Ok((check, false)));
 assert_eq!(U8F8::overflowing_from_str_octal(\"7165.4\"), Ok((check, true)));
 ",
-            ),
+            },
             "```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
@@ -1267,9 +1267,9 @@ assert_eq!(U8F8::overflowing_from_str_octal(\"7165.4\"), Ok((check, true)));
             ) -> Result<($Fixed<Frac>, bool), ParseFixedError> {
                 FromStrRadix::overflowing_from_str_radix(src, 8)
             }
-        );
+        }
 
-        comment!(
+        comment! {
             "Converts a string slice containing hexadecimal digits to a fixed-point number.
 
 Returns a [tuple] of the fixed-point number and a [`bool`] indicating
@@ -1280,7 +1280,7 @@ returned.
 
 ```rust
 ",
-            if_signed_unsigned!(
+            if_signed_unsigned! {
                 $Signedness,
                 "use fixed::types::I8F8;
 let check = I8F8::from_bits(0xFFE);
@@ -1292,7 +1292,7 @@ let check = U8F8::from_bits(0xFFE);
 assert_eq!(U8F8::overflowing_from_str_hex(\"F.FE\"), Ok((check, false)));
 assert_eq!(U8F8::overflowing_from_str_hex(\"C0F.FE\"), Ok((check, true)));
 ",
-            ),
+            },
             "```
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
@@ -1304,6 +1304,6 @@ assert_eq!(U8F8::overflowing_from_str_hex(\"C0F.FE\"), Ok((check, true)));
             ) -> Result<($Fixed<Frac>, bool), ParseFixedError> {
                 FromStrRadix::overflowing_from_str_radix(src, 16)
             }
-        );
+        }
     };
 }

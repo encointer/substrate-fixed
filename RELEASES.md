@@ -5,6 +5,12 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.4.4 (unreleased)
+==========================
+
+  * Bug fix: rounding could produce bad output for `Binary`, `Octal`,
+    `LowerHex` and `UpperHex`.
+
 Version 0.4.3 (2019-08-20)
 ==========================
 

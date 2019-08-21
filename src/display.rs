@@ -657,5 +657,15 @@ mod tests {
         assert_eq!(format!("{:.0o}", i), "376");
         assert_eq!(format!("{:X}", i), "FE.8");
         assert_eq!(format!("{:.0X}", i), "FE");
+
+        let i = U8F8::from_bits(0xFFDD);
+        assert_eq!(format!("{}", i), "254.863");
+        assert_eq!(format!("{:.1}", i), "254.9");
+        assert_eq!(format!("{:b}", i), "11111111.11011101");
+        assert_eq!(format!("{:.4b}", i), "11111111.1110");
+        assert_eq!(format!("{:o}", i), "375.672");
+        assert_eq!(format!("{:.1o}", i), "375.7");
+        assert_eq!(format!("{:X}", i), "FF.DD");
+        assert_eq!(format!("{:.1X}", i), "FF.E");
     }
 }

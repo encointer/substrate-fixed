@@ -58,6 +58,11 @@ Various conversion methods are available:
 
 ## What’s new
 
+### Version 0.4.4 news (unreleased)
+
+  * Bug fix: rounding could produce bad output for [`Binary`],
+    [`Octal`], [`LowerHex`] and [`UpperHex`].
+
 ### Version 0.4.3 news (2019-08-20)
 
   * The [*fixed* crate] now requires rustc version 1.34.0 or later.

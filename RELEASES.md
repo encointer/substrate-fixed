@@ -10,6 +10,8 @@ Version 0.4.4 (unreleased)
 
   * Bug fix: rounding could produce bad output for `Binary`, `Octal`,
     `LowerHex` and `UpperHex`.
+  * The following methods are now `const` functions: `abs`,
+    `wrapping_abs`, `overflowing_abs`.
 
 Version 0.4.3 (2019-08-20)
 ==========================

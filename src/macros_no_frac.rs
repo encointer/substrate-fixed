@@ -192,7 +192,7 @@ assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
 
             if_signed! {
                 $Signedness;
-                delegate!(
+                comment!(
                     "Returns the absolute value.
 
 # Examples
@@ -206,8 +206,16 @@ assert_eq!(five.abs(), five);
 assert_eq!(minus_five.abs(), five);
 ```
 ";
-                    $Fixed => fn abs(self)
+                    #[inline]
+                    pub const fn abs(self) -> $Fixed<Frac> {
+                        Self::from_bits((self.to_bits() ^ self.repeat_sign()) - self.repeat_sign())
+                    }
                 );
+
+                #[inline]
+                const fn repeat_sign(self) -> $Inner {
+                    self.to_bits() >> (<$Inner>::NBITS - 1)
+                }
             }
 
             comment!(
@@ -777,7 +785,7 @@ assert_eq!((Fix::from_num(4)).wrapping_shr(3 + ", $s_nbits, "), Fix::from_num(1)
 
             if_signed! {
                 $Signedness;
-                delegate!(
+                comment!(
                     "Wrapping absolute value. Returns the absolute value, wrapping on overflow.
 
 Overflow can only occur when trying to find the absolute value of the minimum value.
@@ -791,7 +799,12 @@ assert_eq!(Fix::from_num(-5).wrapping_abs(), Fix::from_num(5));
 assert_eq!(Fix::min_value().wrapping_abs(), Fix::min_value());
 ```
 ";
-                    $Fixed => fn wrapping_abs(self)
+                    #[inline]
+                    pub const fn wrapping_abs(self) -> $Fixed<Frac> {
+                        Self::from_bits(
+                            (self.to_bits() ^ self.repeat_sign()).wrapping_sub(self.repeat_sign()),
+                        )
+                    }
                 );
             }
 
@@ -1087,8 +1100,9 @@ assert_eq!(Fix::min_value().overflowing_abs(), (Fix::min_value(), true));
 [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
                     #[inline]
-                    pub fn overflowing_abs(self) -> ($Fixed<Frac>, bool) {
-                        let (ans, o) = self.to_bits().overflowing_abs();
+                    pub const fn overflowing_abs(self) -> ($Fixed<Frac>, bool) {
+                        let (ans, o) = (self.to_bits() ^ self.repeat_sign())
+                            .overflowing_sub(self.repeat_sign());
                         (Self::from_bits(ans), o)
                     }
                 );

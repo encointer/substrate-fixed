@@ -62,6 +62,12 @@ Various conversion methods are available:
 
   * Bug fix: rounding could produce bad output for [`Binary`],
     [`Octal`], [`LowerHex`] and [`UpperHex`].
+  * The following methods are now `const` functions: [`abs`],
+    [`wrapping_abs`], [`overflowing_abs`].
+
+[`abs`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.abs
+[`overflowing_abs`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.overflowing_abs
+[`wrapping_abs`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.wrapping_abs
 
 ### Version 0.4.3 news (2019-08-20)
 

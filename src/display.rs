@@ -482,6 +482,7 @@ impl Mul10 for u128 {
     }
 }
 
+#[allow(clippy::cognitive_complexity)]
 #[allow(clippy::float_cmp)]
 #[cfg(test)]
 mod tests {
@@ -637,7 +638,7 @@ mod tests {
     }
 
     #[test]
-    fn tie_to_even() {
+    fn rounding() {
         let i = U8F8::from_bits(0xFF80);
         assert_eq!(format!("{}", i), "255.5");
         assert_eq!(format!("{:.0}", i), "256");
@@ -658,14 +659,40 @@ mod tests {
         assert_eq!(format!("{:X}", i), "FE.8");
         assert_eq!(format!("{:.0X}", i), "FE");
 
-        let i = U8F8::from_bits(0xFFDD);
-        assert_eq!(format!("{}", i), "254.863");
-        assert_eq!(format!("{:.1}", i), "254.9");
-        assert_eq!(format!("{:b}", i), "11111111.11011101");
-        assert_eq!(format!("{:.4b}", i), "11111111.1110");
-        assert_eq!(format!("{:o}", i), "375.672");
-        assert_eq!(format!("{:.1o}", i), "375.7");
-        assert_eq!(format!("{:X}", i), "FF.DD");
-        assert_eq!(format!("{:.1X}", i), "FF.E");
+        let i = U8F8::from_bits(0xDDDD);
+        assert_eq!(format!("{}", i), "221.863");
+        assert_eq!(format!("{:.0}", i), "222");
+        assert_eq!(format!("{:.1}", i), "221.9");
+        assert_eq!(format!("{:.2}", i), "221.86");
+        assert_eq!(format!("{:.3}", i), "221.863");
+        assert_eq!(format!("{:.4}", i), "221.8633");
+        assert_eq!(format!("{:.5}", i), "221.86328");
+        assert_eq!(format!("{:.6}", i), "221.863281");
+        assert_eq!(format!("{:.7}", i), "221.8632812");
+        assert_eq!(format!("{:.8}", i), "221.86328125");
+        assert_eq!(format!("{:.9}", i), "221.863281250");
+        assert_eq!(format!("{:b}", i), "11011101.11011101");
+        assert_eq!(format!("{:.0b}", i), "11011110");
+        assert_eq!(format!("{:.1b}", i), "11011110.0");
+        assert_eq!(format!("{:.2b}", i), "11011101.11");
+        assert_eq!(format!("{:.3b}", i), "11011101.111");
+        assert_eq!(format!("{:.4b}", i), "11011101.1110");
+        assert_eq!(format!("{:.5b}", i), "11011101.11100");
+        assert_eq!(format!("{:.6b}", i), "11011101.110111");
+        assert_eq!(format!("{:.7b}", i), "11011101.1101110");
+        assert_eq!(format!("{:.8b}", i), "11011101.11011101");
+        assert_eq!(format!("{:.9b}", i), "11011101.110111010");
+        assert_eq!(format!("{:o}", i), "335.672");
+        assert_eq!(format!("{:.0o}", i), "336");
+        assert_eq!(format!("{:.1o}", i), "335.7");
+        assert_eq!(format!("{:.2o}", i), "335.67");
+        assert_eq!(format!("{:.3o}", i), "335.672");
+        assert_eq!(format!("{:.4o}", i), "335.6720");
+        assert_eq!(format!("{:X}", i), "DD.DD");
+        assert_eq!(format!("{:.0X}", i), "DE");
+        assert_eq!(format!("{:.0X}", i), "DE");
+        assert_eq!(format!("{:.1X}", i), "DD.E");
+        assert_eq!(format!("{:.2X}", i), "DD.DD");
+        assert_eq!(format!("{:.3X}", i), "DD.DD0");
     }
 }

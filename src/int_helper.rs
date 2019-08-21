@@ -42,7 +42,6 @@ where
     const MSB: Self;
     const ZERO: Self;
 
-    fn asf64(self) -> f64;
     fn is_negative(self) -> bool;
     fn is_odd(self) -> bool;
     fn wrapping_neg(self) -> Self;
@@ -79,7 +78,6 @@ macro_rules! sealed_int {
             const MSB: $Int = 1 << (Self::NBITS - 1);
             const ZERO: $Int = 0;
 
-            fn asf64(self) -> f64 { self as f64 }
             #[inline]
             fn wrapping_neg(self) -> $Int {
                 self.wrapping_neg()

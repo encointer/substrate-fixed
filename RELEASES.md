@@ -10,8 +10,9 @@ Version 0.4.4 (unreleased)
 
   * Bug fix: rounding could produce bad output for `Binary`, `Octal`,
     `LowerHex` and `UpperHex`.
-  * The following methods are now `const` functions: `abs`,
-    `wrapping_abs`, `overflowing_abs`.
+  * The following methods are now `const` functions:
+      * `abs`, `wrapping_abs`, `overflowing_abs`
+      * `is_power_of_two`
 
 Version 0.4.3 (2019-08-20)
 ==========================
@@ -29,11 +30,11 @@ Version 0.4.3 (2019-08-20)
     an implementation of `FromStr`.
   * The following methods are now `const` functions:
       * `min_value`, `max_value`, `from_bits`, `to_bits`
-	  * `count_ones`, `count_zeros`, `leading_zeros`, `trailing_zeros`
+      * `count_ones`, `count_zeros`, `leading_zeros`, `trailing_zeros`
         `rotate_left`, `rotate_right`
-	  * `wrapping_neg`, `wrapping_add`, `wrapping_sub`,
+      * `wrapping_neg`, `wrapping_add`, `wrapping_sub`,
         `wrapping_mul_int`, `wrapping_shl`, `wrapping_shr`
-	  * `overflowing_neg`, `overflowing_add`, `overflowing_sub`,
+      * `overflowing_neg`, `overflowing_add`, `overflowing_sub`,
         `overflowing_mul_int`, `overflowing_shl`, `overflowing_shr`
       * `is_positive`, `is_negative`
   * The associated constants `INT_NBITS` and `FRAC_NBITS` were added.

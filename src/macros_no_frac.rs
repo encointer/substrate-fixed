@@ -1130,8 +1130,9 @@ assert!(half.is_power_of_two());
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 ";
                     #[inline]
-                    pub fn is_power_of_two(self) -> bool {
-                        self.to_bits().is_power_of_two()
+                    pub const fn is_power_of_two(self) -> bool {
+                        (self.to_bits().wrapping_sub(1) & self.to_bits() == 0)
+                            & (self.to_bits() != 0)
                     }
                 }
 

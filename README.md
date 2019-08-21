@@ -62,10 +62,12 @@ Various conversion methods are available:
 
   * Bug fix: rounding could produce bad output for [`Binary`],
     [`Octal`], [`LowerHex`] and [`UpperHex`].
-  * The following methods are now `const` functions: [`abs`],
-    [`wrapping_abs`], [`overflowing_abs`].
+  * The following methods are now `const` functions:
+      * [`abs`], [`wrapping_abs`], [`overflowing_abs`]
+      * [`is_power_of_two`]
 
 [`abs`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.abs
+[`is_power_of_two`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedU32.html#method.is_power_of_two
 [`overflowing_abs`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.overflowing_abs
 [`wrapping_abs`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.wrapping_abs
 
@@ -84,11 +86,11 @@ Various conversion methods are available:
     an implementation of [`FromStr`].
   * The following methods are now `const` functions:
       * [`min_value`], [`max_value`], [`from_bits`], [`to_bits`]
-	  * [`count_ones`], [`count_zeros`], [`leading_zeros`],
+      * [`count_ones`], [`count_zeros`], [`leading_zeros`],
         [`trailing_zeros`] [`rotate_left`], [`rotate_right`]
-	  * [`wrapping_neg`], [`wrapping_add`], [`wrapping_sub`],
+      * [`wrapping_neg`], [`wrapping_add`], [`wrapping_sub`],
         [`wrapping_mul_int`], [`wrapping_shl`], [`wrapping_shr`]
-	  * [`overflowing_neg`], [`overflowing_add`], [`overflowing_sub`],
+      * [`overflowing_neg`], [`overflowing_add`], [`overflowing_sub`],
         [`overflowing_mul_int`], [`overflowing_shl`],
         [`overflowing_shr`]
       * [`is_positive`], [`is_negative`]

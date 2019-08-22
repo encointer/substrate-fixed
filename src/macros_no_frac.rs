@@ -192,6 +192,74 @@ assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
 
             if_signed! {
                 $Signedness;
+                delegate! {
+                    "Returns [`true`][`bool`] if the number is > 0.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert!(Fix::from_num(5).is_positive());
+assert!(!Fix::from_num(0).is_positive());
+assert!(!Fix::from_num(-5).is_positive());
+```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+";
+                    $Fixed => const fn is_positive(self) -> bool
+                }
+
+                delegate! {
+                    "Returns [`true`][`bool`] if the number is < 0.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert!(!Fix::from_num(5).is_negative());
+assert!(!Fix::from_num(0).is_negative());
+assert!(Fix::from_num(-5).is_negative());
+```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+";
+                    $Fixed => const fn is_negative(self) -> bool
+                }
+            }
+
+            if_unsigned! {
+                $Signedness;
+                comment! {
+                    "Returns [`true`][`bool`] if the fixed-point number is
+2<sup><i>k</i></sup> for some integer <i>k</i>.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+// 3/8 is 0.0110
+let three_eights = Fix::from_bits(0b0110);
+// 1/2 is 0.1000
+let half = Fix::from_bits(0b1000);
+assert!(!three_eights.is_power_of_two());
+assert!(half.is_power_of_two());
+```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+";
+                    #[inline]
+                    pub const fn is_power_of_two(self) -> bool {
+                        (self.to_bits().wrapping_sub(1) & self.to_bits() == 0)
+                            & (self.to_bits() != 0)
+                    }
+                }
+            }
+
+            if_signed! {
+                $Signedness;
                 comment! {
                     "Returns the absolute value.
 
@@ -215,6 +283,35 @@ assert_eq!(minus_five.abs(), five);
                 #[inline]
                 const fn repeat_sign(self) -> $Inner {
                     self.to_bits() >> (<$Inner>::NBITS - 1)
+                }
+            }
+
+            if_unsigned! {
+                $Signedness;
+                delegate! {
+                    "Returns the smallest power of two ≥ `self`.
+
+# Panics
+
+When debug assertions are enabled, panics if the next power of two is
+too large to represent. When debug assertions are not enabled, zero
+can be returned, but it is not considered a breaking change if in the
+future it panics.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+// 3/8 is 0.0110
+let three_eights = Fix::from_bits(0b0110);
+// 1/2 is 0.1000
+let half = Fix::from_bits(0b1000);
+assert_eq!(three_eights.next_power_of_two(), half);
+assert_eq!(half.next_power_of_two(), half);
+```
+";
+                    $Fixed => fn next_power_of_two(self)
                 }
             }
 
@@ -446,6 +543,34 @@ assert_eq!(Fix::min_value().checked_abs(), None);
                     #[inline]
                     pub fn checked_abs(self) -> Option<$Fixed<Frac>> {
                         self.to_bits().checked_abs().map(Self::from_bits)
+                    }
+                }
+            }
+
+            if_unsigned! {
+                $Signedness;
+                comment! {
+                    "Returns the smallest power of two ≥ `self`, or
+[`None`] if the next power of two is too large to represent.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+// 3/8 is 0.0110
+let three_eights = Fix::from_bits(0b0110);
+// 1/2 is 0.1000
+let half = Fix::from_bits(0b1000);
+assert_eq!(three_eights.checked_next_power_of_two(), Some(half));
+assert!(Fix::max_value().checked_next_power_of_two().is_none());
+```
+
+[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+";
+                    #[inline]
+                    pub fn checked_next_power_of_two(self) -> Option<$Fixed<Frac>> {
+                        self.to_bits().checked_next_power_of_two().map(Self::from_bits)
                     }
                 }
             }
@@ -1105,125 +1230,6 @@ assert_eq!(Fix::min_value().overflowing_abs(), (Fix::min_value(), true));
                             .overflowing_sub(self.repeat_sign());
                         (Self::from_bits(ans), o)
                     }
-                }
-            }
-
-            if_unsigned! {
-                $Signedness;
-                comment! {
-                    "Returns [`true`][`bool`] if the fixed-point number is
-2<sup><i>k</i></sup> for some integer <i>k</i>.
-
-# Examples
-
-```rust
-use fixed::{types::extra::U4, ", $s_fixed, "};
-type Fix = ", $s_fixed, "<U4>;
-// 3/8 is 0.0110
-let three_eights = Fix::from_bits(0b0110);
-// 1/2 is 0.1000
-let half = Fix::from_bits(0b1000);
-assert!(!three_eights.is_power_of_two());
-assert!(half.is_power_of_two());
-```
-
-[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
-";
-                    #[inline]
-                    pub const fn is_power_of_two(self) -> bool {
-                        (self.to_bits().wrapping_sub(1) & self.to_bits() == 0)
-                            & (self.to_bits() != 0)
-                    }
-                }
-
-                delegate! {
-                    "Returns the smallest power of two ≥ `self`.
-
-# Panics
-
-When debug assertions are enabled, panics if the next power of two is
-too large to represent. When debug assertions are not enabled, zero
-can be returned, but it is not considered a breaking change if in the
-future it panics.
-
-# Examples
-
-```rust
-use fixed::{types::extra::U4, ", $s_fixed, "};
-type Fix = ", $s_fixed, "<U4>;
-// 3/8 is 0.0110
-let three_eights = Fix::from_bits(0b0110);
-// 1/2 is 0.1000
-let half = Fix::from_bits(0b1000);
-assert_eq!(three_eights.next_power_of_two(), half);
-assert_eq!(half.next_power_of_two(), half);
-```
-";
-                    $Fixed => fn next_power_of_two(self)
-                }
-
-                comment! {
-                    "Returns the smallest power of two ≥ `self`, or
-[`None`] if the next power of two is too large to represent.
-
-# Examples
-
-```rust
-use fixed::{types::extra::U4, ", $s_fixed, "};
-type Fix = ", $s_fixed, "<U4>;
-// 3/8 is 0.0110
-let three_eights = Fix::from_bits(0b0110);
-// 1/2 is 0.1000
-let half = Fix::from_bits(0b1000);
-assert_eq!(three_eights.checked_next_power_of_two(), Some(half));
-assert!(Fix::max_value().checked_next_power_of_two().is_none());
-```
-
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
-";
-                    #[inline]
-                    pub fn checked_next_power_of_two(self) -> Option<$Fixed<Frac>> {
-                        self.to_bits().checked_next_power_of_two().map(Self::from_bits)
-                    }
-                }
-            }
-
-            if_signed! {
-                $Signedness;
-                delegate! {
-                    "Returns [`true`][`bool`] if the number is > 0.
-
-# Examples
-
-```rust
-use fixed::{types::extra::U4, ", $s_fixed, "};
-type Fix = ", $s_fixed, "<U4>;
-assert!(Fix::from_num(5).is_positive());
-assert!(!Fix::from_num(0).is_positive());
-assert!(!Fix::from_num(-5).is_positive());
-```
-
-[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
-";
-                    $Fixed => const fn is_positive(self) -> bool
-                }
-
-                delegate! {
-                    "Returns [`true`][`bool`] if the number is < 0.
-
-# Examples
-
-```rust
-use fixed::{types::extra::U4, ", $s_fixed, "};
-type Fix = ", $s_fixed, "<U4>;
-assert!(!Fix::from_num(5).is_negative());
-assert!(!Fix::from_num(0).is_negative());
-assert!(Fix::from_num(-5).is_negative());
-```
-
-[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
-";
-                    $Fixed => const fn is_negative(self) -> bool
                 }
             }
         }

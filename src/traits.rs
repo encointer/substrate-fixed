@@ -204,7 +204,7 @@ pub trait Fixed
 where
     Self: Copy + Default + Hash + Ord,
     Self: Debug + Display + Binary + Octal + LowerHex + UpperHex + FromStr,
-    Self: FromFixed + ToFixed + FixedOptionalFeatures,
+    Self: FromFixed + ToFixed,
     Self: Add<Output = Self> + AddAssign + Sub<Output = Self> + SubAssign,
     Self: Mul<Output = Self> + MulAssign + Div<Output = Self> + DivAssign,
     Self: Mul<<Self as Fixed>::Bits, Output = Self> + MulAssign<<Self as Fixed>::Bits>,
@@ -218,6 +218,7 @@ where
     Self: PartialOrd<u8> + PartialOrd<u16> + PartialOrd<u32>,
     Self: PartialOrd<u64> + PartialOrd<u128> + PartialOrd<usize>,
     Self: PartialOrd<f32> + PartialOrd<f64>,
+    Self: FixedOptionalFeatures,
     Self: Sealed,
 {
     /// The primitive integer underlying type.
@@ -412,14 +413,14 @@ where
     /// Returns the fractional part.
     fn frac(self) -> Self;
 
+    /// Rounds to the next integer towards 0.
+    fn round_to_zero(self) -> Self;
+
     /// Rounds to the next integer towards +∞.
     fn ceil(self) -> Self;
 
     /// Rounds to the next integer towards −∞.
     fn floor(self) -> Self;
-
-    /// Rounds to the next integer towards 0.
-    fn round_to_zero(self) -> Self;
 
     /// Rounds to the nearest integer, with ties rounded away from zero.
     fn round(self) -> Self;
@@ -930,6 +931,18 @@ where
 
 /// This trait provides methods common to all signed fixed-point numbers.
 pub trait FixedSigned: Fixed + Neg<Output = Self> {
+    /// Returns [`true`][`bool`] if the number is > 0.
+    ///
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
+    fn is_positive(self) -> bool;
+
+    /// Returns [`true`][`bool`] if the number is < 0.
+    ///
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
+    fn is_negative(self) -> bool;
+
     /// Returns the absolute value.
     fn abs(self) -> Self;
 
@@ -976,18 +989,6 @@ pub trait FixedSigned: Fixed + Neg<Output = Self> {
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
     fn overflowing_abs(self) -> (Self, bool);
-
-    /// Returns [`true`][`bool`] if the number is > 0.
-    ///
-    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
-    /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
-    fn is_positive(self) -> bool;
-
-    /// Returns [`true`][`bool`] if the number is < 0.
-    ///
-    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
-    /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
-    fn is_negative(self) -> bool;
 }
 
 /// This trait provides methods common to all unsigned fixed-point numbers.

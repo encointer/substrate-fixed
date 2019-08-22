@@ -63,8 +63,8 @@ Various conversion methods are available:
   * Bug fix: rounding could produce bad output for [`Binary`],
     [`Octal`], [`LowerHex`] and [`UpperHex`].
   * The following methods are now `const` functions:
-      * [`abs`], [`wrapping_abs`], [`overflowing_abs`]
-      * [`is_power_of_two`]
+    [`is_power_of_two`], [`abs`], [`wrapping_abs`],
+    [`overflowing_abs`]
   * The method [`round_to_zero`] was added.
   * The method [`round_ties_to_even`] and its checked variants were
     added.

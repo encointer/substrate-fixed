@@ -90,7 +90,10 @@ depending on the crate’s [optional features].
 /// This trait provides methods common to all fixed-point numbers.
 ///
 /// It can be helpful when writing generic code that makes use of
-/// fixed-point numbers.
+/// fixed-point numbers. For methods only available on signed
+/// fixed-point numbers, use the [`FixedSigned`] trait instead, and
+/// for methods only available on unsigned fixed-point numbers, use
+/// [`FixedUnsigned`].
 ///
 /// This trait is sealed and cannot be implemented for more types; it
 /// is implemented for [`FixedI8`], [`FixedI16`], [`FixedI32`],
@@ -189,11 +192,13 @@ depending on the crate’s [optional features].
 /// [`FixedI32`]: ../struct.FixedI32.html
 /// [`FixedI64`]: ../struct.FixedI64.html
 /// [`FixedI8`]: ../struct.FixedI8.html
+/// [`FixedSigned`]: trait.FixedSigned.html
 /// [`FixedU128`]: ../struct.FixedU128.html
 /// [`FixedU16`]: ../struct.FixedU16.html
 /// [`FixedU32`]: ../struct.FixedU32.html
 /// [`FixedU64`]: ../struct.FixedU64.html
 /// [`FixedU8`]: ../struct.FixedU8.html
+/// [`FixedUnsigned`]: trait.FixedUnsigned.html
 /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
 /// [`TryFrom`]: https://doc.rust-lang.org/nightly/std/convert/trait.TryFrom.html
 /// [`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
@@ -930,6 +935,20 @@ where
 }
 
 /// This trait provides methods common to all signed fixed-point numbers.
+///
+/// Methods common to all fixed-point numbers including unsigned
+/// fixed-point numbers are provided by the [`Fixed`] supertrait.
+///
+/// This trait is sealed and cannot be implemented for more types; it
+/// is implemented for [`FixedI8`], [`FixedI16`], [`FixedI32`],
+/// [`FixedI64`], and [`FixedI128`].
+///
+/// [`FixedI128`]: ../struct.FixedI128.html
+/// [`FixedI16`]: ../struct.FixedI16.html
+/// [`FixedI32`]: ../struct.FixedI32.html
+/// [`FixedI64`]: ../struct.FixedI64.html
+/// [`FixedI8`]: ../struct.FixedI8.html
+/// [`Fixed`]: trait.Fixed.html
 pub trait FixedSigned: Fixed + Neg<Output = Self> {
     /// Returns [`true`][`bool`] if the number is > 0.
     ///
@@ -992,6 +1011,20 @@ pub trait FixedSigned: Fixed + Neg<Output = Self> {
 }
 
 /// This trait provides methods common to all unsigned fixed-point numbers.
+///
+/// Methods common to all fixed-point numbers including signed
+/// fixed-point numbers are provided by the [`Fixed`] supertrait.
+///
+/// This trait is sealed and cannot be implemented for more types; it
+/// is implemented for [`FixedU8`], [`FixedU16`], [`FixedU32`],
+/// [`FixedU64`], and [`FixedU128`].
+///
+/// [`FixedU128`]: ../struct.FixedU128.html
+/// [`FixedU16`]: ../struct.FixedU16.html
+/// [`FixedU32`]: ../struct.FixedU32.html
+/// [`FixedU64`]: ../struct.FixedU64.html
+/// [`FixedU8`]: ../struct.FixedU8.html
+/// [`Fixed`]: trait.Fixed.html
 pub trait FixedUnsigned: Fixed {
     /// Returns [`true`][`bool`] if the fixed-point number is
     /// 2<sup><i>k</i></sup> for some integer <i>k</i>.

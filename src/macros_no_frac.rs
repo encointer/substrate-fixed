@@ -296,7 +296,8 @@ assert_eq!(minus_five.abs(), five);
 When debug assertions are enabled, panics if the next power of two is
 too large to represent. When debug assertions are not enabled, zero
 can be returned, but it is not considered a breaking change if in the
-future it panics.
+future it panics; if this is not desirable use
+[`checked_next_power_of_two`] instead.
 
 # Examples
 
@@ -310,6 +311,8 @@ let half = Fix::from_bits(0b1000);
 assert_eq!(three_eights.next_power_of_two(), half);
 assert_eq!(half.next_power_of_two(), half);
 ```
+
+[`checked_next_power_of_two`]: #method.checked_next_power_of_two
 ";
                     $Fixed => fn next_power_of_two(self)
                 }

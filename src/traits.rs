@@ -19,7 +19,7 @@ This module contains traits.
 
 use crate::{
     helpers::{FloatHelper, FloatKind, FromFloatHelper, IntHelper, Sealed, Widest},
-    types::extra::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
+    types::extra::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8, Unsigned},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8, ParseFixedError,
 };
@@ -228,6 +228,16 @@ where
 {
     /// The primitive integer underlying type.
     type Bits;
+
+    /// The number of fractional bits.
+    ///
+    /// <code>&lt;F as [Fixed]&gt;::Frac::[U32]</code> is equivalent to
+    /// <code>&lt;F as [Fixed]&gt;::[frac_nbits][`frac_nbits`]()</code>.
+    ///
+    /// [Fixed]: trait.Fixed.html
+    /// [U32]: ../types/extra/trait.Unsigned.html#associatedconstant.U32
+    /// [`frac_nbits`]: #tymethod.frac_nbits
+    type Frac: Unsigned;
 
     /// Returns the smallest value that can be represented.
     fn min_value() -> Self;
@@ -1452,6 +1462,7 @@ macro_rules! impl_fixed {
 
         impl<Frac: $LeEqU> Fixed for $Fixed<Frac> {
             type Bits = $Bits;
+            type Frac = Frac;
             trait_delegate! { fn min_value() -> Self }
             trait_delegate! { fn max_value() -> Self }
             trait_delegate! { fn int_nbits() -> u32 }

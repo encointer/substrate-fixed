@@ -19,16 +19,19 @@ macro_rules! fixed_round {
             "Returns the integer part.
 
 ",
-            if_signed_else_empty_str! {
+            if_signed_unsigned! {
                 $Signedness,
-                "Note that since the numbers are stored in two’s
+                concat!(
+                    "Note that since the numbers are stored in two’s
 complement, negative numbers with non-zero fractional parts will be
 rounded towards −∞, except in the case where there are no integer
-bits, that is `", $s_fixed, "<U", $s_nbits, ">`, where the return value is always zero.
-
-",
+bits, that is `", $s_fixed, "<U", $s_nbits, ">`, where the return value is always zero.",
+                ),
+                "Note that for unsigned numbers, this is equivalent to [`floor`].",
             },
-            "# Examples
+            "
+
+# Examples
 
 ```rust
 use fixed::{types::extra::U4, ", $s_fixed, "};
@@ -48,7 +51,13 @@ assert_eq!((-two_and_quarter).int(), -three);
 ",
             },
             "```
-";
+",
+            if_unsigned_else_empty_str! {
+                $Signedness,
+                "
+[`floor`]: #method.floor
+"
+            };
             #[inline]
             pub fn int(self) -> $Fixed<Frac> {
                 Self::from_bits(self.to_bits() & Self::INT_MASK)
@@ -170,6 +179,56 @@ assert_eq!(Fix::from_num(2.5).floor(), Fix::from_num(2));
                 debug_assert!(!overflow, "overflow");
                 let _ = overflow;
                 floor
+            }
+        }
+
+        comment! {
+            "Rounds to the next integer towards 0.
+
+",
+            if_unsigned_else_empty_str! {
+                $Signedness,
+                "Note that for unsigned numbers, this is equivalent to [`floor`].
+
+",
+            },
+            "# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(Fix::from_num(2.1).round_to_zero(), Fix::from_num(2));
+assert_eq!(Fix::from_num(2.9).round_to_zero(), Fix::from_num(2));
+",
+            if_signed_else_empty_str! {
+                $Signedness,
+                "assert_eq!(Fix::from_num(-2.1).round_to_zero(), Fix::from_num(-2));
+assert_eq!(Fix::from_num(-2.9).round_to_zero(), Fix::from_num(-2));
+",
+            },
+            "```
+",
+            if_unsigned_else_empty_str! {
+                $Signedness,
+                "
+[`floor`]: #method.floor
+"
+            };
+            #[inline]
+            pub fn round_to_zero(self) -> $Fixed<Frac> {
+                if_signed! {
+                    $Signedness;
+                    if self.is_negative() {
+                        let int = self.int();
+                        let increment = Self::from_bits(Self::INT_LSB);
+                        if Self::INT_NBITS == 1 {
+                            // increment is -1, so subtract it
+                            return int - increment;
+                        }
+                        return int + increment;
+                    }
+                }
+                self.int()
             }
         }
 
@@ -653,6 +712,7 @@ assert_eq!(Fix::from_num(2.5).overflowing_ceil(), (Fix::from_num(3), false));
                 if_signed! {
                     $Signedness;
                     if Self::INT_NBITS == 1 {
+                        // increment is -1, so subtract it
                         return int.overflowing_sub(increment);
                     }
                 }

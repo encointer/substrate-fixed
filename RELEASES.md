@@ -13,6 +13,7 @@ Version 0.4.4 (unreleased)
   * The following methods are now `const` functions:
       * `abs`, `wrapping_abs`, `overflowing_abs`
       * `is_power_of_two`
+  * The method `round_to_zero` was added.
   * The method `round_ties_to_even` and its checked variants were
     added.
 

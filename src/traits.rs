@@ -418,6 +418,9 @@ where
     /// Rounds to the next integer towards −∞.
     fn floor(self) -> Self;
 
+    /// Rounds to the next integer towards 0.
+    fn round_to_zero(self) -> Self;
+
     /// Rounds to the nearest integer, with ties rounded away from zero.
     fn round(self) -> Self;
 
@@ -1474,6 +1477,7 @@ macro_rules! impl_fixed {
             trait_delegate! { fn frac(self) -> Self }
             trait_delegate! { fn ceil(self) -> Self }
             trait_delegate! { fn floor(self) -> Self }
+            trait_delegate! { fn round_to_zero(self) -> Self }
             trait_delegate! { fn round(self) -> Self }
             trait_delegate! { fn round_ties_to_even(self) -> Self }
             trait_delegate! { fn checked_ceil(self) -> Option<Self> }

@@ -47,6 +47,14 @@ macro_rules! if_signed_else_empty_str {
         ""
     };
 }
+macro_rules! if_unsigned_else_empty_str {
+    (Signed, $($unsigned:tt)*) => {
+        ""
+    };
+    (Unsigned, $($unsigned:tt)*) => {
+        concat!($($unsigned)*)
+    };
+}
 
 macro_rules! doc_comment {
     ($comment:expr; $($tt:tt)*) => {

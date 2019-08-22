@@ -111,12 +111,11 @@ it panics; if wrapping is required use [`wrapping_ceil`] instead.
 ```rust
 use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
-let two_half = Fix::from_num(5) / 2;
-assert_eq!(two_half.ceil(), Fix::from_num(3));
+assert_eq!(Fix::from_num(2.5).ceil(), Fix::from_num(3));
 ",
             if_signed_else_empty_str! {
                 $Signedness,
-                "assert_eq!((-two_half).ceil(), Fix::from_num(-2));
+                "assert_eq!(Fix::from_num(-2.5).ceil(), Fix::from_num(-2));
 ",
             },
             "```
@@ -154,12 +153,11 @@ Overflow can only occur when there are zero integer bits.
 ```rust
 use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
-let two_half = Fix::from_num(5) / 2;
-assert_eq!(two_half.floor(), Fix::from_num(2));
+assert_eq!(Fix::from_num(2.5).floor(), Fix::from_num(2));
 ",
             if_signed_else_empty_str! {
                 $Signedness,
-                "assert_eq!((-two_half).floor(), Fix::from_num(-3));
+                "assert_eq!(Fix::from_num(-2.5).floor(), Fix::from_num(-3));
 ",
             },
             "```
@@ -191,12 +189,11 @@ it panics; if wrapping is required use [`wrapping_round`] instead.
 ```rust
 use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
-let two_half = Fix::from_num(5) / 2;
-assert_eq!(two_half.round(), Fix::from_num(3));
+assert_eq!(Fix::from_num(2.5).round(), Fix::from_num(3));
 ",
             if_signed_else_empty_str! {
                 $Signedness,
-                "assert_eq!((-two_half).round(), Fix::from_num(-3));
+                "assert_eq!(Fix::from_num(-2.5).round(), Fix::from_num(-3));
 ",
             },
             "```
@@ -252,12 +249,11 @@ returning [`None`] on overflow.
 ```rust
 use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
-let two_half = Fix::from_num(5) / 2;
-assert_eq!(two_half.checked_ceil(), Some(Fix::from_num(3)));
+assert_eq!(Fix::from_num(2.5).checked_ceil(), Some(Fix::from_num(3)));
 ",
             if_signed_else_empty_str! {
                 $Signedness,
-                "assert_eq!((-two_half).checked_ceil(), Some(Fix::from_num(-2)));
+                "assert_eq!(Fix::from_num(-2.5).checked_ceil(), Some(Fix::from_num(-2)));
 ",
             },
             "assert!(Fix::max_value().checked_ceil().is_none());
@@ -299,12 +295,11 @@ use fixed::{",
             },
             "};
 type Fix = ", $s_fixed, "<U4>;
-let two_half = Fix::from_num(5) / 2;
-assert_eq!(two_half.checked_floor(), Some(Fix::from_num(2)));
+assert_eq!(Fix::from_num(2.5).checked_floor(), Some(Fix::from_num(2)));
 ",
             if_signed_else_empty_str! {
                 $Signedness,
-                "assert_eq!((-two_half).checked_floor(), Some(Fix::from_num(-3)));
+                "assert_eq!(Fix::from_num(-2.5).checked_floor(), Some(Fix::from_num(-3)));
 type AllFrac = ", $s_fixed, "<U", $s_nbits, ">;
 assert!(AllFrac::min_value().checked_floor().is_none());
 ",
@@ -336,12 +331,11 @@ rounded away from zero, returning [`None`] on overflow.
 ```rust
 use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
-let two_half = Fix::from_num(5) / 2;
-assert_eq!(two_half.checked_round(), Some(Fix::from_num(3)));
+assert_eq!(Fix::from_num(2.5).checked_round(), Some(Fix::from_num(3)));
 ",
             if_signed_else_empty_str! {
                 $Signedness,
-                "assert_eq!((-two_half).checked_round(), Some(Fix::from_num(-3)));
+                "assert_eq!(Fix::from_num(-2.5).checked_round(), Some(Fix::from_num(-3)));
 ",
             },
             "assert!(Fix::max_value().checked_round().is_none());
@@ -388,12 +382,11 @@ saturating on overflow.
 ```rust
 use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
-let two_half = Fix::from_num(5) / 2;
-assert_eq!(two_half.saturating_ceil(), Fix::from_num(3));
+assert_eq!(Fix::from_num(2.5).saturating_ceil(), Fix::from_num(3));
 ",
             if_signed_else_empty_str! {
                 $Signedness,
-                "assert_eq!((-two_half).saturating_ceil(), Fix::from_num(-2));
+                "assert_eq!(Fix::from_num(-2.5).saturating_ceil(), Fix::from_num(-2));
 ",
             },
             "assert_eq!(Fix::max_value().saturating_ceil(), Fix::max_value());
@@ -433,12 +426,11 @@ use fixed::{",
             },
             "};
 type Fix = ", $s_fixed, "<U4>;
-let two_half = Fix::from_num(5) / 2;
-assert_eq!(two_half.saturating_floor(), Fix::from_num(2));
+assert_eq!(Fix::from_num(2.5).saturating_floor(), Fix::from_num(2));
 ",
             if_signed_else_empty_str! {
                 $Signedness,
-                "assert_eq!((-two_half).saturating_floor(), Fix::from_num(-3));
+                "assert_eq!(Fix::from_num(-2.5).saturating_floor(), Fix::from_num(-3));
 type AllFrac = ", $s_fixed, "<U", $s_nbits, ">;
 assert_eq!(AllFrac::min_value().saturating_floor(), AllFrac::min_value());
 ",
@@ -461,12 +453,11 @@ ties rounded away from zero, and saturating on overflow.
 ```rust
 use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
-let two_half = Fix::from_num(5) / 2;
-assert_eq!(two_half.saturating_round(), Fix::from_num(3));
+assert_eq!(Fix::from_num(2.5).saturating_round(), Fix::from_num(3));
 ",
             if_signed_else_empty_str! {
                 $Signedness,
-                "assert_eq!((-two_half).saturating_round(), Fix::from_num(-3));
+                "assert_eq!(Fix::from_num(-2.5).saturating_round(), Fix::from_num(-3));
 ",
             },
             "assert_eq!(Fix::max_value().saturating_round(), Fix::max_value());
@@ -519,12 +510,11 @@ wrapping on overflow.
 ```rust
 use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
-let two_half = Fix::from_num(5) / 2;
-assert_eq!(two_half.wrapping_ceil(), Fix::from_num(3));
+assert_eq!(Fix::from_num(2.5).wrapping_ceil(), Fix::from_num(3));
 ",
             if_signed_else_empty_str! {
                 $Signedness,
-                "assert_eq!((-two_half).wrapping_ceil(), Fix::from_num(-2));
+                "assert_eq!(Fix::from_num(-2.5).wrapping_ceil(), Fix::from_num(-2));
 ",
             },
             "assert_eq!(Fix::max_value().wrapping_ceil(), Fix::min_value());
@@ -563,12 +553,11 @@ use fixed::{",
             },
             "};
 type Fix = ", $s_fixed, "<U4>;
-let two_half = Fix::from_num(5) / 2;
-assert_eq!(two_half.wrapping_floor(), Fix::from_num(2));
+assert_eq!(Fix::from_num(2.5).wrapping_floor(), Fix::from_num(2));
 ",
             if_signed_else_empty_str! {
                 $Signedness,
-                "assert_eq!((-two_half).wrapping_floor(), Fix::from_num(-3));
+                "assert_eq!(Fix::from_num(-2.5).wrapping_floor(), Fix::from_num(-3));
 type AllFrac = ", $s_fixed, "<U", $s_nbits, ">;
 assert_eq!(AllFrac::min_value().wrapping_floor(), AllFrac::from_num(0));
 ",
@@ -590,12 +579,11 @@ nearest, with ties rounded away from zero, and wrapping on overflow.
 ```rust
 use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
-let two_half = Fix::from_num(5) / 2;
-assert_eq!(two_half.wrapping_round(), Fix::from_num(3));
+assert_eq!(Fix::from_num(2.5).wrapping_round(), Fix::from_num(3));
 ",
             if_signed_else_empty_str! {
                 $Signedness,
-                "assert_eq!((-two_half).wrapping_round(), Fix::from_num(-3));
+                "assert_eq!(Fix::from_num(-2.5).wrapping_round(), Fix::from_num(-3));
 ",
             },
             "assert_eq!(Fix::max_value().wrapping_round(), Fix::min_value());
@@ -639,12 +627,11 @@ returned.
 ```rust
 use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
-let two_half = Fix::from_num(5) / 2;
-assert_eq!(two_half.overflowing_ceil(), (Fix::from_num(3), false));
+assert_eq!(Fix::from_num(2.5).overflowing_ceil(), (Fix::from_num(3), false));
 ",
             if_signed_else_empty_str! {
                 $Signedness,
-                "assert_eq!((-two_half).overflowing_ceil(), (Fix::from_num(-2), false));
+                "assert_eq!(Fix::from_num(-2.5).overflowing_ceil(), (Fix::from_num(-2), false));
 "
             },
             "assert_eq!(Fix::max_value().overflowing_ceil(), (Fix::min_value(), true));
@@ -703,12 +690,11 @@ use fixed::{",
             },
             "};
 type Fix = ", $s_fixed, "<U4>;
-let two_half = Fix::from_num(5) / 2;
-assert_eq!(two_half.overflowing_floor(), (Fix::from_num(2), false));
+assert_eq!(Fix::from_num(2.5).overflowing_floor(), (Fix::from_num(2), false));
 ",
             if_signed_else_empty_str! {
                 $Signedness,
-                "assert_eq!((-two_half).overflowing_floor(), (Fix::from_num(-3), false));
+                "assert_eq!(Fix::from_num(-2.5).overflowing_floor(), (Fix::from_num(-3), false));
 type AllFrac = ", $s_fixed, "<U", $s_nbits, ">;
 assert_eq!(AllFrac::min_value().overflowing_floor(), (AllFrac::from_num(0), true));
 ",
@@ -744,12 +730,11 @@ returned.
 ```rust
 use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
-let two_half = Fix::from_num(5) / 2;
-assert_eq!(two_half.overflowing_round(), (Fix::from_num(3), false));
+assert_eq!(Fix::from_num(2.5).overflowing_round(), (Fix::from_num(3), false));
 ",
             if_signed_else_empty_str! {
                 $Signedness,
-                "assert_eq!((-two_half).overflowing_round(), (Fix::from_num(-3), false));
+                "assert_eq!(Fix::from_num(-2.5).overflowing_round(), (Fix::from_num(-3), false));
 ",
             },
             "assert_eq!(Fix::max_value().overflowing_round(), (Fix::min_value(), true));

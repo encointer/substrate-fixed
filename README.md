@@ -65,11 +65,14 @@ Various conversion methods are available:
   * The following methods are now `const` functions:
       * [`abs`], [`wrapping_abs`], [`overflowing_abs`]
       * [`is_power_of_two`]
+  * The method [`round_ties_to_even`] and its checked variants were
+    added.
 
 [`abs`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.abs
 [`is_power_of_two`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedU32.html#method.is_power_of_two
 [`overflowing_abs`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.overflowing_abs
 [`wrapping_abs`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.wrapping_abs
+[`round_ties_to_even`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.round_ties_to_even
 
 ### Version 0.4.3 news (2019-08-20)
 

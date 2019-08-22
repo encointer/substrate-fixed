@@ -213,6 +213,37 @@ assert_eq!(two_half.round(), Fix::from_num(3));
         }
 
         comment! {
+            "Rounds to the nearest integer, with ties rounded to even.
+
+# Panics
+
+When debug assertions are enabled, panics if the result does not fit.
+When debug assertions are not enabled, the wrapped result can be
+returned, but it is not considered a breaking change if in the future
+it panics; if wrapping is required use [`wrapping_round_ties_to_even`]
+instead.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(Fix::from_num(2.5).round_ties_to_even(), Fix::from_num(2));
+assert_eq!(Fix::from_num(3.5).round_ties_to_even(), Fix::from_num(4));
+```
+
+[`wrapping_round_ties_to_even`]: #method.wrapping_round_ties_to_even
+";
+            #[inline]
+            pub fn round_ties_to_even(self) -> $Fixed<Frac> {
+                let (round, overflow) = self.overflowing_round_ties_to_even();
+                debug_assert!(!overflow, "overflow");
+                let _ = overflow;
+                round
+            }
+        }
+
+        comment! {
             "Checked ceil. Rounds to the next integer towards +∞,
 returning [`None`] on overflow.
 
@@ -326,6 +357,29 @@ assert_eq!(two_half.checked_round(), Some(Fix::from_num(3)));
         }
 
         comment! {
+            "Checked round. Rounds to the nearest integer, with ties
+rounded to even, returning [`None`] on overflow.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(Fix::from_num(2.5).checked_round_ties_to_even(), Some(Fix::from_num(2)));
+assert_eq!(Fix::from_num(3.5).checked_round_ties_to_even(), Some(Fix::from_num(4)));
+assert!(Fix::max_value().checked_round_ties_to_even().is_none());
+```
+
+[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+";
+            #[inline]
+            pub fn checked_round_ties_to_even(self) -> Option<$Fixed<Frac>> {
+                let (round, overflow) = self.overflowing_round_ties_to_even();
+                if overflow { None } else { Some(round) }
+            }
+        }
+
+        comment! {
             "Saturating ceil. Rounds to the next integer towards +∞,
 saturating on overflow.
 
@@ -431,6 +485,32 @@ assert_eq!(two_half.saturating_round(), Fix::from_num(3));
         }
 
         comment! {
+            "Saturating round. Rounds to the nearest integer, with
+ties rounded to even, and saturating on overflow.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(Fix::from_num(2.5).saturating_round_ties_to_even(), Fix::from_num(2));
+assert_eq!(Fix::from_num(3.5).saturating_round_ties_to_even(), Fix::from_num(4));
+assert_eq!(Fix::max_value().saturating_round_ties_to_even(), Fix::max_value());
+```
+";
+            #[inline]
+            pub fn saturating_round_ties_to_even(self) -> $Fixed<Frac> {
+                let saturated = if self.to_bits() > 0 {
+                    $Fixed::max_value()
+                } else {
+                    $Fixed::min_value()
+                };
+                let (round, overflow) = self.overflowing_round_ties_to_even();
+                if overflow { saturated } else { round }
+            }
+        }
+
+        comment! {
             "Wrapping ceil. Rounds to the next integer towards +∞,
 wrapping on overflow.
 
@@ -524,6 +604,26 @@ assert_eq!(two_half.wrapping_round(), Fix::from_num(3));
             #[inline]
             pub fn wrapping_round(self) -> $Fixed<Frac> {
                 self.overflowing_round().0
+            }
+        }
+
+        comment! {
+            "Wrapping round. Rounds to the next integer to the
+nearest, with ties rounded to even, and wrapping on overflow.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(Fix::from_num(2.5).wrapping_round_ties_to_even(), Fix::from_num(2));
+assert_eq!(Fix::from_num(3.5).wrapping_round_ties_to_even(), Fix::from_num(4));
+assert_eq!(Fix::max_value().wrapping_round_ties_to_even(), Fix::min_value());
+```
+";
+            #[inline]
+            pub fn wrapping_round_ties_to_even(self) -> $Fixed<Frac> {
+                self.overflowing_round_ties_to_even().0
             }
         }
 
@@ -681,9 +781,62 @@ assert_eq!(two_half.overflowing_round(), (Fix::from_num(3), false));
                         return (int, false);
                     }
                     if Self::INT_NBITS == 1 {
+                        // increment is -1, so subtract it
                         return int.overflowing_sub(increment);
                     }
                     int.overflowing_add(increment)
+                }
+                if_unsigned! {
+                    $Signedness;
+                    if Self::INT_NBITS == 0 {
+                        return (int, true);
+                    }
+                    int.overflowing_add(increment)
+                }
+            }
+        }
+
+        comment! {
+            "Overflowing round. Rounds to the next integer to the
+nearest, with ties rounded to even.
+
+Returns a [tuple] of the fixed-point number and a [`bool`] indicating
+whether an overflow has occurred. On overflow, the wrapped value is
+returned.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(Fix::from_num(2.5).overflowing_round_ties_to_even(), (Fix::from_num(2), false));
+assert_eq!(Fix::from_num(3.5).overflowing_round_ties_to_even(), (Fix::from_num(4), false));
+assert_eq!(Fix::max_value().overflowing_round_ties_to_even(), (Fix::min_value(), true));
+```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
+";
+            #[inline]
+            pub fn overflowing_round_ties_to_even(self) -> ($Fixed<Frac>, bool) {
+                let int = self.int();
+                if (self.to_bits() & Self::FRAC_MSB) == 0 {
+                    return (int, false);
+                }
+                if self.frac().to_bits() == Self::FRAC_MSB && (int.to_bits() & Self::INT_LSB) == 0 {
+                    return (int, false);
+                }
+                let increment = Self::from_bits(Self::INT_LSB);
+                if_signed! {
+                    $Signedness;
+                    // If INT_NBITS is 0, increment is zero, and -0.5 ≤ self < 0.5,
+                    // so we're fine returning 0.overflowing_add(0).
+                    if Self::INT_NBITS == 1 {
+                        // increment is -1, so subtract it
+                        int.overflowing_sub(increment)
+                    } else {
+                        int.overflowing_add(increment)
+                    }
                 }
                 if_unsigned! {
                     $Signedness;

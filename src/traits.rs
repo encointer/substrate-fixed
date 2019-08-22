@@ -421,6 +421,9 @@ where
     /// Rounds to the nearest integer, with ties rounded away from zero.
     fn round(self) -> Self;
 
+    /// Rounds to the nearest integer, with ties rounded to even.
+    fn round_ties_to_even(self) -> Self;
+
     /// Checked ceil. Rounds to the next integer towards +∞, returning
     /// [`None`] on overflow.
     ///
@@ -439,6 +442,12 @@ where
     /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
     fn checked_round(self) -> Option<Self>;
 
+    /// Checked round. Rounds to the nearest integer, with ties
+    /// rounded to even, returning [`None`] on overflow.
+    ///
+    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    fn checked_round_ties_to_even(self) -> Option<Self>;
+
     /// Saturating ceil. Rounds to the next integer towards +∞,
     /// saturating on overflow.
     fn saturating_ceil(self) -> Self;
@@ -451,6 +460,10 @@ where
     /// rounded away from zero, and saturating on overflow.
     fn saturating_round(self) -> Self;
 
+    /// Saturating round. Rounds to the nearest integer, with ties
+    /// rounded to_even, and saturating on overflow.
+    fn saturating_round_ties_to_even(self) -> Self;
+
     /// Wrapping ceil. Rounds to the next integer towards +∞, wrapping
     /// on overflow.
     fn wrapping_ceil(self) -> Self;
@@ -462,6 +475,10 @@ where
     /// Wrapping round. Rounds to the next integer to the nearest,
     /// with ties rounded away from zero, and wrapping on overflow.
     fn wrapping_round(self) -> Self;
+
+    /// Wrapping round. Rounds to the next integer to the nearest,
+    /// with ties rounded to even, and wrapping on overflow.
+    fn wrapping_round_ties_to_even(self) -> Self;
 
     /// Overflowing ceil. Rounds to the next integer towards +∞.
     ///
@@ -493,6 +510,17 @@ where
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
     fn overflowing_round(self) -> (Self, bool);
+
+    /// Overflowing round. Rounds to the next integer to the nearest,
+    /// with ties rounded to even.
+    ///
+    /// Returns a [tuple] of the fixed-point number and a [`bool`],
+    /// indicating whether an overflow has occurred. On overflow, the
+    /// wrapped value is returned.
+    ///
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
+    fn overflowing_round_ties_to_even(self) -> (Self, bool);
 
     /// Returns the number of ones in the binary representation.
     fn count_ones(self) -> u32;
@@ -1447,18 +1475,23 @@ macro_rules! impl_fixed {
             trait_delegate! { fn ceil(self) -> Self }
             trait_delegate! { fn floor(self) -> Self }
             trait_delegate! { fn round(self) -> Self }
+            trait_delegate! { fn round_ties_to_even(self) -> Self }
             trait_delegate! { fn checked_ceil(self) -> Option<Self> }
             trait_delegate! { fn checked_floor(self) -> Option<Self> }
             trait_delegate! { fn checked_round(self) -> Option<Self> }
+            trait_delegate! { fn checked_round_ties_to_even(self) -> Option<Self> }
             trait_delegate! { fn saturating_ceil(self) -> Self }
             trait_delegate! { fn saturating_floor(self) -> Self }
             trait_delegate! { fn saturating_round(self) -> Self }
+            trait_delegate! { fn saturating_round_ties_to_even(self) -> Self }
             trait_delegate! { fn wrapping_ceil(self) -> Self }
             trait_delegate! { fn wrapping_floor(self) -> Self }
             trait_delegate! { fn wrapping_round(self) -> Self }
+            trait_delegate! { fn wrapping_round_ties_to_even(self) -> Self }
             trait_delegate! { fn overflowing_ceil(self) -> (Self, bool) }
             trait_delegate! { fn overflowing_floor(self) -> (Self, bool) }
             trait_delegate! { fn overflowing_round(self) -> (Self, bool) }
+            trait_delegate! { fn overflowing_round_ties_to_even(self) -> (Self, bool) }
             trait_delegate! { fn count_ones(self) -> u32 }
             trait_delegate! { fn count_zeros(self) -> u32 }
             trait_delegate! { fn leading_zeros(self) -> u32 }

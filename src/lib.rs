@@ -391,19 +391,20 @@ fixed! { "A 32-bit fixed-point signed", FixedI32(i32, LeEqU32, "32"), u32, Signe
 fixed! { "A 64-bit fixed-point signed", FixedI64(i64, LeEqU64, "64"), u64, Signed }
 fixed! { "A 128-bit fixed-point signed", FixedI128(i128, LeEqU128, "128"), u128, Signed }
 
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::cognitive_complexity))]
 #[cfg(test)]
 mod tests {
-    use crate::types::{I0F32, I16F16, U0F32, U16F16};
+    use crate::types::{I0F32, I16F16, I1F31, U0F32, U16F16};
 
-    #[cfg_attr(feature = "cargo-clippy", allow(clippy::cognitive_complexity))]
     #[test]
-    fn rounding() {
+    fn rounding_signed() {
         // -0.5
         let f = I0F32::from_bits(-1 << 31);
         assert_eq!(f.to_num::<i32>(), -1);
         assert_eq!(f.overflowing_ceil(), (I0F32::from_num(0), false));
         assert_eq!(f.overflowing_floor(), (I0F32::from_num(0), true));
         assert_eq!(f.overflowing_round(), (I0F32::from_num(0), true));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I0F32::from_num(0), false));
 
         // -0.5 + Δ
         let f = I0F32::from_bits((-1 << 31) + 1);
@@ -411,6 +412,7 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (I0F32::from_num(0), false));
         assert_eq!(f.overflowing_floor(), (I0F32::from_num(0), true));
         assert_eq!(f.overflowing_round(), (I0F32::from_num(0), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I0F32::from_num(0), false));
 
         // 0.5 - Δ
         let f = I0F32::from_bits((1 << 30) - 1 + (1 << 30));
@@ -418,27 +420,55 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (I0F32::from_num(0), true));
         assert_eq!(f.overflowing_floor(), (I0F32::from_num(0), false));
         assert_eq!(f.overflowing_round(), (I0F32::from_num(0), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I0F32::from_num(0), false));
+
+        // -0.5 - Δ
+        let f = I1F31::from_bits(((-1) << 30) - 1);
+        assert_eq!(f.to_num::<i32>(), -1);
+        assert_eq!(f.overflowing_ceil(), (I1F31::from_num(0), false));
+        assert_eq!(f.overflowing_floor(), (I1F31::from_num(-1), false));
+        assert_eq!(f.overflowing_round(), (I1F31::from_num(-1), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I1F31::from_num(-1), false));
+
+        // -0.5
+        let f = I1F31::from_bits((-1) << 30);
+        assert_eq!(f.to_num::<i32>(), -1);
+        assert_eq!(f.overflowing_ceil(), (I1F31::from_num(0), false));
+        assert_eq!(f.overflowing_floor(), (I1F31::from_num(-1), false));
+        assert_eq!(f.overflowing_round(), (I1F31::from_num(-1), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I1F31::from_num(0), false));
+
+        // -0.5 + Δ
+        let f = I1F31::from_bits(((-1) << 30) + 1);
+        assert_eq!(f.to_num::<i32>(), -1);
+        assert_eq!(f.overflowing_ceil(), (I1F31::from_num(0), false));
+        assert_eq!(f.overflowing_floor(), (I1F31::from_num(-1), false));
+        assert_eq!(f.overflowing_round(), (I1F31::from_num(0), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I1F31::from_num(0), false));
 
         // 0.5 - Δ
-        let f = U0F32::from_bits((1 << 31) - 1);
+        let f = I1F31::from_bits((1 << 30) - 1);
         assert_eq!(f.to_num::<i32>(), 0);
-        assert_eq!(f.overflowing_ceil(), (U0F32::from_num(0), true));
-        assert_eq!(f.overflowing_floor(), (U0F32::from_num(0), false));
-        assert_eq!(f.overflowing_round(), (U0F32::from_num(0), false));
+        assert_eq!(f.overflowing_ceil(), (I1F31::from_num(-1), true));
+        assert_eq!(f.overflowing_floor(), (I1F31::from_num(0), false));
+        assert_eq!(f.overflowing_round(), (I1F31::from_num(0), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I1F31::from_num(0), false));
 
         // 0.5
-        let f = U0F32::from_bits(1 << 31);
+        let f = I1F31::from_bits(1 << 30);
         assert_eq!(f.to_num::<i32>(), 0);
-        assert_eq!(f.overflowing_ceil(), (U0F32::from_num(0), true));
-        assert_eq!(f.overflowing_floor(), (U0F32::from_num(0), false));
-        assert_eq!(f.overflowing_round(), (U0F32::from_num(0), true));
+        assert_eq!(f.overflowing_ceil(), (I1F31::from_num(-1), true));
+        assert_eq!(f.overflowing_floor(), (I1F31::from_num(0), false));
+        assert_eq!(f.overflowing_round(), (I1F31::from_num(-1), true));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I1F31::from_num(0), false));
 
         // 0.5 + Δ
-        let f = U0F32::from_bits((1 << 31) + 1);
+        let f = I1F31::from_bits((1 << 30) + 1);
         assert_eq!(f.to_num::<i32>(), 0);
-        assert_eq!(f.overflowing_ceil(), (U0F32::from_num(0), true));
-        assert_eq!(f.overflowing_floor(), (U0F32::from_num(0), false));
-        assert_eq!(f.overflowing_round(), (U0F32::from_num(0), true));
+        assert_eq!(f.overflowing_ceil(), (I1F31::from_num(-1), true));
+        assert_eq!(f.overflowing_floor(), (I1F31::from_num(0), false));
+        assert_eq!(f.overflowing_round(), (I1F31::from_num(-1), true));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I1F31::from_num(-1), true));
 
         // -3.5 - Δ
         let f = I16F16::from_bits(((-7) << 15) - 1);
@@ -446,6 +476,7 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (I16F16::from_num(-3), false));
         assert_eq!(f.overflowing_floor(), (I16F16::from_num(-4), false));
         assert_eq!(f.overflowing_round(), (I16F16::from_num(-4), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I16F16::from_num(-4), false));
 
         // -3.5
         let f = I16F16::from_bits((-7) << 15);
@@ -453,6 +484,7 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (I16F16::from_num(-3), false));
         assert_eq!(f.overflowing_floor(), (I16F16::from_num(-4), false));
         assert_eq!(f.overflowing_round(), (I16F16::from_num(-4), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I16F16::from_num(-4), false));
 
         // -3.5 + Δ
         let f = I16F16::from_bits(((-7) << 15) + 1);
@@ -460,6 +492,31 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (I16F16::from_num(-3), false));
         assert_eq!(f.overflowing_floor(), (I16F16::from_num(-4), false));
         assert_eq!(f.overflowing_round(), (I16F16::from_num(-3), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I16F16::from_num(-3), false));
+
+        // -2.5 - Δ
+        let f = I16F16::from_bits(((-5) << 15) - 1);
+        assert_eq!(f.to_num::<i32>(), -3);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_num(-2), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_num(-3), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_num(-3), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I16F16::from_num(-3), false));
+
+        // -2.5
+        let f = I16F16::from_bits((-5) << 15);
+        assert_eq!(f.to_num::<i32>(), -3);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_num(-2), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_num(-3), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_num(-3), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I16F16::from_num(-2), false));
+
+        // -2.5 + Δ
+        let f = I16F16::from_bits(((-5) << 15) + 1);
+        assert_eq!(f.to_num::<i32>(), -3);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_num(-2), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_num(-3), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_num(-2), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I16F16::from_num(-2), false));
 
         // -0.5 - Δ
         let f = I16F16::from_bits(((-1) << 15) - 1);
@@ -467,6 +524,7 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (I16F16::from_num(0), false));
         assert_eq!(f.overflowing_floor(), (I16F16::from_num(-1), false));
         assert_eq!(f.overflowing_round(), (I16F16::from_num(-1), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I16F16::from_num(-1), false));
 
         // -0.5
         let f = I16F16::from_bits((-1) << 15);
@@ -474,6 +532,7 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (I16F16::from_num(0), false));
         assert_eq!(f.overflowing_floor(), (I16F16::from_num(-1), false));
         assert_eq!(f.overflowing_round(), (I16F16::from_num(-1), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I16F16::from_num(0), false));
 
         // -0.5 + Δ
         let f = I16F16::from_bits(((-1) << 15) + 1);
@@ -481,6 +540,7 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (I16F16::from_num(0), false));
         assert_eq!(f.overflowing_floor(), (I16F16::from_num(-1), false));
         assert_eq!(f.overflowing_round(), (I16F16::from_num(0), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I16F16::from_num(0), false));
 
         // 0.5 - Δ
         let f = I16F16::from_bits((1 << 15) - 1);
@@ -488,6 +548,7 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (I16F16::from_num(1), false));
         assert_eq!(f.overflowing_floor(), (I16F16::from_num(0), false));
         assert_eq!(f.overflowing_round(), (I16F16::from_num(0), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I16F16::from_num(0), false));
 
         // 0.5
         let f = I16F16::from_bits(1 << 15);
@@ -495,6 +556,7 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (I16F16::from_num(1), false));
         assert_eq!(f.overflowing_floor(), (I16F16::from_num(0), false));
         assert_eq!(f.overflowing_round(), (I16F16::from_num(1), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I16F16::from_num(0), false));
 
         // 0.5 + Δ
         let f = I16F16::from_bits((1 << 15) + 1);
@@ -502,6 +564,31 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (I16F16::from_num(1), false));
         assert_eq!(f.overflowing_floor(), (I16F16::from_num(0), false));
         assert_eq!(f.overflowing_round(), (I16F16::from_num(1), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I16F16::from_num(1), false));
+
+        // 2.5 - Δ
+        let f = I16F16::from_bits((5 << 15) - 1);
+        assert_eq!(f.to_num::<i32>(), 2);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_num(3), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_num(2), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_num(2), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I16F16::from_num(2), false));
+
+        // 2.5
+        let f = I16F16::from_bits(5 << 15);
+        assert_eq!(f.to_num::<i32>(), 2);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_num(3), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_num(2), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_num(3), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I16F16::from_num(2), false));
+
+        // 2.5 + Δ
+        let f = I16F16::from_bits((5 << 15) + 1);
+        assert_eq!(f.to_num::<i32>(), 2);
+        assert_eq!(f.overflowing_ceil(), (I16F16::from_num(3), false));
+        assert_eq!(f.overflowing_floor(), (I16F16::from_num(2), false));
+        assert_eq!(f.overflowing_round(), (I16F16::from_num(3), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I16F16::from_num(3), false));
 
         // 3.5 - Δ
         let f = I16F16::from_bits((7 << 15) - 1);
@@ -509,6 +596,7 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (I16F16::from_num(4), false));
         assert_eq!(f.overflowing_floor(), (I16F16::from_num(3), false));
         assert_eq!(f.overflowing_round(), (I16F16::from_num(3), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I16F16::from_num(3), false));
 
         // 3.5
         let f = I16F16::from_bits(7 << 15);
@@ -516,6 +604,7 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (I16F16::from_num(4), false));
         assert_eq!(f.overflowing_floor(), (I16F16::from_num(3), false));
         assert_eq!(f.overflowing_round(), (I16F16::from_num(4), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I16F16::from_num(4), false));
 
         // 3.5 + Δ
         let f = I16F16::from_bits((7 << 15) + 1);
@@ -523,6 +612,34 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (I16F16::from_num(4), false));
         assert_eq!(f.overflowing_floor(), (I16F16::from_num(3), false));
         assert_eq!(f.overflowing_round(), (I16F16::from_num(4), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (I16F16::from_num(4), false));
+    }
+
+    #[test]
+    fn rounding_unsigned() {
+        // 0.5 - Δ
+        let f = U0F32::from_bits((1 << 31) - 1);
+        assert_eq!(f.to_num::<i32>(), 0);
+        assert_eq!(f.overflowing_ceil(), (U0F32::from_num(0), true));
+        assert_eq!(f.overflowing_floor(), (U0F32::from_num(0), false));
+        assert_eq!(f.overflowing_round(), (U0F32::from_num(0), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (U0F32::from_num(0), false));
+
+        // 0.5
+        let f = U0F32::from_bits(1 << 31);
+        assert_eq!(f.to_num::<i32>(), 0);
+        assert_eq!(f.overflowing_ceil(), (U0F32::from_num(0), true));
+        assert_eq!(f.overflowing_floor(), (U0F32::from_num(0), false));
+        assert_eq!(f.overflowing_round(), (U0F32::from_num(0), true));
+        assert_eq!(f.overflowing_round_ties_to_even(), (U0F32::from_num(0), false));
+
+        // 0.5 + Δ
+        let f = U0F32::from_bits((1 << 31) + 1);
+        assert_eq!(f.to_num::<i32>(), 0);
+        assert_eq!(f.overflowing_ceil(), (U0F32::from_num(0), true));
+        assert_eq!(f.overflowing_floor(), (U0F32::from_num(0), false));
+        assert_eq!(f.overflowing_round(), (U0F32::from_num(0), true));
+        assert_eq!(f.overflowing_round_ties_to_even(), (U0F32::from_num(0), true));
 
         // 0.5 - Δ
         let f = U16F16::from_bits((1 << 15) - 1);
@@ -530,6 +647,7 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (U16F16::from_num(1), false));
         assert_eq!(f.overflowing_floor(), (U16F16::from_num(0), false));
         assert_eq!(f.overflowing_round(), (U16F16::from_num(0), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (U16F16::from_num(0), false));
 
         // 0.5
         let f = U16F16::from_bits(1 << 15);
@@ -537,6 +655,7 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (U16F16::from_num(1), false));
         assert_eq!(f.overflowing_floor(), (U16F16::from_num(0), false));
         assert_eq!(f.overflowing_round(), (U16F16::from_num(1), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (U16F16::from_num(0), false));
 
         // 0.5 + Δ
         let f = U16F16::from_bits((1 << 15) + 1);
@@ -544,6 +663,31 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (U16F16::from_num(1), false));
         assert_eq!(f.overflowing_floor(), (U16F16::from_num(0), false));
         assert_eq!(f.overflowing_round(), (U16F16::from_num(1), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (U16F16::from_num(1), false));
+
+        // 2.5 - Δ
+        let f = U16F16::from_bits((5 << 15) - 1);
+        assert_eq!(f.to_num::<i32>(), 2);
+        assert_eq!(f.overflowing_ceil(), (U16F16::from_num(3), false));
+        assert_eq!(f.overflowing_floor(), (U16F16::from_num(2), false));
+        assert_eq!(f.overflowing_round(), (U16F16::from_num(2), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (U16F16::from_num(2), false));
+
+        // 2.5
+        let f = U16F16::from_bits(5 << 15);
+        assert_eq!(f.to_num::<i32>(), 2);
+        assert_eq!(f.overflowing_ceil(), (U16F16::from_num(3), false));
+        assert_eq!(f.overflowing_floor(), (U16F16::from_num(2), false));
+        assert_eq!(f.overflowing_round(), (U16F16::from_num(3), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (U16F16::from_num(2), false));
+
+        // 2.5 + Δ
+        let f = U16F16::from_bits((5 << 15) + 1);
+        assert_eq!(f.to_num::<i32>(), 2);
+        assert_eq!(f.overflowing_ceil(), (U16F16::from_num(3), false));
+        assert_eq!(f.overflowing_floor(), (U16F16::from_num(2), false));
+        assert_eq!(f.overflowing_round(), (U16F16::from_num(3), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (U16F16::from_num(3), false));
 
         // 3.5 - Δ
         let f = U16F16::from_bits((7 << 15) - 1);
@@ -551,6 +695,7 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (U16F16::from_num(4), false));
         assert_eq!(f.overflowing_floor(), (U16F16::from_num(3), false));
         assert_eq!(f.overflowing_round(), (U16F16::from_num(3), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (U16F16::from_num(3), false));
 
         // 3.5
         let f = U16F16::from_bits(7 << 15);
@@ -558,6 +703,7 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (U16F16::from_num(4), false));
         assert_eq!(f.overflowing_floor(), (U16F16::from_num(3), false));
         assert_eq!(f.overflowing_round(), (U16F16::from_num(4), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (U16F16::from_num(4), false));
 
         // 3.5 + Δ
         let f = U16F16::from_bits((7 << 15) + 1);
@@ -565,5 +711,6 @@ mod tests {
         assert_eq!(f.overflowing_ceil(), (U16F16::from_num(4), false));
         assert_eq!(f.overflowing_floor(), (U16F16::from_num(3), false));
         assert_eq!(f.overflowing_round(), (U16F16::from_num(4), false));
+        assert_eq!(f.overflowing_round_ties_to_even(), (U16F16::from_num(4), false));
     }
 }

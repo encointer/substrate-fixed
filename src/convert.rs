@@ -14,7 +14,7 @@
 // <https://opensource.org/licenses/MIT>.
 
 use crate::{
-    helpers::{FloatHelper, IntHelper},
+    helpers::IntHelper,
     traits::LossyFrom,
     types::extra::{
         Diff, IsLessOrEqual, LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8, True, U0, U1, U127, U128,
@@ -25,7 +25,7 @@ use crate::{
 };
 use core::ops::Sub;
 #[cfg(feature = "f16")]
-use half::f16;
+use {crate::helpers::FloatHelper, half::f16};
 
 macro_rules! convert {
     (

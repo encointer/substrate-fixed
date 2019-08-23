@@ -75,8 +75,7 @@ macro_rules! sealed_float {
             fn bits_from_parts(neg: bool, exp: i32, mant: Self::Bits) -> Self::Bits {
                 let sign = if neg { Self::SIGN_MASK } else { 0 };
                 let biased_exp = ((exp + Self::EXP_BIAS) as Self::Bits) << (Self::PREC - 1);
-                let bits = sign | biased_exp | mant;
-                bits
+                sign | biased_exp | mant
             }
 
             #[inline]

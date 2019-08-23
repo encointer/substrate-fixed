@@ -1227,14 +1227,26 @@ mod tests {
         assert_eq!(f16::lossy_from(-32768f32 * 1.625), f16::from_bits(0xFA80));
         assert_eq!(f16::lossy_from(32768f32 * 2.), f16_consts::INFINITY);
         // 0x8020 is 0x1.004 << 15 is 0 11110 0000000001
-        assert_eq!(f16::lossy_from(f32::from(0x8020u16)), f16::from_bits(0x7801));
+        assert_eq!(
+            f16::lossy_from(f32::from(0x8020u16)),
+            f16::from_bits(0x7801)
+        );
         // 0x8030 is rounded to 0x8040 (ties to even)
-        assert_eq!(f16::lossy_from(f32::from(0x8030u16)), f16::from_bits(0x7802));
+        assert_eq!(
+            f16::lossy_from(f32::from(0x8030u16)),
+            f16::from_bits(0x7802)
+        );
         // 0x8050 is rounded to 0x8040 (ties to even)
-        assert_eq!(f16::lossy_from(f32::from(0x8050u16)), f16::from_bits(0x7802));
+        assert_eq!(
+            f16::lossy_from(f32::from(0x8050u16)),
+            f16::from_bits(0x7802)
+        );
         // 1.0 >> 24 is minimum non-zero subnormal 0 0000 0000000001
         assert_eq!(f16::lossy_from((-24f32).exp2()), f16::from_bits(0x0001));
-        assert_eq!(f16::lossy_from((-24f32).exp2() * 0.5001), f16::from_bits(0x0001));
+        assert_eq!(
+            f16::lossy_from((-24f32).exp2() * 0.5001),
+            f16::from_bits(0x0001)
+        );
         assert_eq!(f16::lossy_from((-24f32).exp2() * 0.5), f16::from_bits(0));
 
         assert_eq!(f16::lossy_from(f64::NEG_INFINITY), f16_consts::NEG_INFINITY);
@@ -1244,14 +1256,26 @@ mod tests {
         assert_eq!(f16::lossy_from(-32768f64 * 1.625), f16::from_bits(0xFA80));
         assert_eq!(f16::lossy_from(32768f64 * 2.), f16_consts::INFINITY);
         // 0x8020 is 0x1.004 << 15 is 0 11110 0000000001
-        assert_eq!(f16::lossy_from(f64::from(0x8020u16)), f16::from_bits(0x7801));
+        assert_eq!(
+            f16::lossy_from(f64::from(0x8020u16)),
+            f16::from_bits(0x7801)
+        );
         // 0x8030 is rounded to 0x8040 (ties to even)
-        assert_eq!(f16::lossy_from(f64::from(0x8030u16)), f16::from_bits(0x7802));
+        assert_eq!(
+            f16::lossy_from(f64::from(0x8030u16)),
+            f16::from_bits(0x7802)
+        );
         // 0x8050 is rounded to 0x8040 (ties to even)
-        assert_eq!(f16::lossy_from(f64::from(0x8050u16)), f16::from_bits(0x7802));
+        assert_eq!(
+            f16::lossy_from(f64::from(0x8050u16)),
+            f16::from_bits(0x7802)
+        );
         // 1.0 >> 24 is minimum non-zero subnormal 0 0000 0000000001
         assert_eq!(f16::lossy_from((-24f64).exp2()), f16::from_bits(0x0001));
-        assert_eq!(f16::lossy_from((-24f64).exp2() * 0.5001), f16::from_bits(0x0001));
+        assert_eq!(
+            f16::lossy_from((-24f64).exp2() * 0.5001),
+            f16::from_bits(0x0001)
+        );
         assert_eq!(f16::lossy_from((-24f32).exp2() * 0.5), f16::from_bits(0));
     }
 }

@@ -34,6 +34,8 @@ pub trait FloatHelper: Copy {
     fn is_finite(self) -> bool;
     fn is_sign_negative(self) -> bool;
 
+    fn bits_from_parts(neg: bool, exp: i32, mant: Self::Bits) -> Self::Bits;
+    fn from_parts(neg: bool, exp: i32, mant: Self::Bits) -> Self;
     fn parts(self) -> (bool, i32, Self::Bits);
 
     fn from_to_float_helper(val: ToFloatHelper, frac_bits: u32, int_bits: u32) -> Self;
@@ -67,6 +69,19 @@ macro_rules! sealed_float {
             #[inline]
             fn is_sign_negative(self) -> bool {
                 (self.to_bits() & Self::SIGN_MASK) != 0
+            }
+
+            #[inline]
+            fn bits_from_parts(neg: bool, exp: i32, mant: Self::Bits) -> Self::Bits {
+                let sign = if neg { Self::SIGN_MASK } else { 0 };
+                let biased_exp = ((exp + Self::EXP_BIAS) as Self::Bits) << (Self::PREC - 1);
+                let bits = sign | biased_exp | mant;
+                bits
+            }
+
+            #[inline]
+            fn from_parts(neg: bool, exp: i32, mant: Self::Bits) -> Self {
+                $Float::from_bits(Self::bits_from_parts(neg, exp, mant))
             }
 
             #[inline]

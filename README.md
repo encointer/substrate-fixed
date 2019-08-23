@@ -28,28 +28,47 @@ The crate provides the following types:
 All fixed-point numbers can have `Frac` fractional bits, where `Frac`
 can have any value from 0 up to and including the size of the number
 in bits. When `Frac` is 0, the fixed-point number behaves like an
-integer. When `Frac` is equal to the number of bits, the value of the
-fixed-point number lies in the range −0.5 ≤ *x* < 0.5 for signed
-fixed-point numbers, and in the range 0 ≤ *x* < 1 for unsigned
-fixed-point numbers.
+integer. When `Frac` is equal to the number of bits, the value lies in
+the range −0.5 ≤ *x* < 0.5 for signed numbers, and in the range
+0 ≤ *x* < 1 for unsigned numbers.
 
-Various conversion methods are available:
+The main features of this crate are:
 
-  * All lossless infallible conversions between fixed-point numbers
-    and numeric primitives are implemented. You can use [`From`] or
-    [`Into`] for conversions that always work without losing any bits.
+  * Representation of all fixed-point numbers up to 128 bits wide.
+  * Comprehensive conversion support between fixed-point numbers and
+    numeric primitives.
+  * Comprehensive comparison support between fixed-point numbers and
+    numeric primitives.
+  * Parsing of fixed-point numbers from strings in decimal, binary,
+    octal and hexadecimal.
+  * Display of fixed-point numbers as decimal, binary, octal and
+    hexadecimal.
+  * Arithmetic and logic operations on all fixed-point numbers.
+
+This crate does *not* provide the following:
+
+  * Algebraic functions like the square root and power functions.
+  * Trigonometric functions like the sine and cosine functions.
+  * Other transcendental functions like logs and the exponential
+    function.
+
+The conversions supported cover the following cases.
+
+  * For all lossless infallible conversions between fixed-point
+    numbers and numeric primitives, you can use [`From`] or [`Into`].
+    These conversions always work (infallible) without losing any bits
+    (lossless).
   * For lossy infallible conversions between fixed-point numbers and
-    numeric primitives, where the source type may have more fractional
-    bits than the destination type, the [`LossyFrom`] and
-    [`LossyInto`] traits can be used. Excess fractional bits are
-    truncated.
+    numeric primitives, you can use the [`LossyFrom`] and
+    [`LossyInto`] traits. The source type may have more fractional
+    bits than the destination.
   * Checked conversions are provided between fixed-point numbers and
-    numeric primitives using the [`FromFixed`] and [`ToFixed`] traits,
-    or using the [`from_num`] and [`to_num`] methods and their checked
-    versions.
+    all numeric primitives using the [`FromFixed`] and [`ToFixed`]
+    traits, or using the [`from_num`] and [`to_num`] methods and their
+    checked versions.
   * Fixed-point numbers can be parsed from decimal strings using
-    [`FromStr`], or from binary, octal or hexadecimal using the
-    [`from_str_binary`], [`from_str_octal`] or [`from_str_hex`]
+    [`FromStr`], or from binary, octal or hexadecimal strings using
+    the [`from_str_binary`], [`from_str_octal`] or [`from_str_hex`]
     methods. The result is rounded to the nearest, with ties rounded
     to even.
   * Fixed-point numbers can be converted to strings using [`Display`],
@@ -66,7 +85,7 @@ Various conversion methods are available:
     [`is_power_of_two`], [`abs`], [`wrapping_abs`],
     [`overflowing_abs`]
   * The method [`round_to_zero`] was added.
-  * The method [`round_ties_to_even`] and its checked variants were
+  * The method [`round_ties_to_even`] and its checked versions were
     added.
 
 [`abs`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.abs

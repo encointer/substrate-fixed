@@ -7,68 +7,58 @@ as-is, without any warranty. -->
 
 # Fixed-point numbers
 
-The [*fixed* crate] provides fixed-point numbers. Currently it uses
-the [*typenum* crate] for the fractional bit count; it is planned to
-move to [const generics] when they are implemented by the Rust
-compiler.
+The [*fixed* crate] provides fixed-point numbers.
 
-The crate provides the following types:
+  * [`FixedI8`] and [`FixedU8`] are eight-bit fixed-point numbers.
+  * [`FixedI16`] and [`FixedU16`] are 16-bit fixed-point numbers.
+  * [`FixedI32`] and [`FixedU32`] are 32-bit fixed-point numbers.
+  * [`FixedI64`] and [`FixedU64`] are 64-bit fixed-point numbers.
+  * [`FixedI128`] and [`FixedU128`] are 128-bit fixed-point numbers.
 
-  * [`FixedI8`] is a signed eight-bit fixed-point number,
-  * [`FixedI16`] is a signed 16-bit fixed-point number,
-  * [`FixedI32`] is a signed 32-bit fixed-point number,
-  * [`FixedI64`] is a signed 64-bit fixed-point number,
-  * [`FixedI128`] is a signed 128-bit fixed-point number,
-  * [`FixedU8`] is an unsigned eight-bit fixed-point number,
-  * [`FixedU16`] is an unsigned 16-bit fixed-point number,
-  * [`FixedU32`] is an unsigned 32-bit fixed-point number,
-  * [`FixedU64`] is an unsigned 64-bit fixed-point number, and
-  * [`FixedU128`] is an unsigned 128-bit fixed-point number.
+These types can have `Frac` fractional bits, where 0 ≤ `Frac` ≤ *n*
+and *n* is the total number of bits. When `Frac` = 0, the fixed-point
+number behaves like an *n*-bit integer. When `Frac` = *n*, the value
+*x* lies in the range −0.5 ≤ *x* < 0.5 for signed numbers, and in the
+range 0 ≤ *x* < 1 for unsigned numbers.
 
-All fixed-point numbers can have `Frac` fractional bits, where `Frac`
-can have any value from 0 up to and including the size of the number
-in bits. When `Frac` is 0, the fixed-point number behaves like an
-integer. When `Frac` is equal to the number of bits, the value lies in
-the range −0.5 ≤ *x* < 0.5 for signed numbers, and in the range
-0 ≤ *x* < 1 for unsigned numbers.
+Currently the [*typenum* crate] is used for the fractional bit count
+`Frac`; it is planned to move to [const generics] when they are
+supported by the Rust compiler.
 
-The main features of this crate are:
+The main features are
 
-  * Representation of all fixed-point numbers up to 128 bits wide.
-  * Comprehensive conversion support between fixed-point numbers and
-    numeric primitives.
-  * Comprehensive comparison support between fixed-point numbers and
-    numeric primitives.
-  * Parsing of fixed-point numbers from strings in decimal, binary,
-    octal and hexadecimal.
-  * Display of fixed-point numbers as decimal, binary, octal and
-    hexadecimal.
-  * Arithmetic and logic operations on all fixed-point numbers.
+  * Representation of fixed-point numbers up to 128 bits wide.
+  * Conversions between fixed-point numbers and numeric primitives.
+  * Comparisons between fixed-point numbers and numeric primitives.
+  * Parsing from strings in decimal, binary, octal and hexadecimal.
+  * Display as decimal, binary, octal and hexadecimal.
+  * Arithmetic and logic operations.
 
-This crate does *not* provide the following:
+This crate does *not* provide general analytic functions.
 
-  * Algebraic functions like the square root and power functions.
-  * Trigonometric functions like the sine and cosine functions.
-  * Other transcendental functions like logs and the exponential
-    function.
+  * No algebraic functions are provided, for example no `sqrt` or
+    `pow`.
+  * No trigonometric functions are provided, for example no `sin` or
+    `cos`.
+  * No other transcendental functions are provided: for example no
+    `log` or `exp`.
 
 The conversions supported cover the following cases.
 
-  * For all lossless infallible conversions between fixed-point
-    numbers and numeric primitives, you can use [`From`] or [`Into`].
-    These conversions always work (infallible) without losing any bits
-    (lossless).
-  * For lossy infallible conversions between fixed-point numbers and
-    numeric primitives, you can use the [`LossyFrom`] and
-    [`LossyInto`] traits. The source type may have more fractional
-    bits than the destination.
-  * Checked conversions are provided between fixed-point numbers and
-    all numeric primitives using the [`FromFixed`] and [`ToFixed`]
-    traits, or using the [`from_num`] and [`to_num`] methods and their
-    checked versions.
+  * Infallible lossless conversions between fixed-point numbers and
+    numeric primitives are provided using [`From`] and [`Into`]. These
+    never fail (infallible) and do not lose any bits (lossless).
+  * Infallible lossy conversions between fixed-point numbers and
+    numeric primitives are provided using the [`LossyFrom`] and
+    [`LossyInto`] traits. The source can have more fractional bits
+    than the destination.
+  * Checked conversions between fixed-point numbers and numeric
+    primitives are provided using the [`FromFixed`] and [`ToFixed`]
+    traits, or using the [`from_num`] and [`to_num`] methods and
+    [their checked versions][`checked_from_num`].
   * Fixed-point numbers can be parsed from decimal strings using
-    [`FromStr`], or from binary, octal or hexadecimal strings using
-    the [`from_str_binary`], [`from_str_octal`] or [`from_str_hex`]
+    [`FromStr`], and from binary, octal and hexadecimal strings using
+    the [`from_str_binary`], [`from_str_octal`] and [`from_str_hex`]
     methods. The result is rounded to the nearest, with ties rounded
     to even.
   * Fixed-point numbers can be converted to strings using [`Display`],
@@ -219,7 +209,6 @@ Details on other releases can be found in [*RELEASES.md*].
 ## Quick examples
 
 ```rust
-// 20 integer bits, 12 fractional bits
 use fixed::types::I20F12;
 
 // 19/3 = 6 1/3
@@ -234,14 +223,15 @@ assert_eq!(six_and_third.ceil(), 7);
 
 The type [`I20F12`] is a 32-bit fixed-point signed number with 20
 integer bits and 12 fractional bits. It is an alias to
-<code>[FixedI32][`FixedI32`]&lt;[U12][`U12`]&gt;</code>.
-The unsigned counterpart would be [`U20F12`]. Aliases are provided for
-all combinations of integer and fractional bits adding up to a total
-of eight, 16, 32, 64 or 128 bits.
+<code>[FixedI32][`FixedI32`]&lt;[U12][`U12`]&gt;</code>. The unsigned
+counterpart would be [`U20F12`]. Aliases are provided for all
+combinations of integer and fractional bits adding up to a total of
+eight, 16, 32, 64 or 128 bits.
 
 ```rust
+use fixed::types::{I4F4, I4F12};
+
 // −8 ≤ I4F4 < 8 with steps of 1/16 (~0.06)
-use fixed::types::I4F4;
 let a = I4F4::from_num(1);
 // multiplication and division by integers are possible
 let ans1 = a / 5 * 17;
@@ -250,7 +240,6 @@ assert_eq!(ans1, I4F4::from_bits((3 << 4) + 3));
 assert_eq!(ans1.to_string(), "3.2");
 
 // −8 ≤ I4F12 < 8 with steps of 1/4096 (~0.0002)
-use fixed::types::I4F12;
 let wider_a = I4F12::from(a);
 let wider_ans = wider_a / 5 * 17;
 let ans2 = I4F4::from_num(wider_ans);
@@ -354,6 +343,7 @@ additional terms or conditions.
 [`U12`]: https://docs.rs/fixed/0.4.3/fixed/types/extra/type.U12.html
 [`U20F12`]: https://docs.rs/fixed/0.4.3/fixed/types/type.U20F12.html
 [`UpperHex`]: https://doc.rust-lang.org/nightly/std/fmt/trait.UpperHex.html
+[`checked_from_num`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.checked_from_num
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html
 [`from_num`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.from_num
 [`from_str_binary`]: https://docs.rs/fixed/0.4.3/fixed/struct.FixedI32.html#method.from_str_binary

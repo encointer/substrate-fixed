@@ -481,9 +481,8 @@ impl Mul10 for u128 {
     }
 }
 
-#[allow(clippy::cognitive_complexity)]
-#[allow(clippy::float_cmp)]
 #[cfg(test)]
+#[allow(clippy::cognitive_complexity, clippy::float_cmp)]
 mod tests {
     use crate::{display, types::*};
     use std::{format, string::String};

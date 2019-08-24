@@ -400,8 +400,8 @@ fixed! { "A 32-bit fixed-point signed", FixedI32(i32, LeEqU32, "32"), u32, Signe
 fixed! { "A 64-bit fixed-point signed", FixedI64(i64, LeEqU64, "64"), u64, Signed }
 fixed! { "A 128-bit fixed-point signed", FixedI128(i128, LeEqU128, "128"), u128, Signed }
 
-#[cfg_attr(feature = "cargo-clippy", allow(clippy::cognitive_complexity))]
 #[cfg(test)]
+#[allow(clippy::cognitive_complexity)]
 mod tests {
     use crate::types::{I0F32, I16F16, I1F31, U0F32, U16F16};
 

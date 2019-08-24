@@ -397,8 +397,7 @@ fixed_cmp! { FixedI64(i64, LeEqU64, 64) }
 fixed_cmp! { FixedI128(i128, LeEqU128, 128) }
 
 #[cfg(test)]
-#[cfg_attr(feature = "cargo-clippy", allow(clippy::float_cmp))]
-#[cfg_attr(feature = "cargo-clippy", allow(clippy::cognitive_complexity))]
+#[allow(clippy::cognitive_complexity, clippy::float_cmp)]
 mod tests {
     use crate::*;
 

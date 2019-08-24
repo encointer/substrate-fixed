@@ -791,8 +791,8 @@ lossy! { f64 }
 /// ```
 fn _compile_fail_tests() {}
 
-#[cfg_attr(feature = "cargo-clippy", allow(clippy::float_cmp))]
 #[cfg(test)]
+#[allow(clippy::float_cmp)]
 mod tests {
     use crate::types::*;
 

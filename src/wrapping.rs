@@ -13,6 +13,8 @@
 // <https://www.apache.org/licenses/LICENSE-2.0> and
 // <https://opensource.org/licenses/MIT>.
 
+#![allow(clippy::suspicious_op_assign_impl)]
+
 use crate::{
     from_str::ParseFixedError,
     traits::{Fixed, FixedSigned, ToFixed},
@@ -370,7 +372,6 @@ macro_rules! op_shift {
             F: $Op<u32, Output = F>,
         {
             type Output = Wrapping<F>;
-            #[allow(clippy::suspicious_op_assign_impl)]
             #[inline]
             fn $op(self, other: $Rhs) -> Wrapping<F> {
                 let nbits = mem::size_of::<F>() as u32 * 8;
@@ -382,7 +383,6 @@ macro_rules! op_shift {
             &'a F: $Op<u32, Output = F>,
         {
             type Output = Wrapping<F>;
-            #[allow(clippy::suspicious_op_assign_impl)]
             #[inline]
             fn $op(self, other: $Rhs) -> Wrapping<F> {
                 let nbits = mem::size_of::<F>() as u32 * 8;
@@ -394,7 +394,6 @@ macro_rules! op_shift {
             F: $Op<u32, Output = F>,
         {
             type Output = Wrapping<F>;
-            #[allow(clippy::suspicious_op_assign_impl)]
             #[inline]
             fn $op(self, other: &$Rhs) -> Wrapping<F> {
                 let nbits = mem::size_of::<F>() as u32 * 8;
@@ -406,7 +405,6 @@ macro_rules! op_shift {
             &'b F: $Op<u32, Output = F>,
         {
             type Output = Wrapping<F>;
-            #[allow(clippy::suspicious_op_assign_impl)]
             #[inline]
             fn $op(self, other: &$Rhs) -> Wrapping<F> {
                 let nbits = mem::size_of::<F>() as u32 * 8;
@@ -417,7 +415,6 @@ macro_rules! op_shift {
         where
             F: $OpAssign<u32>,
         {
-            #[allow(clippy::suspicious_op_assign_impl)]
             #[inline]
             fn $op_assign(&mut self, other: $Rhs) {
                 let nbits = mem::size_of::<F>() as u32 * 8;
@@ -428,7 +425,6 @@ macro_rules! op_shift {
         where
             F: $OpAssign<u32>,
         {
-            #[allow(clippy::suspicious_op_assign_impl)]
             #[inline]
             fn $op_assign(&mut self, other: &$Rhs) {
                 let nbits = mem::size_of::<F>() as u32 * 8;

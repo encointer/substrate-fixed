@@ -145,8 +145,8 @@ pub const LN_2: U0F128 = U0F128::from_bits(0xB172_17F7_D1CF_79AB_C9E3_B398_03F2_
 // LN_10 = 2.302585092994045684017991454684364207601...
 pub const LN_10: U2F126 = U2F126::from_bits(0x935D_8DDD_AAA8_AC16_EA56_D62B_82D3_0A28);
 
-#[allow(clippy::cognitive_complexity, clippy::float_cmp)]
 #[cfg(test)]
+#[allow(clippy::cognitive_complexity, clippy::float_cmp)]
 mod tests {
     use crate::{consts::*, traits::FromFixed};
     use core::{f32, f64};

@@ -40,7 +40,7 @@ This crate does *not* provide general analytic functions.
     `pow`.
   * No trigonometric functions are provided, for example no `sin` or
     `cos`.
-  * No other transcendental functions are provided: for example no
+  * No other transcendental functions are provided, for example no
     `log` or `exp`.
 
 The conversions supported cover the following cases.

@@ -24,9 +24,9 @@ f16 = ["half"]
 fail-on-warnings = []
 
 [dependencies]
-typenum = "1.8"
+typenum = "1.10"
 half = { version = "1.2", optional = true }
-serde = { version = "1.0.25", default-features = false, optional = true }
+serde = { version = "1.0.60", default-features = false, optional = true }
 
 [dev-dependencies]
 rand = { version = "0.6", default-features = false }

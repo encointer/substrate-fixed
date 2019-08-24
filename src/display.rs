@@ -438,11 +438,10 @@ impl_fmt! { FixedI32(LeEqU32) }
 impl_fmt! { FixedI64(LeEqU64) }
 impl_fmt! { FixedI128(LeEqU128) }
 
-// approximate ceil(i × log_10 2), works up to 13300
+// ceil(i × log_10 2), works for input < 112_816
 fn ceil_log10_2_times(int_bits: u32) -> u32 {
-    assert!(int_bits <= 13_300);
-    // log_10 2 = 0.301_029_995_664
-    (int_bits * 30_103 + 99_999) / 100_000
+    debug_assert!(int_bits < 112_816);
+    ((u64::from(int_bits) * 0x4D10_4D43 + 0xFFFF_FFFF) >> 32) as u32
 }
 
 pub(crate) trait Mul10: Sized {
@@ -486,7 +485,7 @@ impl Mul10 for u128 {
 #[allow(clippy::float_cmp)]
 #[cfg(test)]
 mod tests {
-    use crate::types::*;
+    use crate::{display, types::*};
     use std::{format, string::String};
 
     fn trim_frac_zeros(mut x: &str) -> &str {
@@ -630,10 +629,9 @@ mod tests {
 
     #[test]
     fn check_ceil_log10_2_times() {
-        use super::ceil_log10_2_times;
-        for i in 0..=13_300 {
+        for i in 0..112_816 {
             let check = (f64::from(i) * 2f64.log10()).ceil() as u32;
-            assert_eq!(ceil_log10_2_times(i), check);
+            assert_eq!(display::ceil_log10_2_times(i), check);
         }
     }
 

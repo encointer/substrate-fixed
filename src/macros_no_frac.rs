@@ -156,7 +156,7 @@ assert_eq!(f.trailing_zeros(), 5);
                 $Fixed => const fn trailing_zeros(self) -> u32
             }
             delegate! {
-                "Shifts to the left by *n* bits, wrapping the
+                "Shifts to the left by `n` bits, wrapping the
 truncated bits to the right end.
 
 # Examples
@@ -173,7 +173,7 @@ assert_eq!(Fix::from_bits(bits).rotate_left(3), Fix::from_bits(rot));
                 $Fixed => const fn rotate_left(self, n: u32)
             }
             delegate! {
-                "Shifts to the right by *n* bits, wrapping the
+                "Shifts to the right by `n` bits, wrapping the
 truncated bits to the left end.
 
 # Examples
@@ -193,7 +193,7 @@ assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
             if_signed! {
                 $Signedness;
                 delegate! {
-                    "Returns [`true`][`bool`] if the number is > 0.
+                    "Returns [`true`][`bool`] if the number is > 0.
 
 # Examples
 
@@ -211,7 +211,7 @@ assert!(!Fix::from_num(-5).is_positive());
                 }
 
                 delegate! {
-                    "Returns [`true`][`bool`] if the number is < 0.
+                    "Returns [`true`][`bool`] if the number is < 0.
 
 # Examples
 
@@ -289,7 +289,7 @@ assert_eq!(minus_five.abs(), five);
             if_unsigned! {
                 $Signedness;
                 delegate! {
-                    "Returns the smallest power of two ≥ `self`.
+                    "Returns the smallest power of two that is ≥ `self`.
 
 # Panics
 
@@ -485,7 +485,7 @@ assert_eq!(Fix::from_num(1).checked_rem_int(0), None);
 
             comment! {
                 "Checked shift left. Returns the shifted number,
-or [`None`] if `rhs` ≥ ", $s_nbits, ".
+or [`None`] if `rhs` ≥ ", $s_nbits, ".
 
 # Examples
 
@@ -506,7 +506,7 @@ assert_eq!((Fix::from_num(1) / 2).checked_shl(", $s_nbits, "), None);
 
             comment! {
                 "Checked shift right. Returns the shifted number,
-or [`None`] if `rhs` ≥ ", $s_nbits, ".
+or [`None`] if `rhs` ≥ ", $s_nbits, ".
 
 # Examples
 
@@ -553,7 +553,7 @@ assert_eq!(Fix::min_value().checked_abs(), None);
             if_unsigned! {
                 $Signedness;
                 comment! {
-                    "Returns the smallest power of two ≥ `self`, or
+                    "Returns the smallest power of two that is ≥ `self`, or
 [`None`] if the next power of two is too large to represent.
 
 # Examples
@@ -880,7 +880,7 @@ assert_eq!(Fix::from_bits(0b10101).wrapping_rem_int(8), Fix::from_bits(0b101));
             }
 
             delegate! {
-                "Wrapping shift left. Wraps `rhs` if `rhs` ≥ ", $s_nbits, ",
+                "Wrapping shift left. Wraps `rhs` if `rhs` ≥ ", $s_nbits, ",
 then shifts and returns the number.
 
 # Examples
@@ -896,7 +896,7 @@ assert_eq!((Fix::from_num(1) / 2).wrapping_shl(3 + ", $s_nbits, "), Fix::from_nu
             }
 
             delegate! {
-                "Wrapping shift right. Wraps `rhs` if `rhs` ≥ ", $s_nbits, ",
+                "Wrapping shift right. Wraps `rhs` if `rhs` ≥ ", $s_nbits, ",
 then shifts and returns the number.
 
 # Examples
@@ -1156,7 +1156,7 @@ assert_eq!(Fix::from_bits(0b10101).overflowing_rem_int(8), (Fix::from_bits(0b101
                 "Overflowing shift left.
 
 Returns a [tuple] of the shifted value and a [`bool`] indicating whether
-an overflow has occurred. Overflow occurs when `rhs` ≥ ", $s_nbits, ".
+an overflow has occurred. Overflow occurs when `rhs` ≥ ", $s_nbits, ".
 On overflow `rhs` is wrapped before the shift operation.
 
 # Examples
@@ -1182,7 +1182,7 @@ assert_eq!((Fix::from_num(1) / 2).overflowing_shl(3 + ", $s_nbits, "), (Fix::fro
                 "Overflowing shift right.
 
 Returns a [tuple] of the shifted value and a [`bool`] indicating whether
-an overflow has occurred. Overflow occurs when `rhs` ≥ ", $s_nbits, ".
+an overflow has occurred. Overflow occurs when `rhs` ≥ ", $s_nbits, ".
 On overflow `rhs` is wrapped before the shift operation.
 
 # Examples

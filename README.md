@@ -15,11 +15,12 @@ The [*fixed* crate] provides fixed-point numbers.
   * [`FixedI64`] and [`FixedU64`] are 64-bit fixed-point numbers.
   * [`FixedI128`] and [`FixedU128`] are 128-bit fixed-point numbers.
 
-These types can have `Frac` fractional bits, where 0 ≤ `Frac` ≤ *n*
-and *n* is the total number of bits. When `Frac` = 0, the fixed-point
-number behaves like an *n*-bit integer. When `Frac` = *n*, the value
-*x* lies in the range −0.5 ≤ *x* < 0.5 for signed numbers, and in the
-range 0 ≤ *x* < 1 for unsigned numbers.
+These types can have `Frac` fractional bits, where
+0 ≤ `Frac` ≤ <i>n</i> and <i>n</i> is the total number of bits. When
+`Frac` = 0, the fixed-point number behaves like an <i>n</i>-bit
+integer. When `Frac` = <i>n</i>, the value <i>x</i> lies in the range
+−0.5 ≤ <i>x</i> < 0.5 for signed numbers, and in the range
+0 ≤ <i>x</i> < 1 for unsigned numbers.
 
 Currently the [*typenum* crate] is used for the fractional bit count
 `Frac`; it is planned to move to [const generics] when they are

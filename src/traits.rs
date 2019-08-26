@@ -553,10 +553,10 @@ where
     /// Returns the number of trailing zeros in the binary representation.
     fn trailing_zeros(self) -> u32;
 
-    /// Shifts to the left by *n* bits, wrapping the truncated bits to the right end.
+    /// Shifts to the left by `n` bits, wrapping the truncated bits to the right end.
     fn rotate_left(self, n: u32) -> Self;
 
-    /// Shifts to the right by *n* bits, wrapping the truncated bits to the left end.
+    /// Shifts to the right by `n` bits, wrapping the truncated bits to the left end.
     fn rotate_right(self, n: u32) -> Self;
 
     /// Checked negation. Returns the negated value, or [`None`] on overflow.
@@ -606,13 +606,13 @@ where
     fn checked_rem_int(self, rhs: Self::Bits) -> Option<Self>;
 
     /// Checked shift left. Returns the shifted number, or [`None`] if
-    /// `rhs` ≥ the number of bits.
+    /// `rhs` ≥ the number of bits.
     ///
     /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
     fn checked_shl(self, rhs: u32) -> Option<Self>;
 
     /// Checked shift right. Returns the shifted number, or [`None`]
-    /// if `rhs` ≥ the number of bits.
+    /// if `rhs` ≥ the number of bits.
     ///
     /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
     fn checked_shr(self, rhs: u32) -> Option<Self>;
@@ -680,11 +680,11 @@ where
     /// Panics if the divisor is zero.
     fn wrapping_rem_int(self, rhs: Self::Bits) -> Self;
 
-    /// Wrapping shift left. Wraps `rhs` if `rhs` ≥ the number of
+    /// Wrapping shift left. Wraps `rhs` if `rhs` ≥ the number of
     /// bits, then shifts and returns the number.
     fn wrapping_shl(self, rhs: u32) -> Self;
 
-    /// Wrapping shift right. Wraps `rhs` if `rhs` ≥ the number of
+    /// Wrapping shift right. Wraps `rhs` if `rhs` ≥ the number of
     /// bits, then shifts and returns the number.
     fn wrapping_shr(self, rhs: u32) -> Self;
 
@@ -960,13 +960,13 @@ where
 /// [`FixedI8`]: ../struct.FixedI8.html
 /// [`Fixed`]: trait.Fixed.html
 pub trait FixedSigned: Fixed + Neg<Output = Self> {
-    /// Returns [`true`][`bool`] if the number is > 0.
+    /// Returns [`true`][`bool`] if the number is > 0.
     ///
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
     fn is_positive(self) -> bool;
 
-    /// Returns [`true`][`bool`] if the number is < 0.
+    /// Returns [`true`][`bool`] if the number is < 0.
     ///
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
@@ -1043,10 +1043,10 @@ pub trait FixedUnsigned: Fixed {
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
     fn is_power_of_two(self) -> bool;
 
-    /// Returns the smallest power of two ≥ `self`.
+    /// Returns the smallest power of two that is ≥ `self`.
     fn next_power_of_two(self) -> Self;
 
-    /// Returns the smallest power of two ≥ `self`, or [`None`] if the
+    /// Returns the smallest power of two that is ≥ `self`, or [`None`] if the
     /// next power of two is too large to represent.
     ///
     /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None

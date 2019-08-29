@@ -211,6 +211,24 @@ impl<F: Fixed> Wrapping<F> {
     pub fn round(self) -> Wrapping<F> {
         Wrapping(self.0.wrapping_round())
     }
+
+    /// Wrapping round. Rounds to the next integer to the nearest,
+    /// with ties rounded to even, and wrapping on overflow.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// let two_half = Wrapping(I16F16::from_num(2.5));
+    /// assert_eq!(two_half.round_ties_to_even(), Wrapping(I16F16::from_num(2)));
+    /// let three_half = Wrapping(I16F16::from_num(3.5));
+    /// assert_eq!(three_half.round_ties_to_even(), Wrapping(I16F16::from_num(4)));
+    /// let max = Wrapping(I16F16::max_value());
+    /// assert_eq!(max.round_ties_to_even(), Wrapping(I16F16::min_value()));
+    /// ```
+    pub fn round_ties_to_even(self) -> Wrapping<F> {
+        Wrapping(self.0.wrapping_round_ties_to_even())
+    }
 }
 
 impl<F: FixedSigned> Wrapping<F> {

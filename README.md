@@ -68,6 +68,14 @@ The conversions supported cover the following cases.
 
 ## What’s new
 
+### Version 0.4.5 news (unreleased)
+
+  * The method [`round_ties_to_even`][`Wrapping::round_ties_to_even`]
+    was added to [`Wrapping`].
+
+[`Wrapping::round_ties_to_even`]: https://docs.rs/fixed/0.4.4/fixed/struct.Wrapping.html#method.round_ties_to_even
+[`Wrapping`]: https://docs.rs/fixed/0.4.4/fixed/struct.Wrapping.html
+
 ### Version 0.4.4 news (2019-08-24)
 
   * Bug fix: rounding could produce bad output for [`Binary`],

@@ -5,6 +5,11 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.4.5 (unreleased)
+==========================
+
+  * The method `round_ties_to_even` was added to `Wrapping`.
+
 Version 0.4.4 (2019-08-24)
 ==========================
 

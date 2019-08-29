@@ -716,7 +716,7 @@ mod tests {
         for u in 0..=255u8 {
             // I4F4 and U4F4 are displayed like f32 when the f32
             // display precision is the number of fractional digits
-            // displayed for fixed-point. This verfies correct display
+            // displayed for fixed-point. This verifies correct display
             // of the integer part.
             let (ifix, ufix) = (I4F4::from_bits(u as i8), U4F4::from_bits(u));
             let (iflo, uflo) = (ifix.to_num::<f32>(), ufix.to_num::<f32>());
@@ -749,6 +749,20 @@ mod tests {
             let sufix_frac = sufix.find('.').map(|i| &sufix[i..]);
             let sufixed_frac = sufixed.find('.').map(|i| &sufixed[i..]);
             assert_eq!(sufix_frac, sufixed_frac);
+        }
+    }
+
+    #[test]
+    fn compare_frac17_float() {
+        for u in 0..(1 << 17) {
+            // 24 bits of precision: 17 fractional bits + 7 significant integer bits
+            let ufix = U15F17::from_bits(u) + U15F17::from_num(99);
+            let ifix = -I15F17::from_num(ufix);
+            let (iflo, uflo) = (ifix.to_num::<f32>(), ufix.to_num::<f32>());
+            assert_eq!(ifix.to_string(), iflo.to_string());
+            assert_eq!(ufix.to_string(), uflo.to_string());
+            assert_eq!(format!("{:.3}", ifix), format!("{:.3}", iflo));
+            assert_eq!(format!("{:.3}", ufix), format!("{:.3}", uflo));
         }
     }
 }

@@ -95,7 +95,7 @@ assert_eq!(Fix::from_num(2).to_bits(), 0b10_0000);
                 }
             }
 
-            delegate! {
+            comment! {
                 "Returns the number of ones in the binary
 representation.
 
@@ -108,9 +108,12 @@ let f = Fix::from_bits(0b11_0010);
 assert_eq!(f.count_ones(), 3);
 ```
 ";
-                $Fixed => const fn count_ones(self) -> u32
+                #[inline]
+                pub const fn count_ones(self) -> u32 {
+                    self.to_bits().count_ones()
+                }
             }
-            delegate! {
+            comment! {
                 "Returns the number of zeros in the binary
 representation.
 
@@ -123,9 +126,12 @@ let f = Fix::from_bits(!0b11_0010);
 assert_eq!(f.count_zeros(), 3);
 ```
 ";
-                $Fixed => const fn count_zeros(self) -> u32
+                #[inline]
+                pub const fn count_zeros(self) -> u32 {
+                    self.to_bits().count_zeros()
+                }
             }
-            delegate! {
+            comment! {
                 "Returns the number of leading zeros in the binary
 representation.
 
@@ -138,9 +144,12 @@ let f = Fix::from_bits(0b10_0000);
 assert_eq!(f.leading_zeros(), ", $s_nbits, " - 6);
 ```
 ";
-                $Fixed => const fn leading_zeros(self) -> u32
+                #[inline]
+                pub const fn leading_zeros(self) -> u32 {
+                    self.to_bits().leading_zeros()
+                }
             }
-            delegate! {
+            comment! {
                 "Returns the number of trailing zeros in the binary
 representation.
 
@@ -153,9 +162,12 @@ let f = Fix::from_bits(0b10_0000);
 assert_eq!(f.trailing_zeros(), 5);
 ```
 ";
-                $Fixed => const fn trailing_zeros(self) -> u32
+                #[inline]
+                pub const fn trailing_zeros(self) -> u32 {
+                    self.to_bits().trailing_zeros()
+                }
             }
-            delegate! {
+            comment! {
                 "Shifts to the left by `n` bits, wrapping the
 truncated bits to the right end.
 
@@ -170,9 +182,12 @@ assert_eq!(bits.rotate_left(3), rot);
 assert_eq!(Fix::from_bits(bits).rotate_left(3), Fix::from_bits(rot));
 ```
 ";
-                $Fixed => const fn rotate_left(self, n: u32)
+                #[inline]
+                pub const fn rotate_left(self, n: u32) -> $Fixed<Frac> {
+                    Self::from_bits(self.to_bits().rotate_left(n))
+                }
             }
-            delegate! {
+            comment! {
                 "Shifts to the right by `n` bits, wrapping the
 truncated bits to the left end.
 
@@ -187,12 +202,15 @@ assert_eq!(bits.rotate_right(3), rot);
 assert_eq!(Fix::from_bits(bits).rotate_right(3), Fix::from_bits(rot));
 ```
 ";
-                $Fixed => const fn rotate_right(self, n: u32)
+                #[inline]
+                pub const fn rotate_right(self, n: u32) -> $Fixed<Frac> {
+                    Self::from_bits(self.to_bits().rotate_right(n))
+                }
             }
 
             if_signed! {
                 $Signedness;
-                delegate! {
+                comment! {
                     "Returns [`true`][`bool`] if the number is > 0.
 
 # Examples
@@ -207,10 +225,13 @@ assert!(!Fix::from_num(-5).is_positive());
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 ";
-                    $Fixed => const fn is_positive(self) -> bool
+                    #[inline]
+                    pub const fn is_positive(self) -> bool {
+                        self.to_bits().is_positive()
+                    }
                 }
 
-                delegate! {
+                comment! {
                     "Returns [`true`][`bool`] if the number is < 0.
 
 # Examples
@@ -225,7 +246,10 @@ assert!(Fix::from_num(-5).is_negative());
 
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
 ";
-                    $Fixed => const fn is_negative(self) -> bool
+                    #[inline]
+                    pub const fn is_negative(self) -> bool {
+                        self.to_bits().is_negative()
+                    }
                 }
             }
 
@@ -288,7 +312,7 @@ assert_eq!(minus_five.abs(), five);
 
             if_unsigned! {
                 $Signedness;
-                delegate! {
+                comment! {
                     "Returns the smallest power of two that is ≥ `self`.
 
 # Panics
@@ -314,7 +338,10 @@ assert_eq!(half.next_power_of_two(), half);
 
 [`checked_next_power_of_two`]: #method.checked_next_power_of_two
 ";
-                    $Fixed => fn next_power_of_two(self)
+                    #[inline]
+                    pub fn next_power_of_two(self) -> $Fixed<Frac> {
+                        Self::from_bits(self.to_bits().next_power_of_two())
+                    }
                 }
             }
 
@@ -879,7 +906,7 @@ assert_eq!(Fix::from_bits(0b10101).wrapping_rem_int(8), Fix::from_bits(0b101));
                 }
             }
 
-            delegate! {
+            comment! {
                 "Wrapping shift left. Wraps `rhs` if `rhs` ≥ ", $s_nbits, ",
 then shifts and returns the number.
 
@@ -892,10 +919,13 @@ assert_eq!((Fix::from_num(1) / 2).wrapping_shl(3), Fix::from_num(4));
 assert_eq!((Fix::from_num(1) / 2).wrapping_shl(3 + ", $s_nbits, "), Fix::from_num(4));
 ```
 ";
-                $Fixed => const fn wrapping_shl(self, rhs: u32)
+                #[inline]
+                pub const fn wrapping_shl(self, rhs: u32) -> $Fixed<Frac> {
+                    Self::from_bits(self.to_bits().wrapping_shl(rhs))
+                }
             }
 
-            delegate! {
+            comment! {
                 "Wrapping shift right. Wraps `rhs` if `rhs` ≥ ", $s_nbits, ",
 then shifts and returns the number.
 
@@ -908,7 +938,10 @@ assert_eq!((Fix::from_num(4)).wrapping_shr(3), Fix::from_num(1) / 2);
 assert_eq!((Fix::from_num(4)).wrapping_shr(3 + ", $s_nbits, "), Fix::from_num(1) / 2);
 ```
 ";
-                $Fixed => const fn wrapping_shr(self, rhs: u32)
+                #[inline]
+                pub const fn wrapping_shr(self, rhs: u32) -> $Fixed<Frac> {
+                    Self::from_bits(self.to_bits().wrapping_shr(rhs))
+                }
             }
 
             if_signed! {

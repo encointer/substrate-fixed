@@ -71,33 +71,3 @@ macro_rules! comment {
         }
     };
 }
-
-macro_rules! delegate {
-    ($($comment:expr),*; $Fixed:ident => fn $method:ident(self)) => {
-        doc_comment! {
-            concat!($($comment),*);
-            #[inline]
-            pub fn $method(self) -> $Fixed<Frac> {
-                Self::from_bits(self.to_bits().$method())
-            }
-        }
-    };
-    ($($comment:expr),*; $Fixed:ident => const fn $method:ident(self) -> $Ret:ty) => {
-        doc_comment! {
-            concat!($($comment),*);
-            #[inline]
-            pub const fn $method(self) -> $Ret {
-                self.to_bits().$method()
-            }
-        }
-    };
-    ($($comment:expr),*; $Fixed:ident => const fn $method:ident(self, $param:ident: $Param:ty)) => {
-        doc_comment! {
-            concat!($($comment),*);
-            #[inline]
-            pub const fn $method(self, $param: $Param) -> $Fixed<Frac> {
-                Self::from_bits(self.to_bits().$method($param))
-            }
-        }
-    };
-}

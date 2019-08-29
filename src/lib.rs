@@ -290,8 +290,6 @@ mod macros_from_to;
 #[macro_use]
 mod macros_round;
 #[macro_use]
-mod macros_deprecated;
-#[macro_use]
 mod macros_no_frac;
 #[macro_use]
 mod macros_frac;

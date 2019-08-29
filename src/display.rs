@@ -714,18 +714,25 @@ mod tests {
     #[test]
     fn compare_frac4_float() {
         for u in 0..=255u8 {
+            // I4F4 and U4F4 are displayed like f32 when the f32
+            // display precision is the number of fractional digits
+            // displayed for fixed-point. This verfies correct display
+            // of the integer part.
             let (ifix, ufix) = (I4F4::from_bits(u as i8), U4F4::from_bits(u));
             let (iflo, uflo) = (ifix.to_num::<f32>(), ufix.to_num::<f32>());
             let (sifix, sufix) = (ifix.to_string(), ufix.to_string());
-            let (siflo, suflo) = (iflo.to_string(), uflo.to_string());
-            let end = sifix.find('.').unwrap_or(sifix.len());
-            assert_eq!(&sifix[..end], &siflo[..end]);
-            let end = sufix.find('.').unwrap_or(sufix.len());
-            assert_eq!(&sufix[..end], &suflo[..end]);
+            let pifix = sifix.find('.').map(|p| sifix.len() - 1 - p).unwrap_or(0);
+            let pufix = sufix.find('.').map(|p| sufix.len() - 1 - p).unwrap_or(0);
+            let (siflo, suflo) = (format!("{:.*}", pifix, iflo), format!("{:.*}", pufix, uflo));
+            assert_eq!(sifix, siflo);
+            assert_eq!(sufix, suflo);
 
-            // 24 bits of precision requires 20 significant integer bits: 1 << 19
+            // I28F4 and U28F4 are displayed like f32 when the f32 has
+            // four bits of precision dedicated to the fractional
+            // part. For f32, this requires the magnitude’s integer
+            // part to have 20 significant bits: (1 << 19)..(1 << 20).
             let ifixed =
-                I28F4::from(ifix) + I28F4::from_num((ifix.to_bits().signum() as i32) << 19);
+                I28F4::from(ifix) + I28F4::from_num(i32::from(ifix.to_bits().signum()) << 19);
             let ufixed = U28F4::from(ufix) + U28F4::from_num(1 << 19);
             let (ifloat, ufloat) = (ifixed.to_num::<f32>(), ufixed.to_num::<f32>());
             let (sifixed, sufixed) = (ifixed.to_string(), ufixed.to_string());
@@ -733,12 +740,15 @@ mod tests {
             assert_eq!(sifixed, sifloat);
             assert_eq!(sufixed, sufloat);
 
-            let beg = sifix.find('.').unwrap_or(sifix.len());
-            let begin = sifixed.find('.').unwrap_or(sifixed.len());
-            assert_eq!(&sifix[beg..], &sifixed[begin..]);
-            let beg = sufix.find('.').unwrap_or(sufix.len());
-            let begin = sufixed.find('.').unwrap_or(sufixed.len());
-            assert_eq!(&sufix[beg..], &sufixed[begin..]);
+            // The fractional parts of I4F4 and U4F4 are displayed
+            // like the fractional parts of I28F4 and U28F4
+            // respectively.
+            let sifix_frac = sifix.find('.').map(|i| &sifix[i..]);
+            let sifixed_frac = sifixed.find('.').map(|i| &sifixed[i..]);
+            assert_eq!(sifix_frac, sifixed_frac);
+            let sufix_frac = sufix.find('.').map(|i| &sufix[i..]);
+            let sufixed_frac = sufixed.find('.').map(|i| &sufixed[i..]);
+            assert_eq!(sufix_frac, sufixed_frac);
         }
     }
 }

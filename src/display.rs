@@ -756,13 +756,32 @@ mod tests {
     fn compare_frac17_float() {
         for u in 0..(1 << 17) {
             // 24 bits of precision: 17 fractional bits + 7 significant integer bits
-            let ufix = U15F17::from_bits(u) + U15F17::from_num(99);
-            let ifix = -I15F17::from_num(ufix);
-            let (iflo, uflo) = (ifix.to_num::<f32>(), ufix.to_num::<f32>());
-            assert_eq!(ifix.to_string(), iflo.to_string());
-            assert_eq!(ufix.to_string(), uflo.to_string());
-            assert_eq!(format!("{:.3}", ifix), format!("{:.3}", iflo));
-            assert_eq!(format!("{:.3}", ufix), format!("{:.3}", uflo));
+            let fix = U15F17::from_bits(u) + U15F17::from_num(99);
+            let fix_pos = I15F17::from_num(fix);
+            let fix_neg = -fix_pos;
+            let (flo, flo_neg) = (fix.to_num::<f32>(), fix_neg.to_num::<f32>());
+
+            let fix_str = fix.to_string();
+            let fix_pos_str = fix_pos.to_string();
+            let fix_neg_str = fix_neg.to_string();
+            assert_eq!(fix_str, flo.to_string());
+            assert_eq!(fix_str, fix_pos_str);
+            assert_eq!(fix_neg_str, flo_neg.to_string());
+            if u != 0 {
+                assert_eq!(&fix_neg_str[..1], "-");
+                assert_eq!(&fix_neg_str[1..], fix_pos_str);
+            }
+
+            let fix_str3 = format!("{:.3}", fix);
+            let fix_pos_str3 = format!("{:.3}", fix_pos);
+            let fix_neg_str3 = format!("{:.3}", fix_neg);
+            assert_eq!(fix_str3, format!("{:.3}", flo));
+            assert_eq!(fix_str3, fix_pos_str3);
+            assert_eq!(fix_neg_str3, format!("{:.3}", flo_neg));
+            if u != 0 {
+                assert_eq!(&fix_neg_str3[..1], "-");
+                assert_eq!(&fix_neg_str3[1..], fix_pos_str3);
+            }
         }
     }
 }

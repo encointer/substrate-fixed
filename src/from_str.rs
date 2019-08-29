@@ -844,8 +844,16 @@ impl_from_str! {
 
 #[cfg(test)]
 mod tests {
-    use crate::{from_str::*, traits::Fixed, types::*};
-    use std::{fmt::Debug, format, string::String};
+    use crate::{
+        from_str::*,
+        traits::{Fixed, ToFixed},
+        types::*,
+    };
+    use std::{
+        fmt::Debug,
+        format,
+        string::{String, ToString},
+    };
 
     #[test]
     fn check_dec_8() {
@@ -985,6 +993,8 @@ mod tests {
         assert_eq!((neg, int, frac), (true, &b""[..], &b"C1A"[..]));
 
         let ParseFixedError { kind } = parse_bounds(b"0 ", 10).unwrap_err();
+        assert_eq!(kind, ParseErrorKind::InvalidDigit);
+        let ParseFixedError { kind } = parse_bounds(b"+-", 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::InvalidDigit);
         let ParseFixedError { kind } = parse_bounds(b"+.", 10).unwrap_err();
         assert_eq!(kind, ParseErrorKind::NoDigits);
@@ -1850,5 +1860,68 @@ mod tests {
         );
         // 18/32 = 9/16
         assert_ok::<U4F4>("0.5625", 10, 0x09, false);
+    }
+
+    #[test]
+    fn frac4() {
+        for u in 0..=255u8 {
+            let (ifix, ufix) = (I4F4::from_bits(u as i8), U4F4::from_bits(u));
+            let (ifix_str, ufix_str) = (ifix.to_string(), ufix.to_string());
+            assert_eq!(I4F4::from_str(&ifix_str).unwrap(), ifix);
+            assert_eq!(U4F4::from_str(&ufix_str).unwrap(), ufix);
+        }
+    }
+
+    fn similar<F: Fixed, G: ToFixed>(a: F, b: F, max_diff: G) -> bool {
+        let abs_diff = if a > b { a - b } else { b - a };
+        abs_diff <= max_diff.to_fixed::<F>()
+    }
+
+    #[test]
+    fn frac17() {
+        for u in 0..(1 << 17) {
+            let fix = U15F17::from_bits(u) + U15F17::from_num(99);
+            let fix_pos = I15F17::from_num(fix);
+            let fix_neg = -fix_pos;
+            let fix_str = fix.to_string();
+            let fix_pos_str = fix_pos.to_string();
+            let fix_neg_str = fix_neg.to_string();
+            assert_eq!(fix_str, fix_pos_str);
+            if u != 0 {
+                assert_eq!(&fix_neg_str[..1], "-");
+                assert_eq!(&fix_neg_str[1..], fix_pos_str);
+            }
+            assert_eq!(U15F17::from_str(&fix_str).unwrap(), fix);
+            assert_eq!(I15F17::from_str(&fix_pos_str).unwrap(), fix_pos);
+            assert_eq!(I15F17::from_str(&fix_neg_str).unwrap(), fix_neg);
+
+            let fix_str3 = format!("{:.3}", fix);
+            let fix_pos_str3 = format!("{:.3}", fix_pos);
+            let fix_neg_str3 = format!("{:.3}", fix_neg);
+            assert_eq!(fix_str3, fix_pos_str3);
+            if u != 0 {
+                assert_eq!(&fix_neg_str3[..1], "-");
+                assert_eq!(&fix_neg_str3[1..], fix_pos_str3);
+            }
+            let max_diff = U15F17::from_bits((5 << 17) / 10000 + 1);
+            let from_fix_str3 = U15F17::from_str(&fix_str3).unwrap();
+            assert!(similar(from_fix_str3, fix, max_diff));
+            let from_fix_pos_str3 = I15F17::from_str(&fix_pos_str3).unwrap();
+            assert!(similar(from_fix_pos_str3, fix_pos, max_diff));
+            let from_fix_neg_str3 = I15F17::from_str(&fix_neg_str3).unwrap();
+            assert!(similar(from_fix_neg_str3, fix_neg, max_diff));
+
+            let fix_str9 = format!("{:.9}", fix);
+            let fix_pos_str9 = format!("{:.9}", fix_pos);
+            let fix_neg_str9 = format!("{:.9}", fix_neg);
+            assert_eq!(fix_str9, fix_pos_str9);
+            if u != 0 {
+                assert_eq!(&fix_neg_str9[..1], "-");
+                assert_eq!(&fix_neg_str9[1..], fix_pos_str9);
+            }
+            assert_eq!(U15F17::from_str(&fix_str9).unwrap(), fix);
+            assert_eq!(I15F17::from_str(&fix_pos_str9).unwrap(), fix_pos);
+            assert_eq!(I15F17::from_str(&fix_neg_str9).unwrap(), fix_neg);
+        }
     }
 }

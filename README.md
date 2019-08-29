@@ -70,6 +70,8 @@ The conversions supported cover the following cases.
 
 ### Version 0.4.5 news (unreleased)
 
+  * Bug fix: display of many decimal numbers was panicking in debug
+    mode or including a leading zero in release mode.
   * The method [`round_ties_to_even`][`Wrapping::round_ties_to_even`]
     was added to [`Wrapping`].
 

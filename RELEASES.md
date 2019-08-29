@@ -8,6 +8,8 @@ as-is, without any warranty. -->
 Version 0.4.5 (unreleased)
 ==========================
 
+  * Bug fix: display of many decimal numbers was panicking in debug
+    mode or including a leading zero in release mode.
   * The method `round_ties_to_even` was added to `Wrapping`.
 
 Version 0.4.4 (2019-08-24)

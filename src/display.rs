@@ -146,8 +146,24 @@ impl Buffer {
             ""
         };
         let prefix = if fmt.alternate() { maybe_prefix } else { "" };
+
+        // For numbers with no significant integer bits:
+        //   * data starts  with "0." and begin = 0.
+        //
+        // For numbers with some significant integer bits, data can have:
+        //   * no leading zeros => begin = 0
+        //   * one leading zero => begin = 1
+        //   * two leading zeros => begin = 2
+        //
+        // Two leading zeros can happen for decimal only. For example
+        // with four significant integer bits, we could get anything
+        // between 8 and 15, so two decimal digits are allocated apart
+        // from the initial padding zero. This means that for 8, data
+        // would begin as "008.", and begin = 2.
         let abs_begin = if self.data[0] != b'0' || self.data[1] == b'.' {
             0
+        } else if self.data[1] == b'0' {
+            2
         } else {
             1
         };
@@ -274,7 +290,6 @@ macro_rules! impl_radix_helper {
                     return (self as $H).write_int_dec(nbits, buf);
                 }
                 for b in buf.int().iter_mut().rev() {
-                    debug_assert!(self != 0);
                     *b = (self % 10).lower_byte();
                     self /= 10;
                 }
@@ -485,7 +500,10 @@ impl Mul10 for u128 {
 #[allow(clippy::cognitive_complexity, clippy::float_cmp)]
 mod tests {
     use crate::{display, types::*};
-    use std::{format, string::String};
+    use std::{
+        format,
+        string::{String, ToString},
+    };
 
     fn trim_frac_zeros(mut x: &str) -> &str {
         while x.ends_with('0') {
@@ -691,5 +709,36 @@ mod tests {
         assert_eq!(format!("{:.1X}", i), "DD.E");
         assert_eq!(format!("{:.2X}", i), "DD.DD");
         assert_eq!(format!("{:.3X}", i), "DD.DD0");
+    }
+
+    #[test]
+    fn compare_frac4_float() {
+        for u in 0..=255u8 {
+            let (ifix, ufix) = (I4F4::from_bits(u as i8), U4F4::from_bits(u));
+            let (iflo, uflo) = (ifix.to_num::<f32>(), ufix.to_num::<f32>());
+            let (sifix, sufix) = (ifix.to_string(), ufix.to_string());
+            let (siflo, suflo) = (iflo.to_string(), uflo.to_string());
+            let end = sifix.find('.').unwrap_or(sifix.len());
+            assert_eq!(&sifix[..end], &siflo[..end]);
+            let end = sufix.find('.').unwrap_or(sufix.len());
+            assert_eq!(&sufix[..end], &suflo[..end]);
+
+            // 24 bits of precision requires 20 significant integer bits: 1 << 19
+            let ifixed =
+                I28F4::from(ifix) + I28F4::from_num((ifix.to_bits().signum() as i32) << 19);
+            let ufixed = U28F4::from(ufix) + U28F4::from_num(1 << 19);
+            let (ifloat, ufloat) = (ifixed.to_num::<f32>(), ufixed.to_num::<f32>());
+            let (sifixed, sufixed) = (ifixed.to_string(), ufixed.to_string());
+            let (sifloat, sufloat) = (ifloat.to_string(), ufloat.to_string());
+            assert_eq!(sifixed, sifloat);
+            assert_eq!(sufixed, sufloat);
+
+            let beg = sifix.find('.').unwrap_or(sifix.len());
+            let begin = sifixed.find('.').unwrap_or(sifixed.len());
+            assert_eq!(&sifix[beg..], &sifixed[begin..]);
+            let beg = sufix.find('.').unwrap_or(sufix.len());
+            let begin = sufixed.find('.').unwrap_or(sufixed.len());
+            assert_eq!(&sufix[beg..], &sufixed[begin..]);
+        }
     }
 }

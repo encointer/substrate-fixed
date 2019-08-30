@@ -44,9 +44,7 @@ where
 
     fn is_negative(self) -> bool;
     fn is_odd(self) -> bool;
-    fn wrapping_neg(self) -> Self;
     fn checked_add(self, val: Self) -> Option<Self>;
-    fn checked_mul(self, val: Self) -> Option<Self>;
     fn overflowing_add(self, val: Self) -> (Self, bool);
     fn overflowing_mul(self, val: Self) -> (Self, bool);
     fn leading_zeros(self) -> u32;
@@ -79,18 +77,8 @@ macro_rules! sealed_int {
             const ZERO: $Int = 0;
 
             #[inline]
-            fn wrapping_neg(self) -> $Int {
-                self.wrapping_neg()
-            }
-
-            #[inline]
             fn checked_add(self, val: $Int) -> Option<$Int> {
                 self.checked_add(val)
-            }
-
-            #[inline]
-            fn checked_mul(self, val: $Int) -> Option<$Int> {
-                self.checked_mul(val)
             }
 
             #[inline]

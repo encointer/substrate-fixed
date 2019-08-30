@@ -30,9 +30,6 @@ pub trait FloatHelper: Copy {
     const MANT_MASK: Self::Bits;
 
     fn is_nan(self) -> bool;
-    fn is_infinite(self) -> bool;
-    fn is_finite(self) -> bool;
-    fn is_sign_negative(self) -> bool;
 
     fn bits_from_parts(neg: bool, exp: i32, mant: Self::Bits) -> Self::Bits;
     fn from_parts(neg: bool, exp: i32, mant: Self::Bits) -> Self;
@@ -54,21 +51,6 @@ macro_rules! sealed_float {
             #[inline]
             fn is_nan(self) -> bool {
                 (self.to_bits() & !Self::SIGN_MASK) > Self::EXP_MASK
-            }
-
-            #[inline]
-            fn is_infinite(self) -> bool {
-                (self.to_bits() & !Self::SIGN_MASK) == Self::EXP_MASK
-            }
-
-            #[inline]
-            fn is_finite(self) -> bool {
-                (self.to_bits() & !Self::SIGN_MASK) < Self::EXP_MASK
-            }
-
-            #[inline]
-            fn is_sign_negative(self) -> bool {
-                (self.to_bits() & Self::SIGN_MASK) != 0
             }
 
             #[inline]

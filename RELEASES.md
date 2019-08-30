@@ -5,7 +5,7 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
-Version 0.4.5 (unreleased)
+Version 0.4.5 (2019-08-30)
 ==========================
 
   * Bug fix: display of many decimal numbers was panicking in debug

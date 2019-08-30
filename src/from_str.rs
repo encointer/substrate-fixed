@@ -856,6 +856,92 @@ mod tests {
     };
 
     #[test]
+    fn overflowing() {
+        let overflow = ParseFixedError {
+            kind: ParseErrorKind::Overflow,
+        };
+        assert_eq!(
+            U4F4::overflowing_from_str("15.5"),
+            Ok((U4F4::from_bits(0xF8), false))
+        );
+        assert_eq!(U4F4::from_str("15.5"), Ok(U4F4::from_bits(0xF8)));
+        assert_eq!(
+            U4F4::overflowing_from_str("31.5"),
+            Ok((U4F4::from_bits(0xF8), true))
+        );
+        assert_eq!(U4F4::from_str("31.5"), Err(overflow));
+        assert_eq!(
+            U4F4::overflowing_from_str("271.5"),
+            Ok((U4F4::from_bits(0xF8), true))
+        );
+        assert_eq!(
+            U8F0::overflowing_from_str("271"),
+            Ok((U8F0::from_bits(0x0F), true))
+        );
+        let longer_than_8 = format!("{}", (1 << 30) + 15);
+        assert_eq!(
+            U8F0::overflowing_from_str(&longer_than_8),
+            Ok((U8F0::from_bits(0x0F), true))
+        );
+
+        assert_eq!(
+            U4F4::overflowing_from_str_binary("1111.1000"),
+            Ok((U4F4::from_bits(0xF8), false))
+        );
+        assert_eq!(
+            U4F4::from_str_binary("1111.1000"),
+            Ok(U4F4::from_bits(0xF8))
+        );
+        assert_eq!(
+            U4F4::overflowing_from_str_binary("11111.1000"),
+            Ok((U4F4::from_bits(0xF8), true))
+        );
+        assert_eq!(U4F4::from_str_binary("11111.1000"), Err(overflow));
+        assert_eq!(
+            U8F0::overflowing_from_str_binary("100001111"),
+            Ok((U8F0::from_bits(0x0F), true))
+        );
+
+        assert_eq!(
+            U4F4::overflowing_from_str_octal("17.7"),
+            Ok((U4F4::from_bits(0xFE), false))
+        );
+        assert_eq!(U4F4::from_str_octal("17.7"), Ok(U4F4::from_bits(0xFE)));
+        assert_eq!(
+            U4F4::overflowing_from_str_octal("77.7"),
+            Ok((U4F4::from_bits(0xFE), true))
+        );
+        assert_eq!(U4F4::from_str_octal("77.7"), Err(overflow));
+        assert_eq!(
+            U4F4::overflowing_from_str_octal("707.7"),
+            Ok((U4F4::from_bits(0x7E), true))
+        );
+        assert_eq!(
+            U8F0::overflowing_from_str_octal("1307"),
+            Ok((U8F0::from_bits(0o307), true))
+        );
+
+        assert_eq!(
+            U6F10::overflowing_from_str_hex("3F.8"),
+            Ok((U6F10::from_bits(0xFE00), false))
+        );
+        assert_eq!(U6F10::from_str_hex("3F.8"), Ok(U6F10::from_bits(0xFE00)));
+        assert_eq!(
+            U6F10::overflowing_from_str_hex("FF.8"),
+            Ok((U6F10::from_bits(0xFE00), true))
+        );
+        assert_eq!(U6F10::from_str_hex("FF.8"), Err(overflow));
+        assert_eq!(
+            U6F10::overflowing_from_str_hex("F0F.8"),
+            Ok((U6F10::from_bits(0x3E00), true))
+        );
+        assert_eq!(
+            U16F0::overflowing_from_str_hex("100FF"),
+            Ok((U16F0::from_bits(0x00FF), true))
+        );
+    }
+
+    #[test]
     fn check_dec_8() {
         let two_pow = 8f64.exp2();
         let limit = 1000;
@@ -977,6 +1063,10 @@ mod tests {
             Round::Nearest,
         );
         assert_eq!(x, Some(42_010_168_377_579_896_403_540_037_811_203_677_112));
+
+        let eights = 888_888_888_888_888_888_888_888_888;
+        let narrow = <u128 as DecToBin>::dec_to_bin((eights, zeros), 40, Round::Nearest);
+        assert_eq!(narrow, Some(977_343_669_134));
     }
 
     #[test]

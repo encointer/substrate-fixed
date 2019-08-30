@@ -505,6 +505,24 @@ mod tests {
         string::{String, ToString},
     };
 
+    #[test]
+    fn format() {
+        let pos = I16F16::from_num(12.3);
+        assert_eq!(format!("{:+}", pos), "+12.3");
+        assert_eq!(format!("{:+08}", pos), "+00012.3");
+        assert_eq!(format!("{:+#08}", pos), "+00012.3");
+        assert_eq!(format!("{:+08X}", pos), "+0C.4CCD");
+        assert_eq!(format!("{:+08.1X}", pos), "+0000C.5");
+        assert_eq!(format!("{:+#08X}", pos), "+0xC.4CCD");
+        assert_eq!(format!("{:+#08.1X}", pos), "+0x00C.5");
+
+        assert_eq!(format!("{:#<8}", pos), "12.3####");
+        assert_eq!(format!("{:#^8}", pos), "##12.3##");
+        assert_eq!(format!("{:#^9}", pos), "##12.3###");
+        assert_eq!(format!("{:#>8}", pos), "####12.3");
+        assert_eq!(format!("{:#^08}", pos), "000012.3");
+    }
+
     fn trim_frac_zeros(mut x: &str) -> &str {
         while x.ends_with('0') {
             x = &x[..x.len() - 1];
@@ -709,6 +727,26 @@ mod tests {
         assert_eq!(format!("{:.1X}", i), "DD.E");
         assert_eq!(format!("{:.2X}", i), "DD.DD");
         assert_eq!(format!("{:.3X}", i), "DD.DD0");
+    }
+
+    #[test]
+    fn compare_frac0_int() {
+        for u in 0..=255u8 {
+            let i = u as i8;
+            let (ifix, ufix) = (I8F0::from_bits(i), U8F0::from_bits(u));
+            assert_eq!(ifix.to_string(), i.to_string());
+            assert_eq!(ufix.to_string(), u.to_string());
+            if i >= 0 {
+                assert_eq!(format!("{:#X}", ifix), format!("{:#X}", i));
+                assert_eq!(format!("{:#b}", ifix), format!("{:#b}", i));
+            } else {
+                let abs_i = i.wrapping_neg() as u8;
+                assert_eq!(format!("{:#X}", ifix), format!("-{:#X}", abs_i));
+                assert_eq!(format!("{:#b}", ifix), format!("-{:#b}", abs_i));
+            }
+            assert_eq!(format!("{:#x}", ufix), format!("{:#x}", u));
+            assert_eq!(format!("{:#o}", ufix), format!("{:#o}", u));
+        }
     }
 
     #[test]

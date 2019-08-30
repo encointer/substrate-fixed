@@ -588,10 +588,10 @@ impl<F: FixedSigned> Wrapping<F> {
     ///     <code>[Wrapping][`Wrapping`]&lt;[I0F16][`I0F16`]&gt;</code>,
     ///     the return value is always zero.
     ///   * When there is one integer bit, for example for the type
-    ///     <code>[Wrapping][`Wrapping`]&lt;[I1F16][`I1F16`]&gt;</code>,
+    ///     <code>[Wrapping][`Wrapping`]&lt;[I1F15][`I1F15`]&gt;</code>,
     ///     the return value is zero when `self` is zero, and −1
     ///     otherwise. This means that for a positive number, −1 is
-    ///     returned, because 1 does not fit and is wrapped to −1.
+    ///     returned, because +1 does not fit and is wrapped to −1.
     ///
     /// # Examples
     ///
@@ -603,7 +603,7 @@ impl<F: FixedSigned> Wrapping<F> {
     /// ```
     ///
     /// [`I0F16`]: types/type.I0F16.html
-    /// [`I1F16`]: types/type.I1F16.html
+    /// [`I1F15`]: types/type.I1F15.html
     /// [`Wrapping`]: struct.Wrapping.html
     #[inline]
     pub fn signum(self) -> Self {

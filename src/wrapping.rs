@@ -17,7 +17,7 @@
 
 use crate::{
     from_str::ParseFixedError,
-    traits::{Fixed, FixedSigned, ToFixed},
+    traits::{Fixed, FixedSigned, FixedUnsigned, FromFixed, ToFixed},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
 };
@@ -50,6 +50,87 @@ use core::{
 pub struct Wrapping<F>(pub F);
 
 impl<F: Fixed> Wrapping<F> {
+    /// Returns the smallest value that can be represented.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// assert_eq!(Wrapping::<I16F16>::min_value(), Wrapping(I16F16::min_value()));
+    /// ```
+    #[inline]
+    pub fn min_value() -> Self {
+        Wrapping(F::min_value())
+    }
+
+    /// Returns the largest value that can be represented.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// assert_eq!(Wrapping::<I16F16>::max_value(), Wrapping(I16F16::max_value()));
+    /// ```
+    #[inline]
+    pub fn max_value() -> Self {
+        Wrapping(F::max_value())
+    }
+
+    /// Returns the number of integer bits.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// assert_eq!(Wrapping::<I16F16>::int_nbits(), I16F16::int_nbits());
+    /// ```
+    #[inline]
+    pub fn int_nbits() -> u32 {
+        F::int_nbits()
+    }
+
+    /// Returns the number of fractional bits.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// assert_eq!(Wrapping::<I16F16>::frac_nbits(), I16F16::frac_nbits());
+    /// ```
+    #[inline]
+    pub fn frac_nbits() -> u32 {
+        F::frac_nbits()
+    }
+
+    /// Creates a fixed-point number that has a bitwise representation
+    /// identical to the given integer.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// assert_eq!(Wrapping::<I16F16>::from_bits(0x1C), Wrapping(I16F16::from_bits(0x1C)));
+    /// ```
+    #[inline]
+    pub fn from_bits(bits: F::Bits) -> Self {
+        Wrapping(F::from_bits(bits))
+    }
+
+    /// Creates an integer that has a bitwise representation identical
+    /// to the given fixed-point number.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// let w = Wrapping(I16F16::from_bits(0x1C));
+    /// assert_eq!(w.to_bits(), 0x1C);
+    /// ```
+    #[inline]
+    pub fn to_bits(self) -> F::Bits {
+        self.0.to_bits()
+    }
+
     /// Wrapping conversion from another number.
     ///
     /// The other number can be:
@@ -114,8 +195,68 @@ impl<F: Fixed> Wrapping<F> {
     /// [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
     /// [`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
     /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
+    #[inline]
     pub fn from_num<Src: ToFixed>(src: Src) -> Self {
         Wrapping(src.wrapping_to_fixed())
+    }
+
+    /// Converts a fixed-point number to another number, wrapping the
+    /// value on overflow.
+    ///
+    /// The other number can be:
+    ///
+    ///   * Another fixed-point number. Any extra fractional bits are truncated.
+    ///   * An integer of type [`i8`], [`i16`], [`i32`], [`i64`], [`i128`],
+    ///     [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], or
+    ///     [`usize`]. Any fractional bits are truncated.
+    ///   * A floating-point number of type [`f32`] or [`f64`]. If the [`f16`
+    ///     feature] is enabled, it can also be of type [`f16`]. For this
+    ///     conversion, the method rounds to the nearest, with ties rounding
+    ///     to even.
+    ///   * Any other type `Dst` for which [`FromFixed`] is implemented, in
+    ///     which case this method returns
+    ///     [`Dst::wrapping_from_fixed(self.0)`][`wrapping_from_fixed`].
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{
+    ///     types::{I2F6, I4F4, I16F16},
+    ///     Wrapping,
+    /// };
+    ///
+    /// // conversion that fits
+    /// let src = Wrapping(I4F4::from_num(1.75));
+    /// let expected = I16F16::from_num(1.75);
+    /// assert_eq!(src.to_num::<I16F16>(), expected);
+    ///
+    /// // conversion that wraps
+    /// let src = Wrapping(I4F4::max_value());
+    /// let wrapped = I2F6::from_bits(I2F6::max_value().to_bits() << 2);
+    /// assert_eq!(src.to_num::<I2F6>(), wrapped);
+    /// ```
+    ///
+    /// [`FromFixed`]: traits/trait.FromFixed.html
+    /// [`f16` feature]: index.html#optional-features
+    /// [`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
+    /// [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
+    /// [`f64`]: https://doc.rust-lang.org/nightly/std/primitive.f64.html
+    /// [`wrapping_from_fixed`]: traits/trait.FromFixed.html#tymethod.wrapping_from_fixed
+    /// [`i128`]: https://doc.rust-lang.org/nightly/std/primitive.i128.html
+    /// [`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
+    /// [`i32`]: https://doc.rust-lang.org/nightly/std/primitive.i32.html
+    /// [`i64`]: https://doc.rust-lang.org/nightly/std/primitive.i64.html
+    /// [`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
+    /// [`isize`]: https://doc.rust-lang.org/nightly/std/primitive.isize.html
+    /// [`u128`]: https://doc.rust-lang.org/nightly/std/primitive.u128.html
+    /// [`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
+    /// [`u32`]: https://doc.rust-lang.org/nightly/std/primitive.u32.html
+    /// [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
+    /// [`u8`]: https://doc.rust-lang.org/nightly/std/primitive.u8.html
+    /// [`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
+    #[inline]
+    pub fn to_num<Dst: FromFixed>(self) -> Dst {
+        Dst::wrapping_from_fixed(self.0)
     }
 
     /// Converts a string slice containing binary digits to a fixed-point number.
@@ -160,6 +301,69 @@ impl<F: Fixed> Wrapping<F> {
         F::wrapping_from_str_hex(src).map(Wrapping)
     }
 
+    /// Returns the integer part.
+    ///
+    /// Note that since the numbers are stored in two’s complement,
+    /// negative numbers with non-zero fractional parts will be
+    /// rounded towards −∞, except in the case where there are no
+    /// integer bits, for example for the type
+    /// <code>[Wrapping][`Wrapping`]&lt;[I0F16][`I0F16`]&gt;</code>,
+    /// where the return value is always zero.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// assert_eq!(Wrapping(I16F16::from_num(12.25)).int(), Wrapping(I16F16::from_num(12)));
+    /// assert_eq!(Wrapping(I16F16::from_num(-12.25)).int(), Wrapping(I16F16::from_num(-13)));
+    /// ```
+    ///
+    /// [`I0F16`]: types/type.I0F16.html
+    /// [`Wrapping`]: struct.Wrapping.html
+    #[inline]
+    pub fn int(self) -> Self {
+        Wrapping(self.0.int())
+    }
+
+    /// Returns the fractional part.
+    ///
+    /// Note that since the numbers are stored in two’s complement,
+    /// the returned fraction will be non-negative for negative
+    /// numbers, except in the case where there are no integer bits,
+    /// for example for the type
+    /// <code>[Wrapping][`Wrapping`]&lt;[I0F16][`I0F16`]&gt;</code>,
+    /// where the return value is always equal to `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// assert_eq!(Wrapping(I16F16::from_num(12.25)).frac(), Wrapping(I16F16::from_num(0.25)));
+    /// assert_eq!(Wrapping(I16F16::from_num(-12.25)).frac(), Wrapping(I16F16::from_num(0.75)));
+    /// ```
+    ///
+    /// [`I0F16`]: types/type.I0F16.html
+    /// [`Wrapping`]: struct.Wrapping.html
+    #[inline]
+    pub fn frac(self) -> Self {
+        Wrapping(self.0.frac())
+    }
+
+    /// Rounds to the next integer towards 0.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// let three = Wrapping(I16F16::from_num(3));
+    /// assert_eq!(Wrapping(I16F16::from_num(3.9)).round_to_zero(), three);
+    /// assert_eq!(Wrapping(I16F16::from_num(-3.9)).round_to_zero(), -three);
+    /// ```
+    #[inline]
+    pub fn round_to_zero(self) -> Self {
+        Wrapping(self.0.round_to_zero())
+    }
+
     /// Wrapping ceil. Rounds to the next integer towards +∞, wrapping
     /// on overflow.
     ///
@@ -171,6 +375,7 @@ impl<F: Fixed> Wrapping<F> {
     /// assert_eq!(two_half.ceil(), Wrapping(I16F16::from_num(3)));
     /// assert_eq!(Wrapping(I16F16::max_value()).ceil(), Wrapping(I16F16::min_value()));
     /// ```
+    #[inline]
     pub fn ceil(self) -> Wrapping<F> {
         Wrapping(self.0.wrapping_ceil())
     }
@@ -192,6 +397,7 @@ impl<F: Fixed> Wrapping<F> {
     /// assert_eq!(two_half.floor(), Wrapping(I16F16::from_num(2)));
     /// assert_eq!(Wrapping(I0F32::min_value()).floor(), Wrapping(I0F32::from_num(0)));
     /// ```
+    #[inline]
     pub fn floor(self) -> Wrapping<F> {
         Wrapping(self.0.wrapping_floor())
     }
@@ -208,6 +414,7 @@ impl<F: Fixed> Wrapping<F> {
     /// assert_eq!((-two_half).round(), Wrapping(I16F16::from_num(-3)));
     /// assert_eq!(Wrapping(I16F16::max_value()).round(), Wrapping(I16F16::min_value()));
     /// ```
+    #[inline]
     pub fn round(self) -> Wrapping<F> {
         Wrapping(self.0.wrapping_round())
     }
@@ -226,12 +433,131 @@ impl<F: Fixed> Wrapping<F> {
     /// let max = Wrapping(I16F16::max_value());
     /// assert_eq!(max.round_ties_to_even(), Wrapping(I16F16::min_value()));
     /// ```
+    #[inline]
     pub fn round_ties_to_even(self) -> Wrapping<F> {
         Wrapping(self.0.wrapping_round_ties_to_even())
+    }
+
+    /// Returns the number of ones in the binary representation.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// let w = Wrapping(I16F16::from_bits(0x00FF_FF00));
+    /// assert_eq!(w.count_ones(), w.0.count_ones());
+    /// ```
+    #[inline]
+    pub fn count_ones(self) -> u32 {
+        self.0.count_ones()
+    }
+
+    /// Returns the number of zeros in the binary representation.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// let w = Wrapping(I16F16::from_bits(0x00FF_FF00));
+    /// assert_eq!(w.count_zeros(), w.0.count_zeros());
+    /// ```
+    #[inline]
+    pub fn count_zeros(self) -> u32 {
+        self.0.count_zeros()
+    }
+
+    /// Returns the number of leading zeros in the binary representation.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// let w = Wrapping(I16F16::from_bits(0x00FF_FF00));
+    /// assert_eq!(w.leading_zeros(), w.0.leading_zeros());
+    /// ```
+    #[inline]
+    pub fn leading_zeros(self) -> u32 {
+        self.0.leading_zeros()
+    }
+
+    /// Returns the number of trailing zeros in the binary representation.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// let w = Wrapping(I16F16::from_bits(0x00FF_FF00));
+    /// assert_eq!(w.trailing_zeros(), w.0.trailing_zeros());
+    /// ```
+    #[inline]
+    pub fn trailing_zeros(self) -> u32 {
+        self.0.trailing_zeros()
+    }
+
+    /// Shifts to the left by `n` bits, wrapping the truncated bits to the right end.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// let i = I16F16::from_bits(0x00FF_FF00);
+    /// assert_eq!(Wrapping(i).rotate_left(12), Wrapping(i.rotate_left(12)));
+    /// ```
+    #[inline]
+    pub fn rotate_left(self, n: u32) -> Self {
+        Wrapping(self.0.rotate_left(n))
+    }
+
+    /// Shifts to the right by `n` bits, wrapping the truncated bits to the left end.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// let i = I16F16::from_bits(0x00FF_FF00);
+    /// assert_eq!(Wrapping(i).rotate_right(12), Wrapping(i.rotate_right(12)));
+    /// ```
+    #[inline]
+    pub fn rotate_right(self, n: u32) -> Self {
+        Wrapping(self.0.rotate_right(n))
     }
 }
 
 impl<F: FixedSigned> Wrapping<F> {
+    /// Returns [`true`][`bool`] if the number is > 0.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// assert!(Wrapping(I16F16::from_num(4.3)).is_positive());
+    /// assert!(!Wrapping(I16F16::from_num(0)).is_positive());
+    /// assert!(!Wrapping(I16F16::from_num(-4.3)).is_positive());
+    /// ```
+    ///
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    #[inline]
+    pub fn is_positive(self) -> bool {
+        self.0.is_positive()
+    }
+
+    /// Returns [`true`][`bool`] if the number is < 0.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// assert!(!Wrapping(I16F16::from_num(4.3)).is_negative());
+    /// assert!(!Wrapping(I16F16::from_num(0)).is_negative());
+    /// assert!(Wrapping(I16F16::from_num(-4.3)).is_negative());
+    /// ```
+    ///
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    #[inline]
+    pub fn is_negative(self) -> bool {
+        self.0.is_negative()
+    }
+
     /// Wrapping absolute value. Returns the absolute value, wrapping
     /// on overflow.
     ///
@@ -245,8 +571,89 @@ impl<F: FixedSigned> Wrapping<F> {
     /// assert_eq!(Wrapping(I16F16::from_num(-5)).abs(), Wrapping(I16F16::from_num(5)));
     /// assert_eq!(Wrapping(I16F16::min_value()).abs(), Wrapping(I16F16::min_value()));
     /// ```
+    #[inline]
     pub fn abs(self) -> Wrapping<F> {
         Wrapping(self.0.wrapping_abs())
+    }
+
+    /// Returns a number representing the sign of `self`.
+    ///
+    /// # Warning
+    ///
+    /// Using this method when 1 and −1 cannot be represented is
+    /// almost certainly a bug, however, this is allowed and gives the
+    /// following wrapped results.
+    ///
+    ///   * When there are no integer bits, for example for the type
+    ///     <code>[Wrapping][`Wrapping`]&lt;[I0F16][`I0F16`]&gt;</code>,
+    ///     the return value is always zero.
+    ///   * When there is one integer bit, for example for the type
+    ///     <code>[Wrapping][`Wrapping`]&lt;[I1F16][`I1F16`]&gt;</code>,
+    ///     the return value is zero when `self` is zero, and −1
+    ///     otherwise. This means that for a positive number, −1 is
+    ///     returned, because 1 does not fit and is wrapped to −1.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// assert_eq!(Wrapping(<I16F16>::from_num(-3.9)).signum(), Wrapping(I16F16::from_num(-1)));
+    /// assert_eq!(Wrapping(<I16F16>::from_num(0)).signum(), Wrapping(I16F16::from_num(0)));
+    /// assert_eq!(Wrapping(<I16F16>::from_num(3.9)).signum(), Wrapping(I16F16::from_num(1)));
+    /// ```
+    ///
+    /// [`I0F16`]: types/type.I0F16.html
+    /// [`I1F16`]: types/type.I1F16.html
+    /// [`Wrapping`]: struct.Wrapping.html
+    #[inline]
+    pub fn signum(self) -> Self {
+        if self.is_positive() {
+            Self::from_num(1)
+        } else if self.is_negative() {
+            Self::from_num(-1)
+        } else {
+            Self::from_num(0)
+        }
+    }
+}
+
+impl<F: FixedUnsigned> Wrapping<F> {
+    /// Returns [`true`][`bool`] if the fixed-point number is
+    /// 2<sup><i>k</i></sup> for some integer <i>k</i>.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::U16F16, Wrapping};
+    /// assert!(Wrapping(U16F16::from_num(0.5)).is_power_of_two());
+    /// assert!(Wrapping(U16F16::from_num(4)).is_power_of_two());
+    /// assert!(!Wrapping(U16F16::from_num(5)).is_power_of_two());
+    /// ```
+    ///
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    #[inline]
+    pub fn is_power_of_two(self) -> bool {
+        self.0.is_power_of_two()
+    }
+
+    /// Returns the smallest power of two that is ≥ `self`.
+    ///
+    /// If the next power of two is too large to fit, it is wrapped to zero.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::U16F16, Wrapping};
+    /// let half = Wrapping(U16F16::from_num(0.5));
+    /// assert_eq!(Wrapping(U16F16::from_num(0.3)).next_power_of_two(), half);
+    /// let four = Wrapping(U16F16::from_num(4));
+    /// assert_eq!(Wrapping(U16F16::from_num(4)).next_power_of_two(), four);
+    /// let zero = Wrapping(U16F16::from_num(0));
+    /// assert_eq!(Wrapping(U16F16::max_value()).next_power_of_two(), zero);
+    /// ```
+    #[inline]
+    pub fn next_power_of_two(self) -> Self {
+        Wrapping(self.0.checked_next_power_of_two().unwrap_or_default())
     }
 }
 

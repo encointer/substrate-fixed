@@ -963,13 +963,11 @@ pub trait FixedSigned: Fixed + Neg<Output = Self> {
     /// Returns [`true`][`bool`] if the number is > 0.
     ///
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
-    /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
     fn is_positive(self) -> bool;
 
     /// Returns [`true`][`bool`] if the number is < 0.
     ///
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
-    /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
     fn is_negative(self) -> bool;
 
     /// Returns the absolute value.
@@ -1040,7 +1038,6 @@ pub trait FixedUnsigned: Fixed {
     /// 2<sup><i>k</i></sup> for some integer <i>k</i>.
     ///
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
-    /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
     fn is_power_of_two(self) -> bool;
 
     /// Returns the smallest power of two that is ≥ `self`.

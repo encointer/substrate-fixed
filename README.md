@@ -72,10 +72,9 @@ The conversions supported cover the following cases.
 
   * Bug fix: display of many decimal numbers was panicking in debug
     mode or including a leading zero in release mode.
-  * The method [`round_ties_to_even`][`Wrapping::round_ties_to_even`]
-    was added to [`Wrapping`].
+  * Many methods were added to [`Wrapping`] for convenience, even if
+    they do not involve wrapping.
 
-[`Wrapping::round_ties_to_even`]: https://docs.rs/fixed/0.4.4/fixed/struct.Wrapping.html#method.round_ties_to_even
 [`Wrapping`]: https://docs.rs/fixed/0.4.4/fixed/struct.Wrapping.html
 
 ### Version 0.4.4 news (2019-08-24)

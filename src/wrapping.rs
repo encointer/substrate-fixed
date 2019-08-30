@@ -59,7 +59,7 @@ impl<F: Fixed> Wrapping<F> {
     /// assert_eq!(Wrapping::<I16F16>::min_value(), Wrapping(I16F16::min_value()));
     /// ```
     #[inline]
-    pub fn min_value() -> Self {
+    pub fn min_value() -> Wrapping<F> {
         Wrapping(F::min_value())
     }
 
@@ -72,7 +72,7 @@ impl<F: Fixed> Wrapping<F> {
     /// assert_eq!(Wrapping::<I16F16>::max_value(), Wrapping(I16F16::max_value()));
     /// ```
     #[inline]
-    pub fn max_value() -> Self {
+    pub fn max_value() -> Wrapping<F> {
         Wrapping(F::max_value())
     }
 
@@ -112,7 +112,7 @@ impl<F: Fixed> Wrapping<F> {
     /// assert_eq!(Wrapping::<I16F16>::from_bits(0x1C), Wrapping(I16F16::from_bits(0x1C)));
     /// ```
     #[inline]
-    pub fn from_bits(bits: F::Bits) -> Self {
+    pub fn from_bits(bits: F::Bits) -> Wrapping<F> {
         Wrapping(F::from_bits(bits))
     }
 
@@ -196,7 +196,7 @@ impl<F: Fixed> Wrapping<F> {
     /// [`usize`]: https://doc.rust-lang.org/nightly/std/primitive.usize.html
     /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
     #[inline]
-    pub fn from_num<Src: ToFixed>(src: Src) -> Self {
+    pub fn from_num<Src: ToFixed>(src: Src) -> Wrapping<F> {
         Wrapping(src.wrapping_to_fixed())
     }
 
@@ -221,7 +221,7 @@ impl<F: Fixed> Wrapping<F> {
     ///
     /// ```rust
     /// use fixed::{
-    ///     types::{I2F6, I4F4, I16F16},
+    ///     types::{I16F16, I2F6, I4F4},
     ///     Wrapping,
     /// };
     ///
@@ -269,7 +269,7 @@ impl<F: Fixed> Wrapping<F> {
     /// assert_eq!(Wrapping::<I8F8>::from_str_binary("101100111000.1"), Ok(check));
     /// ```
     #[inline]
-    pub fn from_str_binary(src: &str) -> Result<Self, ParseFixedError> {
+    pub fn from_str_binary(src: &str) -> Result<Wrapping<F>, ParseFixedError> {
         F::wrapping_from_str_binary(src).map(Wrapping)
     }
 
@@ -283,7 +283,7 @@ impl<F: Fixed> Wrapping<F> {
     /// assert_eq!(Wrapping::<I8F8>::from_str_octal("7165.4"), Ok(check));
     /// ```
     #[inline]
-    pub fn from_str_octal(src: &str) -> Result<Self, ParseFixedError> {
+    pub fn from_str_octal(src: &str) -> Result<Wrapping<F>, ParseFixedError> {
         F::wrapping_from_str_octal(src).map(Wrapping)
     }
 
@@ -297,7 +297,7 @@ impl<F: Fixed> Wrapping<F> {
     /// assert_eq!(Wrapping::<I8F8>::from_str_hex("C0F.FE"), Ok(check));
     /// ```
     #[inline]
-    pub fn from_str_hex(src: &str) -> Result<Self, ParseFixedError> {
+    pub fn from_str_hex(src: &str) -> Result<Wrapping<F>, ParseFixedError> {
         F::wrapping_from_str_hex(src).map(Wrapping)
     }
 
@@ -321,7 +321,7 @@ impl<F: Fixed> Wrapping<F> {
     /// [`I0F16`]: types/type.I0F16.html
     /// [`Wrapping`]: struct.Wrapping.html
     #[inline]
-    pub fn int(self) -> Self {
+    pub fn int(self) -> Wrapping<F> {
         Wrapping(self.0.int())
     }
 
@@ -345,7 +345,7 @@ impl<F: Fixed> Wrapping<F> {
     /// [`I0F16`]: types/type.I0F16.html
     /// [`Wrapping`]: struct.Wrapping.html
     #[inline]
-    pub fn frac(self) -> Self {
+    pub fn frac(self) -> Wrapping<F> {
         Wrapping(self.0.frac())
     }
 
@@ -360,7 +360,7 @@ impl<F: Fixed> Wrapping<F> {
     /// assert_eq!(Wrapping(I16F16::from_num(-3.9)).round_to_zero(), -three);
     /// ```
     #[inline]
-    pub fn round_to_zero(self) -> Self {
+    pub fn round_to_zero(self) -> Wrapping<F> {
         Wrapping(self.0.round_to_zero())
     }
 
@@ -504,7 +504,7 @@ impl<F: Fixed> Wrapping<F> {
     /// assert_eq!(Wrapping(i).rotate_left(12), Wrapping(i.rotate_left(12)));
     /// ```
     #[inline]
-    pub fn rotate_left(self, n: u32) -> Self {
+    pub fn rotate_left(self, n: u32) -> Wrapping<F> {
         Wrapping(self.0.rotate_left(n))
     }
 
@@ -518,7 +518,7 @@ impl<F: Fixed> Wrapping<F> {
     /// assert_eq!(Wrapping(i).rotate_right(12), Wrapping(i.rotate_right(12)));
     /// ```
     #[inline]
-    pub fn rotate_right(self, n: u32) -> Self {
+    pub fn rotate_right(self, n: u32) -> Wrapping<F> {
         Wrapping(self.0.rotate_right(n))
     }
 }
@@ -561,8 +561,8 @@ impl<F: FixedSigned> Wrapping<F> {
     /// Wrapping absolute value. Returns the absolute value, wrapping
     /// on overflow.
     ///
-    /// Overflow can only occur for signed numbers when trying to find
-    /// the absolute value of the minimum value.
+    /// Overflow can only occur when trying to find the absolute value
+    /// of the minimum value.
     ///
     /// # Examples
     ///
@@ -606,7 +606,7 @@ impl<F: FixedSigned> Wrapping<F> {
     /// [`I1F15`]: types/type.I1F15.html
     /// [`Wrapping`]: struct.Wrapping.html
     #[inline]
-    pub fn signum(self) -> Self {
+    pub fn signum(self) -> Wrapping<F> {
         if self.is_positive() {
             Self::from_num(1)
         } else if self.is_negative() {
@@ -652,7 +652,7 @@ impl<F: FixedUnsigned> Wrapping<F> {
     /// assert_eq!(Wrapping(U16F16::max_value()).next_power_of_two(), zero);
     /// ```
     #[inline]
-    pub fn next_power_of_two(self) -> Self {
+    pub fn next_power_of_two(self) -> Wrapping<F> {
         Wrapping(self.0.checked_next_power_of_two().unwrap_or_default())
     }
 }

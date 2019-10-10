@@ -235,6 +235,7 @@ extern crate std;
 mod macros;
 
 mod arith;
+#[cfg(feature = "az")]
 mod cast;
 mod cmp;
 pub mod consts;

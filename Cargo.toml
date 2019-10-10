@@ -25,7 +25,7 @@ fail-on-warnings = []
 
 [dependencies]
 typenum = "1.10"
-az = "0.3"
+az = { version = "0.3", optional = true }
 half = { version = "1.2", optional = true }
 serde = { version = "1.0.60", default-features = false, optional = true }
 
@@ -36,7 +36,7 @@ criterion = "0.2"
 num-traits = { version = "0.2", default-features = false }
 
 [package.metadata.docs.rs]
-features = ["f16", "serde"]
+features = ["az", "f16", "serde"]
 
 [[bench]]
 name = "bench_main"

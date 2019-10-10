@@ -132,13 +132,13 @@ macro_rules! compile_time {
 
         compile_time! {
             impl<Frac: $LeEqU> StaticCast<$IntI> for $FixedU<Frac> {
-                8 * mem::size_of::<$IntI>() as u32 >= $FixedU::<Frac>::INT_NBITS + 1
+                8 * mem::size_of::<$IntI>() as u32 > $FixedU::<Frac>::INT_NBITS
             }
         }
 
         compile_time! {
             impl<Frac: $LeEqU> StaticCast<$FixedI<Frac>> for $IntU {
-                $FixedI::<Frac>::INT_NBITS >= 8 * mem::size_of::<$IntU>() as u32 + 1
+                $FixedI::<Frac>::INT_NBITS > 8 * mem::size_of::<$IntU>() as u32
             }
         }
 

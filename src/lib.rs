@@ -235,6 +235,7 @@ extern crate std;
 mod macros;
 
 mod arith;
+mod cast;
 mod cmp;
 pub mod consts;
 mod convert;

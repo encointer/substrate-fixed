@@ -25,6 +25,7 @@ fail-on-warnings = []
 
 [dependencies]
 typenum = "1.10"
+az = "0.3"
 half = { version = "1.2", optional = true }
 serde = { version = "1.0.60", default-features = false, optional = true }
 

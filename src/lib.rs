@@ -144,11 +144,13 @@ The *fixed* crate requires rustc version 1.34.0 or later.
 
 ## Optional features
 
-The *fixed* crate has two optional feature:
+The *fixed* crate has three optional feature:
 
- 1. `f16`, disabled by default. This provides conversion to/from
+ 1. `az`, disabled by default. This implements the cast traits
+    provided by the [*az* crate].
+ 2. `f16`, disabled by default. This provides conversion to/from
     [`f16`]. This features requires the [*half* crate].
- 2. `serde`, disabled by default. This provides serialization support
+ 3. `serde`, disabled by default. This provides serialization support
     for the fixed-point types. This feature requires the
     [*serde* crate].
 
@@ -179,6 +181,7 @@ License, Version 2.0, shall be dual licensed as above, without any
 additional terms or conditions.
 
 [*Cargo.toml*]: https://doc.rust-lang.org/cargo/guide/dependencies.html
+[*az* crate]: https://crates.io/crates/az
 [*fixed* crate]: https://crates.io/crates/fixed
 [*half* crate]: https://crates.io/crates/half
 [*serde* crate]: https://crates.io/crates/serde

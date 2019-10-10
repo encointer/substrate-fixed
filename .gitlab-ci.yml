@@ -28,15 +28,19 @@ x86_64-gnulinux:
     paths:
     - cargo/
   script:
-  - cargo +beta-$TARGET clippy --all-targets --features "fail-on-warnings f16 serde"
-  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings serde"
+  - cargo +beta-$TARGET clippy --all-targets --features "fail-on-warnings az f16 serde"
+  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings az f16"
+  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings az serde"
+  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings f16 serde"
+  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings az"
   - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings f16"
+  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings serde"
   - cargo +beta-$TARGET check --all-targets --features fail-on-warnings
-  - cargo +beta-$TARGET test --features "fail-on-warnings f16 serde"
-  - cargo +beta-$TARGET test --release --features "fail-on-warnings f16 serde"
+  - cargo +beta-$TARGET test --features "fail-on-warnings az f16 serde"
+  - cargo +beta-$TARGET test --release --features "fail-on-warnings az f16 serde"
   - cargo +beta-$TARGET fmt -- --check
-  - cargo +1.34.2-$TARGET test --lib --features "fail-on-warnings f16 serde"
-  - cargo +1.34.2-$TARGET test --release --lib --features "fail-on-warnings f16 serde"
+  - cargo +1.34.2-$TARGET test --lib --features "fail-on-warnings az f16 serde"
+  - cargo +1.34.2-$TARGET test --release --lib --features "fail-on-warnings az f16 serde"
 
 i686-gnulinux:
   image: i386/rust:1
@@ -47,12 +51,16 @@ i686-gnulinux:
     paths:
     - cargo/
   script:
-  - cargo +beta-$TARGET clippy --all-targets --features "fail-on-warnings f16 serde"
-  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings serde"
+  - cargo +beta-$TARGET clippy --all-targets --features "fail-on-warnings az f16 serde"
+  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings az f16"
+  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings az serde"
+  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings f16 serde"
+  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings az"
   - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings f16"
+  - cargo +beta-$TARGET check --all-targets --features "fail-on-warnings serde"
   - cargo +beta-$TARGET check --all-targets --features fail-on-warnings
   - cargo +beta-$TARGET test --features "fail-on-warnings f16 serde"
-  - cargo +beta-$TARGET test --release --features "fail-on-warnings f16 serde"
+  - cargo +beta-$TARGET test --release --features "fail-on-warnings azf16 serde"
   - cargo +beta-$TARGET fmt -- --check
-  - cargo +1.34.2-$TARGET test --lib --features "fail-on-warnings f16 serde"
-  - cargo +1.34.2-$TARGET test --release --lib --features "fail-on-warnings f16 serde"
+  - cargo +1.34.2-$TARGET test --lib --features "fail-on-warnings az f16 serde"
+  - cargo +1.34.2-$TARGET test --release --lib --features "fail-on-warnings az f16 serde"

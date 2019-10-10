@@ -5,6 +5,11 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.4.6 (unreleased)
+==========================
+
+  * Support for casts using the *az* crate was added.
+
 Version 0.4.5 (2019-08-30)
 ==========================
 

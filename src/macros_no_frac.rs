@@ -633,10 +633,13 @@ assert_eq!(Fix::from_num(5).saturating_neg(), Fix::from_num(0));",
 ```
 ";
                 #[inline]
-                pub fn saturating_neg(self) -> $Fixed<Frac> {
+                pub const fn saturating_neg(self) -> $Fixed<Frac> {
                     if_signed_unsigned! {
                         $Signedness,
-                        self.checked_neg().unwrap_or(Self::max_value()),
+                        {
+                            let (val, overflow) = self.overflowing_neg();
+                            val.if_cond_else(!overflow, Self::max_value())
+                        },
                         Self::from_bits(0),
                     }
                 }
@@ -655,8 +658,16 @@ assert_eq!(Fix::max_value().saturating_add(Fix::from_num(1)), Fix::max_value());
 ```
 ";
                 #[inline]
-                pub fn saturating_add(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                    Self::from_bits(self.to_bits().saturating_add(rhs.to_bits()))
+                pub const fn saturating_add(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                    let (val, overflow) = self.overflowing_add(rhs);
+                    val.if_cond_else(
+                        !overflow,
+                        if_signed_unsigned! {
+                            $Signedness,
+                            Self::min_value().if_cond_else(self.to_bits() < 0, Self::max_value()),
+                            Self::max_value(),
+                        },
+                    )
                 }
             }
 
@@ -680,8 +691,19 @@ assert_eq!(Fix::from_num(0).saturating_sub(Fix::from_num(1)), Fix::from_num(0));
 ```
 ";
                 #[inline]
-                pub fn saturating_sub(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                    Self::from_bits(self.to_bits().saturating_sub(rhs.to_bits()))
+                pub const fn saturating_sub(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                    let (val, overflow) = self.overflowing_sub(rhs);
+                    val.if_cond_else(
+                        !overflow,
+                        if_signed_unsigned! {
+                            $Signedness,
+                            Self::min_value().if_cond_else(
+                                self.to_bits() < rhs.to_bits(),
+                                Self::max_value(),
+                            ),
+                            Self::min_value(),
+                        },
+                    )
                 }
             }
 
@@ -698,8 +720,19 @@ assert_eq!(Fix::max_value().saturating_mul_int(2), Fix::max_value());
 ```
 ";
                 #[inline]
-                pub fn saturating_mul_int(self, rhs: $Inner) -> $Fixed<Frac> {
-                    Self::from_bits(self.to_bits().saturating_mul(rhs))
+                pub const fn saturating_mul_int(self, rhs: $Inner) -> $Fixed<Frac> {
+                    let (val, overflow) = self.overflowing_mul_int(rhs);
+                    val.if_cond_else(
+                        !overflow,
+                        if_signed_unsigned! {
+                            $Signedness,
+                            Self::min_value().if_cond_else(
+                                (self.to_bits() < 0) != (rhs < 0),
+                                Self::max_value(),
+                            ),
+                            Self::max_value(),
+                        },
+                    )
                 }
             }
 
@@ -720,8 +753,9 @@ assert_eq!(Fix::min_value().saturating_abs(), Fix::max_value());
 ```
 ";
                     #[inline]
-                    pub fn saturating_abs(self) -> $Fixed<Frac> {
-                        self.checked_abs().unwrap_or(Self::max_value())
+                    pub const fn saturating_abs(self) -> $Fixed<Frac> {
+                        let (val, overflow) = self.overflowing_abs();
+                        val.if_cond_else(!overflow, Self::max_value())
                     }
                 }
             }
@@ -1267,6 +1301,12 @@ assert_eq!(Fix::min_value().overflowing_abs(), (Fix::min_value(), true));
                         (Self::from_bits(ans), o)
                     }
                 }
+            }
+
+            #[inline]
+            const fn if_cond_else(self, cond: bool, otherwise: Self) -> Self {
+                let not_mask = (cond as $Inner).wrapping_sub(1);
+                Self::from_bits((self.to_bits() & !not_mask) | (otherwise.to_bits() & not_mask))
             }
         }
     };

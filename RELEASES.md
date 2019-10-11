@@ -8,6 +8,9 @@ as-is, without any warranty. -->
 Version 0.4.6 (unreleased)
 ==========================
 
+  * The following methods are now `const` functions: `saturating_neg`,
+    `saturating_add`, `saturating_sub`, `saturating_mul_int`,
+    `saturating_abs`
   * Support for casts using the *az* crate was added.
 
 Version 0.4.5 (2019-08-30)

@@ -70,7 +70,16 @@ The conversions supported cover the following cases.
 
 ### Version 0.4.6 news (unreleased)
 
+  * The following methods are now `const` functions:
+    [`saturating_neg`], [`saturating_add`], [`saturating_sub`],
+    [`saturating_mul_int`], [`saturating_abs`]
   * Support for casts using the [*az* crate] was added.
+
+[`saturating_abs`]: https://docs.rs/fixed/0.4.5/fixed/struct.FixedI32.html#method.saturating_abs
+[`saturating_add`]: https://docs.rs/fixed/0.4.5/fixed/struct.FixedI32.html#method.saturating_add
+[`saturating_mul_int`]: https://docs.rs/fixed/0.4.5/fixed/struct.FixedI32.html#method.saturating_mul_int
+[`saturating_mul_sub`]: https://docs.rs/fixed/0.4.5/fixed/struct.FixedI32.html#method.saturating_mul_sub
+[`saturating_neg`]: https://docs.rs/fixed/0.4.5/fixed/struct.FixedI32.html#method.saturating_neg
 
 ### Version 0.4.5 news (2019-08-30)
 

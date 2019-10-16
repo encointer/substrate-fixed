@@ -139,10 +139,10 @@ impl<F: Fixed> Wrapping<F> {
     ///   * An integer of type [`i8`], [`i16`], [`i32`], [`i64`], [`i128`],
     ///     [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], or
     ///     [`usize`].
-    ///   * A floating-point number of type [`f32`] or [`f64`]. If the [`f16`
-    ///     feature] is enabled, it can also be of type [`f16`]. For this
-    ///     conversion, the method rounds to the nearest, with ties rounding
-    ///     to even.
+    ///   * A floating-point number of type [`f32`] or [`f64`]. If the
+    ///     [`f16` feature] is enabled, it can also be of type [`f16`]
+    ///     or [`bf16`]. For this conversion, the method rounds to the
+    ///     nearest, with ties rounding to even.
     ///   * Any other number `src` for which [`ToFixed`] is implemented, in
     ///     which case this method returns
     ///     <code>[Wrapping][`Wrapping`]([src.wrapping_to_fixed()][`wrapping_to_fixed`])</code>.
@@ -177,6 +177,7 @@ impl<F: Fixed> Wrapping<F> {
     ///
     /// [`ToFixed`]: traits/trait.ToFixed.html
     /// [`Wrapping`]: struct.Wrapping.html
+    /// [`bf16`]: https://docs.rs/half/^1.2/half/struct.bf16.html
     /// [`f16` feature]: index.html#optional-features
     /// [`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
     /// [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
@@ -209,10 +210,10 @@ impl<F: Fixed> Wrapping<F> {
     ///   * An integer of type [`i8`], [`i16`], [`i32`], [`i64`], [`i128`],
     ///     [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], or
     ///     [`usize`]. Any fractional bits are truncated.
-    ///   * A floating-point number of type [`f32`] or [`f64`]. If the [`f16`
-    ///     feature] is enabled, it can also be of type [`f16`]. For this
-    ///     conversion, the method rounds to the nearest, with ties rounding
-    ///     to even.
+    ///   * A floating-point number of type [`f32`] or [`f64`]. If the
+    ///     [`f16` feature] is enabled, it can also be of type [`f16`]
+    ///     or [`bf16`]. For this conversion, the method rounds to the
+    ///     nearest, with ties rounding to even.
     ///   * Any other type `Dst` for which [`FromFixed`] is implemented, in
     ///     which case this method returns
     ///     [`Dst::wrapping_from_fixed(self.0)`][`wrapping_from_fixed`].
@@ -237,6 +238,7 @@ impl<F: Fixed> Wrapping<F> {
     /// ```
     ///
     /// [`FromFixed`]: traits/trait.FromFixed.html
+    /// [`bf16`]: https://docs.rs/half/^1.2/half/struct.bf16.html
     /// [`f16` feature]: index.html#optional-features
     /// [`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
     /// [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html

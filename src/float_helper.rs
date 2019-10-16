@@ -16,7 +16,7 @@
 use crate::helpers::{FloatKind, IntHelper, ToFixedHelper, ToFloatHelper, Widest};
 use core::cmp::Ordering;
 #[cfg(feature = "f16")]
-use half::f16;
+use half::{bf16, f16};
 
 pub trait FloatHelper: Copy {
     type Bits: IntHelper;
@@ -207,5 +207,7 @@ macro_rules! sealed_float {
 
 #[cfg(feature = "f16")]
 sealed_float! { f16(u16, i16, 11) }
+#[cfg(feature = "f16")]
+sealed_float! { bf16(u16, i16, 8) }
 sealed_float! { f32(u32, i32, 24) }
 sealed_float! { f64(u64, i64, 53) }

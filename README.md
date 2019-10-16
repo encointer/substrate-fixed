@@ -70,6 +70,8 @@ The conversions supported cover the following cases.
 
 ### Version 0.4.6 news (unreleased)
 
+  * Conversions to/from [`bf16`] are now provided when the `f16`
+    option is enabled.
   * The following methods are now `const` functions:
     [`saturating_neg`], [`saturating_add`], [`saturating_sub`],
     [`saturating_mul_int`], [`saturating_abs`]
@@ -78,7 +80,7 @@ The conversions supported cover the following cases.
 [`saturating_abs`]: https://docs.rs/fixed/0.4.5/fixed/struct.FixedI32.html#method.saturating_abs
 [`saturating_add`]: https://docs.rs/fixed/0.4.5/fixed/struct.FixedI32.html#method.saturating_add
 [`saturating_mul_int`]: https://docs.rs/fixed/0.4.5/fixed/struct.FixedI32.html#method.saturating_mul_int
-[`saturating_mul_sub`]: https://docs.rs/fixed/0.4.5/fixed/struct.FixedI32.html#method.saturating_mul_sub
+[`saturating_sub`]: https://docs.rs/fixed/0.4.5/fixed/struct.FixedI32.html#method.saturating_sub
 [`saturating_neg`]: https://docs.rs/fixed/0.4.5/fixed/struct.FixedI32.html#method.saturating_neg
 
 ### Version 0.4.5 news (2019-08-30)
@@ -245,7 +247,7 @@ The *fixed* crate has three optional feature:
  1. `az`, disabled by default. This implements the cast traits
     provided by the [*az* crate].
  2. `f16`, disabled by default. This provides conversion to/from
-    [`f16`]. This features requires the [*half* crate].
+    [`f16`] and [`bf16`]. This features requires the [*half* crate].
  3. `serde`, disabled by default. This provides serialization support
     for the fixed-point types. This feature requires the
     [*serde* crate].
@@ -311,6 +313,7 @@ additional terms or conditions.
 [`U12`]: https://docs.rs/fixed/0.4.5/fixed/types/extra/type.U12.html
 [`U20F12`]: https://docs.rs/fixed/0.4.5/fixed/types/type.U20F12.html
 [`UpperHex`]: https://doc.rust-lang.org/nightly/std/fmt/trait.UpperHex.html
+[`bf16`]: https://docs.rs/half/^1/half/struct.bf16.html
 [`checked_from_num`]: https://docs.rs/fixed/0.4.5/fixed/struct.FixedI32.html#method.checked_from_num
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html
 [`from_num`]: https://docs.rs/fixed/0.4.5/fixed/struct.FixedI32.html#method.from_num

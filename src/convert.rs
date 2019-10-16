@@ -25,7 +25,7 @@ use crate::{
 };
 use core::ops::Sub;
 #[cfg(feature = "f16")]
-use {crate::helpers::FloatHelper, half::f16};
+use half::{bf16, f16};
 
 macro_rules! convert {
     (
@@ -515,6 +515,8 @@ macro_rules! fixed_to_float_lossy {
     ($Fixed:ident($LeEqU:ident)) => {
         #[cfg(feature = "f16")]
         fixed_to_float_lossy! { $Fixed($LeEqU) -> f16 }
+        #[cfg(feature = "f16")]
+        fixed_to_float_lossy! { $Fixed($LeEqU) -> bf16 }
         fixed_to_float_lossy! { $Fixed($LeEqU) -> f32 }
         fixed_to_float_lossy! { $Fixed($LeEqU) -> f64 }
     };
@@ -543,6 +545,8 @@ macro_rules! int_to_float_lossy {
     ($Int:ident) => {
         #[cfg(feature = "f16")]
         int_to_float_lossy! { $Int -> f16 }
+        #[cfg(feature = "f16")]
+        int_to_float_lossy! { $Int -> bf16 }
         int_to_float_lossy! { $Int -> f32 }
         int_to_float_lossy! { $Int -> f64 }
     };
@@ -587,61 +591,43 @@ lossy! { usize }
 #[cfg(feature = "f16")]
 lossy! { f16 }
 #[cfg(feature = "f16")]
+impl LossyFrom<f16> for bf16 {
+    #[inline]
+    fn lossy_from(src: f16) -> bf16 {
+        bf16::from_f32(src.into())
+    }
+}
+#[cfg(feature = "f16")]
 lossy! { f16: Into f32 }
 #[cfg(feature = "f16")]
 lossy! { f16: Into f64 }
 
 #[cfg(feature = "f16")]
+impl LossyFrom<bf16> for f16 {
+    #[inline]
+    fn lossy_from(src: bf16) -> f16 {
+        f16::from_f32(src.into())
+    }
+}
+#[cfg(feature = "f16")]
+lossy! { bf16 }
+#[cfg(feature = "f16")]
+lossy! { bf16: Into f32 }
+#[cfg(feature = "f16")]
+lossy! { bf16: Into f64 }
+
+#[cfg(feature = "f16")]
 impl LossyFrom<f32> for f16 {
+    #[inline]
     fn lossy_from(src: f32) -> Self {
-        // do not use f16::from_f32 because of https://github.com/starkat99/half-rs/issues/24
-        let (neg, exp, mantissa) = src.parts();
-        // src is ∞ or NaN
-        if exp == f32::EXP_MAX + 1 {
-            let mantissa = if mantissa != 0 {
-                // set highest mantissa bit for NaN to NaN conversion
-                (mantissa >> (f32::PREC - f16::PREC) | (1 << (f16::PREC - 2))) as u16
-            } else {
-                0
-            };
-            return f16::from_parts(neg, f16::EXP_MAX + 1, mantissa);
-        }
-        // src overflows
-        if exp > f16::EXP_MAX {
-            return f16::from_parts(neg, f16::EXP_MAX + 1, 0);
-        }
-        // src underflows
-        if exp < f16::EXP_MIN {
-            let remove_bits = -exp + f16::EXP_MIN + f32::PREC as i32 - f16::PREC as i32;
-            // src underflows to zero even if rounding up
-            if remove_bits > f32::PREC as i32 {
-                return f16::from_parts(neg, f16::EXP_MIN - 1, 0);
-            }
-            // add implicit one
-            let mantissa = mantissa | (1 << (f32::PREC - 1));
-            let round_mask = 1 << (remove_bits - 1);
-            // round up if round bit is true and either
-            //   * odd, that is mantissa & (2 * round_mask) != 0
-            //   * more bits below round, that is mantissa & (round_mask - 1) != 0
-            // The two later masks can be combined to (3 * round_mask - 1)
-            let round = mantissa & round_mask != 0 && mantissa & (3 * round_mask - 1) != 0;
-            // add rounding bit after conversion in case we go back to normal
-            let mantissa = (mantissa >> remove_bits) as u16;
-            let bits =
-                f16::bits_from_parts(neg, f16::EXP_MIN - 1, mantissa) + if round { 1 } else { 0 };
-            return f16::from_bits(bits);
-        }
-        let remove_bits = f32::PREC - f16::PREC;
-        let round_mask = 1 << (remove_bits - 1);
-        // round up if round bit is true and either
-        //   * odd, that is mantissa & (2 * round_mask) != 0
-        //   * more bits below round, that is mantissa & (round_mask - 1) != 0
-        // The two later masks can be combined to (3 * round_mask - 1)
-        let round = mantissa & round_mask != 0 && mantissa & (3 * round_mask - 1) != 0;
-        // add rounding bit after conversion in case we overflow
-        let mantissa = (mantissa >> remove_bits) as u16;
-        let bits = f16::bits_from_parts(neg, exp, mantissa) + if round { 1 } else { 0 };
-        f16::from_bits(bits)
+        f16::from_f32(src)
+    }
+}
+#[cfg(feature = "f16")]
+impl LossyFrom<f32> for bf16 {
+    #[inline]
+    fn lossy_from(src: f32) -> Self {
+        bf16::from_f32(src)
     }
 }
 lossy! { f32 }
@@ -649,55 +635,16 @@ lossy! { f32: Into f64 }
 
 #[cfg(feature = "f16")]
 impl LossyFrom<f64> for f16 {
+    #[inline]
     fn lossy_from(src: f64) -> Self {
-        // do not use f16::from_f64 because of https://github.com/starkat99/half-rs/issues/24
-        let (neg, exp, mantissa) = src.parts();
-        // src is ∞ or NaN
-        if exp == f64::EXP_MAX + 1 {
-            let mantissa = if mantissa != 0 {
-                // set highest mantissa bit for NaN to NaN conversion
-                (mantissa >> (f64::PREC - f16::PREC) | (1 << (f16::PREC - 2))) as u16
-            } else {
-                0
-            };
-            return f16::from_parts(neg, f16::EXP_MAX + 1, mantissa);
-        }
-        // src overflows
-        if exp > f16::EXP_MAX {
-            return f16::from_parts(neg, f16::EXP_MAX + 1, 0);
-        }
-        // src underflows
-        if exp < f16::EXP_MIN {
-            let remove_bits = -exp + f16::EXP_MIN + f64::PREC as i32 - f16::PREC as i32;
-            // src underflows to zero even if rounding up
-            if remove_bits > f64::PREC as i32 {
-                return f16::from_parts(neg, f16::EXP_MIN - 1, 0);
-            }
-            // add implicit one
-            let mantissa = mantissa | (1 << (f64::PREC - 1));
-            let round_mask = 1 << (remove_bits - 1);
-            // round up if round bit is true and either
-            //   * odd, that is mantissa & (2 * round_mask) != 0
-            //   * more bits below round, that is mantissa & (round_mask - 1) != 0
-            // The two later masks can be combined to (3 * round_mask - 1)
-            let round = mantissa & round_mask != 0 && mantissa & (3 * round_mask - 1) != 0;
-            // add rounding bit after conversion in case we go back to normal
-            let mantissa = (mantissa >> remove_bits) as u16;
-            let bits =
-                f16::bits_from_parts(neg, f16::EXP_MIN - 1, mantissa) + if round { 1 } else { 0 };
-            return f16::from_bits(bits);
-        }
-        let remove_bits = f64::PREC - f16::PREC;
-        let round_mask = 1 << (remove_bits - 1);
-        // round up if round bit is true and either
-        //   * odd, that is mantissa & (2 * round_mask) != 0
-        //   * more bits below round, that is mantissa & (round_mask - 1) != 0
-        // The two later masks can be combined to (3 * round_mask - 1)
-        let round = mantissa & round_mask != 0 && mantissa & (3 * round_mask - 1) != 0;
-        // add rounding bit after conversion in case we overflow
-        let mantissa = (mantissa >> remove_bits) as u16;
-        let bits = f16::bits_from_parts(neg, exp, mantissa) + if round { 1 } else { 0 };
-        f16::from_bits(bits)
+        f16::from_f64(src)
+    }
+}
+#[cfg(feature = "f16")]
+impl LossyFrom<f64> for bf16 {
+    #[inline]
+    fn lossy_from(src: f64) -> Self {
+        bf16::from_f64(src)
     }
 }
 lossy! { f64 as f32 }
@@ -1095,6 +1042,53 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "f16")]
+    #[test]
+    fn to_bf16() {
+        use half::bf16;
+        for u in 0x00..=0xff {
+            let fu = U1F7::from_bits(u);
+            assert_eq!(fu.to_num::<bf16>(), bf16::from_f32(f32::from(u) / 128.0));
+            let i = u as i8;
+            let fi = I1F7::from_bits(i);
+            assert_eq!(fi.to_num::<bf16>(), bf16::from_f32(f32::from(i) / 128.0));
+
+            for hi in &[
+                0u32,
+                0x0000_0100,
+                0x7fff_ff00,
+                0x8000_0000,
+                0x8100_0000,
+                0xffff_fe00,
+                0xffff_ff00,
+            ] {
+                let uu = *hi | u32::from(u);
+                let fuu = U25F7::from_bits(uu);
+                assert_eq!(fuu.to_num::<bf16>(), bf16::from_f32(uu as f32 / 128.0));
+                let ii = uu as i32;
+                let fii = I25F7::from_bits(ii);
+                assert_eq!(fii.to_num::<bf16>(), bf16::from_f32(ii as f32 / 128.0));
+            }
+
+            for hi in &[
+                0u128,
+                0x0000_0000_0000_0000_0000_0000_0000_0100,
+                0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
+                0x8000_0000_0000_0000_0000_0000_0000_0000,
+                0x8100_0000_0000_0000_0000_0000_0000_0000,
+                0xffff_ffff_ffff_ffff_ffff_ffff_ffff_fe00,
+                0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ff00,
+            ] {
+                let uu = *hi | u128::from(u);
+                let fuu = U121F7::from_bits(uu);
+                assert_eq!(fuu.to_num::<bf16>(), bf16::from_f64(uu as f64 / 128.0));
+                let ii = uu as i128;
+                let fii = I121F7::from_bits(ii);
+                assert_eq!(fii.to_num::<bf16>(), bf16::from_f64(ii as f64 / 128.0));
+            }
+        }
+    }
+
     #[test]
     fn to_f32() {
         for u in 0x00..=0xff {
@@ -1218,14 +1212,14 @@ mod tests {
     fn lossy_f16() {
         use crate::traits::LossyFrom;
         use core::{f32, f64};
-        use half::{consts as f16_consts, f16};
+        use half::f16;
 
-        assert_eq!(f16::lossy_from(f32::NEG_INFINITY), f16_consts::NEG_INFINITY);
+        assert_eq!(f16::lossy_from(f32::NEG_INFINITY), f16::NEG_INFINITY);
         assert!(f16::lossy_from(f32::NAN).is_nan());
         assert_eq!(f16::lossy_from(1e-37f32), f16::from_bits(0));
         // -1.625 << 15 is 1 11110 1010000000 is FA80
         assert_eq!(f16::lossy_from(-32768f32 * 1.625), f16::from_bits(0xFA80));
-        assert_eq!(f16::lossy_from(32768f32 * 2.), f16_consts::INFINITY);
+        assert_eq!(f16::lossy_from(32768f32 * 2.), f16::INFINITY);
         // 0x8020 is 0x1.004 << 15 is 0 11110 0000000001
         assert_eq!(
             f16::lossy_from(f32::from(0x8020u16)),
@@ -1249,12 +1243,12 @@ mod tests {
         );
         assert_eq!(f16::lossy_from((-24f32).exp2() * 0.5), f16::from_bits(0));
 
-        assert_eq!(f16::lossy_from(f64::NEG_INFINITY), f16_consts::NEG_INFINITY);
+        assert_eq!(f16::lossy_from(f64::NEG_INFINITY), f16::NEG_INFINITY);
         assert!(f16::lossy_from(f64::NAN).is_nan());
         assert_eq!(f16::lossy_from(1e-37f64), f16::from_bits(0));
         // -1.625 << 15 is 1 11110 1010000000 is FA80
         assert_eq!(f16::lossy_from(-32768f64 * 1.625), f16::from_bits(0xFA80));
-        assert_eq!(f16::lossy_from(32768f64 * 2.), f16_consts::INFINITY);
+        assert_eq!(f16::lossy_from(32768f64 * 2.), f16::INFINITY);
         // 0x8020 is 0x1.004 << 15 is 0 11110 0000000001
         assert_eq!(
             f16::lossy_from(f64::from(0x8020u16)),
@@ -1277,5 +1271,65 @@ mod tests {
             f16::from_bits(0x0001)
         );
         assert_eq!(f16::lossy_from((-24f32).exp2() * 0.5), f16::from_bits(0));
+    }
+
+    #[cfg(feature = "f16")]
+    #[test]
+    fn lossy_bf16() {
+        use crate::traits::LossyFrom;
+        use core::{f32, f64};
+        use half::bf16;
+
+        assert_eq!(bf16::lossy_from(f32::NEG_INFINITY), bf16::NEG_INFINITY);
+        assert!(bf16::lossy_from(f32::NAN).is_nan());
+        assert_eq!(bf16::lossy_from(f32::MIN_POSITIVE), bf16::MIN_POSITIVE);
+        // -1.625 << 127 is 1 11111110 1010000 is FF50
+        assert_eq!(
+            bf16::lossy_from(127f32.exp2() * -1.625),
+            bf16::from_bits(0xFF50)
+        );
+        // max is rounded up
+        assert_eq!(bf16::lossy_from(f32::MAX), bf16::INFINITY);
+        assert_eq!(
+            bf16::lossy_from(f32::from_bits(0x4175_7FFF)),
+            bf16::from_bits(0x4175)
+        );
+        assert_eq!(
+            bf16::lossy_from(f32::from_bits(0x4175_8000)),
+            bf16::from_bits(0x4176)
+        );
+        assert_eq!(
+            bf16::lossy_from(f32::from_bits(0x4175_8001)),
+            bf16::from_bits(0x4176)
+        );
+        assert_eq!(
+            bf16::lossy_from(f32::from_bits(0x4176_7FFF)),
+            bf16::from_bits(0x4176)
+        );
+        assert_eq!(
+            bf16::lossy_from(f32::from_bits(0x4176_8000)),
+            bf16::from_bits(0x4176)
+        );
+        assert_eq!(
+            bf16::lossy_from(f32::from_bits(0x4176_8001)),
+            bf16::from_bits(0x4177)
+        );
+
+        assert_eq!(bf16::lossy_from(f64::NEG_INFINITY), bf16::NEG_INFINITY);
+        assert!(bf16::lossy_from(f64::NAN).is_nan());
+        assert_eq!(bf16::lossy_from(1e-100f64), bf16::from_bits(0));
+        // -1.625 << 127 is 1 11111110 1010000 is FF50
+        assert_eq!(
+            bf16::lossy_from(127f64.exp2() * -1.625),
+            bf16::from_bits(0xFF50)
+        );
+        assert_eq!(bf16::lossy_from(128f64.exp2()), bf16::INFINITY);
+        // 1.0 >> 133 is minimum non-zero subnormal 0 0000000 0000001
+        assert_eq!(bf16::lossy_from((-133f64).exp2()), bf16::from_bits(0x0001));
+        assert_eq!(
+            bf16::lossy_from((-133f64).exp2() * 0.5001),
+            bf16::from_bits(0x0001)
+        );
+        assert_eq!(bf16::lossy_from((-133f32).exp2() * 0.5), bf16::from_bits(0));
     }
 }

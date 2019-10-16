@@ -25,9 +25,9 @@ The other number can be:
     [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], or
     [`usize`].
   * A floating-point number of type [`f32`] or [`f64`]. If the [`f16`
-    feature] is enabled, it can also be of type [`f16`]. For this
-    conversion, the method rounds to the nearest, with ties rounding
-    to even.
+    feature] is enabled, it can also be of type [`f16`] or [`bf16`].
+    For this conversion, the method rounds to the nearest, with ties
+    rounding to even.
   * Any other number `src` for which [`ToFixed`] is implemented, in
     which case this method returns [`src.to_fixed()`][`to_fixed`].
 
@@ -70,6 +70,7 @@ assert_eq!(Fix::from_num(",
 ```
 
 [`ToFixed`]: traits/trait.ToFixed.html
+[`bf16`]: https://docs.rs/half/^1.2/half/struct.bf16.html
 [`f16` feature]: index.html#optional-features
 [`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
 [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
@@ -106,9 +107,9 @@ The other number can be:
     [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], or
     [`usize`]. Any fractional bits are truncated.
   * A floating-point number of type [`f32`] or [`f64`]. If the [`f16`
-    feature] is enabled, it can also be of type [`f16`]. For this
-    conversion, the method rounds to the nearest, with ties rounding
-    to even.
+    feature] is enabled, it can also be of type [`f16`] or [`bf16`].
+    For this conversion, the method rounds to the nearest, with ties
+    rounding to even.
   * Any other type `Dst` for which [`FromFixed`] is implemented, in
     which case this method returns
     [`Dst::from_fixed(self)`][`from_fixed`].
@@ -156,6 +157,7 @@ assert_eq!(",
 ```
 
 [`FromFixed`]: traits/trait.FromFixed.html
+[`bf16`]: https://docs.rs/half/^1.2/half/struct.bf16.html
 [`f16` feature]: index.html#optional-features
 [`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
 [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
@@ -192,9 +194,9 @@ The other number can be:
     [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], or
     [`usize`].
   * A floating-point number of type [`f32`] or [`f64`]. If the [`f16`
-    feature] is enabled, it can also be of type [`f16`]. For this
-    conversion, the method rounds to the nearest, with ties rounding
-    to even.
+    feature] is enabled, it can also be of type [`f16`] or [`bf16`].
+    For this conversion, the method rounds to the nearest, with ties
+    rounding to even.
   * Any other number `src` for which [`ToFixed`] is implemented, in
     which case this method returns [`src.checked_to_fixed()`][`checked_to_fixed`].
 
@@ -242,6 +244,7 @@ assert!(Fix::checked_from_num(std::f64::NAN).is_none());
 
 [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
 [`ToFixed`]: traits/trait.ToFixed.html
+[`bf16`]: https://docs.rs/half/^1.2/half/struct.bf16.html
 [`f16` feature]: index.html#optional-features
 [`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
 [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
@@ -277,9 +280,9 @@ The other number can be:
     [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], or
     [`usize`]. Any fractional bits are truncated.
   * A floating-point number of type [`f32`] or [`f64`]. If the [`f16`
-    feature] is enabled, it can also be of type [`f16`]. For this
-    conversion, the method rounds to the nearest, with ties rounding
-    to even.
+    feature] is enabled, it can also be of type [`f16`] or [`bf16`].
+    For this conversion, the method rounds to the nearest, with ties
+    rounding to even.
   * Any other type `Dst` for which [`FromFixed`] is implemented, in
     which case this method returns
     [`Dst::checked_from_fixed(self)`][`checked_from_fixed`].
@@ -327,6 +330,7 @@ assert_eq!(one_point_625.checked_to_num::<f32>(), Some(1.625f32));
 
 [`FromFixed`]: traits/trait.FromFixed.html
 [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`bf16`]: https://docs.rs/half/^1.2/half/struct.bf16.html
 [`checked_from_fixed`]: traits/trait.FromFixed.html#tymethod.checked_from_fixed
 [`f16` feature]: index.html#optional-features
 [`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
@@ -362,9 +366,9 @@ The other number can be:
     [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], or
     [`usize`].
   * A floating-point number of type [`f32`] or [`f64`]. If the [`f16`
-    feature] is enabled, it can also be of type [`f16`]. For this
-    conversion, the method rounds to the nearest, with ties rounding
-    to even.
+    feature] is enabled, it can also be of type [`f16`] or [`bf16`].
+    For this conversion, the method rounds to the nearest, with ties
+    rounding to even.
   * Any other number `src` for which [`ToFixed`] is implemented, in
     which case this method returns
     [`src.saturating_to_fixed()`][`saturating_to_fixed`].
@@ -415,6 +419,7 @@ assert_eq!(Fix::saturating_from_num(std::f64::NEG_INFINITY), Fix::min_value());
 
 [NaN]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_nan
 [`ToFixed`]: traits/trait.ToFixed.html
+[`bf16`]: https://docs.rs/half/^1.2/half/struct.bf16.html
 [`f16` feature]: index.html#optional-features
 [`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
 [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
@@ -450,9 +455,9 @@ The other number can be:
     [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], or
     [`usize`]. Any fractional bits are truncated.
   * A floating-point number of type [`f32`] or [`f64`]. If the [`f16`
-    feature] is enabled, it can also be of type [`f16`]. For this
-    conversion, the method rounds to the nearest, with ties rounding
-    to even.
+    feature] is enabled, it can also be of type [`f16`] or [`bf16`].
+    For this conversion, the method rounds to the nearest, with ties
+    rounding to even.
   * Any other type `Dst` for which [`FromFixed`] is implemented, in
     which case this method returns
     [`Dst::saturating_from_fixed(self)`][`saturating_from_fixed`].
@@ -496,6 +501,7 @@ assert_eq!(one_point_625.saturating_to_num::<f32>(), 1.625f32);
 ```
 
 [`FromFixed`]: traits/trait.FromFixed.html
+[`bf16`]: https://docs.rs/half/^1.2/half/struct.bf16.html
 [`f16` feature]: index.html#optional-features
 [`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
 [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
@@ -531,9 +537,9 @@ The other number can be:
     [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], or
     [`usize`].
   * A floating-point number of type [`f32`] or [`f64`]. If the [`f16`
-    feature] is enabled, it can also be of type [`f16`]. For this
-    conversion, the method rounds to the nearest, with ties rounding
-    to even.
+    feature] is enabled, it can also be of type [`f16`] or [`bf16`].
+    For this conversion, the method rounds to the nearest, with ties
+    rounding to even.
   * Any other number `src` for which [`ToFixed`] is implemented, in
     which case this method returns [`src.wrapping_to_fixed()`][`wrapping_to_fixed`].
 
@@ -574,6 +580,7 @@ assert_eq!(Fix::wrapping_from_num(large), wrapped);
 ```
 
 [`ToFixed`]: traits/trait.ToFixed.html
+[`bf16`]: https://docs.rs/half/^1.2/half/struct.bf16.html
 [`f16` feature]: index.html#optional-features
 [`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
 [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
@@ -610,9 +617,9 @@ The other number can be:
     [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], or
     [`usize`]. Any fractional bits are truncated.
   * A floating-point number of type [`f32`] or [`f64`]. If the [`f16`
-    feature] is enabled, it can also be of type [`f16`]. For this
-    conversion, the method rounds to the nearest, with ties rounding
-    to even.
+    feature] is enabled, it can also be of type [`f16`] or [`bf16`].
+    For this conversion, the method rounds to the nearest, with ties
+    rounding to even.
   * Any other type `Dst` for which [`FromFixed`] is implemented, in
     which case this method returns
     [`Dst::wrapping_from_fixed(self)`][`wrapping_from_fixed`].
@@ -657,6 +664,7 @@ assert_eq!(one_point_625.wrapping_to_num::<f32>(), 1.625f32);
 
 [`FromFixed`]: traits/trait.FromFixed.html
 [`wrapping_from_fixed`]: traits/trait.FromFixed.html#tymethod.wrapping_from_fixed
+[`bf16`]: https://docs.rs/half/^1.2/half/struct.bf16.html
 [`f16` feature]: index.html#optional-features
 [`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
 [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
@@ -694,7 +702,7 @@ The other number can be:
     [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], or
     [`usize`].
   * A floating-point number of type [`f32`] or [`f64`]. If the [`f16`
-    feature] is enabled, it can also be of type [`f16`]. For this
+    feature] is enabled, it can also be of type [`f16`] or [`bf16`]. For this
     conversion, the method rounds to the nearest, with ties rounding
     to even.
   * Any other number `src` for which [`ToFixed`] is implemented, in
@@ -740,6 +748,7 @@ assert_eq!(Fix::overflowing_from_num(large), (wrapped, true));
 
 [`ToFixed`]: traits/trait.ToFixed.html
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[`bf16`]: https://docs.rs/half/^1.2/half/struct.bf16.html
 [`f16` feature]: index.html#optional-features
 [`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
 [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html
@@ -779,9 +788,9 @@ The other number can be:
     [`isize`], [`u8`], [`u16`], [`u32`], [`u64`], [`u128`], or
     [`usize`]. Any fractional bits are truncated.
   * A floating-point number of type [`f32`] or [`f64`]. If the [`f16`
-    feature] is enabled, it can also be of type [`f16`]. For this
-    conversion, the method rounds to the nearest, with ties rounding
-    to even.
+    feature] is enabled, it can also be of type [`f16`] or [`bf16`].
+    For this conversion, the method rounds to the nearest, with ties
+    rounding to even.
   * Any other type `Dst` for which [`FromFixed`] is implemented, in
     which case this method returns
     [`Dst::overflowing_from_fixed(self)`][`overflowing_from_fixed`].
@@ -828,6 +837,7 @@ assert_eq!(one_point_625.overflowing_to_num::<f32>(), (1.625f32, false));
 
 [`FromFixed`]: traits/trait.FromFixed.html
 [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[`bf16`]: https://docs.rs/half/^1.2/half/struct.bf16.html
 [`f16` feature]: index.html#optional-features
 [`f16`]: https://docs.rs/half/^1.2/half/struct.f16.html
 [`f32`]: https://doc.rust-lang.org/nightly/std/primitive.f32.html

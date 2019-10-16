@@ -21,7 +21,7 @@ use crate::{
 use az::{Cast, CheckedCast, OverflowingCast, SaturatingCast, StaticCast, WrappingCast};
 use core::mem;
 #[cfg(feature = "f16")]
-use half::f16;
+use half::{bf16, f16};
 
 macro_rules! run_time {
     ($Src:ident($LeEqUSrc:ident); $Dst:ident($LeEqUDst:ident)) => {
@@ -302,7 +302,7 @@ macro_rules! run_time_num {
         #[cfg(feature = "f16")]
         run_time_num! {
             $Fixed($LeEqU);
-            f16,
+            f16, bf16,
         }
     )* };
 }
@@ -389,7 +389,7 @@ macro_rules! compile_time_float {
         #[cfg(feature = "f16")]
         compile_time_float! {
             $Fixed($LeEqU);
-            f16,
+            f16, bf16,
         }
     )* };
 }

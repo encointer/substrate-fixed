@@ -22,7 +22,7 @@ use crate::{
 };
 use core::cmp::Ordering;
 #[cfg(feature = "f16")]
-use half::f16;
+use half::{bf16, f16};
 
 macro_rules! fixed_cmp_fixed {
     ($Lhs:ident($LhsLeEqU:ident), $Rhs:ident($RhsLeEqU:ident)) => {
@@ -365,6 +365,8 @@ macro_rules! fixed_cmp_all {
         fixed_cmp_int! { $Fix($LeEqU), usize }
         #[cfg(feature = "f16")]
         fixed_cmp_float! { $Fix($LeEqU), f16 }
+        #[cfg(feature = "f16")]
+        fixed_cmp_float! { $Fix($LeEqU), bf16 }
         fixed_cmp_float! { $Fix($LeEqU), f32 }
         fixed_cmp_float! { $Fix($LeEqU), f64 }
     };

@@ -34,7 +34,7 @@ use core::{
     str::FromStr,
 };
 #[cfg(feature = "f16")]
-use half::f16;
+use half::{bf16, f16};
 #[cfg(feature = "serde")]
 use serde::{de::Deserialize, ser::Serialize};
 
@@ -48,7 +48,7 @@ macro_rules! comment_features {
         #[cfg(all(feature = "f16", not(feature = "serde")))]
         doc_comment! {
             $comment;
-            pub trait FixedOptionalFeatures: PartialOrd<f16> {}
+            pub trait FixedOptionalFeatures: PartialOrd<f16> + PartialOrd<bf16> {}
         }
         #[cfg(all(not(feature = "f16"), feature = "serde"))]
         doc_comment! {
@@ -60,7 +60,7 @@ macro_rules! comment_features {
             $comment;
             pub trait FixedOptionalFeatures
             where
-                Self: PartialOrd<f16>,
+                Self: PartialOrd<f16> + PartialOrd<bf16>,
                 Self: Serialize + for<'de> Deserialize<'de>,
             {
             }
@@ -73,8 +73,9 @@ comment_features! {
 depending on the crate’s [optional features].
 
  1. If the `f16` feature is enabled,
-    <code>[PartialOrd][`PartialOrd`]&lt;[f16][`f16`]&gt;</code> is a
-    supertrait of [`Fixed`].
+    <code>[PartialOrd][`PartialOrd`]&lt;[f16][`f16`]&gt;</code> and
+    <code>[PartialOrd][`PartialOrd`]&lt;[bf16][`bf16`]&gt;</code> are
+    supertraits of [`Fixed`].
  2. If the `serde` feature is enabled, [`Serialize`] and
     [`Deserialize`] are supertraits of [`Fixed`].
 
@@ -82,6 +83,7 @@ depending on the crate’s [optional features].
 [`Fixed`]: trait.Fixed.html
 [`PartialOrd`]: https://doc.rust-lang.org/nightly/std/cmp/trait.PartialOrd.html
 [`Serialize`]: https://docs.rs/serde/^1/serde/ser/trait.Serialize.html
+[`bf16`]: https://docs.rs/half/^1/half/struct.bf16.html
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html
 [optional features]: ../index.html#optional-features
 "
@@ -1423,6 +1425,8 @@ macro_rules! impl_float {
 
 #[cfg(feature = "f16")]
 impl_float! { f16 }
+#[cfg(feature = "f16")]
+impl_float! { bf16 }
 impl_float! { f32 }
 impl_float! { f64 }
 

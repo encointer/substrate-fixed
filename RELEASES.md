@@ -8,6 +8,8 @@ as-is, without any warranty. -->
 Version 0.4.6 (unreleased)
 ==========================
 
+  * Conversions to/from `bf16` are now provided when the `f16` option
+    is enabled.
   * The following methods are now `const` functions: `saturating_neg`,
     `saturating_add`, `saturating_sub`, `saturating_mul_int`,
     `saturating_abs`

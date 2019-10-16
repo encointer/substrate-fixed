@@ -156,42 +156,79 @@ mod tests {
     fn cmp_f16() {
         use half::{self, f16};
         assert_eq!(f16::from_fixed(TAU), f16::from_f32(f32::consts::PI * 2.0));
-        assert_eq!(f16::from_fixed(FRAC_TAU_2), half::consts::PI);
+        assert_eq!(f16::from_fixed(FRAC_TAU_2), f16::PI);
         assert_eq!(
             f16::from_fixed(FRAC_TAU_3),
             f16::from_f32(f32::consts::FRAC_PI_3 * 2.0)
         );
-        assert_eq!(f16::from_fixed(FRAC_TAU_4), half::consts::FRAC_PI_2);
-        assert_eq!(f16::from_fixed(FRAC_TAU_6), half::consts::FRAC_PI_3);
-        assert_eq!(f16::from_fixed(FRAC_TAU_8), half::consts::FRAC_PI_4);
-        assert_eq!(f16::from_fixed(FRAC_TAU_12), half::consts::FRAC_PI_6);
+        assert_eq!(f16::from_fixed(FRAC_TAU_4), f16::FRAC_PI_2);
+        assert_eq!(f16::from_fixed(FRAC_TAU_6), f16::FRAC_PI_3);
+        assert_eq!(f16::from_fixed(FRAC_TAU_8), f16::FRAC_PI_4);
+        assert_eq!(f16::from_fixed(FRAC_TAU_12), f16::FRAC_PI_6);
         assert_eq!(
             f16::from_fixed(FRAC_1_TAU),
             f16::from_f32(f32::consts::FRAC_1_PI * 0.5)
         );
-        assert_eq!(f16::from_fixed(FRAC_2_TAU), half::consts::FRAC_1_PI);
-        assert_eq!(f16::from_fixed(FRAC_4_TAU), half::consts::FRAC_2_PI);
-        assert_eq!(f16::from_fixed(PI), half::consts::PI);
-        assert_eq!(f16::from_fixed(FRAC_PI_2), half::consts::FRAC_PI_2);
-        assert_eq!(f16::from_fixed(FRAC_PI_3), half::consts::FRAC_PI_3);
-        assert_eq!(f16::from_fixed(FRAC_PI_4), half::consts::FRAC_PI_4);
-        assert_eq!(f16::from_fixed(FRAC_PI_6), half::consts::FRAC_PI_6);
-        assert_eq!(f16::from_fixed(FRAC_PI_8), half::consts::FRAC_PI_8);
-        assert_eq!(f16::from_fixed(FRAC_1_PI), half::consts::FRAC_1_PI);
-        assert_eq!(f16::from_fixed(FRAC_2_PI), half::consts::FRAC_2_PI);
+        assert_eq!(f16::from_fixed(FRAC_2_TAU), f16::FRAC_1_PI);
+        assert_eq!(f16::from_fixed(FRAC_4_TAU), f16::FRAC_2_PI);
+        assert_eq!(f16::from_fixed(PI), f16::PI);
+        assert_eq!(f16::from_fixed(FRAC_PI_2), f16::FRAC_PI_2);
+        assert_eq!(f16::from_fixed(FRAC_PI_3), f16::FRAC_PI_3);
+        assert_eq!(f16::from_fixed(FRAC_PI_4), f16::FRAC_PI_4);
+        assert_eq!(f16::from_fixed(FRAC_PI_6), f16::FRAC_PI_6);
+        assert_eq!(f16::from_fixed(FRAC_PI_8), f16::FRAC_PI_8);
+        assert_eq!(f16::from_fixed(FRAC_1_PI), f16::FRAC_1_PI);
+        assert_eq!(f16::from_fixed(FRAC_2_PI), f16::FRAC_2_PI);
+        assert_eq!(f16::from_fixed(FRAC_2_SQRT_PI), f16::FRAC_2_SQRT_PI);
+        assert_eq!(f16::from_fixed(SQRT_2), f16::SQRT_2);
+        assert_eq!(f16::from_fixed(FRAC_1_SQRT_2), f16::FRAC_1_SQRT_2);
+        assert_eq!(f16::from_fixed(E), f16::E);
+        // assert_eq!(f16::from_fixed(LOG2_10), f16::LOG2_10);
+        assert_eq!(f16::from_fixed(LOG2_E), f16::LOG2_E);
+        // assert_eq!(f16::from_fixed(LOG10_2), f16::LOG10_2);
+        assert_eq!(f16::from_fixed(LOG10_E), f16::LOG10_E);
+        assert_eq!(f16::from_fixed(LN_2), f16::LN_2);
+        assert_eq!(f16::from_fixed(LN_10), f16::LN_10);
+    }
+
+    #[cfg(feature = "f16")]
+    #[test]
+    fn cmp_bf16() {
+        use half::{self, bf16};
+        assert_eq!(bf16::from_fixed(TAU), bf16::from_f32(f32::consts::PI * 2.0));
+        assert_eq!(bf16::from_fixed(FRAC_TAU_2), bf16::PI);
         assert_eq!(
-            f16::from_fixed(FRAC_2_SQRT_PI),
-            half::consts::FRAC_2_SQRT_PI
+            bf16::from_fixed(FRAC_TAU_3),
+            bf16::from_f32(f32::consts::FRAC_PI_3 * 2.0)
         );
-        assert_eq!(f16::from_fixed(SQRT_2), half::consts::SQRT_2);
-        assert_eq!(f16::from_fixed(FRAC_1_SQRT_2), half::consts::FRAC_1_SQRT_2);
-        assert_eq!(f16::from_fixed(E), half::consts::E);
-        // assert_eq!(f16::from_fixed(LOG2_10), half::consts::LOG2_10);
-        assert_eq!(f16::from_fixed(LOG2_E), half::consts::LOG2_E);
-        // assert_eq!(f16::from_fixed(LOG10_2), half::consts::LOG10_2);
-        assert_eq!(f16::from_fixed(LOG10_E), half::consts::LOG10_E);
-        assert_eq!(f16::from_fixed(LN_2), half::consts::LN_2);
-        assert_eq!(f16::from_fixed(LN_10), half::consts::LN_10);
+        assert_eq!(bf16::from_fixed(FRAC_TAU_4), bf16::FRAC_PI_2);
+        assert_eq!(bf16::from_fixed(FRAC_TAU_6), bf16::FRAC_PI_3);
+        assert_eq!(bf16::from_fixed(FRAC_TAU_8), bf16::FRAC_PI_4);
+        assert_eq!(bf16::from_fixed(FRAC_TAU_12), bf16::FRAC_PI_6);
+        assert_eq!(
+            bf16::from_fixed(FRAC_1_TAU),
+            bf16::from_f32(f32::consts::FRAC_1_PI * 0.5)
+        );
+        assert_eq!(bf16::from_fixed(FRAC_2_TAU), bf16::FRAC_1_PI);
+        assert_eq!(bf16::from_fixed(FRAC_4_TAU), bf16::FRAC_2_PI);
+        assert_eq!(bf16::from_fixed(PI), bf16::PI);
+        assert_eq!(bf16::from_fixed(FRAC_PI_2), bf16::FRAC_PI_2);
+        assert_eq!(bf16::from_fixed(FRAC_PI_3), bf16::FRAC_PI_3);
+        assert_eq!(bf16::from_fixed(FRAC_PI_4), bf16::FRAC_PI_4);
+        assert_eq!(bf16::from_fixed(FRAC_PI_6), bf16::FRAC_PI_6);
+        assert_eq!(bf16::from_fixed(FRAC_PI_8), bf16::FRAC_PI_8);
+        assert_eq!(bf16::from_fixed(FRAC_1_PI), bf16::FRAC_1_PI);
+        assert_eq!(bf16::from_fixed(FRAC_2_PI), bf16::FRAC_2_PI);
+        assert_eq!(bf16::from_fixed(FRAC_2_SQRT_PI), bf16::FRAC_2_SQRT_PI);
+        assert_eq!(bf16::from_fixed(SQRT_2), bf16::SQRT_2);
+        assert_eq!(bf16::from_fixed(FRAC_1_SQRT_2), bf16::FRAC_1_SQRT_2);
+        assert_eq!(bf16::from_fixed(E), bf16::E);
+        // assert_eq!(bf16::from_fixed(LOG2_10), bf16::LOG2_10);
+        assert_eq!(bf16::from_fixed(LOG2_E), bf16::LOG2_E);
+        // assert_eq!(bf16::from_fixed(LOG10_2), bf16::LOG10_2);
+        assert_eq!(bf16::from_fixed(LOG10_E), bf16::LOG10_E);
+        assert_eq!(bf16::from_fixed(LN_2), bf16::LN_2);
+        assert_eq!(bf16::from_fixed(LN_10), bf16::LN_10);
     }
 
     #[test]

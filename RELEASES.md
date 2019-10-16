@@ -5,7 +5,7 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
-Version 0.4.6 (unreleased)
+Version 0.4.6 (2019-10-16)
 ==========================
 
   * Conversions to/from `bf16` are now provided when the `f16` option

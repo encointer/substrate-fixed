@@ -8,6 +8,11 @@ as-is, without any warranty. -->
 Version 0.4.6 (2019-10-16)
 ==========================
 
+  * Support for Euclidean division by integers was added.
+
+Version 0.4.7 (unreleased)
+==========================
+
   * Conversions to/from `bf16` are now provided when the `f16` option
     is enabled.
   * The following methods are now `const` functions: `saturating_neg`,

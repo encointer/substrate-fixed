@@ -561,6 +561,20 @@ where
     /// Shifts to the right by `n` bits, wrapping the truncated bits to the left end.
     fn rotate_right(self, n: u32) -> Self;
 
+    /// Euclidean division by an integer.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the divisor is zero or if the division results in overflow.
+    fn div_euclid_int(self, rhs: Self::Bits) -> Self;
+
+    /// Remainder for Euclidean division by an integer.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the divisor is zero or if the division results in overflow.
+    fn rem_euclid_int(self, rhs: Self::Bits) -> Self;
+
     /// Checked negation. Returns the negated value, or [`None`] on overflow.
     ///
     /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
@@ -606,6 +620,20 @@ where
     ///
     /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
     fn checked_rem_int(self, rhs: Self::Bits) -> Option<Self>;
+
+    /// Checked Euclidean division by an integer. Returns the
+    /// quotient, or [`None`] if the divisor is zero or if the
+    /// division results in overflow.
+    ///
+    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    fn checked_div_euclid_int(self, rhs: Self::Bits) -> Option<Self>;
+
+    /// Checked fixed-point remainder for Euclidean division by an
+    /// integer. Returns the remainder, or [`None`] if the divisor is
+    /// zero or if the division results in overflow.
+    ///
+    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    fn checked_rem_euclid_int(self, rhs: Self::Bits) -> Option<Self>;
 
     /// Checked shift left. Returns the shifted number, or [`None`] if
     /// `rhs` ≥ the number of bits.
@@ -681,6 +709,26 @@ where
     ///
     /// Panics if the divisor is zero.
     fn wrapping_rem_int(self, rhs: Self::Bits) -> Self;
+
+    /// Wrapping Euclidean division by an integer. Returns the
+    /// quotient, wrapping on overflow.
+    ///
+    /// Overflow can only occur when dividing the minimum value by −1.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the divisor is zero.
+    fn wrapping_div_euclid_int(self, rhs: Self::Bits) -> Self;
+
+    /// Wrapping fixed-point remainder for Euclidean division by an
+    /// integer. Returns the remainder, wrapping on overflow.
+    ///
+    /// Overflow can only occur when dividing the minimum value by −1.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the divisor is zero.
+    fn wrapping_rem_euclid_int(self, rhs: Self::Bits) -> Self;
 
     /// Wrapping shift left. Wraps `rhs` if `rhs` ≥ the number of
     /// bits, then shifts and returns the number.
@@ -782,6 +830,35 @@ where
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
     fn overflowing_rem_int(self, rhs: Self::Bits) -> (Self, bool);
+
+    /// Overflowing Euclidean division by an integer.
+    ///
+    /// Returns a [tuple] of the quotient and a [`bool`], indicating
+    /// whether an overflow has occurred. On overflow, the wrapped
+    /// value is returned.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the divisor is zero.
+    ///
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
+    fn overflowing_div_euclid_int(self, rhs: Self::Bits) -> (Self, bool);
+
+    /// Overflowing fixed-point remainder for Euclidean division by an integer.
+    ///
+    /// Returns a [tuple] of the remainder and a [`bool`], indicating
+    /// whether an overflow has occurred. On overflow, the wrapped
+    /// value is returned. Overflow can only occur when dividing the
+    /// minimum value by −1.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the divisor is zero.
+    ///
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
+    fn overflowing_rem_euclid_int(self, rhs: Self::Bits) -> (Self, bool);
 
     /// Overflowing shift left.
     ///
@@ -1548,6 +1625,8 @@ macro_rules! impl_fixed {
             trait_delegate! { fn trailing_zeros(self) -> u32 }
             trait_delegate! { fn rotate_left(self, n: u32) -> Self }
             trait_delegate! { fn rotate_right(self, n: u32) -> Self }
+            trait_delegate! { fn div_euclid_int(self, rhs: Self::Bits) -> Self }
+            trait_delegate! { fn rem_euclid_int(self, rhs: Self::Bits) -> Self }
             trait_delegate! { fn checked_neg(self) -> Option<Self> }
             trait_delegate! { fn checked_add(self, rhs: Self) -> Option<Self> }
             trait_delegate! { fn checked_sub(self, rhs: Self) -> Option<Self> }
@@ -1556,6 +1635,8 @@ macro_rules! impl_fixed {
             trait_delegate! { fn checked_mul_int(self, rhs: Self::Bits) -> Option<Self> }
             trait_delegate! { fn checked_div_int(self, rhs: Self::Bits) -> Option<Self> }
             trait_delegate! { fn checked_rem_int(self, rhs: Self::Bits) -> Option<Self> }
+            trait_delegate! { fn checked_div_euclid_int(self, rhs: Self::Bits) -> Option<Self> }
+            trait_delegate! { fn checked_rem_euclid_int(self, rhs: Self::Bits) -> Option<Self> }
             trait_delegate! { fn checked_shl(self, rhs: u32) -> Option<Self> }
             trait_delegate! { fn checked_shr(self, rhs: u32) -> Option<Self> }
             trait_delegate! { fn saturating_neg(self) -> Self }
@@ -1572,6 +1653,8 @@ macro_rules! impl_fixed {
             trait_delegate! { fn wrapping_mul_int(self, rhs: Self::Bits) -> Self }
             trait_delegate! { fn wrapping_div_int(self, rhs: Self::Bits) -> Self }
             trait_delegate! { fn wrapping_rem_int(self, rhs: Self::Bits) -> Self }
+            trait_delegate! { fn wrapping_div_euclid_int(self, rhs: Self::Bits) -> Self }
+            trait_delegate! { fn wrapping_rem_euclid_int(self, rhs: Self::Bits) -> Self }
             trait_delegate! { fn wrapping_shl(self, rhs: u32) -> Self }
             trait_delegate! { fn wrapping_shr(self, rhs: u32) -> Self }
             trait_delegate! { fn overflowing_neg(self) -> (Self, bool) }
@@ -1582,6 +1665,8 @@ macro_rules! impl_fixed {
             trait_delegate! { fn overflowing_mul_int(self, rhs: Self::Bits) -> (Self, bool) }
             trait_delegate! { fn overflowing_div_int(self, rhs: Self::Bits) -> (Self, bool) }
             trait_delegate! { fn overflowing_rem_int(self, rhs: Self::Bits) -> (Self, bool) }
+            trait_delegate! { fn overflowing_div_euclid_int(self, rhs: Self::Bits) -> (Self, bool) }
+            trait_delegate! { fn overflowing_rem_euclid_int(self, rhs: Self::Bits) -> (Self, bool) }
             trait_delegate! { fn overflowing_shl(self, rhs: u32) -> (Self, bool) }
             trait_delegate! { fn overflowing_shr(self, rhs: u32) -> (Self, bool) }
         }

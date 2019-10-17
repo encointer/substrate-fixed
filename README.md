@@ -68,6 +68,10 @@ The conversions supported cover the following cases.
 
 ## What’s new
 
+### Version 0.4.7 news (unreleased)
+
+  * Support for Euclidean division by integers was added.
+
 ### Version 0.4.6 news (2019-10-16)
 
   * Conversions to/from [`bf16`] are now provided when the `f16`

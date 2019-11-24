@@ -276,8 +276,7 @@ assert!(half.is_power_of_two());
 ";
                     #[inline]
                     pub const fn is_power_of_two(self) -> bool {
-                        (self.to_bits().wrapping_sub(1) & self.to_bits() == 0)
-                            & (self.to_bits() != 0)
+                        self.count_ones() == 1
                     }
                 }
             }

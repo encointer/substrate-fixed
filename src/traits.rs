@@ -26,12 +26,12 @@ use crate::{
 use core::{
     fmt::{Binary, Debug, Display, LowerHex, Octal, UpperHex},
     hash::Hash,
+    mem,
     ops::{
         Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div,
         DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub,
         SubAssign,
     },
-    mem,
     str::FromStr,
 };
 #[cfg(feature = "f16")]

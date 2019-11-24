@@ -68,8 +68,9 @@ The conversions supported cover the following cases.
 
 ## What’s new
 
-### Version 0.4.7 news (unreleased)
+### Version 0.5.0 news (unreleased)
 
+  * The *fixed* crate now requires rustc version 1.39.0 or later.
   * Support for Euclidean division by integers was added.
 
 ### Version 0.4.6 news (2019-10-16)
@@ -185,7 +186,7 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 fixed = "0.4.6"
 ```
 
-The *fixed* crate requires rustc version 1.34.0 or later.
+The *fixed* crate requires rustc version 1.39.0 or later.
 
 ## Optional features
 

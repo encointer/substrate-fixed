@@ -5,12 +5,13 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
-Version 0.4.6 (2019-10-16)
+Version 0.5.0 (unreleased)
 ==========================
 
+  * The *fixed* crate now requires rustc version 1.39.0 or later.
   * Support for Euclidean division by integers was added.
 
-Version 0.4.7 (unreleased)
+Version 0.4.6 (2019-10-16)
 ==========================
 
   * Conversions to/from `bf16` are now provided when the `f16` option

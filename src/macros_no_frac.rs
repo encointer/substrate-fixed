@@ -17,6 +17,7 @@ macro_rules! fixed_no_frac {
     (
         $description:expr,
         $Fixed:ident[$s_fixed:expr]($Inner:ty[$s_inner:expr], $s_nbits:expr),
+        $nbytes:expr, $bytes_val:expr, $be_bytes:expr, $le_bytes:expr,
         $UInner:ty, $Signedness:tt
     ) => {
         impl<Frac> $Fixed<Frac> {
@@ -92,6 +93,143 @@ assert_eq!(Fix::from_num(2).to_bits(), 0b10_0000);
                 #[inline]
                 pub const fn to_bits(self) -> $Inner {
                     self.bits
+                }
+            }
+
+            comment! {
+                "Creates a fixed-point number from its representation
+as a byte array in big endian.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(
+    Fix::from_be_bytes(", $be_bytes, "),
+    Fix::from_bits(", $bytes_val, ")
+);
+```
+";
+                #[inline]
+                pub fn from_be_bytes(bytes: [u8; $nbytes]) -> $Fixed<Frac> {
+                    $Fixed::from_bits(<$Inner>::from_be_bytes(bytes))
+                }
+            }
+
+            comment! {
+                "Creates a fixed-point number from its representation
+as a byte array in little endian.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(
+    Fix::from_le_bytes(", $le_bytes, "),
+    Fix::from_bits(", $bytes_val, ")
+);
+```
+";
+                #[inline]
+                pub fn from_le_bytes(bytes: [u8; $nbytes]) -> $Fixed<Frac> {
+                    $Fixed::from_bits(<$Inner>::from_le_bytes(bytes))
+                }
+            }
+
+            comment! {
+                "Creates a fixed-point number from its representation
+as a byte array in native endian.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(
+    if cfg!(target_endian = \"big\") {
+        Fix::from_ne_bytes(", $be_bytes, ")
+    } else {
+        Fix::from_ne_bytes(", $le_bytes, ")
+    },
+    Fix::from_bits(", $bytes_val, ")
+);
+```
+";
+                #[inline]
+                pub fn from_ne_bytes(bytes: [u8; $nbytes]) -> $Fixed<Frac> {
+                    $Fixed::from_bits(<$Inner>::from_ne_bytes(bytes))
+                }
+            }
+
+            comment! {
+                "Returns the memory representation of this fixed-point
+number as a byte array in big-endian byte order.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+let val = Fix::from_bits(", $bytes_val, ");
+assert_eq!(
+    val.to_be_bytes(),
+    ", $be_bytes, "
+);
+```
+";
+                #[inline]
+                pub fn to_be_bytes(self) -> [u8; $nbytes] {
+                    self.to_bits().to_be_bytes()
+                }
+            }
+
+            comment! {
+                "Returns the memory representation of this fixed-point
+number as a byte array in little-endian byte order.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+let val = Fix::from_bits(", $bytes_val, ");
+assert_eq!(
+    val.to_le_bytes(),
+    ", $le_bytes, "
+);
+```
+";
+                #[inline]
+                pub fn to_le_bytes(self) -> [u8; $nbytes] {
+                    self.to_bits().to_le_bytes()
+                }
+            }
+
+            comment! {
+                "Returns the memory representation of this fixed-point
+number as a byte array in native byte order.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+let val = Fix::from_bits(", $bytes_val, ");
+assert_eq!(
+    val.to_ne_bytes(),
+    if cfg!(target_endian = \"big\") {
+        ", $be_bytes, "
+    } else {
+        ", $le_bytes, "
+    }
+);
+```
+";
+                #[inline]
+                pub fn to_ne_bytes(self) -> [u8; $nbytes] {
+                    self.to_bits().to_ne_bytes()
                 }
             }
 

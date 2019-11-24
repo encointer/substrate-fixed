@@ -31,6 +31,7 @@ use core::{
         DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub,
         SubAssign,
     },
+    mem,
     str::FromStr,
 };
 #[cfg(feature = "f16")]
@@ -231,6 +232,9 @@ where
     /// The primitive integer underlying type.
     type Bits;
 
+    /// A byte array with the same size as the type.
+    type Bytes;
+
     /// The number of fractional bits.
     ///
     /// <code>&lt;F as [Fixed]&gt;::Frac::[U32]</code> is equivalent to
@@ -260,6 +264,30 @@ where
     /// Creates an integer that has a bitwise representation identical
     /// to the given fixed-point number.
     fn to_bits(self) -> Self::Bits;
+
+    /// Creates a fixed-point number from its representation as a byte
+    /// array in big endian.
+    fn from_be_bytes(bytes: Self::Bytes) -> Self;
+
+    /// Creates a fixed-point number from its representation as a byte
+    /// array in little endian.
+    fn from_le_bytes(bytes: Self::Bytes) -> Self;
+
+    /// Creates a fixed-point number from its representation as a byte
+    /// array in native endian.
+    fn from_ne_bytes(bytes: Self::Bytes) -> Self;
+
+    /// Returns the memory representation of this fixed-point number
+    /// as a byte array in big-endian byte order.
+    fn to_be_bytes(self) -> Self::Bytes;
+
+    /// Returns the memory representation of this fixed-point number
+    /// as a byte array in little-endian byte order.
+    fn to_le_bytes(self) -> Self::Bytes;
+
+    /// Returns the memory representation of this fixed-point number
+    /// as a byte array in native byte order.
+    fn to_ne_bytes(self) -> Self::Bytes;
 
     /// Creates a fixed-point number from another number.
     ///
@@ -1398,6 +1426,7 @@ macro_rules! impl_fixed {
 
         impl<Frac: $LeEqU> Fixed for $Fixed<Frac> {
             type Bits = $Bits;
+            type Bytes = [u8; mem::size_of::<$Bits>()];
             type Frac = Frac;
             trait_delegate! { fn min_value() -> Self }
             trait_delegate! { fn max_value() -> Self }
@@ -1405,6 +1434,12 @@ macro_rules! impl_fixed {
             trait_delegate! { fn frac_nbits() -> u32 }
             trait_delegate! { fn from_bits(bits: Self::Bits) -> Self }
             trait_delegate! { fn to_bits(self) -> Self::Bits }
+            trait_delegate! { fn from_be_bytes(bits: Self::Bytes) -> Self }
+            trait_delegate! { fn from_le_bytes(bits: Self::Bytes) -> Self }
+            trait_delegate! { fn from_ne_bytes(bits: Self::Bytes) -> Self }
+            trait_delegate! { fn to_be_bytes(self) -> Self::Bytes }
+            trait_delegate! { fn to_le_bytes(self) -> Self::Bytes }
+            trait_delegate! { fn to_ne_bytes(self) -> Self::Bytes }
             trait_delegate! { fn from_num<Src: ToFixed>(src: Src) -> Self }
             trait_delegate! { fn to_num<Dst: FromFixed>(self) -> Dst }
             trait_delegate! { fn checked_from_num<Src: ToFixed>(val: Src) -> Option<Self> }

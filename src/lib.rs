@@ -301,17 +301,20 @@ macro_rules! fixed {
     (
         $description:expr,
         $Fixed:ident($Inner:ty, $LeEqU:tt, $s_nbits:expr),
+        $nbytes:expr, $bytes_val:expr, $be_bytes:expr, $le_bytes:expr,
         $UInner:ty, $Signedness:tt
     ) => {
         fixed! {
             $description,
             $Fixed[stringify!($Fixed)]($Inner[stringify!($Inner)], $LeEqU, $s_nbits),
+            $nbytes, $bytes_val, $be_bytes, $le_bytes,
             $UInner, $Signedness
         }
     };
     (
         $description:expr,
         $Fixed:ident[$s_fixed:expr]($Inner:ty[$s_inner:expr], $LeEqU:tt, $s_nbits:expr),
+        $nbytes:expr, $bytes_val:expr, $be_bytes:expr, $le_bytes:expr,
         $UInner:ty, $Signedness:tt
     ) => {
         comment! {
@@ -380,6 +383,7 @@ assert_eq!(two_point_75.to_string(), \"2.8\");
         fixed_no_frac! {
             $description,
             $Fixed[$s_fixed]($Inner[$s_inner], $s_nbits),
+            $nbytes, $bytes_val, $be_bytes, $le_bytes,
             $UInner, $Signedness
         }
         // inherent methods that require Frac bounds, and cannot be const
@@ -391,16 +395,78 @@ assert_eq!(two_point_75.to_string(), \"2.8\");
     };
 }
 
-fixed! { "An eight-bit fixed-point unsigned", FixedU8(u8, LeEqU8, "8"), u8, Unsigned }
-fixed! { "A 16-bit fixed-point unsigned", FixedU16(u16, LeEqU16, "16"), u16, Unsigned }
-fixed! { "A 32-bit fixed-point unsigned", FixedU32(u32, LeEqU32, "32"), u32, Unsigned }
-fixed! { "A 64-bit fixed-point unsigned", FixedU64(u64, LeEqU64, "64"), u64, Unsigned }
-fixed! { "A 128-bit fixed-point unsigned", FixedU128(u128, LeEqU128, "128"), u128, Unsigned }
-fixed! { "An eight-bit fixed-point signed", FixedI8(i8, LeEqU8, "8"), u8, Signed }
-fixed! { "A 16-bit fixed-point signed", FixedI16(i16, LeEqU16, "16"), u16, Signed }
-fixed! { "A 32-bit fixed-point signed", FixedI32(i32, LeEqU32, "32"), u32, Signed }
-fixed! { "A 64-bit fixed-point signed", FixedI64(i64, LeEqU64, "64"), u64, Signed }
-fixed! { "A 128-bit fixed-point signed", FixedI128(i128, LeEqU128, "128"), u128, Signed }
+fixed! {
+    "An eight-bit fixed-point unsigned",
+    FixedU8(u8, LeEqU8, "8"),
+    1, "0x12", "[0x12]", "[0x12]",
+    u8, Unsigned
+}
+fixed! {
+    "A 16-bit fixed-point unsigned",
+    FixedU16(u16, LeEqU16, "16"),
+    2, "0x1234", "[0x12, 0x34]", "[0x34, 0x12]",
+    u16, Unsigned
+}
+fixed! {
+    "A 32-bit fixed-point unsigned",
+    FixedU32(u32, LeEqU32, "32"),
+    4, "0x1234_5678", "[0x12, 0x34, 0x56, 0x78]", "[0x78, 0x56, 0x34, 0x12]",
+    u32, Unsigned
+}
+fixed! {
+    "A 64-bit fixed-point unsigned",
+    FixedU64(u64, LeEqU64, "64"),
+    8, "0x1234_5678_9ABC_DEF0",
+    "[0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0]",
+    "[0xF0, 0xDE, 0xBC, 0x9A, 0x78, 0x56, 0x34, 0x12]",
+    u64, Unsigned
+}
+fixed! {
+    "A 128-bit fixed-point unsigned",
+    FixedU128(u128, LeEqU128, "128"),
+    16, "0x1234_5678_9ABC_DEF0_1234_5678_9ABC_DEF0",
+    "[0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0, \
+     0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0]",
+    "[0xF0, 0xDE, 0xBC, 0x9A, 0x78, 0x56, 0x34, 0x12, \
+     0xF0, 0xDE, 0xBC, 0x9A, 0x78, 0x56, 0x34, 0x12]",
+    u128, Unsigned
+}
+fixed! {
+    "An eight-bit fixed-point signed",
+    FixedI8(i8, LeEqU8, "8"),
+    1, "0x12", "[0x12]", "[0x12]",
+    u8, Signed
+}
+fixed! {
+    "A 16-bit fixed-point signed",
+    FixedI16(i16, LeEqU16, "16"),
+    2, "0x1234", "[0x12, 0x34]", "[0x34, 0x12]",
+    u16, Signed
+}
+fixed! {
+    "A 32-bit fixed-point signed",
+    FixedI32(i32, LeEqU32, "32"),
+    4, "0x1234_5678", "[0x12, 0x34, 0x56, 0x78]", "[0x78, 0x56, 0x34, 0x12]",
+    u32, Signed
+}
+fixed! {
+    "A 64-bit fixed-point signed",
+    FixedI64(i64, LeEqU64, "64"),
+    8, "0x1234_5678_9ABC_DEF0",
+    "[0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0]",
+    "[0xF0, 0xDE, 0xBC, 0x9A, 0x78, 0x56, 0x34, 0x12]",
+    u64, Signed
+}
+fixed! {
+    "A 128-bit fixed-point signed",
+    FixedI128(i128, LeEqU128, "128"),
+    16, "0x1234_5678_9ABC_DEF0_1234_5678_9ABC_DEF0",
+    "[0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0, \
+     0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0]",
+    "[0xF0, 0xDE, 0xBC, 0x9A, 0x78, 0x56, 0x34, 0x12, \
+     0xF0, 0xDE, 0xBC, 0x9A, 0x78, 0x56, 0x34, 0x12]",
+    u128, Signed
+}
 
 #[cfg(test)]
 #[allow(clippy::cognitive_complexity)]

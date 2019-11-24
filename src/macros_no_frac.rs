@@ -310,22 +310,7 @@ assert_eq!(Fix::from_bits(0x7F).div_euclid_int(4), Fix::from_bits(0x1F));
 ";
                 #[inline]
                 pub fn div_euclid_int(self, rhs: $Inner) -> $Fixed<Frac> {
-                    if_signed_unsigned! {
-                        $Signedness,
-                        {
-                            let bits = self.to_bits();
-                            let (q, r) = (bits / rhs, bits % rhs);
-                            let ret_bits = if r >= 0 {
-                                q
-                            } else if rhs >= 0 {
-                                q - 1
-                            } else {
-                                q + 1
-                            };
-                            Self::from_bits(ret_bits)
-                        },
-                        Self::from_bits(self.to_bits() / rhs),
-                    }
+                    Self::from_bits(self.to_bits().div_euclid(rhs))
                 }
             }
 
@@ -357,22 +342,7 @@ assert_eq!(Fix::from_bits(0x7F).rem_euclid_int(4), Fix::from_bits(0x03));
 ";
                 #[inline]
                 pub fn rem_euclid_int(self, rhs: $Inner) -> $Fixed<Frac> {
-                    if_signed_unsigned! {
-                        $Signedness,
-                        {
-                            let bits = self.to_bits();
-                            let r = bits % rhs;
-                            let ret_bits = if r >= 0 {
-                                r
-                            } else if rhs >= 0 {
-                                r + rhs
-                            } else {
-                                r - rhs
-                            };
-                            Self::from_bits(ret_bits)
-                        },
-                        Self::from_bits(self.to_bits() % rhs),
-                    }
+                    Self::from_bits(self.to_bits().rem_euclid(rhs))
                 }
             }
 
@@ -633,17 +603,7 @@ assert_eq!(Fix::min_value().checked_div_int(-1), None);
 ";
                 #[inline]
                 pub fn checked_div_euclid_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
-                    if_signed_unsigned! {
-                        $Signedness,
-                        {
-                            if rhs == 0 || (self.to_bits() == <$Inner>::min_value() && rhs == -1) {
-                                None
-                            } else {
-                                Some(self.div_euclid_int(rhs))
-                            }
-                        },
-                        self.checked_div_int(rhs),
-                    }
+                    self.to_bits().checked_div_euclid(rhs).map(Self::from_bits)
                 }
             }
 
@@ -676,17 +636,7 @@ assert_eq!(Fix::min_value().checked_rem_euclid_int(-1), None);
 ";
                 #[inline]
                 pub fn checked_rem_euclid_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
-                    if_signed_unsigned! {
-                        $Signedness,
-                        {
-                            if rhs == 0 || (self.to_bits() == <$Inner>::min_value() && rhs == -1) {
-                                None
-                            } else {
-                                Some(self.rem_euclid_int(rhs))
-                            }
-                        },
-                        self.checked_rem_int(rhs),
-                    }
+                    self.to_bits().checked_rem_euclid(rhs).map(Self::from_bits)
                 }
             }
 
@@ -1154,7 +1104,7 @@ assert_eq!(Fix::min_value().wrapping_div_euclid_int(-1), Fix::min_value());
 ";
                 #[inline]
                 pub fn wrapping_div_euclid_int(self, rhs: $Inner) -> $Fixed<Frac> {
-                    self.overflowing_div_euclid_int(rhs).0
+                    Self::from_bits(self.to_bits().wrapping_div_euclid(rhs))
                 }
             }
 
@@ -1193,7 +1143,7 @@ assert_eq!(Fix::min_value().wrapping_rem_euclid_int(-1), 0);
 ";
                 #[inline]
                 pub fn wrapping_rem_euclid_int(self, rhs: $Inner) -> $Fixed<Frac> {
-                    self.overflowing_rem_euclid_int(rhs).0
+                    Self::from_bits(self.to_bits().wrapping_rem_euclid(rhs))
                 }
             }
 
@@ -1513,13 +1463,8 @@ assert_eq!(Fix::min_value().overflowing_div_euclid_int(-1), (Fix::min_value(), t
 ";
                 #[inline]
                 pub fn overflowing_div_euclid_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
-                    if_signed! {
-                        $Signedness;
-                        if self.to_bits() == <$Inner>::min_value() && rhs == -1 {
-                            return (self, true);
-                        }
-                    }
-                    (self.div_euclid_int(rhs), false)
+                    let (ans, o) = self.to_bits().overflowing_div_euclid(rhs);
+                    (Self::from_bits(ans), o)
                 }
             }
 
@@ -1560,13 +1505,8 @@ assert_eq!(Fix::min_value().overflowing_rem_euclid_int(-1), (Fix::from_num(0), t
 ";
                 #[inline]
                 pub fn overflowing_rem_euclid_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
-                    if_signed! {
-                        $Signedness;
-                        if self.to_bits() == <$Inner>::min_value() && rhs == -1 {
-                            return (Self::from_bits(0), true);
-                        }
-                    }
-                    (self.rem_euclid_int(rhs), false)
+                    let (ans, o) = self.to_bits().overflowing_rem_euclid(rhs);
+                    (Self::from_bits(ans), o)
                 }
             }
 

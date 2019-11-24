@@ -260,7 +260,6 @@ mod wrapping;
 use crate::{
     arith::MulDivDir,
     from_str::FromStrRadix,
-    helpers::IntHelper,
     traits::{FromFixed, ToFixed},
     types::extra::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
 };

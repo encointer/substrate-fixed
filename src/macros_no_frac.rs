@@ -364,13 +364,8 @@ assert_eq!(minus_five.abs(), five);
 ";
                     #[inline]
                     pub const fn abs(self) -> $Fixed<Frac> {
-                        Self::from_bits((self.to_bits() ^ self.repeat_sign()) - self.repeat_sign())
+                        Self::from_bits(self.to_bits().abs())
                     }
-                }
-
-                #[inline]
-                const fn repeat_sign(self) -> $Inner {
-                    self.to_bits() >> (<$Inner>::NBITS - 1)
                 }
             }
 
@@ -1203,9 +1198,7 @@ assert_eq!(Fix::min_value().wrapping_abs(), Fix::min_value());
 ";
                     #[inline]
                     pub const fn wrapping_abs(self) -> $Fixed<Frac> {
-                        Self::from_bits(
-                            (self.to_bits() ^ self.repeat_sign()).wrapping_sub(self.repeat_sign()),
-                        )
+                        Self::from_bits(self.to_bits().wrapping_abs())
                     }
                 }
             }
@@ -1587,8 +1580,7 @@ assert_eq!(Fix::min_value().overflowing_abs(), (Fix::min_value(), true));
 ";
                     #[inline]
                     pub const fn overflowing_abs(self) -> ($Fixed<Frac>, bool) {
-                        let (ans, o) = (self.to_bits() ^ self.repeat_sign())
-                            .overflowing_sub(self.repeat_sign());
+                        let (ans, o) = self.to_bits().overflowing_abs();
                         (Self::from_bits(ans), o)
                     }
                 }

@@ -11,6 +11,11 @@ Version 0.5.0 (unreleased)
   * The *fixed* crate now requires rustc version 1.39.0 or later.
   * Support for Euclidean division by integers was added.
 
+Incompatible changes
+--------------------
+
+  * Deprecated methods and modules were removed.
+
 Version 0.4.6 (2019-10-16)
 ==========================
 

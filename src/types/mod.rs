@@ -25,9 +25,6 @@ use crate::{
 
 pub mod extra;
 
-#[deprecated(since = "0.4.3")]
-pub use crate::types::extra::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8};
-
 /*
 ```rust
 fn num(n: i32, noun: &str) -> String {

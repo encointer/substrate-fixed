@@ -71,7 +71,30 @@ The conversions supported cover the following cases.
 ### Version 0.5.0 news (unreleased)
 
   * The *fixed* crate now requires rustc version 1.39.0 or later.
-  * Support for Euclidean division by integers was added.
+  * The following methods were added to all fixed-point types and to
+    the [`Fixed`] trait:
+      * [`from_be_bytes`], [`from_le_bytes`], [`from_ne_bytes`]
+	  * [`to_be_bytes`], [`to_le_bytes`], [`to_ne_bytes`]
+	  * [`div_euclid_int`], [`rem_euclid_int`]
+	  * [`checked_div_euclid_int`], [`checked_rem_euclid_int`]
+	  * [`wrapping_div_euclid_int`], [`wrapping_rem_euclid_int`]
+	  * [`overflowing_div_euclid_int`], [`overflowing_rem_euclid_int`]
+
+[`Fixed`]: https://docs.rs/fixed/0.4.6/fixed/traits/trait.Fixed.html
+[`checked_div_euclid_int`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.checked_div_euclid_int
+[`checked_rem_euclid_int`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.checked_rem_euclid_int
+[`div_euclid_int`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.div_euclid_int
+[`from_be_bytes`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.from_be_bytes
+[`from_le_bytes`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.from_le_bytes
+[`from_ne_bytes`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.from_ne_bytes
+[`overflowing_div_euclid_int`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.overflowing_div_euclid_int
+[`overflowing_rem_euclid_int`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.overflowing_rem_euclid_int
+[`rem_euclid_int`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.rem_euclid_int
+[`to_be_bytes`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.to_be_bytes
+[`to_le_bytes`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.to_le_bytes
+[`to_ne_bytes`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.to_ne_bytes
+[`wrapping_div_euclid_int`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.wrapping_div_euclid_int
+[`wrapping_rem_euclid_int`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.wrapping_rem_euclid_int
 
 ### Version 0.4.6 news (2019-10-16)
 

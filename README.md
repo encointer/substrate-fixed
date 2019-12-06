@@ -68,7 +68,7 @@ The conversions supported cover the following cases.
 
 ## What’s new
 
-### Version 0.5.0 news (unreleased)
+### Version 0.5.0 news (2019-12-06)
 
   * The *fixed* crate now requires rustc version 1.39.0 or later.
   * The following methods were added to all fixed-point types and to
@@ -80,21 +80,25 @@ The conversions supported cover the following cases.
 	  * [`wrapping_div_euclid_int`], [`wrapping_rem_euclid_int`]
 	  * [`overflowing_div_euclid_int`], [`overflowing_rem_euclid_int`]
 
-[`Fixed`]: https://docs.rs/fixed/0.4.6/fixed/traits/trait.Fixed.html
-[`checked_div_euclid_int`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.checked_div_euclid_int
-[`checked_rem_euclid_int`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.checked_rem_euclid_int
-[`div_euclid_int`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.div_euclid_int
-[`from_be_bytes`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.from_be_bytes
-[`from_le_bytes`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.from_le_bytes
-[`from_ne_bytes`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.from_ne_bytes
-[`overflowing_div_euclid_int`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.overflowing_div_euclid_int
-[`overflowing_rem_euclid_int`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.overflowing_rem_euclid_int
-[`rem_euclid_int`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.rem_euclid_int
-[`to_be_bytes`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.to_be_bytes
-[`to_le_bytes`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.to_le_bytes
-[`to_ne_bytes`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.to_ne_bytes
-[`wrapping_div_euclid_int`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.wrapping_div_euclid_int
-[`wrapping_rem_euclid_int`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.wrapping_rem_euclid_int
+[`Fixed`]: https://docs.rs/fixed/0.5.0/fixed/traits/trait.Fixed.html
+[`checked_div_euclid_int`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.checked_div_euclid_int
+[`checked_rem_euclid_int`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.checked_rem_euclid_int
+[`div_euclid_int`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.div_euclid_int
+[`from_be_bytes`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.from_be_bytes
+[`from_le_bytes`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.from_le_bytes
+[`from_ne_bytes`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.from_ne_bytes
+[`overflowing_div_euclid_int`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.overflowing_div_euclid_int
+[`overflowing_rem_euclid_int`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.overflowing_rem_euclid_int
+[`rem_euclid_int`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.rem_euclid_int
+[`to_be_bytes`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.to_be_bytes
+[`to_le_bytes`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.to_le_bytes
+[`to_ne_bytes`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.to_ne_bytes
+[`wrapping_div_euclid_int`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.wrapping_div_euclid_int
+[`wrapping_rem_euclid_int`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.wrapping_rem_euclid_int
+
+#### Incompatible changes
+
+  * Deprecated methods and modules were removed.
 
 ### Version 0.4.6 news (2019-10-16)
 
@@ -105,38 +109,11 @@ The conversions supported cover the following cases.
     [`saturating_mul_int`], [`saturating_abs`]
   * Support for casts using the [*az* crate] was added.
 
-[`saturating_abs`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.saturating_abs
-[`saturating_add`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.saturating_add
-[`saturating_mul_int`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.saturating_mul_int
-[`saturating_sub`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.saturating_sub
-[`saturating_neg`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.saturating_neg
-
-### Version 0.4.5 news (2019-08-30)
-
-  * Bug fix: display of many decimal numbers was panicking in debug
-    mode or including a leading zero in release mode.
-  * Many methods were added to [`Wrapping`] for convenience, even if
-    they do not involve wrapping.
-
-[`Wrapping`]: https://docs.rs/fixed/0.4.6/fixed/struct.Wrapping.html
-
-### Version 0.4.4 news (2019-08-24)
-
-  * Bug fix: rounding could produce bad output for [`Binary`],
-    [`Octal`], [`LowerHex`] and [`UpperHex`].
-  * The following methods are now `const` functions:
-    [`is_power_of_two`], [`abs`], [`wrapping_abs`],
-    [`overflowing_abs`]
-  * The method [`round_to_zero`] was added.
-  * The method [`round_ties_to_even`] and its checked versions were
-    added.
-
-[`abs`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.abs
-[`is_power_of_two`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedU32.html#method.is_power_of_two
-[`overflowing_abs`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.overflowing_abs
-[`round_ties_to_even`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.round_ties_to_even
-[`round_to_zero`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.round_to_zero
-[`wrapping_abs`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.wrapping_abs
+[`saturating_abs`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.saturating_abs
+[`saturating_add`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.saturating_add
+[`saturating_mul_int`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.saturating_mul_int
+[`saturating_sub`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.saturating_sub
+[`saturating_neg`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.saturating_neg
 
 ### Other releases
 
@@ -206,7 +183,7 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 
 ```toml
 [dependencies]
-fixed = "0.4.6"
+fixed = "0.5.0"
 ```
 
 The *fixed* crate requires rustc version 1.39.0 or later.
@@ -228,7 +205,7 @@ To enable features, you can add the dependency like this to
 
 ```toml
 [dependencies.fixed]
-version = "0.4.6"
+version = "0.5.0"
 features = ["f16", "serde"]
 ```
 
@@ -259,37 +236,37 @@ additional terms or conditions.
 [LICENSE-MIT]: https://opensource.org/licenses/MIT
 [`Binary`]: https://doc.rust-lang.org/nightly/std/fmt/trait.Binary.html
 [`Display`]: https://doc.rust-lang.org/nightly/std/fmt/trait.Display.html
-[`FixedI128`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI128.html
-[`FixedI16`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI16.html
-[`FixedI32`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html
-[`FixedI64`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI64.html
-[`FixedI8`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI8.html
-[`FixedU128`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedU128.html
-[`FixedU16`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedU16.html
-[`FixedU32`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedU32.html
-[`FixedU64`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedU64.html
-[`FixedU8`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedU8.html
-[`FromFixed`]: https://docs.rs/fixed/0.4.6/fixed/traits/trait.FromFixed.html
+[`FixedI128`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI128.html
+[`FixedI16`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI16.html
+[`FixedI32`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html
+[`FixedI64`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI64.html
+[`FixedI8`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI8.html
+[`FixedU128`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedU128.html
+[`FixedU16`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedU16.html
+[`FixedU32`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedU32.html
+[`FixedU64`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedU64.html
+[`FixedU8`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedU8.html
+[`FromFixed`]: https://docs.rs/fixed/0.5.0/fixed/traits/trait.FromFixed.html
 [`FromStr`]: https://doc.rust-lang.org/nightly/std/str/trait.FromStr.html
 [`From`]: https://doc.rust-lang.org/nightly/std/convert/trait.From.html
-[`I20F12`]: https://docs.rs/fixed/0.4.6/fixed/types/type.I20F12.html
-[`I4F12`]: https://docs.rs/fixed/0.4.6/fixed/types/type.I4F12.html
-[`I4F4`]: https://docs.rs/fixed/0.4.6/fixed/types/type.I4F4.html
+[`I20F12`]: https://docs.rs/fixed/0.5.0/fixed/types/type.I20F12.html
+[`I4F12`]: https://docs.rs/fixed/0.5.0/fixed/types/type.I4F12.html
+[`I4F4`]: https://docs.rs/fixed/0.5.0/fixed/types/type.I4F4.html
 [`Into`]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
-[`LossyFrom`]: https://docs.rs/fixed/0.4.6/fixed/traits/trait.LossyFrom.html
-[`LossyInto`]: https://docs.rs/fixed/0.4.6/fixed/traits/trait.LossyInto.html
+[`LossyFrom`]: https://docs.rs/fixed/0.5.0/fixed/traits/trait.LossyFrom.html
+[`LossyInto`]: https://docs.rs/fixed/0.5.0/fixed/traits/trait.LossyInto.html
 [`LowerHex`]: https://doc.rust-lang.org/nightly/std/fmt/trait.LowerHex.html
 [`Octal`]: https://doc.rust-lang.org/nightly/std/fmt/trait.Octal.html
-[`ToFixed`]: https://docs.rs/fixed/0.4.6/fixed/traits/trait.ToFixed.html
-[`U12`]: https://docs.rs/fixed/0.4.6/fixed/types/extra/type.U12.html
-[`U20F12`]: https://docs.rs/fixed/0.4.6/fixed/types/type.U20F12.html
+[`ToFixed`]: https://docs.rs/fixed/0.5.0/fixed/traits/trait.ToFixed.html
+[`U12`]: https://docs.rs/fixed/0.5.0/fixed/types/extra/type.U12.html
+[`U20F12`]: https://docs.rs/fixed/0.5.0/fixed/types/type.U20F12.html
 [`UpperHex`]: https://doc.rust-lang.org/nightly/std/fmt/trait.UpperHex.html
 [`bf16`]: https://docs.rs/half/^1/half/struct.bf16.html
-[`checked_from_num`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.checked_from_num
+[`checked_from_num`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.checked_from_num
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html
-[`from_num`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.from_num
-[`from_str_binary`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.from_str_binary
-[`from_str_hex`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.from_str_hex
-[`from_str_octal`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.from_str_octal
-[`to_num`]: https://docs.rs/fixed/0.4.6/fixed/struct.FixedI32.html#method.to_num
+[`from_num`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.from_num
+[`from_str_binary`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.from_str_binary
+[`from_str_hex`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.from_str_hex
+[`from_str_octal`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.from_str_octal
+[`to_num`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.to_num
 [const generics]: https://github.com/rust-lang/rust/issues/44580

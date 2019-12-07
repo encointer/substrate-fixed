@@ -153,10 +153,9 @@ assert_eq!(Fix::max_value().checked_mul(Fix::from_num(2)), None);
 ";
                 #[inline]
                 pub fn checked_mul(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
-                    let (ans, dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
-                    match dir {
-                        Ordering::Equal => Some(Self::from_bits(ans)),
-                        _ => None,
+                    match self.to_bits().mul_overflow(rhs.to_bits(), Frac::U32) {
+                        (ans, false) => Some(Self::from_bits(ans)),
+                        (_, true) => None,
                     }
                 }
             }
@@ -181,10 +180,9 @@ assert_eq!(Fix::max_value().checked_div(Fix::from_num(1) / 2), None);
                     if rhs.to_bits() == 0 {
                         return None;
                     }
-                    let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
-                    match dir {
-                        Ordering::Equal => Some(Self::from_bits(ans)),
-                        _ => None,
+                    match self.to_bits().div_overflow(rhs.to_bits(), Frac::U32) {
+                        (ans, false) => Some(Self::from_bits(ans)),
+                        (_, true) => None,
                     }
                 }
             }
@@ -203,11 +201,15 @@ assert_eq!(Fix::max_value().saturating_mul(Fix::from_num(2)), Fix::max_value());
 ";
                 #[inline]
                 pub fn saturating_mul(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                    let (ans, dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
-                    match dir {
-                        Ordering::Equal => Self::from_bits(ans),
-                        Ordering::Less => Self::max_value(),
-                        Ordering::Greater => Self::min_value(),
+                    match self.to_bits().mul_overflow(rhs.to_bits(), Frac::U32) {
+                        (ans, false) => Self::from_bits(ans),
+                        (_, true) => {
+                            if (self < 0) != (rhs < 0) {
+                                Self::min_value()
+                            } else {
+                                Self::max_value()
+                            }
+                        }
                     }
                 }
             }
@@ -231,11 +233,15 @@ assert_eq!(Fix::max_value().saturating_div(one_half), Fix::max_value());
 ";
                 #[inline]
                 pub fn saturating_div(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                    let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
-                    match dir {
-                        Ordering::Equal => Self::from_bits(ans),
-                        Ordering::Less => Self::max_value(),
-                        Ordering::Greater => Self::min_value(),
+                    match self.to_bits().div_overflow(rhs.to_bits(), Frac::U32) {
+                        (ans, false) => Self::from_bits(ans),
+                        (_, true) => {
+                            if (self < 0) != (rhs < 0) {
+                                Self::min_value()
+                            } else {
+                                Self::max_value()
+                            }
+                        }
                     }
                 }
             }
@@ -255,7 +261,7 @@ assert_eq!(Fix::max_value().wrapping_mul(Fix::from_num(4)), wrapped);
 ";
                 #[inline]
                 pub fn wrapping_mul(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                    let (ans, _) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
+                    let (ans, _) = self.to_bits().mul_overflow(rhs.to_bits(), Frac::U32);
                     Self::from_bits(ans)
                 }
             }
@@ -281,7 +287,7 @@ assert_eq!(Fix::max_value().wrapping_div(quarter), wrapped);
 ";
                 #[inline]
                 pub fn wrapping_div(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                    let (ans, _) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
+                    let (ans, _) = self.to_bits().div_overflow(rhs.to_bits(), Frac::U32);
                     Self::from_bits(ans)
                 }
             }
@@ -307,8 +313,8 @@ assert_eq!(Fix::max_value().overflowing_mul(Fix::from_num(4)), (wrapped, true));
 ";
                 #[inline]
                 pub fn overflowing_mul(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
-                    let (ans, dir) = self.to_bits().mul_dir(rhs.to_bits(), Frac::U32);
-                    (Self::from_bits(ans), dir != Ordering::Equal)
+                    let (ans, overflow) = self.to_bits().mul_overflow(rhs.to_bits(), Frac::U32);
+                    (Self::from_bits(ans), overflow)
                 }
             }
 
@@ -336,8 +342,8 @@ assert_eq!(Fix::max_value().overflowing_div(quarter), (wrapped, true));
 ";
                 #[inline]
                 pub fn overflowing_div(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
-                    let (ans, dir) = self.to_bits().div_dir(rhs.to_bits(), Frac::U32);
-                    (Self::from_bits(ans), dir != Ordering::Equal)
+                    let (ans, overflow) = self.to_bits().div_overflow(rhs.to_bits(), Frac::U32);
+                    (Self::from_bits(ans), overflow)
                 }
             }
         }

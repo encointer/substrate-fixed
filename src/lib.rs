@@ -256,7 +256,7 @@ pub mod types;
 mod wide_div;
 mod wrapping;
 use crate::{
-    arith::MulDivDir,
+    arith::MulDivOverflow,
     from_str::FromStrRadix,
     traits::{FromFixed, ToFixed},
     types::extra::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},

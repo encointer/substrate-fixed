@@ -5,6 +5,12 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.5.1 (2019-12-22)
+==========================
+
+  * `ParseFixedError` implements `Error` when the new `std` feature is
+    enabled.
+
 Version 0.5.0 (2019-12-06)
 ==========================
 

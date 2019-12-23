@@ -144,7 +144,7 @@ The *fixed* crate requires rustc version 1.39.0 or later.
 
 ## Optional features
 
-The *fixed* crate has three optional feature:
+The *fixed* crate has four optional feature:
 
  1. `az`, disabled by default. This implements the cast traits
     provided by the [*az* crate].
@@ -153,6 +153,9 @@ The *fixed* crate has three optional feature:
  3. `serde`, disabled by default. This provides serialization support
     for the fixed-point types. This feature requires the
     [*serde* crate].
+ 4. `std`, disabled by default. This is for features that are not
+    possible under `no_std`: currently the implementation of the
+    [`Error`] trait for [`ParseFixedError`].
 
 To enable features, you can add the dependency like this to
 [*Cargo.toml*]:
@@ -190,6 +193,7 @@ additional terms or conditions.
 [LICENSE-MIT]: https://opensource.org/licenses/MIT
 [`Binary`]: https://doc.rust-lang.org/nightly/core/fmt/trait.Binary.html
 [`Display`]: https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html
+[`Error`]: https://doc.rust-lang.org/nightly/std/error/trait.Error.html
 [`FixedI128`]: struct.FixedI128.html
 [`FixedI16`]: struct.FixedI16.html
 [`FixedI32`]: struct.FixedI32.html
@@ -211,6 +215,7 @@ additional terms or conditions.
 [`LossyInto`]: traits/trait.LossyInto.html
 [`LowerHex`]: https://doc.rust-lang.org/nightly/core/fmt/trait.LowerHex.html
 [`Octal`]: https://doc.rust-lang.org/nightly/core/fmt/trait.Octal.html
+[`ParseFixedError`]: struct.ParseFixedError.html
 [`ToFixed`]: traits/trait.ToFixed.html
 [`U12`]: types/extra/type.U12.html
 [`U20F12`]: types/type.U20F12.html
@@ -225,14 +230,14 @@ additional terms or conditions.
 [`to_num`]: struct.FixedI32.html#method.to_num
 [const generics]: https://github.com/rust-lang/rust/issues/44580
 */
-#![no_std]
+#![cfg_attr(not(feature = "std"), no_std)]
 #![warn(missing_docs)]
 #![doc(html_root_url = "https://docs.rs/fixed/0.5.0")]
 #![doc(test(attr(deny(warnings))))]
 #![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
 #![allow(clippy::type_repetition_in_bounds)]
 
-#[cfg(test)]
+#[cfg(all(not(feature = "std"), test))]
 extern crate std;
 
 #[macro_use]

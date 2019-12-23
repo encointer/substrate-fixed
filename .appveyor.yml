@@ -31,13 +31,22 @@ before_test:
   - C:\msys64\usr\bin\bash -c "if [ -d ""$USERPROFILE/.cargo/registry/cache"" ]; then cd ""$USERPROFILE/.cargo/registry""; /c/msys64/usr/bin/find cache -name \*.crate; fi"
 
 test_script:
-  - cargo +beta-%TARGET% clippy --all-targets --features "fail-on-warnings az f16 serde"
+  - cargo +beta-%TARGET% clippy --all-targets --features "fail-on-warnings az f16 serde std"
+  - cargo +beta-%TARGET% check --all-targets --features "fail-on-warnings az f16 serde"
+  - cargo +beta-%TARGET% check --all-targets --features "fail-on-warnings az f16 std"
   - cargo +beta-%TARGET% check --all-targets --features "fail-on-warnings az f16"
+  - cargo +beta-%TARGET% check --all-targets --features "fail-on-warnings az serde std"
   - cargo +beta-%TARGET% check --all-targets --features "fail-on-warnings az serde"
-  - cargo +beta-%TARGET% check --all-targets --features "fail-on-warnings f16 serde"
+  - cargo +beta-%TARGET% check --all-targets --features "fail-on-warnings az std"
   - cargo +beta-%TARGET% check --all-targets --features "fail-on-warnings az"
+  - cargo +beta-%TARGET% check --all-targets --features "fail-on-warnings az"
+  - cargo +beta-%TARGET% check --all-targets --features "fail-on-warnings f16 serde std"
+  - cargo +beta-%TARGET% check --all-targets --features "fail-on-warnings f16 serde"
+  - cargo +beta-%TARGET% check --all-targets --features "fail-on-warnings f16 std"
   - cargo +beta-%TARGET% check --all-targets --features "fail-on-warnings f16"
+  - cargo +beta-%TARGET% check --all-targets --features "fail-on-warnings serde std"
   - cargo +beta-%TARGET% check --all-targets --features "fail-on-warnings serde"
+  - cargo +beta-%TARGET% check --all-targets --features "fail-on-warnings std"
   - cargo +beta-%TARGET% check --all-targets --features fail-on-warnings
   - cargo +beta-%TARGET% test --release --features "fail-on-warnings az f16 serde"
   - cargo +beta-%TARGET% fmt -- --check

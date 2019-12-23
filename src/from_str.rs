@@ -27,6 +27,8 @@ use core::{
     ops::{Add, Mul, Shl, Shr},
     str::FromStr,
 };
+#[cfg(feature = "std")]
+use std::error::Error;
 
 fn bin_str_int_to_bin<I>(bytes: &[u8]) -> (I, bool)
 where
@@ -543,16 +545,28 @@ impl From<ParseErrorKind> for ParseFixedError {
     }
 }
 
-impl Display for ParseFixedError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl ParseFixedError {
+    fn message(&self) -> &str {
         use self::ParseErrorKind::*;
-        let message = match self.kind {
+        match self.kind {
             InvalidDigit => "invalid digit found in string",
             NoDigits => "string has no digits",
             TooManyPoints => "more than one decimal point found in string",
             Overflow => "overflow",
-        };
-        Display::fmt(message, f)
+        }
+    }
+}
+
+impl Display for ParseFixedError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        Display::fmt(self.message(), f)
+    }
+}
+
+#[cfg(feature = "std")]
+impl Error for ParseFixedError {
+    fn description(&self) -> &str {
+        self.message()
     }
 }
 

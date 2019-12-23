@@ -190,7 +190,7 @@ The *fixed* crate requires rustc version 1.39.0 or later.
 
 ## Optional features
 
-The *fixed* crate has three optional feature:
+The *fixed* crate has four optional feature:
 
  1. `az`, disabled by default. This implements the cast traits
     provided by the [*az* crate].
@@ -199,6 +199,9 @@ The *fixed* crate has three optional feature:
  3. `serde`, disabled by default. This provides serialization support
     for the fixed-point types. This feature requires the
     [*serde* crate].
+ 4. `std`, disabled by default. This is for features that are not
+    possible under `no_std`: currently the implementation of the
+    [`Error`] trait for [`ParseFixedError`].
 
 To enable features, you can add the dependency like this to
 [*Cargo.toml*]:
@@ -236,6 +239,7 @@ additional terms or conditions.
 [LICENSE-MIT]: https://opensource.org/licenses/MIT
 [`Binary`]: https://doc.rust-lang.org/nightly/core/fmt/trait.Binary.html
 [`Display`]: https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html
+[`Error`]: https://doc.rust-lang.org/nightly/std/error/trait.Error.html
 [`FixedI128`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI128.html
 [`FixedI16`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI16.html
 [`FixedI32`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html
@@ -257,6 +261,7 @@ additional terms or conditions.
 [`LossyInto`]: https://docs.rs/fixed/0.5.0/fixed/traits/trait.LossyInto.html
 [`LowerHex`]: https://doc.rust-lang.org/nightly/core/fmt/trait.LowerHex.html
 [`Octal`]: https://doc.rust-lang.org/nightly/core/fmt/trait.Octal.html
+[`ParseFixedError`]: https://docs.rs/fixed/0.5.0/fixed/struct.ParseFixedError.html
 [`ToFixed`]: https://docs.rs/fixed/0.5.0/fixed/traits/trait.ToFixed.html
 [`U12`]: https://docs.rs/fixed/0.5.0/fixed/types/extra/type.U12.html
 [`U20F12`]: https://docs.rs/fixed/0.5.0/fixed/types/type.U20F12.html

@@ -568,7 +568,7 @@ assert_eq!(Fix::from_num(5).checked_neg(), None);",
                 "
 ```
 
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 ";
                 #[inline]
                 pub fn checked_neg(self) -> Option<$Fixed<Frac>> {
@@ -589,7 +589,7 @@ assert_eq!((Fix::max_value() - one).checked_add(one), Some(Fix::max_value()));
 assert_eq!(Fix::max_value().checked_add(one), None);
 ```
 
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 ";
                 #[inline]
                 pub fn checked_add(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
@@ -610,7 +610,7 @@ assert_eq!((Fix::min_value() + one).checked_sub(one), Some(Fix::min_value()));
 assert_eq!(Fix::min_value().checked_sub(one), None);
 ```
 
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 ";
                 #[inline]
                 pub fn checked_sub(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
@@ -631,7 +631,7 @@ assert_eq!(Fix::max_value().checked_mul_int(1), Some(Fix::max_value()));
 assert_eq!(Fix::max_value().checked_mul_int(2), None);
 ```
 
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 ";
                 #[inline]
                 pub fn checked_mul_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
@@ -664,7 +664,7 @@ assert_eq!(Fix::from_num(1).checked_div_int(0), None);
                 },
                 "```
 
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 ";
                 #[inline]
                 pub fn checked_div_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
@@ -698,7 +698,7 @@ assert_eq!(Fix::from_num(1).checked_rem_int(0), None);
                 },
                 "```
 
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 ";
                 #[inline]
                 pub fn checked_rem_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
@@ -731,7 +731,7 @@ assert_eq!(Fix::min_value().checked_div_int(-1), None);
                 },
                 "```
 
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 ";
                 #[inline]
                 pub fn checked_div_euclid_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
@@ -764,7 +764,7 @@ assert_eq!(Fix::min_value().checked_rem_euclid_int(-1), None);
                 },
                 "```
 
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 ";
                 #[inline]
                 pub fn checked_rem_euclid_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
@@ -785,7 +785,7 @@ assert_eq!((Fix::from_num(1) / 2).checked_shl(3), Some(Fix::from_num(4)));
 assert_eq!((Fix::from_num(1) / 2).checked_shl(", $s_nbits, "), None);
 ```
 
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 ";
                 #[inline]
                 pub fn checked_shl(self, rhs: u32) -> Option<$Fixed<Frac>> {
@@ -806,7 +806,7 @@ assert_eq!(Fix::from_num(4).checked_shr(3), Some(Fix::from_num(1) / 2));
 assert_eq!(Fix::from_num(4).checked_shr(", $s_nbits, "), None);
 ```
 
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 ";
                 #[inline]
                 pub fn checked_shr(self, rhs: u32) -> Option<$Fixed<Frac>> {
@@ -830,7 +830,7 @@ assert_eq!(Fix::from_num(-5).checked_abs(), Some(Fix::from_num(5)));
 assert_eq!(Fix::min_value().checked_abs(), None);
 ```
 
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 ";
                     #[inline]
                     pub fn checked_abs(self) -> Option<$Fixed<Frac>> {
@@ -858,7 +858,7 @@ assert_eq!(three_eights.checked_next_power_of_two(), Some(half));
 assert!(Fix::max_value().checked_next_power_of_two().is_none());
 ```
 
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 ";
                     #[inline]
                     pub fn checked_next_power_of_two(self) -> Option<$Fixed<Frac>> {

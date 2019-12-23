@@ -234,8 +234,8 @@ additional terms or conditions.
 [*typenum* crate]: https://crates.io/crates/typenum
 [LICENSE-APACHE]: https://www.apache.org/licenses/LICENSE-2.0
 [LICENSE-MIT]: https://opensource.org/licenses/MIT
-[`Binary`]: https://doc.rust-lang.org/nightly/std/fmt/trait.Binary.html
-[`Display`]: https://doc.rust-lang.org/nightly/std/fmt/trait.Display.html
+[`Binary`]: https://doc.rust-lang.org/nightly/core/fmt/trait.Binary.html
+[`Display`]: https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html
 [`FixedI128`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI128.html
 [`FixedI16`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI16.html
 [`FixedI32`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html
@@ -247,20 +247,20 @@ additional terms or conditions.
 [`FixedU64`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedU64.html
 [`FixedU8`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedU8.html
 [`FromFixed`]: https://docs.rs/fixed/0.5.0/fixed/traits/trait.FromFixed.html
-[`FromStr`]: https://doc.rust-lang.org/nightly/std/str/trait.FromStr.html
-[`From`]: https://doc.rust-lang.org/nightly/std/convert/trait.From.html
+[`FromStr`]: https://doc.rust-lang.org/nightly/core/str/trait.FromStr.html
+[`From`]: https://doc.rust-lang.org/nightly/core/convert/trait.From.html
 [`I20F12`]: https://docs.rs/fixed/0.5.0/fixed/types/type.I20F12.html
 [`I4F12`]: https://docs.rs/fixed/0.5.0/fixed/types/type.I4F12.html
 [`I4F4`]: https://docs.rs/fixed/0.5.0/fixed/types/type.I4F4.html
-[`Into`]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
+[`Into`]: https://doc.rust-lang.org/nightly/core/convert/trait.Into.html
 [`LossyFrom`]: https://docs.rs/fixed/0.5.0/fixed/traits/trait.LossyFrom.html
 [`LossyInto`]: https://docs.rs/fixed/0.5.0/fixed/traits/trait.LossyInto.html
-[`LowerHex`]: https://doc.rust-lang.org/nightly/std/fmt/trait.LowerHex.html
-[`Octal`]: https://doc.rust-lang.org/nightly/std/fmt/trait.Octal.html
+[`LowerHex`]: https://doc.rust-lang.org/nightly/core/fmt/trait.LowerHex.html
+[`Octal`]: https://doc.rust-lang.org/nightly/core/fmt/trait.Octal.html
 [`ToFixed`]: https://docs.rs/fixed/0.5.0/fixed/traits/trait.ToFixed.html
 [`U12`]: https://docs.rs/fixed/0.5.0/fixed/types/extra/type.U12.html
 [`U20F12`]: https://docs.rs/fixed/0.5.0/fixed/types/type.U20F12.html
-[`UpperHex`]: https://doc.rust-lang.org/nightly/std/fmt/trait.UpperHex.html
+[`UpperHex`]: https://doc.rust-lang.org/nightly/core/fmt/trait.UpperHex.html
 [`bf16`]: https://docs.rs/half/^1/half/struct.bf16.html
 [`checked_from_num`]: https://docs.rs/fixed/0.5.0/fixed/struct.FixedI32.html#method.checked_from_num
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html

@@ -82,7 +82,7 @@ depending on the crate’s [optional features].
 
 [`Deserialize`]: https://docs.rs/serde/^1/serde/de/trait.Deserialize.html
 [`Fixed`]: trait.Fixed.html
-[`PartialOrd`]: https://doc.rust-lang.org/nightly/std/cmp/trait.PartialOrd.html
+[`PartialOrd`]: https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html
 [`Serialize`]: https://docs.rs/serde/^1/serde/ser/trait.Serialize.html
 [`bf16`]: https://docs.rs/half/^1/half/struct.bf16.html
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html
@@ -202,8 +202,8 @@ depending on the crate’s [optional features].
 /// [`FixedU64`]: ../struct.FixedU64.html
 /// [`FixedU8`]: ../struct.FixedU8.html
 /// [`FixedUnsigned`]: trait.FixedUnsigned.html
-/// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
-/// [`TryFrom`]: https://doc.rust-lang.org/nightly/std/convert/trait.TryFrom.html
+/// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
+/// [`TryFrom`]: https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html
 /// [`i16`]: https://doc.rust-lang.org/nightly/std/primitive.i16.html
 /// [`i8`]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
 /// [`u16`]: https://doc.rust-lang.org/nightly/std/primitive.u16.html
@@ -308,7 +308,7 @@ where
     ///
     /// Returns the same value as [`src.checked_to_fixed()`][`checked_to_fixed`].
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     /// [`checked_to_fixed`]: trait.ToFixed.html#tymethod.checked_to_fixed
     fn checked_from_num<Src: ToFixed>(src: Src) -> Option<Self>;
 
@@ -317,7 +317,7 @@ where
     ///
     /// Returns the same value as [`Dst::checked_from_fixed(self)`][`checked_from_fixed`].
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     /// [`checked_from_fixed`]: trait.FromFixed.html#tymethod.checked_from_fixed
     fn checked_to_num<Dst: FromFixed>(self) -> Option<Dst>;
 
@@ -476,25 +476,25 @@ where
     /// Checked ceil. Rounds to the next integer towards +∞, returning
     /// [`None`] on overflow.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_ceil(self) -> Option<Self>;
 
     /// Checked floor. Rounds to the next integer towards −∞, returning
     /// [`None`] on overflow.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_floor(self) -> Option<Self>;
 
     /// Checked round. Rounds to the nearest integer, with ties
     /// rounded away from zero, returning [`None`] on overflow.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_round(self) -> Option<Self>;
 
     /// Checked round. Rounds to the nearest integer, with ties
     /// rounded to even, returning [`None`] on overflow.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_round_ties_to_even(self) -> Option<Self>;
 
     /// Saturating ceil. Rounds to the next integer towards +∞,
@@ -605,74 +605,74 @@ where
 
     /// Checked negation. Returns the negated value, or [`None`] on overflow.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_neg(self) -> Option<Self>;
 
     /// Checked addition. Returns the sum, or [`None`] on overflow.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_add(self, rhs: Self) -> Option<Self>;
 
     /// Checked subtraction. Returns the difference, or [`None`] on overflow.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_sub(self, rhs: Self) -> Option<Self>;
 
     /// Checked multiplication. Returns the product, or [`None`] on overflow.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_mul(self, rhs: Self) -> Option<Self>;
 
     /// Checked division. Returns the quotient, or [`None`] if the
     /// divisor is zero or on overflow.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_div(self, rhs: Self) -> Option<Self>;
 
     /// Checked multiplication by an integer. Returns the product, or
     /// [`None`] on overflow.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_mul_int(self, rhs: Self::Bits) -> Option<Self>;
 
     /// Checked division by an integer. Returns the quotient, or
     /// [`None`] if the divisor is zero or if the division results in
     /// overflow.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_div_int(self, rhs: Self::Bits) -> Option<Self>;
 
     /// Checked fixed-point remainder for division by an integer.
     /// Returns the remainder, or [`None`] if the divisor is zero or
     /// if the division results in overflow.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_rem_int(self, rhs: Self::Bits) -> Option<Self>;
 
     /// Checked Euclidean division by an integer. Returns the
     /// quotient, or [`None`] if the divisor is zero or if the
     /// division results in overflow.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_div_euclid_int(self, rhs: Self::Bits) -> Option<Self>;
 
     /// Checked fixed-point remainder for Euclidean division by an
     /// integer. Returns the remainder, or [`None`] if the divisor is
     /// zero or if the division results in overflow.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_rem_euclid_int(self, rhs: Self::Bits) -> Option<Self>;
 
     /// Checked shift left. Returns the shifted number, or [`None`] if
     /// `rhs` ≥ the number of bits.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_shl(self, rhs: u32) -> Option<Self>;
 
     /// Checked shift right. Returns the shifted number, or [`None`]
     /// if `rhs` ≥ the number of bits.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_shr(self, rhs: u32) -> Option<Self>;
 
     /// Saturated negation. Returns the negated value, saturating on overflow.
@@ -959,7 +959,7 @@ pub trait FixedSigned: Fixed + Neg<Output = Self> {
     ///
     /// Overflow can only occur when trying to find the absolute value of the minimum value.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_abs(self) -> Option<Self>;
 
     /// Saturating absolute value. Returns the absolute value, saturating on overflow.
@@ -1011,7 +1011,7 @@ pub trait FixedUnsigned: Fixed {
     /// Returns the smallest power of two that is ≥ `self`, or [`None`] if the
     /// next power of two is too large to represent.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_next_power_of_two(self) -> Option<Self>;
 }
 
@@ -1053,8 +1053,8 @@ pub trait LossyFrom<Src> {
 /// assert_eq!(lossy, I12F4::from_bits(0x0012));
 /// ```
 ///
-/// [`From`]: https://doc.rust-lang.org/nightly/std/convert/trait.From.html
-/// [`Into`]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
+/// [`From`]: https://doc.rust-lang.org/nightly/core/convert/trait.From.html
+/// [`Into`]: https://doc.rust-lang.org/nightly/core/convert/trait.Into.html
 /// [`LossyFrom`]: trait.LossyFrom.html
 pub trait LossyInto<Dst> {
     /// Performs the conversion.
@@ -1111,7 +1111,7 @@ pub trait FromFixed {
     ///
     /// Any extra fractional bits are truncated.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_from_fixed<F: Fixed>(src: F) -> Option<Self>
     where
         Self: Sized;
@@ -1187,7 +1187,7 @@ pub trait ToFixed {
     ///
     /// Any extra fractional bits are truncated.
     ///
-    /// [`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_to_fixed<F: Fixed>(self) -> Option<F>;
 
     /// Converts to a fixed-point number, saturating if it does not fit.

@@ -149,7 +149,7 @@ assert_eq!(Fix::max_value().checked_mul(Fix::from_num(1)), Some(Fix::max_value()
 assert_eq!(Fix::max_value().checked_mul(Fix::from_num(2)), None);
 ```
 
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 ";
                 #[inline]
                 pub fn checked_mul(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
@@ -173,7 +173,7 @@ assert_eq!(Fix::max_value().checked_div(Fix::from_num(1)), Some(Fix::max_value()
 assert_eq!(Fix::max_value().checked_div(Fix::from_num(1) / 2), None);
 ```
 
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 ";
                 #[inline]
                 pub fn checked_div(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {

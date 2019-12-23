@@ -318,7 +318,7 @@ assert_eq!(Fix::from_num(2.5).checked_ceil(), Some(Fix::from_num(3)));
             "assert!(Fix::max_value().checked_ceil().is_none());
 ```
 
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 ";
             #[inline]
             pub fn checked_ceil(self) -> Option<$Fixed<Frac>> {
@@ -368,9 +368,9 @@ assert!(AllFrac::min_value().checked_floor().is_none());
             if_signed_unsigned! {
                 $Signedness,
                 "
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None",
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None",
                 "
-[`Some`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.Some",
+[`Some`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.Some",
             },
             "
 ";
@@ -400,7 +400,7 @@ assert_eq!(Fix::from_num(2.5).checked_round(), Some(Fix::from_num(3)));
             "assert!(Fix::max_value().checked_round().is_none());
 ```
 
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 ";
             #[inline]
             pub fn checked_round(self) -> Option<$Fixed<Frac>> {
@@ -423,7 +423,7 @@ assert_eq!(Fix::from_num(3.5).checked_round_ties_to_even(), Some(Fix::from_num(4
 assert!(Fix::max_value().checked_round_ties_to_even().is_none());
 ```
 
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 ";
             #[inline]
             pub fn checked_round_ties_to_even(self) -> Option<$Fixed<Frac>> {

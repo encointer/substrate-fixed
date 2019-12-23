@@ -242,7 +242,7 @@ assert!(Fix::checked_from_num(2e38).is_none());
 assert!(Fix::checked_from_num(std::f64::NAN).is_none());
 ```
 
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 [`ToFixed`]: traits/trait.ToFixed.html
 [`bf16`]: https://docs.rs/half/^1.2/half/struct.bf16.html
 [`f16` feature]: index.html#optional-features
@@ -329,7 +329,7 @@ assert_eq!(one_point_625.checked_to_num::<f32>(), Some(1.625f32));
 ```
 
 [`FromFixed`]: traits/trait.FromFixed.html
-[`None`]: https://doc.rust-lang.org/nightly/std/option/enum.Option.html#variant.None
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
 [`bf16`]: https://docs.rs/half/^1.2/half/struct.bf16.html
 [`checked_from_fixed`]: traits/trait.FromFixed.html#tymethod.checked_from_fixed
 [`f16` feature]: index.html#optional-features

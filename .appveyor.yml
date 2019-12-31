@@ -54,4 +54,4 @@ test_script:
   - cargo +1.39.0-%TARGET% test --lib --features "fail-on-warnings az f16 serde"
 
 after_test:
-  - bash -c "if [ -d $USERPROFILE/.cargo/registry/cache ]; then cd $USERPROFILE/.cargo/registry; for c in cache/*/*.crate; do s=src/${c#cache/}; if [ ! -e ${s%.crate} ]; then rm -v $c; fi; done; find cache -name \*.crate; fi"
+  - bash -c "if [ -d $USERPROFILE/.cargo/registry/cache ]; then cd $USERPROFILE/.cargo/registry; for c in cache/*/*.crate; do s=src/${c#cache/}; if [ ! -e ${s%%.crate} ]; then rm -v $c; fi; done; find cache -name \*.crate; fi"

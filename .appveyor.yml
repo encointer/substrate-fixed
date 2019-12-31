@@ -18,7 +18,7 @@ cache:
   - '%USERPROFILE%\.cargo\registry\cache -> Cargo.toml'
 
 install:
-  - set PATH=%USERPROFILE%\.cargo\bin;%PATH%
+  - set PATH=C:\msys64\usr\bin;%USERPROFILE%\.cargo\bin;%PATH%
   - curl -sSf -o rustup-init.exe https://win.rustup.rs
   - rustup-init.exe -y --default-host %TARGET% --default-toolchain none --no-modify-path
   - rustup --version
@@ -28,7 +28,8 @@ install:
 build: false
 
 before_test:
-  - C:\msys64\usr\bin\bash -c "if [ -d ""$USERPROFILE/.cargo/registry/cache"" ]; then cd ""$USERPROFILE/.cargo/registry""; /c/msys64/usr/bin/find cache -name \*.crate; fi"
+  - bash -c "if [ -d $USERPROFILE/.cargo/registry/src ]; then rm -r $USERPROFILE/.cargo/src; fi"
+  - bash -c "if [ -d $USERPROFILE/.cargo/registry/cache ]; then cd $USERPROFILE/.cargo/registry; find cache -name \*.crate; fi"
 
 test_script:
   - cargo +beta-%TARGET% clippy --all-targets --features "fail-on-warnings az f16 serde std"
@@ -53,4 +54,4 @@ test_script:
   - cargo +1.39.0-%TARGET% test --lib --features "fail-on-warnings az f16 serde"
 
 after_test:
-  - C:\msys64\usr\bin\bash -c "if [ -d ""$USERPROFILE/.cargo/registry/cache"" ]; then cd ""$USERPROFILE/.cargo/registry""; /c/msys64/usr/bin/find cache -name \*.crate; fi"
+  - bash -c "if [ -d $USERPROFILE/.cargo/registry/cache ]; then cd $USERPROFILE/.cargo/registry; for c in cache/*/*.crate; do s=src/${c#cache/}; if [ ! -e ${s%.crate} ]; then rm -v $c; fi; done; find cache -name \*.crate; fi"

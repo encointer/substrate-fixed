@@ -7,8 +7,9 @@
 
 before_script:
   - getconf LONG_BIT
+  - rustup self update
   - rustup --version
-  - rustup install beta-$TARGET 1.39.0-$TARGET
+  - rustup toolchain install --profile minimal beta-$TARGET 1.39.0-$TARGET
   - rustup component add --toolchain beta-$TARGET rustfmt clippy
   - if [ -d cargo/registry/cache ]; then rm -rf $CARGO_HOME/registry/cache; mkdir -p $CARGO_HOME/registry; cp -R cargo/registry/cache $CARGO_HOME/registry/; echo Copied registry/cache; fi
   - if [ -d $CARGO_HOME/registry/cache ]; then (cd $CARGO_HOME/registry; find cache -name \*.crate) fi

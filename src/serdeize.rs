@@ -16,7 +16,7 @@
 use crate::{
     types::extra::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
-    FixedU8,
+    FixedU8, Wrapping,
 };
 use core::fmt::{Formatter, Result as FmtResult};
 use serde::{
@@ -27,6 +27,14 @@ use serde::{
 macro_rules! serde_fixed {
     ($Fixed:ident($LeEqU:ident) is $TBits:ident name $Name:expr) => {
         impl<Frac: $LeEqU> Serialize for $Fixed<Frac> {
+            fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                let bits = self.to_bits();
+                let mut state = serializer.serialize_struct($Name, 1)?;
+                state.serialize_field("bits", &bits)?;
+                state.end()
+            }
+        }
+        impl<Frac: $LeEqU> Serialize for Wrapping<$Fixed<Frac>> {
             fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
                 let bits = self.to_bits();
                 let mut state = serializer.serialize_struct($Name, 1)?;
@@ -73,6 +81,47 @@ macro_rules! serde_fixed {
 
                 let bits = deserializer.deserialize_struct($Name, FIELDS, FixedVisitor)?;
                 Ok($Fixed::from_bits(bits))
+            }
+        }
+
+        impl<'de, Frac: $LeEqU> Deserialize<'de> for Wrapping<$Fixed<Frac>> {
+            fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+                struct FixedVisitor;
+
+                impl<'de> Visitor<'de> for FixedVisitor {
+                    type Value = $TBits;
+
+                    fn expecting(&self, formatter: &mut Formatter) -> FmtResult {
+                        formatter.write_str("struct ")?;
+                        formatter.write_str($Name)
+                    }
+
+                    fn visit_seq<V: SeqAccess<'de>>(self, mut seq: V) -> Result<$TBits, V::Error> {
+                        let bits = seq
+                            .next_element()?
+                            .ok_or_else(|| de::Error::invalid_length(0, &self))?;
+                        Ok(bits)
+                    }
+
+                    fn visit_map<V: MapAccess<'de>>(self, mut map: V) -> Result<$TBits, V::Error> {
+                        let mut bits = None;
+                        while let Some(key) = map.next_key()? {
+                            match key {
+                                Field::Bits => {
+                                    if bits.is_some() {
+                                        return Err(de::Error::duplicate_field("bits"));
+                                    }
+                                    bits = Some(map.next_value()?);
+                                }
+                            }
+                        }
+                        let bits = bits.ok_or_else(|| de::Error::missing_field("bits"))?;
+                        Ok(bits)
+                    }
+                }
+
+                let bits = deserializer.deserialize_struct($Name, FIELDS, FixedVisitor)?;
+                Ok(Wrapping($Fixed::from_bits(bits)))
             }
         }
     };

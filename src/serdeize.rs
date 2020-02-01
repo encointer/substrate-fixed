@@ -16,7 +16,7 @@
 use crate::{
     types::extra::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
-    FixedU8,
+    FixedU8, Wrapping,
 };
 use core::fmt::{Formatter, Result as FmtResult};
 use serde::{
@@ -32,6 +32,11 @@ macro_rules! serde_fixed {
                 let mut state = serializer.serialize_struct($Name, 1)?;
                 state.serialize_field("bits", &bits)?;
                 state.end()
+            }
+        }
+        impl<Frac: $LeEqU> Serialize for Wrapping<$Fixed<Frac>> {
+            fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                self.0.serialize(serializer)
             }
         }
 
@@ -73,6 +78,12 @@ macro_rules! serde_fixed {
 
                 let bits = deserializer.deserialize_struct($Name, FIELDS, FixedVisitor)?;
                 Ok($Fixed::from_bits(bits))
+            }
+        }
+
+        impl<'de, Frac: $LeEqU> Deserialize<'de> for Wrapping<$Fixed<Frac>> {
+            fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+                $Fixed::deserialize(deserializer).map(Wrapping)
             }
         }
     };

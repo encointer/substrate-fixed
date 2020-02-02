@@ -5,6 +5,11 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.5.2 (2020-02-02)
+==========================
+
+  * `Wrapping` now supports serialization. (Thanks: Shane Pearman)
+
 Version 0.5.1 (2019-12-22)
 ==========================
 

@@ -523,6 +523,48 @@ impl<F: Fixed> Wrapping<F> {
     pub fn rotate_right(self, n: u32) -> Wrapping<F> {
         Wrapping(self.0.rotate_right(n))
     }
+
+    /// Euclidean division.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the divisor is zero.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// let num = Wrapping(I16F16::from_num(7.5));
+    /// let den = Wrapping(I16F16::from_num(2));
+    /// assert_eq!(num.div_euclid(den), Wrapping(I16F16::from_num(3)));
+    /// let quarter = Wrapping(I16F16::from_num(0.25));
+    /// let check = (Wrapping::max_value() * 4i32).round_to_zero();
+    /// assert_eq!(Wrapping::max_value().div_euclid(quarter), check);
+    /// ```
+    #[inline]
+    pub fn div_euclid(self, divisor: Wrapping<F>) -> Wrapping<F> {
+        Wrapping(self.0.wrapping_div_euclid(divisor.0))
+    }
+
+    /// Remainder for Euclidean division.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the divisor is zero.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// let num = Wrapping(I16F16::from_num(7.5));
+    /// let den = Wrapping(I16F16::from_num(2));
+    /// assert_eq!(num.rem_euclid(den), Wrapping(I16F16::from_num(1.5)));
+    /// assert_eq!((-num).rem_euclid(den), Wrapping(I16F16::from_num(0.5)));
+    /// ```
+    #[inline]
+    pub fn rem_euclid(self, divisor: Wrapping<F>) -> Wrapping<F> {
+        Wrapping(self.0.rem_euclid(divisor.0))
+    }
 }
 
 impl<F: FixedSigned> Wrapping<F> {

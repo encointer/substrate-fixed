@@ -53,6 +53,13 @@ This crate does *not* provide general analytic functions.
   * No other transcendental functions are provided, for example no
     `log` or `exp`.
 
+These functions are not provided because different implementations can
+have different trade-offs, for example trading some correctness for
+speed. Implementations can be provided in other crates.
+
+  * The [*fixed-sqrt* crate][https://crates.io/crates/fixed-sqrt]
+    provides the square root operation.
+
 The conversions supported cover the following cases.
 
   * Infallible lossless conversions between fixed-point numbers and

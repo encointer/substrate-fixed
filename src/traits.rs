@@ -728,6 +728,13 @@ where
     /// Panics if the divisor is zero.
     fn saturating_div(self, rhs: Self) -> Self;
 
+    /// Saturating Euclidean division. Returns the quotient, saturating on overflow.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the divisor is zero.
+    fn saturating_div_euclid(self, rhs: Self) -> Self;
+
     /// Saturating multiplication by an integer. Returns the product, saturating on overflow.
     fn saturating_mul_int(self, rhs: Self::Bits) -> Self;
 
@@ -749,6 +756,13 @@ where
     ///
     /// Panics if the divisor is zero.
     fn wrapping_div(self, rhs: Self) -> Self;
+
+    /// Wrapping Euclidean division. Returns the quotient, wrapping on overflow.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the divisor is zero.
+    fn wrapping_div_euclid(self, rhs: Self) -> Self;
 
     /// Wrapping multiplication by an integer. Returns the product, wrapping on overflow.
     fn wrapping_mul_int(self, rhs: Self::Bits) -> Self;
@@ -853,6 +867,20 @@ where
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
     fn overflowing_div(self, rhs: Self) -> (Self, bool);
+
+    /// Overflowing Euclidean division.
+    ///
+    /// Returns a [tuple] of the quotient and a [`bool`], indicating
+    /// whether an overflow has occurred. On overflow, the wrapped
+    /// value is returned.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the divisor is zero.
+    ///
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
+    fn overflowing_div_euclid(self, rhs: Self) -> (Self, bool);
 
     /// Overflowing multiplication by an integer.
     ///
@@ -1576,12 +1604,14 @@ macro_rules! impl_fixed {
             trait_delegate! { fn saturating_sub(self, rhs: Self) -> Self }
             trait_delegate! { fn saturating_mul(self, rhs: Self) -> Self }
             trait_delegate! { fn saturating_div(self, rhs: Self) -> Self }
+            trait_delegate! { fn saturating_div_euclid(self, rhs: Self) -> Self }
             trait_delegate! { fn saturating_mul_int(self, rhs: Self::Bits) -> Self }
             trait_delegate! { fn wrapping_neg(self) -> Self }
             trait_delegate! { fn wrapping_add(self, rhs: Self) -> Self }
             trait_delegate! { fn wrapping_sub(self, rhs: Self) -> Self }
             trait_delegate! { fn wrapping_mul(self, rhs: Self) -> Self }
             trait_delegate! { fn wrapping_div(self, rhs: Self) -> Self }
+            trait_delegate! { fn wrapping_div_euclid(self, rhs: Self) -> Self }
             trait_delegate! { fn wrapping_mul_int(self, rhs: Self::Bits) -> Self }
             trait_delegate! { fn wrapping_div_int(self, rhs: Self::Bits) -> Self }
             trait_delegate! { fn wrapping_rem_int(self, rhs: Self::Bits) -> Self }
@@ -1594,6 +1624,7 @@ macro_rules! impl_fixed {
             trait_delegate! { fn overflowing_sub(self, rhs: Self) -> (Self, bool) }
             trait_delegate! { fn overflowing_mul(self, rhs: Self) -> (Self, bool) }
             trait_delegate! { fn overflowing_div(self, rhs: Self) -> (Self, bool) }
+            trait_delegate! { fn overflowing_div_euclid(self, rhs: Self) -> (Self, bool) }
             trait_delegate! { fn overflowing_mul_int(self, rhs: Self::Bits) -> (Self, bool) }
             trait_delegate! { fn overflowing_div_int(self, rhs: Self::Bits) -> (Self, bool) }
             trait_delegate! { fn overflowing_rem_int(self, rhs: Self::Bits) -> (Self, bool) }

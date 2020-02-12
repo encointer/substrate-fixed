@@ -77,6 +77,9 @@ The conversions supported cover the following cases.
 	  * [`checked_rem`]
 	  * [`div_euclid`], [`rem_euclid`]
 	  * [`checked_div_euclid`], [`checked_rem_euclid`]
+	  * [`saturating_div_euclid`]
+	  * [`wrapping_div_euclid`]
+      * [`overflowing_div_euclid`]
 
 [`RemAssign`]: https://doc.rust-lang.org/nightly/core/ops/trait.RemAssign.html
 [`Rem`]: https://doc.rust-lang.org/nightly/core/ops/trait.Rem.html
@@ -84,7 +87,10 @@ The conversions supported cover the following cases.
 [`checked_rem_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.checked_rem_euclid
 [`checked_rem`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.checked_rem
 [`div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.div_euclid
+[`overflowing_div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.overflowing_div_euclid
 [`rem_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.rem_euclid
+[`saturating_div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.saturating_div_euclid
+[`wrapping_div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.wrapping_div_euclid
 
 ### Version 0.5.2 news (2020-02-02)
 

@@ -13,7 +13,10 @@ Version 0.5.3 (unreleased)
     the `Fixed` trait:
 	  * `checked_rem`
 	  * `div_euclid`, `rem_euclid`
-	  * `checked_div_euclid`,  `checked_rem_euclid`
+	  * `checked_div_euclid`, `checked_rem_euclid`
+	  * `saturating_div_euclid`
+	  * `wrapping_div_euclid`
+      * `overflowing_div_euclid`
 
 Version 0.5.2 (2020-02-02)
 ==========================

@@ -325,6 +325,47 @@ assert_eq!(Fix::max_value().saturating_div(one_half), Fix::max_value());
             }
 
             comment! {
+                "Saturating Euclidean division. Returns the quotient,
+saturating on overflow.
+
+# Panics
+
+Panics if the divisor is zero.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(Fix::from_num(7.5).saturating_div_euclid(Fix::from_num(2)), Fix::from_num(3));
+assert_eq!(Fix::max_value().saturating_div_euclid(Fix::from_num(0.25)), Fix::max_value());
+",
+                if_signed_else_empty_str! {
+                    $Signedness,
+                    "assert_eq!(Fix::from_num(-7.5).saturating_div_euclid(Fix::from_num(2)), Fix::from_num(-4));
+assert_eq!(Fix::min_value().saturating_div_euclid(Fix::from_num(0.25)), Fix::min_value());
+",
+                },
+                "```
+
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
+";
+                #[inline]
+                pub fn saturating_div_euclid(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                    if rhs.to_bits() == 0 {
+                        panic!("division by zero");
+                    }
+                    self.checked_div_euclid(rhs).unwrap_or_else(|| {
+                        if (self.to_bits() > 0) == (rhs.to_bits() > 0) {
+                            Self::max_value()
+                        } else {
+                            Self::min_value()
+                        }
+                    })
+                }
+            }
+
+            comment! {
                 "Wrapping multiplication. Returns the product, wrapping on overflow.
 
 # Examples
@@ -367,6 +408,29 @@ assert_eq!(Fix::max_value().wrapping_div(quarter), wrapped);
                 pub fn wrapping_div(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
                     let (ans, _) = self.to_bits().div_overflow(rhs.to_bits(), Frac::U32);
                     Self::from_bits(ans)
+                }
+            }
+
+            comment! {
+                "Wrapping Euclidean division. Returns the quotient, wrapping on overflow.
+
+# Panics
+
+Panics if the divisor is zero.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(Fix::from_num(7.5).wrapping_div_euclid(Fix::from_num(2)), Fix::from_num(3));
+let wrapped = Fix::max_value().wrapping_mul_int(4).round_to_zero();
+assert_eq!(Fix::max_value().wrapping_div_euclid(Fix::from_num(0.25)), wrapped);
+```
+";
+                #[inline]
+                pub fn wrapping_div_euclid(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                    self.overflowing_div_euclid(rhs).0
                 }
             }
 
@@ -417,11 +481,60 @@ let quarter = Fix::from_num(1) / 4;
 let wrapped = Fix::from_bits(!0 << 2);
 assert_eq!(Fix::max_value().overflowing_div(quarter), (wrapped, true));
 ```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
 ";
                 #[inline]
                 pub fn overflowing_div(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
                     let (ans, overflow) = self.to_bits().div_overflow(rhs.to_bits(), Frac::U32);
                     (Self::from_bits(ans), overflow)
+                }
+            }
+
+            comment! {
+                "Overflowing Euclidean division. 
+
+Returns a [tuple] of the quotient and a [`bool`] indicating whether an
+overflow has occurred. On overflow, the wrapped value is returned.
+
+# Panics
+
+Panics if the divisor is zero.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(Fix::from_num(7.5).overflowing_div_euclid(Fix::from_num(2)), (Fix::from_num(3), false));
+let wrapped = Fix::max_value().wrapping_mul_int(4).round_to_zero();
+assert_eq!(Fix::max_value().overflowing_div_euclid(Fix::from_num(0.25)), (wrapped, true));
+```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
+";
+                #[inline]
+                pub fn overflowing_div_euclid(self, rhs: $Fixed<Frac>) -> ($Fixed<Frac>, bool) {
+                    let (mut q, overflow) = self.overflowing_div(rhs);
+                    q = q.round_to_zero();
+                    if_signed! {
+                        $Signedness;
+                        if (self % rhs).is_negative() {
+                            let one = match Self::checked_from_num(1) {
+                                None => return (q, true),
+                                Some(one) => one,
+                            };
+                            let (q, overflow2) = if rhs.is_positive() {
+                                q.overflowing_sub(one)
+                            } else {
+                                q.overflowing_add(one)
+                            };
+                            return (q, overflow | overflow2);
+                        }
+                    }
+                    (q, overflow)
                 }
             }
         }

@@ -190,14 +190,18 @@ assert_eq!(Fix::from_num(7.5).div_euclid(Fix::from_num(2)), Fix::from_num(3));
 
 Panics if the divisor is zero.
 
-When debug assertions are enabled, this method also panics if the
-division overflows. When debug assertions are not enabled, the wrapped
-value can be returned, but it is not considered a breaking change if
-in the future it panics; if wrapping is required use
-[`wrapping_div_euclid_int`] instead.
-
-
-# Examples
+",
+                if_signed_else_empty_str! {
+                    $Signedness,
+                    "When debug assertions are enabled, this method
+also panics if the division overflows. Overflow can only occur when
+dividing the minimum value by −1. When debug assertions are not
+enabled, the wrapped value can be returned, but it is not considered a
+breaking change if in the future it panics; if wrapping is required
+use [`wrapping_div_euclid_int`] instead.
+",
+                },
+                "# Examples
 
 ```rust
 use fixed::{types::extra::U4, ", $s_fixed, "};
@@ -743,7 +747,8 @@ Panics if the divisor is zero.
 ```rust
 use fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
-assert_eq!(Fix::from_num(7.5).overflowing_div_euclid(Fix::from_num(2)), (Fix::from_num(3), false));
+let check = Fix::from_num(3);
+assert_eq!(Fix::from_num(7.5).overflowing_div_euclid(Fix::from_num(2)), (check, false));
 let wrapped = Fix::max_value().wrapping_mul_int(4).round_to_zero();
 assert_eq!(Fix::max_value().overflowing_div_euclid(Fix::from_num(0.25)), (wrapped, true));
 ```

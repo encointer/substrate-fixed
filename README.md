@@ -72,6 +72,8 @@ The conversions supported cover the following cases.
 
   * Bug fix: all remainder operations with a fixed-point LHS and an
     integer RHS were giving an incorrect answer ([issue 13]).
+  * Bug fix: Euclidean division operations by integers were giving an
+    incorrect answer.
   * [`Rem`] and [`RemAssign`] were implemented for fixed-point
     numbers.
   * The following methods were added to all fixed-point types and to

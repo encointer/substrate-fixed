@@ -138,6 +138,83 @@ assert_eq!(Fix::from_num(-5).signum(), -1);
             }
 
             comment! {
+                "Euclidean division.
+
+# Panics
+
+Panics if the divisor is zero",
+                if_signed_else_empty_str! {
+                    $Signedness,
+                    " or if the division results in overflow",
+                },
+                ".
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(Fix::from_num(7.5).div_euclid(Fix::from_num(2)), Fix::from_num(3));
+",
+                if_signed_else_empty_str! {
+                    $Signedness,
+                    "assert_eq!(Fix::from_num(-7.5).div_euclid(Fix::from_num(2)), Fix::from_num(-4));
+",
+                },
+                "```
+";
+                #[inline]
+                pub fn div_euclid(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                    let q = (self / rhs).round_to_zero();
+                    if_signed! {
+                        $Signedness;
+                        if (self % rhs).is_negative() {
+                            return if rhs.is_positive() {
+                                q - Self::from_num(1)
+                            } else {
+                                q + Self::from_num(1)
+                            };
+                        }
+                    }
+                    q
+                }
+            }
+
+            comment! {
+                "Remainder for Euclidean division.
+
+# Panics
+
+Panics if the divisor is zero.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(Fix::from_num(7.5).rem_euclid(Fix::from_num(2)), Fix::from_num(1.5));
+",
+                if_signed_else_empty_str! {
+                    $Signedness,
+                    "assert_eq!(Fix::from_num(-7.5).rem_euclid(Fix::from_num(2)), Fix::from_num(0.5));
+",
+                },
+                "```
+";
+                #[inline]
+                pub fn rem_euclid(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                    let r = self % rhs;
+                    if_signed! {
+                        $Signedness;
+                        if r.is_negative() {
+                            return r + rhs.abs();
+                        }
+                    }
+                    r
+                }
+            }
+
+            comment! {
                 "Checked multiplication. Returns the product, or [`None`] on overflow.
 
 # Examples

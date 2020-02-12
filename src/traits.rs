@@ -595,6 +595,20 @@ where
     /// # Panics
     ///
     /// Panics if the divisor is zero or if the division results in overflow.
+    fn div_euclid(self, rhs: Self) -> Self;
+
+    /// Remainder for Euclidean division.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the divisor is zero.
+    fn rem_euclid(self, rhs: Self) -> Self;
+
+    /// Euclidean division by an integer.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the divisor is zero or if the division results in overflow.
     fn div_euclid_int(self, rhs: Self::Bits) -> Self;
 
     /// Remainder for Euclidean division by an integer.
@@ -1525,6 +1539,8 @@ macro_rules! impl_fixed {
             trait_delegate! { fn trailing_zeros(self) -> u32 }
             trait_delegate! { fn rotate_left(self, n: u32) -> Self }
             trait_delegate! { fn rotate_right(self, n: u32) -> Self }
+            trait_delegate! { fn div_euclid(self, rhs: Self) -> Self }
+            trait_delegate! { fn rem_euclid(self, rhs: Self) -> Self }
             trait_delegate! { fn div_euclid_int(self, rhs: Self::Bits) -> Self }
             trait_delegate! { fn rem_euclid_int(self, rhs: Self::Bits) -> Self }
             trait_delegate! { fn checked_neg(self) -> Option<Self> }

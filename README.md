@@ -77,7 +77,7 @@ The conversions supported cover the following cases.
 
 ### Version 0.5.3 news (unreleased)
 
-  * Bug fix: [`round_to_zero`] was return incorrect results for
+  * Bug fix: [`round_to_zero`] was returning incorrect results for
     negative whole number operands.
   * Bug fix: all remainder operations with a fixed-point LHS and an
     integer RHS were giving an incorrect answer ([issue 13]).

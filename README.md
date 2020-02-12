@@ -68,6 +68,17 @@ The conversions supported cover the following cases.
 
 ## What’s new
 
+### Version 0.5.3 news (unreleased)
+
+  * [`Rem`] and [`RemAssign`] were implemented for fixed-point
+    numbers.
+  * The method [`checked_rem`] was added to all fixed-point types and
+    to the [`Fixed`] trait.
+
+[`checked_rem`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.checked_rem
+[`Rem`]: https://doc.rust-lang.org/nightly/core/ops/trait.Rem.html
+[`RemAssign`]: https://doc.rust-lang.org/nightly/core/ops/trait.RemAssign.html
+
 ### Version 0.5.2 news (2020-02-02)
 
   * [`Wrapping`] now supports serialization. (Thanks: Shane Pearman)

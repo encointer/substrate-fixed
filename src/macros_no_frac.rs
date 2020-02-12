@@ -619,6 +619,34 @@ assert_eq!(Fix::min_value().checked_sub(one), None);
             }
 
             comment! {
+                "Checked remainder. Returns the remainder, or [`None`] if
+the divisor is zero.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(Fix::from_num(1.5).checked_rem(Fix::from_num(1)), Some(Fix::from_num(0.5)));
+assert_eq!(Fix::from_num(1.5).checked_rem(Fix::from_num(0)), None);
+```
+
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
+";
+                #[inline]
+                pub fn checked_rem(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
+                    let rhs = rhs.to_bits();
+                    if rhs == 0 {
+                        None
+                    } else if if_signed_unsigned!($Signedness, rhs == -1, false) {
+                        Some(Self::from_bits(0))
+                    } else {
+                        self.to_bits().checked_rem(rhs).map(Self::from_bits)
+                    }
+                }
+            }
+
+            comment! {
                 "Checked multiplication by an integer. Returns the
 product, or [`None`] on overflow.
 

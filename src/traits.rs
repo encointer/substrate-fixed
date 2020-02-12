@@ -215,6 +215,7 @@ where
     Self: FromFixed + ToFixed,
     Self: Add<Output = Self> + AddAssign + Sub<Output = Self> + SubAssign,
     Self: Mul<Output = Self> + MulAssign + Div<Output = Self> + DivAssign,
+    Self: Rem<Output = Self> + RemAssign,
     Self: Mul<<Self as Fixed>::Bits, Output = Self> + MulAssign<<Self as Fixed>::Bits>,
     Self: Div<<Self as Fixed>::Bits, Output = Self> + DivAssign<<Self as Fixed>::Bits>,
     Self: Rem<<Self as Fixed>::Bits, Output = Self> + RemAssign<<Self as Fixed>::Bits>,
@@ -628,6 +629,12 @@ where
     ///
     /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_div(self, rhs: Self) -> Option<Self>;
+
+    /// Checked remainder. Returns the remainder, or [`None`] if the
+    /// divisor is zero.
+    ///
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
+    fn checked_rem(self, rhs: Self) -> Option<Self>;
 
     /// Checked multiplication by an integer. Returns the product, or
     /// [`None`] on overflow.
@@ -1525,6 +1532,7 @@ macro_rules! impl_fixed {
             trait_delegate! { fn checked_sub(self, rhs: Self) -> Option<Self> }
             trait_delegate! { fn checked_mul(self, rhs: Self) -> Option<Self> }
             trait_delegate! { fn checked_div(self, rhs: Self) -> Option<Self> }
+            trait_delegate! { fn checked_rem(self, rhs: Self) -> Option<Self> }
             trait_delegate! { fn checked_mul_int(self, rhs: Self::Bits) -> Option<Self> }
             trait_delegate! { fn checked_div_int(self, rhs: Self::Bits) -> Option<Self> }
             trait_delegate! { fn checked_rem_int(self, rhs: Self::Bits) -> Option<Self> }

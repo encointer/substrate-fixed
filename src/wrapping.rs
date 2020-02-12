@@ -880,6 +880,7 @@ op! { wrapping_add, Add add, AddAssign add_assign }
 op! { wrapping_sub, Sub sub, SubAssign sub_assign }
 op! { wrapping_mul, Mul mul, MulAssign mul_assign }
 op! { wrapping_div, Div div, DivAssign div_assign }
+op! { rem, Rem rem, RemAssign rem_assign }
 
 impl<F> Not for Wrapping<F>
 where

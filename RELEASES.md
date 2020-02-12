@@ -5,6 +5,13 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.5.3 (unreleased)
+==========================
+
+  * `Rem` and `RemAssign` were implemented for fixed-point numbers.
+  * The method `checked_rem` was added to all fixed-point types and to
+    the `Fixed` trait.
+
 Version 0.5.2 (2020-02-02)
 ==========================
 

@@ -266,6 +266,39 @@ assert_eq!(Fix::max_value().checked_div_euclid(Fix::from_num(0.25)), None);
             }
 
             comment! {
+                "Checked fixed-point remainder for division by an integer.
+Returns the remainder, or [`None`] if the divisor is zero.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(Fix::from_num(3.75).checked_rem_int(2), Some(Fix::from_num(1.75)));
+assert_eq!(Fix::from_num(3.75).checked_rem_int(0), None);
+",
+                if_signed_else_empty_str! {
+                    $Signedness,
+                    "assert_eq!(Fix::from_num(-3.75).checked_rem_int(2), Some(Fix::from_num(-1.75)));
+",
+                },
+                "```
+
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
+";
+                #[inline]
+                pub fn checked_rem_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
+                    // Any overflow in coverting rhs to $Fixed<Frac> means that |rhs| > |self|,
+                    // and consequently the remainder is self.
+                    let fixed_rhs = match Self::checked_from_num(rhs) {
+                        Some(s) => s,
+                        None => return Some(self),
+                    };
+                    self.checked_rem(fixed_rhs)
+                }
+            }
+
+            comment! {
                 "Saturating multiplication. Returns the product, saturating on overflow.
 
 # Examples
@@ -536,6 +569,28 @@ assert_eq!(Fix::max_value().overflowing_div_euclid(Fix::from_num(0.25)), (wrappe
                     }
                     (q, overflow)
                 }
+            }
+
+            /// Remainder for division by an integer.
+            ///
+            /// # Panics
+            ///
+            /// Panics if the divisor is zero.
+            #[deprecated(since = "0.5.3", note = "cannot overflow, use `%` or `Rem::rem` instead")]
+            #[inline]
+            pub fn wrapping_rem_int(self, rhs: $Inner) -> $Fixed<Frac> {
+                self % rhs
+            }
+
+            /// Remainder for division by an integer.
+            ///
+            /// # Panics
+            ///
+            /// Panics if the divisor is zero.
+            #[deprecated(since = "0.5.3", note = "cannot overflow, use `%` or `Rem::rem` instead")]
+            #[inline]
+            pub fn overflowing_rem_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
+                (self % rhs, false)
             }
         }
     };

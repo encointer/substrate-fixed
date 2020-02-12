@@ -735,40 +735,6 @@ assert_eq!(Fix::from_num(1).checked_div_int(0), None);
             }
 
             comment! {
-                "Checked fixed-point remainder for division by an integer.
-Returns the remainder, or [`None`] if the divisor is zero",
-                if_signed_unsigned! {
-                    $Signedness,
-                    " or if the division results in overflow.",
-                    ".",
-                },
-                "
-
-# Examples
-
-```rust
-use fixed::{types::extra::U4, ", $s_fixed, "};
-type Fix = ", $s_fixed, "<U4>;
-// binary 1.0101 / 8 = binary 0.0010 remainder 0.0101
-assert_eq!(Fix::from_bits(0b10101).checked_rem_int(8), Some(Fix::from_bits(0b101)));
-assert_eq!(Fix::from_num(1).checked_rem_int(0), None);
-",
-                if_signed_else_empty_str! {
-                    $Signedness,
-                    "assert_eq!(Fix::min_value().checked_rem_int(-1), None);
-",
-                },
-                "```
-
-[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
-";
-                #[inline]
-                pub fn checked_rem_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
-                    self.to_bits().checked_rem(rhs).map(Self::from_bits)
-                }
-            }
-
-            comment! {
                 "Checked remainder for Euclidean division. Returns the
 remainder, or [`None`] if the divisor is zero.
 
@@ -1262,44 +1228,6 @@ assert_eq!(Fix::from_num(3).wrapping_div_int(2), one_point_5);
             }
 
             comment! {
-                "Wrapping fixed-point remainder for division by an integer. Returns the remainder",
-                if_signed_unsigned! {
-                    $Signedness,
-                    ", wrapping on overflow.
-
-Overflow can only occur when dividing the minimum value by −1.",
-                    ".
-
-Can never overflow for unsigned values.",
-                },
-                "
-
-# Panics
-
-Panics if the divisor is zero.
-
-# Examples
-
-```rust
-use fixed::{types::extra::U4, ", $s_fixed, "};
-type Fix = ", $s_fixed, "<U4>;
-// binary 1.0101 / 8 = binary 0.0010 remainder 0.0101
-assert_eq!(Fix::from_bits(0b10101).wrapping_rem_int(8), Fix::from_bits(0b101));
-",
-                if_signed_else_empty_str! {
-                    $Signedness,
-                    "assert_eq!(Fix::min_value().wrapping_rem_int(-1), 0);
-",
-                },
-                "```
-";
-                #[inline]
-                pub fn wrapping_rem_int(self, rhs: $Inner) -> $Fixed<Frac> {
-                    Self::from_bits(self.to_bits().wrapping_rem(rhs))
-                }
-            }
-
-            comment! {
                 "Wrapping Euclidean division by an integer. Returns the quotient",
                 if_signed_unsigned! {
                     $Signedness,
@@ -1607,48 +1535,6 @@ assert_eq!(Fix::from_num(3).overflowing_div_int(2), (one_point_5, false));
                 #[inline]
                 pub fn overflowing_div_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
                     let (ans, o) = self.to_bits().overflowing_div(rhs);
-                    (Self::from_bits(ans), o)
-                }
-            }
-
-            comment! {
-                "Overflowing fixed-point remainder for division by an integer.
-
-Returns a [tuple] of the remainder and ",
-                if_signed_unsigned! {
-                    $Signedness,
-                    "a [`bool`] indicating whether an overflow has
-occurred. On overflow, the wrapped value is returned. Overflow can
-only occur when dividing the minimum value by −1.",
-                    "[`false`][`bool`], as the division can never overflow for unsigned values.",
-                },
-                "
-
-# Panics
-
-Panics if the divisor is zero.
-
-# Examples
-
-```rust
-use fixed::{types::extra::U4, ", $s_fixed, "};
-type Fix = ", $s_fixed, "<U4>;
-// binary 1.0101 / 8 = binary 0.0010 remainder 0.0101
-assert_eq!(Fix::from_bits(0b10101).overflowing_rem_int(8), (Fix::from_bits(0b101), false));
-",
-                if_signed_else_empty_str! {
-                    $Signedness,
-                    "assert_eq!(Fix::min_value().overflowing_rem_int(-1), (Fix::from_num(0), true));
-",
-                },
-                "```
-
-[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
-[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
-";
-                #[inline]
-                pub fn overflowing_rem_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
-                    let (ans, o) = self.to_bits().overflowing_rem(rhs);
                     (Self::from_bits(ans), o)
                 }
             }

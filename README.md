@@ -70,6 +70,8 @@ The conversions supported cover the following cases.
 
 ### Version 0.5.3 news (unreleased)
 
+  * Bug fix: all remainder operations with a fixed-point LHS and an
+    integer RHS were giving an incorrect answer ([issue 13]).
   * [`Rem`] and [`RemAssign`] were implemented for fixed-point
     numbers.
   * The following methods were added to all fixed-point types and to
@@ -81,6 +83,7 @@ The conversions supported cover the following cases.
 	  * [`wrapping_div_euclid`]
       * [`overflowing_div_euclid`]
 
+[issue 13]: https://gitlab.com/tspiteri/fixed/issues/13
 [`RemAssign`]: https://doc.rust-lang.org/nightly/core/ops/trait.RemAssign.html
 [`Rem`]: https://doc.rust-lang.org/nightly/core/ops/trait.Rem.html
 [`checked_div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.checked_div_euclid

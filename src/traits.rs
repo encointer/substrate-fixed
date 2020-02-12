@@ -776,16 +776,6 @@ where
     /// Panics if the divisor is zero.
     fn wrapping_div_int(self, rhs: Self::Bits) -> Self;
 
-    /// Wrapping fixed-point remainder for division by an integer.
-    /// Returns the remainder, wrapping on overflow.
-    ///
-    /// Overflow can only occur when dividing the minimum value by −1.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the divisor is zero.
-    fn wrapping_rem_int(self, rhs: Self::Bits) -> Self;
-
     /// Wrapping Euclidean division by an integer. Returns the
     /// quotient, wrapping on overflow.
     ///
@@ -906,21 +896,6 @@ where
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
     fn overflowing_div_int(self, rhs: Self::Bits) -> (Self, bool);
 
-    /// Overflowing fixed-point remainder for division by an integer.
-    ///
-    /// Returns a [tuple] of the remainder and a [`bool`], indicating
-    /// whether an overflow has occurred. On overflow, the wrapped
-    /// value is returned. Overflow can only occur when dividing the
-    /// minimum value by −1.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the divisor is zero.
-    ///
-    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
-    /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
-    fn overflowing_rem_int(self, rhs: Self::Bits) -> (Self, bool);
-
     /// Overflowing Euclidean division by an integer.
     ///
     /// Returns a [tuple] of the quotient and a [`bool`], indicating
@@ -969,6 +944,26 @@ where
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
     fn overflowing_shr(self, rhs: u32) -> (Self, bool);
+
+    /// Remainder for division by an integer.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the divisor is zero.
+    #[deprecated(since = "0.5.3", note = "cannot overflow, use `%` or `Rem::rem` instead")]
+    fn wrapping_rem_int(self, rhs: Self::Bits) -> Self {
+        self % rhs
+    }
+
+    /// Remainder for division by an integer.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the divisor is zero.
+    #[deprecated(since = "0.5.3", note = "cannot overflow, use `%` or `Rem::rem` instead")]
+    fn overflowing_rem_int(self, rhs: Self::Bits) -> (Self, bool) {
+        (self % rhs, false)
+    }
 }
 
 /// This trait provides methods common to all signed fixed-point numbers.
@@ -1614,7 +1609,6 @@ macro_rules! impl_fixed {
             trait_delegate! { fn wrapping_div_euclid(self, rhs: Self) -> Self }
             trait_delegate! { fn wrapping_mul_int(self, rhs: Self::Bits) -> Self }
             trait_delegate! { fn wrapping_div_int(self, rhs: Self::Bits) -> Self }
-            trait_delegate! { fn wrapping_rem_int(self, rhs: Self::Bits) -> Self }
             trait_delegate! { fn wrapping_div_euclid_int(self, rhs: Self::Bits) -> Self }
             trait_delegate! { fn wrapping_rem_euclid_int(self, rhs: Self::Bits) -> Self }
             trait_delegate! { fn wrapping_shl(self, rhs: u32) -> Self }
@@ -1627,7 +1621,6 @@ macro_rules! impl_fixed {
             trait_delegate! { fn overflowing_div_euclid(self, rhs: Self) -> (Self, bool) }
             trait_delegate! { fn overflowing_mul_int(self, rhs: Self::Bits) -> (Self, bool) }
             trait_delegate! { fn overflowing_div_int(self, rhs: Self::Bits) -> (Self, bool) }
-            trait_delegate! { fn overflowing_rem_int(self, rhs: Self::Bits) -> (Self, bool) }
             trait_delegate! { fn overflowing_div_euclid_int(self, rhs: Self::Bits) -> (Self, bool) }
             trait_delegate! { fn overflowing_rem_euclid_int(self, rhs: Self::Bits) -> (Self, bool) }
             trait_delegate! { fn overflowing_shl(self, rhs: u32) -> (Self, bool) }

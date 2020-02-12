@@ -8,6 +8,9 @@ as-is, without any warranty. -->
 Version 0.5.3 (unreleased)
 ==========================
 
+  * Bug fix: all remainder operations with a fixed-point LHS and an
+    integer RHS were giving an incorrect answer
+    (https://gitlab.com/tspiteri/fixed/issues/13).
   * `Rem` and `RemAssign` were implemented for fixed-point numbers.
   * The following methods were added to all fixed-point types and to
     the `Fixed` trait:

@@ -20,6 +20,7 @@ use crate::{
     traits::{Fixed, FixedSigned, FixedUnsigned, FromFixed, ToFixed},
     FixedI128, FixedI16, FixedI32, FixedI64, FixedI8, FixedU128, FixedU16, FixedU32, FixedU64,
     FixedU8,
+    types::extra::{LeEqU128, LeEqU16, LeEqU32, LeEqU64, LeEqU8},
 };
 use core::{
     fmt::{Display, Formatter, Result as FmtResult},
@@ -1016,45 +1017,45 @@ impl<'a, F: 'a + Fixed> Product<&'a Wrapping<F>> for Wrapping<F> {
 
 macro_rules! op_bits {
     (
-        $Fixed:ident($Bits:ident)::$wrapping:ident,
+        $Fixed:ident($Bits:ident $(, $LeEqU:ident)*)::$wrapping:ident,
         $Op:ident $op:ident,
         $OpAssign:ident $op_assign:ident
     ) => {
-        impl<Frac> $Op<$Bits> for Wrapping<$Fixed<Frac>> {
+        impl<Frac $(: $LeEqU)*> $Op<$Bits> for Wrapping<$Fixed<Frac>> {
             type Output = Wrapping<$Fixed<Frac>>;
             #[inline]
             fn $op(self, other: $Bits) -> Wrapping<$Fixed<Frac>> {
                 Wrapping((self.0).$wrapping(other))
             }
         }
-        impl<'a, Frac> $Op<$Bits> for &'a Wrapping<$Fixed<Frac>> {
+        impl<'a, Frac $(: $LeEqU)*> $Op<$Bits> for &'a Wrapping<$Fixed<Frac>> {
             type Output = Wrapping<$Fixed<Frac>>;
             #[inline]
             fn $op(self, other: $Bits) -> Wrapping<$Fixed<Frac>> {
                 Wrapping((self.0).$wrapping(other))
             }
         }
-        impl<'a, Frac> $Op<&'a $Bits> for Wrapping<$Fixed<Frac>> {
+        impl<'a, Frac $(: $LeEqU)*> $Op<&'a $Bits> for Wrapping<$Fixed<Frac>> {
             type Output = Wrapping<$Fixed<Frac>>;
             #[inline]
             fn $op(self, other: &$Bits) -> Wrapping<$Fixed<Frac>> {
                 Wrapping((self.0).$wrapping(*other))
             }
         }
-        impl<'a, 'b, Frac> $Op<&'a $Bits> for &'b Wrapping<$Fixed<Frac>> {
+        impl<'a, 'b, Frac $(: $LeEqU)*> $Op<&'a $Bits> for &'b Wrapping<$Fixed<Frac>> {
             type Output = Wrapping<$Fixed<Frac>>;
             #[inline]
             fn $op(self, other: &$Bits) -> Wrapping<$Fixed<Frac>> {
                 Wrapping((self.0).$wrapping(*other))
             }
         }
-        impl<Frac> $OpAssign<$Bits> for Wrapping<$Fixed<Frac>> {
+        impl<Frac $(: $LeEqU)*> $OpAssign<$Bits> for Wrapping<$Fixed<Frac>> {
             #[inline]
             fn $op_assign(&mut self, other: $Bits) {
                 self.0 = (self.0).$wrapping(other);
             }
         }
-        impl<'a, Frac> $OpAssign<&'a $Bits> for Wrapping<$Fixed<Frac>> {
+        impl<'a, Frac $(: $LeEqU)*> $OpAssign<&'a $Bits> for Wrapping<$Fixed<Frac>> {
             #[inline]
             fn $op_assign(&mut self, other: &$Bits) {
                 self.0 = (self.0).$wrapping(*other);
@@ -1064,19 +1065,19 @@ macro_rules! op_bits {
 }
 
 macro_rules! ops {
-    ($Fixed:ident($Bits:ident)) => {
+    ($Fixed:ident($Bits:ident, $LeEqU:ident)) => {
         op_bits! { $Fixed($Bits)::wrapping_mul_int, Mul mul, MulAssign mul_assign }
         op_bits! { $Fixed($Bits)::wrapping_div_int, Div div, DivAssign div_assign }
-        op_bits! { $Fixed($Bits)::wrapping_rem_int, Rem rem, RemAssign rem_assign }
+        op_bits! { $Fixed($Bits, $LeEqU)::rem, Rem rem, RemAssign rem_assign }
     };
 }
-ops! { FixedI8(i8) }
-ops! { FixedI16(i16) }
-ops! { FixedI32(i32) }
-ops! { FixedI64(i64) }
-ops! { FixedI128(i128) }
-ops! { FixedU8(u8) }
-ops! { FixedU16(u16) }
-ops! { FixedU32(u32) }
-ops! { FixedU64(u64) }
-ops! { FixedU128(u128) }
+ops! { FixedI8(i8, LeEqU8) }
+ops! { FixedI16(i16, LeEqU16) }
+ops! { FixedI32(i32, LeEqU32) }
+ops! { FixedI64(i64, LeEqU64) }
+ops! { FixedI128(i128, LeEqU128) }
+ops! { FixedU8(u8, LeEqU8) }
+ops! { FixedU16(u16, LeEqU16) }
+ops! { FixedU32(u32, LeEqU32) }
+ops! { FixedU64(u64, LeEqU64) }
+ops! { FixedU128(u128, LeEqU128) }

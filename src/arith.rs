@@ -370,7 +370,13 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn rem(self, rhs: $Inner) -> $Fixed<Frac> {
-                Self::from_bits(self.to_bits().rem(rhs))
+                // Any overflow in coverting rhs to $Fixed<Frac> means that |rhs| > |self|,
+                // and consequently the remainder is self.
+                let fixed_rhs = match Self::checked_from_num(rhs) {
+                    Some(s) => s,
+                    None => return self,
+                };
+                self.rem(fixed_rhs)
             }
         }
 

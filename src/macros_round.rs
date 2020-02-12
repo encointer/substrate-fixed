@@ -141,7 +141,7 @@ assert_eq!(Fix::from_num(-2.9).round_to_zero(), Fix::from_num(-2));
             pub fn round_to_zero(self) -> $Fixed<Frac> {
                 if_signed! {
                     $Signedness;
-                    if self.is_negative() {
+                    if self.is_negative() && self.frac() != 0 {
                         let int = self.int();
                         let increment = Self::from_bits(Self::INT_LSB);
                         if Self::INT_NBITS == 1 {

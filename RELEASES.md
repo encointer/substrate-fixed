@@ -8,6 +8,8 @@ as-is, without any warranty. -->
 Version 0.5.3 (unreleased)
 ==========================
 
+  * Bug fix: `round_to_zero` was return incorrect results for negative
+    whole number operands.
   * Bug fix: all remainder operations with a fixed-point LHS and an
     integer RHS were giving an incorrect answer
     (https://gitlab.com/tspiteri/fixed/issues/13).

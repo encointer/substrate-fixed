@@ -70,6 +70,8 @@ The conversions supported cover the following cases.
 
 ### Version 0.5.3 news (unreleased)
 
+  * Bug fix: [`round_to_zero`] was return incorrect results for
+    negative whole number operands.
   * Bug fix: all remainder operations with a fixed-point LHS and an
     integer RHS were giving an incorrect answer ([issue 13]).
   * Bug fix: Euclidean division operations by integers were giving an
@@ -85,7 +87,6 @@ The conversions supported cover the following cases.
 	  * [`wrapping_div_euclid`]
       * [`overflowing_div_euclid`]
 
-[issue 13]: https://gitlab.com/tspiteri/fixed/issues/13
 [`RemAssign`]: https://doc.rust-lang.org/nightly/core/ops/trait.RemAssign.html
 [`Rem`]: https://doc.rust-lang.org/nightly/core/ops/trait.Rem.html
 [`checked_div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.checked_div_euclid
@@ -94,8 +95,10 @@ The conversions supported cover the following cases.
 [`div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.div_euclid
 [`overflowing_div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.overflowing_div_euclid
 [`rem_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.rem_euclid
+[`round_to_zero`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.round_to_zero
 [`saturating_div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.saturating_div_euclid
 [`wrapping_div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.wrapping_div_euclid
+[issue 13]: https://gitlab.com/tspiteri/fixed/issues/13
 
 ### Version 0.5.2 news (2020-02-02)
 

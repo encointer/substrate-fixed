@@ -650,6 +650,19 @@ where
     /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
     fn checked_rem(self, rhs: Self) -> Option<Self>;
 
+    /// Checked remainder for Euclidean division. Returns the
+    /// remainder, or [`None`] if the divisor is zero or the division
+    /// results in overflow.
+    ///
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
+    fn checked_div_euclid(self, rhs: Self) -> Option<Self>;
+
+    /// Checked remainder for Euclidean division. Returns the
+    /// remainder, or [`None`] if the divisor is zero.
+    ///
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
+    fn checked_rem_euclid(self, rhs: Self) -> Option<Self>;
+
     /// Checked multiplication by an integer. Returns the product, or
     /// [`None`] on overflow.
     ///
@@ -1549,6 +1562,8 @@ macro_rules! impl_fixed {
             trait_delegate! { fn checked_mul(self, rhs: Self) -> Option<Self> }
             trait_delegate! { fn checked_div(self, rhs: Self) -> Option<Self> }
             trait_delegate! { fn checked_rem(self, rhs: Self) -> Option<Self> }
+            trait_delegate! { fn checked_div_euclid(self, rhs: Self) -> Option<Self> }
+            trait_delegate! { fn checked_rem_euclid(self, rhs: Self) -> Option<Self> }
             trait_delegate! { fn checked_mul_int(self, rhs: Self::Bits) -> Option<Self> }
             trait_delegate! { fn checked_div_int(self, rhs: Self::Bits) -> Option<Self> }
             trait_delegate! { fn checked_rem_int(self, rhs: Self::Bits) -> Option<Self> }

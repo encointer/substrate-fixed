@@ -769,6 +769,41 @@ assert_eq!(Fix::from_num(1).checked_rem_int(0), None);
             }
 
             comment! {
+                "Checked remainder for Euclidean division. Returns the
+remainder, or [`None`] if the divisor is zero.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+let num = Fix::from_num(7.5);
+assert_eq!(num.checked_rem_euclid(Fix::from_num(2)), Some(Fix::from_num(1.5)));
+assert_eq!(num.checked_rem_euclid(Fix::from_num(0)), None);
+",
+                if_signed_else_empty_str! {
+                    $Signedness,
+                    "assert_eq!((-num).checked_rem_euclid(Fix::from_num(2)), Some(Fix::from_num(0.5)));
+",
+                },
+                "```
+
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
+";
+                #[inline]
+                pub fn checked_rem_euclid(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
+                    let r = self.checked_rem(rhs)?;
+                    if_signed! {
+                        $Signedness;
+                        if r.is_negative() {
+                            return Some(r + rhs.abs());
+                        }
+                    }
+                    Some(r)
+                }
+            }
+
+            comment! {
                 "Checked Euclidean division by an integer. Returns the
 quotient, or [`None`] if the divisor is zero",
                 if_signed_else_empty_str! {

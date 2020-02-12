@@ -12,7 +12,8 @@ Version 0.5.3 (unreleased)
   * The following methods were added to all fixed-point types and to
     the `Fixed` trait:
 	  * `checked_rem`
-	  * `div_euclid`, `rem_euclid`x
+	  * `div_euclid`, `rem_euclid`
+	  * `checked_div_euclid`,  `checked_rem_euclid`
 
 Version 0.5.2 (2020-02-02)
 ==========================

@@ -142,12 +142,7 @@ assert_eq!(Fix::from_num(-5).signum(), -1);
 
 # Panics
 
-Panics if the divisor is zero",
-                if_signed_else_empty_str! {
-                    $Signedness,
-                    " or if the division results in overflow",
-                },
-                ".
+Panics if the divisor is zero or if the division results in overflow.
 
 # Examples
 
@@ -227,6 +222,46 @@ assert_eq!(Fix::max_value().checked_div(Fix::from_num(1) / 2), None);
                         (ans, false) => Some(Self::from_bits(ans)),
                         (_, true) => None,
                     }
+                }
+            }
+
+            comment! {
+                "Checked Euclidean division. Returns the quotient, or
+[`None`] if the divisor is zero or on overflow.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(Fix::from_num(7.5).checked_div_euclid(Fix::from_num(2)), Some(Fix::from_num(3)));
+assert_eq!(Fix::from_num(7.5).checked_div_euclid(Fix::from_num(0)), None);
+assert_eq!(Fix::max_value().checked_div_euclid(Fix::from_num(0.25)), None);
+",
+                if_signed_else_empty_str! {
+                    $Signedness,
+                    "assert_eq!(Fix::from_num(-7.5).checked_div_euclid(Fix::from_num(2)), Some(Fix::from_num(-4)));
+",
+                },
+                "```
+
+[`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
+";
+                #[inline]
+                pub fn checked_div_euclid(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
+                    let q = self.checked_div(rhs)?.round_to_zero();
+                    if_signed! {
+                        $Signedness;
+                        if (self % rhs).is_negative() {
+                            let one = Self::checked_from_num(1)?;
+                            return if rhs.is_positive() {
+                                q.checked_sub(one)
+                            } else {
+                                q.checked_add(one)
+                            };
+                        }
+                    }
+                    Some(q)
                 }
             }
 

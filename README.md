@@ -74,11 +74,14 @@ The conversions supported cover the following cases.
     numbers.
   * The following methods were added to all fixed-point types and to
     the [`Fixed`] trait:
-	  *  [`checked_rem`]
-	  *  [`div_euclid`], [`rem_euclid`]
+	  * [`checked_rem`]
+	  * [`div_euclid`], [`rem_euclid`]
+	  * [`checked_div_euclid`], [`checked_rem_euclid`]
 
 [`RemAssign`]: https://doc.rust-lang.org/nightly/core/ops/trait.RemAssign.html
 [`Rem`]: https://doc.rust-lang.org/nightly/core/ops/trait.Rem.html
+[`checked_div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.checked_div_euclid
+[`checked_rem_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.checked_rem_euclid
 [`checked_rem`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.checked_rem
 [`div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.div_euclid
 [`rem_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.rem_euclid

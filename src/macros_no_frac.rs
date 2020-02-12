@@ -420,6 +420,40 @@ assert!(half.is_power_of_two());
             }
 
             comment! {
+                "Remainder for Euclidean division.
+
+# Panics
+
+Panics if the divisor is zero.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U4, ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U4>;
+assert_eq!(Fix::from_num(7.5).rem_euclid(Fix::from_num(2)), Fix::from_num(1.5));
+",
+                if_signed_else_empty_str! {
+                    $Signedness,
+                    "assert_eq!(Fix::from_num(-7.5).rem_euclid(Fix::from_num(2)), Fix::from_num(0.5));
+",
+                },
+                "```
+";
+                #[inline]
+                pub fn rem_euclid(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
+                    let r = self % rhs;
+                    if_signed! {
+                        $Signedness;
+                        if r.is_negative() {
+                            return r + rhs.abs();
+                        }
+                    }
+                    r
+                }
+            }
+
+            comment! {
                 "Euclidean division by an integer.
 
 # Panics

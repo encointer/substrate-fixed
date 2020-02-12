@@ -86,6 +86,9 @@ The conversions supported cover the following cases.
 	  * [`saturating_div_euclid`]
 	  * [`wrapping_div_euclid`]
       * [`overflowing_div_euclid`]
+  * The following methods were added to the [`Wrapping`] wrapper:
+	  * [`div_euclid`][wde], [`rem_euclid`][wre]
+	  * [`div_euclid_int`][wdei], [`rem_euclid_int`][wrei]
 
 [`RemAssign`]: https://doc.rust-lang.org/nightly/core/ops/trait.RemAssign.html
 [`Rem`]: https://doc.rust-lang.org/nightly/core/ops/trait.Rem.html
@@ -99,6 +102,10 @@ The conversions supported cover the following cases.
 [`saturating_div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.saturating_div_euclid
 [`wrapping_div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.wrapping_div_euclid
 [issue 13]: https://gitlab.com/tspiteri/fixed/issues/13
+[wde]: https://docs.rs/fixed/0.5.3/fixed/struct.Wrapping.html#method.div_euclid
+[wdei]: https://docs.rs/fixed/0.5.3/fixed/struct.Wrapping.html#method.div_euclid_int
+[wre]: https://docs.rs/fixed/0.5.3/fixed/struct.Wrapping.html#method.rem_euclid
+[wrei]: https://docs.rs/fixed/0.5.3/fixed/struct.Wrapping.html#method.rem_euclid_int
 
 ### Version 0.5.2 news (2020-02-02)
 

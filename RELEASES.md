@@ -24,6 +24,9 @@ Version 0.5.3 (unreleased)
 	  * `saturating_div_euclid`
 	  * `wrapping_div_euclid`
       * `overflowing_div_euclid`
+  * The following methods were added to the `Wrapping` wrapper:
+	  * `div_euclid`, `rem_euclid`
+	  * `div_euclid_int`, `rem_euclid_int`
 
 Version 0.5.2 (2020-02-02)
 ==========================
@@ -113,13 +116,12 @@ Version 0.4.3 (2019-08-20)
 Version 0.4.2 (2019-08-16)
 ==========================
 
-  * The new methods [`from_num`] and [`to_num`] together with their
+  * The new methods `from_num` and `to_num` together with their
     checked versions were added to all fixed-point numbers.
   * The methods `from_fixed`, `to_fixed`, `from_int`, `to_int`,
     `from_float`, and `to_float`, and their checked versions, were
     deprecated.
-  * The new method [`from_num`][`Wrapping::from_num`] was added to the
-    [`Wrapping`] wrapper.
+  * The new method `from_num` was added to the `Wrapping` wrapper.
   * Bug fix: parsing of decimal fractions was fixed to give correctly
     rounded results for long decimal fraction strings, for example
     with four fractional bits, 0.96874999… (just below 31⁄32) and

@@ -566,6 +566,45 @@ impl<F: Fixed> Wrapping<F> {
     pub fn rem_euclid(self, divisor: Wrapping<F>) -> Wrapping<F> {
         Wrapping(self.0.rem_euclid(divisor.0))
     }
+
+    /// Euclidean division by an integer.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the divisor is zero.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// let num = Wrapping(I16F16::from_num(7.5));
+    /// assert_eq!(num.div_euclid_int(2), Wrapping(I16F16::from_num(3)));
+    /// let min = Wrapping(I16F16::min_value());
+    /// assert_eq!(min.div_euclid_int(-1), min);
+    /// ```
+    #[inline]
+    pub fn div_euclid_int(self, divisor: F::Bits) -> Wrapping<F> {
+        Wrapping(self.0.wrapping_div_euclid_int(divisor))
+    }
+
+    /// Remainder for Euclidean division.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the divisor is zero.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fixed::{types::I16F16, Wrapping};
+    /// let num = Wrapping(I16F16::from_num(7.5));
+    /// assert_eq!(num.rem_euclid_int(2), Wrapping(I16F16::from_num(1.5)));
+    /// assert_eq!((-num).rem_euclid_int(2), Wrapping(I16F16::from_num(0.5)));
+    /// ```
+    #[inline]
+    pub fn rem_euclid_int(self, divisor: F::Bits) -> Wrapping<F> {
+        Wrapping(self.0.rem_euclid_int(divisor))
+    }
 }
 
 impl<F: FixedSigned> Wrapping<F> {

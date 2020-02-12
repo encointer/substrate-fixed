@@ -664,19 +664,27 @@ mod tests {
         let frac = Frac::U32;
         let a = 12;
         let b = 5;
-        let af = FixedU16::<Frac>::from_bits(a << Frac::U32);
-        let bf = FixedU16::<Frac>::from_bits(b << Frac::U32);
-        assert_eq!((af + bf).to_bits(), (a << frac) + (b << frac));
-        assert_eq!((af - bf).to_bits(), (a << frac) - (b << frac));
-        assert_eq!((af * bf).to_bits(), (a << frac) * b);
-        assert_eq!((af / bf).to_bits(), (a << frac) / b);
-        assert_eq!((af % bf).to_bits(), (a << frac) % (b << frac));
-        assert_eq!((af & bf).to_bits(), (a << frac) & (b << frac));
-        assert_eq!((af | bf).to_bits(), (a << frac) | (b << frac));
-        assert_eq!((af ^ bf).to_bits(), (a << frac) ^ (b << frac));
-        assert_eq!((!af).to_bits(), !(a << frac));
-        assert_eq!((af << 4u8).to_bits(), (a << frac) << 4);
-        assert_eq!((af >> 4i128).to_bits(), (a << frac) >> 4);
+        for &(a, b) in &[(a, b), (b, a)] {
+            let af = FixedU16::<Frac>::from_num(a);
+            let bf = FixedU16::<Frac>::from_num(b);
+            assert_eq!((af + bf).to_bits(), (a << frac) + (b << frac));
+            if a > b {
+                assert_eq!((af - bf).to_bits(), (a << frac) - (b << frac));
+            }
+            assert_eq!((af * bf).to_bits(), (a << frac) * b);
+            assert_eq!((af / bf).to_bits(), (a << frac) / b);
+            assert_eq!((af % bf).to_bits(), (a << frac) % (b << frac));
+            assert_eq!((af & bf).to_bits(), (a << frac) & (b << frac));
+            assert_eq!((af | bf).to_bits(), (a << frac) | (b << frac));
+            assert_eq!((af ^ bf).to_bits(), (a << frac) ^ (b << frac));
+            assert_eq!((!af).to_bits(), !(a << frac));
+            assert_eq!((af << 4u8).to_bits(), (a << frac) << 4);
+            assert_eq!((af >> 4i128).to_bits(), (a << frac) >> 4);
+            assert_eq!((af * b).to_bits(), (a << frac) * b);
+            assert_eq!((b * af).to_bits(), (a << frac) * b);
+            assert_eq!((af / b).to_bits(), (a << frac) / b);
+            assert_eq!((af % b).to_bits(), (a << frac) % (b << frac));
+        }
     }
 
     #[test]
@@ -685,10 +693,18 @@ mod tests {
         let frac = Frac::U32;
         let a = 12;
         let b = 5;
-        for &pair in &[(a, b), (a, -b), (-a, b), (-a, -b)] {
-            let (a, b) = pair;
-            let af = FixedI16::<Frac>::from_bits(a << frac);
-            let bf = FixedI16::<Frac>::from_bits(b << frac);
+        for &(a, b) in &[
+            (a, b),
+            (a, -b),
+            (-a, b),
+            (-a, -b),
+            (b, a),
+            (b, -a),
+            (-b, a),
+            (-b, -a),
+        ] {
+            let af = FixedI16::<Frac>::from_num(a);
+            let bf = FixedI16::<Frac>::from_num(b);
             assert_eq!((af + bf).to_bits(), (a << frac) + (b << frac));
             assert_eq!((af - bf).to_bits(), (a << frac) - (b << frac));
             assert_eq!((af * bf).to_bits(), (a << frac) * b);
@@ -701,6 +717,10 @@ mod tests {
             assert_eq!((!af).to_bits(), !(a << frac));
             assert_eq!((af << 4u8).to_bits(), (a << frac) << 4);
             assert_eq!((af >> 4i128).to_bits(), (a << frac) >> 4);
+            assert_eq!((af * b).to_bits(), (a << frac) * b);
+            assert_eq!((b * af).to_bits(), (a << frac) * b);
+            assert_eq!((af / b).to_bits(), (a << frac) / b);
+            assert_eq!((af % b).to_bits(), (a << frac) % (b << frac));
         }
     }
 
@@ -711,8 +731,8 @@ mod tests {
         let a = 0x0003_4567_89ab_cdef_0123_4567_89ab_cdef_u128;
         let b = 5;
         for &(a, b) in &[(a, b), (b, a)] {
-            let af = FixedU128::<Frac>::from_bits(a << frac);
-            let bf = FixedU128::<Frac>::from_bits(b << frac);
+            let af = FixedU128::<Frac>::from_num(a);
+            let bf = FixedU128::<Frac>::from_num(b);
             assert_eq!((af + bf).to_bits(), (a << frac) + (b << frac));
             if a > b {
                 assert_eq!((af - bf).to_bits(), (a << frac) - (b << frac));
@@ -724,6 +744,12 @@ mod tests {
             assert_eq!((af | bf).to_bits(), (a << frac) | (b << frac));
             assert_eq!((af ^ bf).to_bits(), (a << frac) ^ (b << frac));
             assert_eq!((!af).to_bits(), !(a << frac));
+            assert_eq!((af << 4u8).to_bits(), (a << frac) << 4);
+            assert_eq!((af >> 4i128).to_bits(), (a << frac) >> 4);
+            assert_eq!((af * b).to_bits(), (a << frac) * b);
+            assert_eq!((b * af).to_bits(), (a << frac) * b);
+            assert_eq!((af / b).to_bits(), (a << frac) / b);
+            assert_eq!((af % b).to_bits(), (a << frac) % (b << frac));
         }
     }
 
@@ -743,8 +769,8 @@ mod tests {
             (-b, a),
             (-b, -a),
         ] {
-            let af = FixedI128::<Frac>::from_bits(a << frac);
-            let bf = FixedI128::<Frac>::from_bits(b << frac);
+            let af = FixedI128::<Frac>::from_num(a);
+            let bf = FixedI128::<Frac>::from_num(b);
             assert_eq!((af + bf).to_bits(), (a << frac) + (b << frac));
             assert_eq!((af - bf).to_bits(), (a << frac) - (b << frac));
             assert_eq!((af * bf).to_bits(), (a << frac) * b);
@@ -753,7 +779,14 @@ mod tests {
             assert_eq!((af & bf).to_bits(), (a << frac) & (b << frac));
             assert_eq!((af | bf).to_bits(), (a << frac) | (b << frac));
             assert_eq!((af ^ bf).to_bits(), (a << frac) ^ (b << frac));
+            assert_eq!((-af).to_bits(), -(a << frac));
             assert_eq!((!af).to_bits(), !(a << frac));
+            assert_eq!((af << 4u8).to_bits(), (a << frac) << 4);
+            assert_eq!((af >> 4i128).to_bits(), (a << frac) >> 4);
+            assert_eq!((af * b).to_bits(), (a << frac) * b);
+            assert_eq!((b * af).to_bits(), (a << frac) * b);
+            assert_eq!((af / b).to_bits(), (a << frac) / b);
+            assert_eq!((af % b).to_bits(), (a << frac) % (b << frac));
         }
     }
 }

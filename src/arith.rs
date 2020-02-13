@@ -370,21 +370,7 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn rem(self, rhs: $Inner) -> $Fixed<Frac> {
-                // Overflow converting rhs to $Fixed<Frac> means that either
-                //   * |rhs| > |self|, and so remainder is self, or
-                //   * self is signed min, and the value of rhs is -self, so remainder is 0.
-                match Self::checked_from_num(rhs) {
-                    Some(fixed_rhs) => self.rem(fixed_rhs),
-                    None => if_signed_unsigned! {
-                        $Signedness,
-                        if self.to_num::<$Inner>().wrapping_abs() == rhs {
-                            Self::from_bits(0)
-                        } else {
-                            self
-                        },
-                        self
-                    },
-                }
+                self.checked_rem_int(rhs).expect("division by zero")
             }
         }
 

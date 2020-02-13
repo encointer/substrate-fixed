@@ -442,18 +442,7 @@ assert_eq!(Fix::from_num(7.5).rem_euclid(Fix::from_num(2)), Fix::from_num(1.5));
 ";
                 #[inline]
                 pub fn rem_euclid(self, rhs: $Fixed<Frac>) -> $Fixed<Frac> {
-                    let r = self % rhs;
-                    if_signed! {
-                        $Signedness;
-                        if r.is_negative() {
-                            return if rhs.to_bits() < 0 {
-                                r - rhs
-                            } else {
-                                r + rhs
-                            };
-                        }
-                    }
-                    r
+                    self.checked_rem_euclid(rhs).expect("division by zero")
                 }
             }
 
@@ -609,13 +598,19 @@ assert_eq!(Fix::from_num(1.5).checked_rem(Fix::from_num(0)), None);
 ";
                 #[inline]
                 pub fn checked_rem(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
-                    let rhs = rhs.to_bits();
-                    if rhs == 0 {
+                    let rhs_bits = rhs.to_bits();
+                    if rhs_bits == 0 {
                         None
-                    } else if if_signed_unsigned!($Signedness, rhs == -1, false) {
-                        Some(Self::from_bits(0))
                     } else {
-                        self.to_bits().checked_rem(rhs).map(Self::from_bits)
+                        Some(Self::from_bits(if_signed_unsigned!(
+                            $Signedness,
+                            if rhs_bits == -1 {
+                                0
+                            } else {
+                                self.to_bits() % rhs_bits
+                            },
+                            self.to_bits() % rhs_bits,
+                        )))
                     }
                 }
             }
@@ -698,10 +693,19 @@ assert_eq!(num.checked_rem_euclid(Fix::from_num(0)), None);
 ";
                 #[inline]
                 pub fn checked_rem_euclid(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
-                    if rhs.to_bits() == 0 {
+                    let rhs_bits = rhs.to_bits();
+                    if rhs_bits == 0 {
                         None
                     } else {
-                        Some(self.rem_euclid(rhs))
+                        Some(Self::from_bits(if_signed_unsigned!(
+                            $Signedness,
+                            if rhs_bits == -1 {
+                                0
+                            } else {
+                                self.to_bits().rem_euclid(rhs_bits)
+                            },
+                            self.to_bits() % rhs_bits,
+                        )))
                     }
                 }
             }

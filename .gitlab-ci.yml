@@ -13,10 +13,10 @@ before_script:
   - rustup component add --toolchain beta-$TARGET rustfmt clippy
   - if [ -d cargo/registry/cache ]; then rm -rf $CARGO_HOME/registry/cache; mkdir -p $CARGO_HOME/registry; cp -R cargo/registry/cache $CARGO_HOME/registry/; echo Copied registry/cache; fi
   - if [ -d $CARGO_HOME/registry/src ]; then rm -r $CARGO_HOME/registry/src; fi
-  - if [ -d $CARGO_HOME/registry/cache ]; then (cd $CARGO_HOME/registry; find cache -name \*.crate) fi
+  - if [ -d $CARGO_HOME/registry/cache ]; then (cd $CARGO_HOME/registry; find cache -name \*.crate | sort) fi
 
 after_script:
-  - if [ -d $CARGO_HOME/registry/cache ]; then (cd $CARGO_HOME/registry; for c in cache/*/*.crate; do s=src/${c#cache/}; if [ ! -e ${s%.crate} ]; then rm -v $c; fi; done; find cache -name \*.crate) fi
+  - if [ -d $CARGO_HOME/registry/cache ]; then (cd $CARGO_HOME/registry; for c in cache/*/*.crate; do s=src/${c#cache/}; if [ ! -e ${s%.crate} ]; then rm -v $c; fi; done; find cache -name \*.crate | sort) fi
   - rm -rf cargo
   - mkdir -p cargo/registry
   - if [ -d $CARGO_HOME/registry/cache ]; then cp -R $CARGO_HOME/registry/cache cargo/registry/; echo Updated registry/cache; fi

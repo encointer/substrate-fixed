@@ -257,13 +257,19 @@ assert_eq!(Fix::from_num(7.5).rem_euclid_int(2), Fix::from_num(1.5));
 ";
                 #[inline]
                 pub fn rem_euclid_int(self, rhs: $Inner) -> $Fixed<Frac> {
-                    // Any overflow in coverting rhs to $Fixed<Frac> means that |rhs| > |self|,
-                    // and consequently the remainder is self.
-                    let fixed_rhs = match Self::checked_from_num(rhs) {
-                        Some(s) => s,
-                        None => return self,
-                    };
-                    self.rem_euclid(fixed_rhs)
+                    // For signed rem_euclid_int, rhs can be made
+                    // negative without changing result.
+                    // Then, overflow converting rhs to $Fixed<Frac> means
+                    // that |rhs| > |self|, and so remainder is self.
+                    let prep_rhs = if_signed_unsigned!(
+                        $Signedness,
+                        rhs.wrapping_abs().wrapping_neg(),
+                        rhs,
+                    );
+                    match Self::checked_from_num(prep_rhs) {
+                        Some(fixed_rhs) => self.rem_euclid(fixed_rhs),
+                        None => self,
+                    }
                 }
             }
 
@@ -379,13 +385,11 @@ assert_eq!(Fix::from_num(3.75).checked_rem_int(0), None);
 ";
                 #[inline]
                 pub fn checked_rem_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
-                    // Any overflow in coverting rhs to $Fixed<Frac> means that |rhs| > |self|,
-                    // and consequently the remainder is self.
-                    let fixed_rhs = match Self::checked_from_num(rhs) {
-                        Some(s) => s,
-                        None => return Some(self),
-                    };
-                    self.checked_rem(fixed_rhs)
+                    if rhs == 0 {
+                        None
+                    } else {
+                        Some(self % rhs)
+                    }
                 }
             }
 
@@ -456,13 +460,11 @@ assert_eq!(Fix::from_num(7.5).checked_rem_euclid_int(0), None);
 ";
                 #[inline]
                 pub fn checked_rem_euclid_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
-                    // Any overflow in coverting rhs to $Fixed<Frac> means that |rhs| > |self|,
-                    // and consequently the remainder is self.
-                    let fixed_rhs = match Self::checked_from_num(rhs) {
-                        Some(s) => s,
-                        None => return Some(self),
-                    };
-                    self.checked_rem_euclid(fixed_rhs)
+                    if rhs == 0 {
+                        None
+                    } else {
+                        Some(self.rem_euclid_int(rhs))
+                    }
                 }
             }
 

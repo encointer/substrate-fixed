@@ -446,7 +446,11 @@ assert_eq!(Fix::from_num(7.5).rem_euclid(Fix::from_num(2)), Fix::from_num(1.5));
                     if_signed! {
                         $Signedness;
                         if r.is_negative() {
-                            return r + rhs.abs();
+                            return if rhs.to_bits() < 0 {
+                                r - rhs
+                            } else {
+                                r + rhs
+                            };
                         }
                     }
                     r
@@ -694,14 +698,11 @@ assert_eq!(num.checked_rem_euclid(Fix::from_num(0)), None);
 ";
                 #[inline]
                 pub fn checked_rem_euclid(self, rhs: $Fixed<Frac>) -> Option<$Fixed<Frac>> {
-                    let r = self.checked_rem(rhs)?;
-                    if_signed! {
-                        $Signedness;
-                        if r.is_negative() {
-                            return Some(r + rhs.abs());
-                        }
+                    if rhs.to_bits() == 0 {
+                        None
+                    } else {
+                        Some(self.rem_euclid(rhs))
                     }
-                    Some(r)
                 }
             }
 

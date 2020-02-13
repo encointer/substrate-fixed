@@ -370,13 +370,21 @@ macro_rules! fixed_arith {
             type Output = $Fixed<Frac>;
             #[inline]
             fn rem(self, rhs: $Inner) -> $Fixed<Frac> {
-                // Any overflow in coverting rhs to $Fixed<Frac> means that |rhs| > |self|,
-                // and consequently the remainder is self.
-                let fixed_rhs = match Self::checked_from_num(rhs) {
-                    Some(s) => s,
-                    None => return self,
-                };
-                self.rem(fixed_rhs)
+                // Overflow converting rhs to $Fixed<Frac> means that either
+                //   * |rhs| > |self|, and so remainder is self, or
+                //   * self is signed min, and the value of rhs is -self, so remainder is 0.
+                match Self::checked_from_num(rhs) {
+                    Some(fixed_rhs) => self.rem(fixed_rhs),
+                    None => if_signed_unsigned! {
+                        $Signedness,
+                        if self.to_num::<$Inner>().wrapping_abs() == rhs {
+                            Self::from_bits(0)
+                        } else {
+                            self
+                        },
+                        self
+                    },
+                }
             }
         }
 
@@ -788,5 +796,46 @@ mod tests {
             assert_eq!((af / b).to_bits(), (a << frac) / b);
             assert_eq!((af % b).to_bits(), (a << frac) % (b << frac));
         }
+    }
+
+    fn check_rem_int(a: i32, b: i32) {
+        use crate::types::I16F16;
+        assert_eq!(I16F16::from_num(a) % b, a % b);
+        assert_eq!(I16F16::from_num(a).rem_euclid_int(b), a.rem_euclid(b));
+        match (I16F16::from_num(a).checked_rem_int(b), a.checked_rem(b)) {
+            (Some(a), Some(b)) => assert_eq!(a, b),
+            (None, None) => {}
+            (a, b) => panic!("mismatch {:?}, {:?}", a, b),
+        }
+        match (
+            I16F16::from_num(a).checked_rem_euclid_int(b),
+            a.checked_rem_euclid(b),
+        ) {
+            (Some(a), Some(b)) => assert_eq!(a, b),
+            (None, None) => {}
+            (a, b) => panic!("mismatch {:?}, {:?}", a, b),
+        }
+    }
+
+    #[test]
+    fn rem_int() {
+        use crate::types::I16F16;
+        check_rem_int(-0x8000, -0x8000);
+        check_rem_int(-0x8000, -0x7fff);
+        check_rem_int(-0x8000, 0x7fff);
+        check_rem_int(-0x8000, 0x8000);
+        check_rem_int(-0x7fff, -0x8000);
+        check_rem_int(-0x7fff, -0x7fff);
+        check_rem_int(-0x7fff, 0x7fff);
+        check_rem_int(-0x7fff, 0x8000);
+        check_rem_int(0x7fff, -0x8000);
+        check_rem_int(0x7fff, -0x7fff);
+        check_rem_int(0x7fff, 0x7fff);
+        check_rem_int(0x7fff, 0x8000);
+
+        assert_eq!(I16F16::min_value() % -1, 0);
+        assert_eq!(I16F16::min_value().checked_rem_int(-1).unwrap(), 0);
+        assert_eq!(I16F16::min_value().rem_euclid_int(-1), 0);
+        assert_eq!(I16F16::min_value().checked_rem_euclid_int(-1).unwrap(), 0);
     }
 }

@@ -134,16 +134,16 @@ depending on the crate’s [optional features].
 /// ```
 ///
 /// One way to fix this is to add a trait bound indicating that any
-/// [`u16`] (which can represent 500) can be converted to `F::Bits`.
+/// [`u16`] (which can represent 500) can be converted into `F::Bits`.
 ///
 /// ```rust
 /// use fixed::{traits::Fixed, types::U12F4};
 ///
 /// fn checked_add_times_500<F: Fixed>(lhs: F, rhs: F) -> Option<F>
 /// where
-///     F::Bits: From<u16>,
+///     u16: Into<F::Bits>,
 /// {
-///     rhs.checked_mul_int(F::Bits::from(500))?.checked_add(lhs)
+///     rhs.checked_mul_int(500.into())?.checked_add(lhs)
 /// }
 ///
 /// let val = checked_add_times_500(U12F4::from_num(0.25), Fixed::from_num(1.5));
@@ -159,12 +159,12 @@ depending on the crate’s [optional features].
 ///
 /// fn checked_add_times_500<F: Fixed>(lhs: F, rhs: F) -> Option<F>
 /// where
-///     F::Bits: From<u16>,
+///     u16: Into<F::Bits>,
 /// {
-///     rhs.checked_mul_int(F::Bits::from(500))?.checked_add(lhs)
+///     rhs.checked_mul_int(500.into())?.checked_add(lhs)
 /// }
 ///
-/// // I12F4::Bits is i16, which does not implement From<u16>
+/// // I12F4::Bits is i16, and u16 does not implement Into<i16>
 /// let val = checked_add_times_500(I12F4::from_num(0.25), Fixed::from_num(1.5));
 /// # let _ = val;
 /// ```
@@ -176,14 +176,13 @@ depending on the crate’s [optional features].
 ///
 /// ```rust
 /// use fixed::{traits::Fixed, types::I12F4};
-/// use std::convert::TryFrom;
+/// use core::convert::TryInto;
 ///
 /// fn checked_add_times_500<F: Fixed>(lhs: F, rhs: F) -> Option<F>
 /// where
-///     F::Bits: TryFrom<u16>,
+///     u16: TryInto<F::Bits>,
 /// {
-///     let m = F::Bits::try_from(500).ok()?;
-///     rhs.checked_mul_int(m)?.checked_add(lhs)
+///     rhs.checked_mul_int(500.try_into().ok()?)?.checked_add(lhs)
 /// }
 ///
 /// let val = checked_add_times_500(I12F4::from_num(0.25), Fixed::from_num(1.5));

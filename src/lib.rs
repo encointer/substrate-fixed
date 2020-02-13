@@ -57,8 +57,7 @@ These functions are not provided because different implementations can
 have different trade-offs, for example trading some correctness for
 speed. Implementations can be provided in other crates.
 
-  * The [*fixed-sqrt* crate](https://crates.io/crates/fixed-sqrt)
-    provides the square root operation.
+  * The [*fixed-sqrt* crate] provides the square root operation.
 
 The conversions supported cover the following cases.
 
@@ -144,7 +143,7 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 
 ```toml
 [dependencies]
-fixed = "0.5.2"
+fixed = "0.5.3"
 ```
 
 The *fixed* crate requires rustc version 1.39.0 or later.
@@ -169,7 +168,7 @@ To enable features, you can add the dependency like this to
 
 ```toml
 [dependencies.fixed]
-version = "0.5.2"
+version = "0.5.3"
 features = ["f16", "serde"]
 ```
 
@@ -193,6 +192,7 @@ additional terms or conditions.
 [*Cargo.toml*]: https://doc.rust-lang.org/cargo/guide/dependencies.html
 [*az* crate]: https://crates.io/crates/az
 [*fixed* crate]: https://crates.io/crates/fixed
+[*fixed-sqrt* crate]: https://crates.io/crates/fixed-sqrt
 [*half* crate]: https://crates.io/crates/half
 [*serde* crate]: https://crates.io/crates/serde
 [*typenum* crate]: https://crates.io/crates/typenum
@@ -239,7 +239,7 @@ additional terms or conditions.
 */
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(missing_docs)]
-#![doc(html_root_url = "https://docs.rs/fixed/0.5.2")]
+#![doc(html_root_url = "https://docs.rs/fixed/0.5.3")]
 #![doc(test(attr(deny(warnings))))]
 #![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
 #![allow(clippy::type_repetition_in_bounds)]

@@ -48,8 +48,7 @@ These functions are not provided because different implementations can
 have different trade-offs, for example trading some correctness for
 speed. Implementations can be provided in other crates.
 
-  * The [*fixed-sqrt* crate](https://crates.io/crates/fixed-sqrt)
-    provides the square root operation.
+  * The [*fixed-sqrt* crate] provides the square root operation.
 
 The conversions supported cover the following cases.
 
@@ -75,7 +74,7 @@ The conversions supported cover the following cases.
 
 ## What’s new
 
-### Version 0.5.3 news (unreleased)
+### Version 0.5.3 news (2020-02-13)
 
   * Bug fix: [`round_to_zero`] was returning incorrect results for
     negative whole number operands.
@@ -97,8 +96,14 @@ The conversions supported cover the following cases.
 	  * [`div_euclid`][wde], [`rem_euclid`][wre]
 	  * [`div_euclid_int`][wdei], [`rem_euclid_int`][wrei]
 
+### Version 0.5.2 news (2020-02-02)
+
+  * [`Wrapping`] now supports serialization. (Thanks: Shane Pearman)
+
+[`Fixed`]: https://docs.rs/fixed/0.5.2/fixed/traits/trait.Fixed.html
 [`RemAssign`]: https://doc.rust-lang.org/nightly/core/ops/trait.RemAssign.html
 [`Rem`]: https://doc.rust-lang.org/nightly/core/ops/trait.Rem.html
+[`Wrapping`]: https://docs.rs/fixed/0.5.3/fixed/struct.Wrapping.html
 [`checked_div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.checked_div_euclid
 [`checked_rem_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.checked_rem_euclid
 [`checked_rem`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.checked_rem
@@ -113,49 +118,6 @@ The conversions supported cover the following cases.
 [wdei]: https://docs.rs/fixed/0.5.3/fixed/struct.Wrapping.html#method.div_euclid_int
 [wre]: https://docs.rs/fixed/0.5.3/fixed/struct.Wrapping.html#method.rem_euclid
 [wrei]: https://docs.rs/fixed/0.5.3/fixed/struct.Wrapping.html#method.rem_euclid_int
-
-### Version 0.5.2 news (2020-02-02)
-
-  * [`Wrapping`] now supports serialization. (Thanks: Shane Pearman)
-  
-[`Wrapping`]: https://docs.rs/fixed/0.5.2/fixed/struct.Wrapping.html
-
-### Version 0.5.1 news (2019-12-23)
-
-  * [`ParseFixedError`] implements [`Error`] when the new `std`
-    feature is enabled.
-
-### Version 0.5.0 news (2019-12-06)
-
-  * The *fixed* crate now requires rustc version 1.39.0 or later.
-  * The following methods were added to all fixed-point types and to
-    the [`Fixed`] trait:
-      * [`from_be_bytes`], [`from_le_bytes`], [`from_ne_bytes`]
-	  * [`to_be_bytes`], [`to_le_bytes`], [`to_ne_bytes`]
-	  * [`div_euclid_int`], [`rem_euclid_int`]
-	  * [`checked_div_euclid_int`], [`checked_rem_euclid_int`]
-	  * [`wrapping_div_euclid_int`], [`wrapping_rem_euclid_int`]
-	  * [`overflowing_div_euclid_int`], [`overflowing_rem_euclid_int`]
-
-[`Fixed`]: https://docs.rs/fixed/0.5.2/fixed/traits/trait.Fixed.html
-[`checked_div_euclid_int`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.checked_div_euclid_int
-[`checked_rem_euclid_int`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.checked_rem_euclid_int
-[`div_euclid_int`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.div_euclid_int
-[`from_be_bytes`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.from_be_bytes
-[`from_le_bytes`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.from_le_bytes
-[`from_ne_bytes`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.from_ne_bytes
-[`overflowing_div_euclid_int`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.overflowing_div_euclid_int
-[`overflowing_rem_euclid_int`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.overflowing_rem_euclid_int
-[`rem_euclid_int`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.rem_euclid_int
-[`to_be_bytes`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.to_be_bytes
-[`to_le_bytes`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.to_le_bytes
-[`to_ne_bytes`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.to_ne_bytes
-[`wrapping_div_euclid_int`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.wrapping_div_euclid_int
-[`wrapping_rem_euclid_int`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.wrapping_rem_euclid_int
-
-#### Incompatible changes
-
-  * Deprecated methods and modules were removed.
 
 ### Other releases
 
@@ -225,7 +187,7 @@ it in your crate, add it as a dependency inside [*Cargo.toml*]:
 
 ```toml
 [dependencies]
-fixed = "0.5.2"
+fixed = "0.5.3"
 ```
 
 The *fixed* crate requires rustc version 1.39.0 or later.
@@ -250,7 +212,7 @@ To enable features, you can add the dependency like this to
 
 ```toml
 [dependencies.fixed]
-version = "0.5.2"
+version = "0.5.3"
 features = ["f16", "serde"]
 ```
 
@@ -274,6 +236,7 @@ additional terms or conditions.
 [*Cargo.toml*]: https://doc.rust-lang.org/cargo/guide/dependencies.html
 [*az* crate]: https://crates.io/crates/az
 [*fixed* crate]: https://crates.io/crates/fixed
+[*fixed-sqrt* crate]: https://crates.io/crates/fixed-sqrt
 [*half* crate]: https://crates.io/crates/half
 [*serde* crate]: https://crates.io/crates/serde
 [*typenum* crate]: https://crates.io/crates/typenum
@@ -282,38 +245,38 @@ additional terms or conditions.
 [`Binary`]: https://doc.rust-lang.org/nightly/core/fmt/trait.Binary.html
 [`Display`]: https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html
 [`Error`]: https://doc.rust-lang.org/nightly/std/error/trait.Error.html
-[`FixedI128`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI128.html
-[`FixedI16`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI16.html
-[`FixedI32`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html
-[`FixedI64`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI64.html
-[`FixedI8`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI8.html
-[`FixedU128`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedU128.html
-[`FixedU16`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedU16.html
-[`FixedU32`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedU32.html
-[`FixedU64`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedU64.html
-[`FixedU8`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedU8.html
-[`FromFixed`]: https://docs.rs/fixed/0.5.2/fixed/traits/trait.FromFixed.html
+[`FixedI128`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI128.html
+[`FixedI16`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI16.html
+[`FixedI32`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html
+[`FixedI64`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI64.html
+[`FixedI8`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI8.html
+[`FixedU128`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedU128.html
+[`FixedU16`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedU16.html
+[`FixedU32`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedU32.html
+[`FixedU64`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedU64.html
+[`FixedU8`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedU8.html
+[`FromFixed`]: https://docs.rs/fixed/0.5.3/fixed/traits/trait.FromFixed.html
 [`FromStr`]: https://doc.rust-lang.org/nightly/core/str/trait.FromStr.html
 [`From`]: https://doc.rust-lang.org/nightly/core/convert/trait.From.html
-[`I20F12`]: https://docs.rs/fixed/0.5.2/fixed/types/type.I20F12.html
-[`I4F12`]: https://docs.rs/fixed/0.5.2/fixed/types/type.I4F12.html
-[`I4F4`]: https://docs.rs/fixed/0.5.2/fixed/types/type.I4F4.html
+[`I20F12`]: https://docs.rs/fixed/0.5.3/fixed/types/type.I20F12.html
+[`I4F12`]: https://docs.rs/fixed/0.5.3/fixed/types/type.I4F12.html
+[`I4F4`]: https://docs.rs/fixed/0.5.3/fixed/types/type.I4F4.html
 [`Into`]: https://doc.rust-lang.org/nightly/core/convert/trait.Into.html
-[`LossyFrom`]: https://docs.rs/fixed/0.5.2/fixed/traits/trait.LossyFrom.html
-[`LossyInto`]: https://docs.rs/fixed/0.5.2/fixed/traits/trait.LossyInto.html
+[`LossyFrom`]: https://docs.rs/fixed/0.5.3/fixed/traits/trait.LossyFrom.html
+[`LossyInto`]: https://docs.rs/fixed/0.5.3/fixed/traits/trait.LossyInto.html
 [`LowerHex`]: https://doc.rust-lang.org/nightly/core/fmt/trait.LowerHex.html
 [`Octal`]: https://doc.rust-lang.org/nightly/core/fmt/trait.Octal.html
-[`ParseFixedError`]: https://docs.rs/fixed/0.5.2/fixed/struct.ParseFixedError.html
-[`ToFixed`]: https://docs.rs/fixed/0.5.2/fixed/traits/trait.ToFixed.html
-[`U12`]: https://docs.rs/fixed/0.5.2/fixed/types/extra/type.U12.html
-[`U20F12`]: https://docs.rs/fixed/0.5.2/fixed/types/type.U20F12.html
+[`ParseFixedError`]: https://docs.rs/fixed/0.5.3/fixed/struct.ParseFixedError.html
+[`ToFixed`]: https://docs.rs/fixed/0.5.3/fixed/traits/trait.ToFixed.html
+[`U12`]: https://docs.rs/fixed/0.5.3/fixed/types/extra/type.U12.html
+[`U20F12`]: https://docs.rs/fixed/0.5.3/fixed/types/type.U20F12.html
 [`UpperHex`]: https://doc.rust-lang.org/nightly/core/fmt/trait.UpperHex.html
 [`bf16`]: https://docs.rs/half/^1/half/struct.bf16.html
-[`checked_from_num`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.checked_from_num
+[`checked_from_num`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.checked_from_num
 [`f16`]: https://docs.rs/half/^1/half/struct.f16.html
-[`from_num`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.from_num
-[`from_str_binary`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.from_str_binary
-[`from_str_hex`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.from_str_hex
-[`from_str_octal`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.from_str_octal
-[`to_num`]: https://docs.rs/fixed/0.5.2/fixed/struct.FixedI32.html#method.to_num
+[`from_num`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.from_num
+[`from_str_binary`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.from_str_binary
+[`from_str_hex`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.from_str_hex
+[`from_str_octal`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.from_str_octal
+[`to_num`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.to_num
 [const generics]: https://github.com/rust-lang/rust/issues/44580

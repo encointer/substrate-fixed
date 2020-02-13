@@ -5,7 +5,7 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
-Version 0.5.3 (unreleased)
+Version 0.5.3 (2020-02-13)
 ==========================
 
   * Bug fix: `round_to_zero` was returning incorrect results for

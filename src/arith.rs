@@ -649,6 +649,7 @@ mul_div_widen! { i64, i128, Signed }
 mul_div_fallback! { i128, u128, Signed }
 
 #[cfg(test)]
+#[allow(clippy::cognitive_complexity)]
 mod tests {
     use crate::{types::extra::Unsigned, *};
 
@@ -804,6 +805,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::modulo_one)]
     fn rem_int() {
         use crate::types::{I0F32, I16F16, I1F31};
         check_rem_int(-0x8000, -0x8000);

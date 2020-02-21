@@ -74,6 +74,11 @@ The conversions supported cover the following cases.
 
 ## What’s new
 
+### Version 0.5.4 news (unreleased)
+
+  * Bug fix: [`rem_euclid_int`] and its checked versions were handling
+    overflow incorrectly.
+
 ### Version 0.5.3 news (2020-02-13)
 
   * Bug fix: [`round_to_zero`] was returning incorrect results for
@@ -95,6 +100,8 @@ The conversions supported cover the following cases.
   * The following methods were added to the [`Wrapping`] wrapper:
 	  * [`div_euclid`][wde], [`rem_euclid`][wre]
 	  * [`div_euclid_int`][wdei], [`rem_euclid_int`][wrei]
+  * The following methods were deprecated:
+      * [`wrapping_rem_int`], [`overflowing_rem_int`]
 
 ### Version 0.5.2 news (2020-02-02)
 
@@ -109,10 +116,13 @@ The conversions supported cover the following cases.
 [`checked_rem`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.checked_rem
 [`div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.div_euclid
 [`overflowing_div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.overflowing_div_euclid
+[`overflowing_rem_int`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.overflowing_rem_int
+[`rem_euclid_int`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.rem_euclid_int
 [`rem_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.rem_euclid
 [`round_to_zero`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.round_to_zero
 [`saturating_div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.saturating_div_euclid
 [`wrapping_div_euclid`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.wrapping_div_euclid
+[`wrapping_rem_int`]: https://docs.rs/fixed/0.5.3/fixed/struct.FixedI32.html#method.wrapping_rem_int
 [issue 13]: https://gitlab.com/tspiteri/fixed/issues/13
 [wde]: https://docs.rs/fixed/0.5.3/fixed/struct.Wrapping.html#method.div_euclid
 [wdei]: https://docs.rs/fixed/0.5.3/fixed/struct.Wrapping.html#method.div_euclid_int

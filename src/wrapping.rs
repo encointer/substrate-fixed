@@ -603,7 +603,7 @@ impl<F: Fixed> Wrapping<F> {
     /// ```
     #[inline]
     pub fn rem_euclid_int(self, divisor: F::Bits) -> Wrapping<F> {
-        Wrapping(self.0.rem_euclid_int(divisor))
+        Wrapping(self.0.wrapping_rem_euclid_int(divisor))
     }
 }
 

@@ -5,6 +5,12 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+Version 0.5.4 (unreleased)
+==========================
+
+  * Bug fix: `rem_euclid_int` and its checked versions were handling
+    overflow incorrectly.
+
 Version 0.5.3 (2020-02-13)
 ==========================
 
@@ -27,6 +33,8 @@ Version 0.5.3 (2020-02-13)
   * The following methods were added to the `Wrapping` wrapper:
 	  * `div_euclid`, `rem_euclid`
 	  * `div_euclid_int`, `rem_euclid_int`
+  * The following methods were deprecated:
+      * `wrapping_rem_int`, `overflowing_rem_int`
 
 Version 0.5.2 (2020-02-02)
 ==========================

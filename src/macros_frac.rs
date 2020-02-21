@@ -16,7 +16,9 @@
 macro_rules! fixed_frac {
     (
         $description:expr,
-        $Fixed:ident[$s_fixed:expr]($Inner:ty[$s_inner:expr], $LeEqU:tt, $s_nbits:expr),
+        $Fixed:ident[$s_fixed:expr](
+            $Inner:ty[$s_inner:expr], $LeEqU:tt, $s_nbits:expr, $s_nbits_m4:expr
+        ),
         $UInner:ty, $Signedness:tt
     ) => {
         impl<Frac: $LeEqU> $Fixed<Frac> {
@@ -257,7 +259,9 @@ assert_eq!(Fix::from_num(7.5).rem_euclid_int(2), Fix::from_num(1.5));
 ";
                 #[inline]
                 pub fn rem_euclid_int(self, rhs: $Inner) -> $Fixed<Frac> {
-                    self.checked_rem_euclid_int(rhs).expect("division by zero")
+                    let (ans, overflow) = self.overflowing_rem_euclid_int(rhs);
+                    debug_assert!(!overflow, "overflow");
+                    ans
                 }
             }
 
@@ -375,12 +379,15 @@ assert_eq!(Fix::from_num(3.75).checked_rem_int(0), None);
                 pub fn checked_rem_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
                     // Overflow converting rhs to $Fixed<Frac> means that either
                     //   * |rhs| > |self|, and so remainder is self, or
-                    //   * self is signed min, and the value of rhs is -self, so remainder is 0.
+                    //   * self is signed min with at least one integer bit,
+                    //     and the value of rhs is -self, so remainder is 0.
                     match Self::checked_from_num(rhs) {
                         Some(fixed_rhs) => self.checked_rem(fixed_rhs),
                         None => Some(if_signed_unsigned!(
                             $Signedness,
-                            if self.to_num::<$Inner>().wrapping_abs() == rhs {
+                            if self == Self::min_value()
+                                && (Self::INT_NBITS > 0 && rhs == 1 << (Self::INT_NBITS - 1))
+                            {
                                 Self::from_bits(0)
                             } else {
                                 self
@@ -437,19 +444,26 @@ assert_eq!(Fix::from_num(7.5).checked_div_euclid_int(0), None);
 
             comment! {
                 "Checked remainder for Euclidean division by an integer.
-Returns the remainder, or [`None`] if the divisor is zero.
+Returns the remainder, or [`None`] if the divisor is zero",
+                if_signed_else_empty_str! {
+                    $Signedness,
+                    " or if the remainder results in overflow",
+                },
+                ".
 
 # Examples
 
 ```rust
-use fixed::{types::extra::U4, ", $s_fixed, "};
-type Fix = ", $s_fixed, "<U4>;
+use fixed::{types::extra::U", $s_nbits_m4, ", ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U", $s_nbits_m4, ">;
 assert_eq!(Fix::from_num(7.5).checked_rem_euclid_int(2), Some(Fix::from_num(1.5)));
 assert_eq!(Fix::from_num(7.5).checked_rem_euclid_int(0), None);
 ",
                 if_signed_else_empty_str! {
                     $Signedness,
                     "assert_eq!(Fix::from_num(-7.5).checked_rem_euclid_int(2), Some(Fix::from_num(0.5)));
+// −8 ≤ Fix < 8, so the answer 12.5 overflows
+assert_eq!(Fix::from_num(-7.5).checked_rem_euclid_int(20), None);
 ",
                 },
                 "```
@@ -458,18 +472,31 @@ assert_eq!(Fix::from_num(7.5).checked_rem_euclid_int(0), None);
 ";
                 #[inline]
                 pub fn checked_rem_euclid_int(self, rhs: $Inner) -> Option<$Fixed<Frac>> {
-                    // For signed rem_euclid_int, rhs can be made
-                    // negative without changing result.
-                    // Then, overflow converting rhs to $Fixed<Frac> means
-                    // that |rhs| > |self|, and so remainder is self.
-                    let prep_rhs = if_signed_unsigned!(
-                        $Signedness,
-                        rhs.wrapping_abs().wrapping_neg(),
-                        rhs,
-                    );
-                    match Self::checked_from_num(prep_rhs) {
-                        Some(fixed_rhs) => self.checked_rem_euclid(fixed_rhs),
-                        None => Some(self),
+                    if_signed! {
+                        $Signedness;
+                        let rem = self.checked_rem_int(rhs)?;
+                        if rem >= 0 {
+                            return Some(rem);
+                        }
+                        // Work in unsigned.
+                        // Answer required is |rhs| - |rem|, but rhs is int, rem is fixed.
+                        // INT_NBITS == 0 is a special case, as fraction can be negative.
+                        if Self::INT_NBITS == 0 {
+                            // -0.5 <= rem < 0, so euclidean remainder is in the range
+                            // 0.5 <= answer < 1, which does not fit.
+                            return None;
+                        }
+                        let rhs_abs = rhs.wrapping_abs() as $UInner;
+                        let remb = rem.to_bits();
+                        let remb_abs = remb.wrapping_neg() as $UInner;
+                        let rem_int_abs = remb_abs >> Self::FRAC_NBITS;
+                        let rem_frac = remb & Self::FRAC_MASK;
+                        let ans_int = rhs_abs - rem_int_abs - if rem_frac > 0 { 1 } else { 0 };
+                        Self::checked_from_num(ans_int).map(|x| x | Self::from_bits(rem_frac))
+                    }
+                    if_unsigned! {
+                        $Signedness;
+                        self.checked_rem_int(rhs)
                     }
                 }
             }
@@ -683,6 +710,46 @@ assert_eq!(Fix::min_value().wrapping_div_euclid_int(-1), wrapped);
             }
 
             comment! {
+                "Wrapping remainder for Euclidean division by an integer. Returns the remainder",
+                if_signed_unsigned! {
+                    $Signedness,
+                    ", wrapping on overflow.
+
+Note that while remainder for Euclidean division cannot be negative,
+the wrapped value can be negative.",
+                    ".
+
+Can never overflow for unsigned values.",
+                },
+                "
+
+# Panics
+
+Panics if the divisor is zero.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U", $s_nbits_m4, ", ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U", $s_nbits_m4, ">;
+assert_eq!(Fix::from_num(7.5).wrapping_rem_euclid_int(2), Fix::from_num(1.5));
+",
+                if_signed_else_empty_str! {
+                    $Signedness,
+                    "assert_eq!(Fix::from_num(-7.5).wrapping_rem_euclid_int(2), Fix::from_num(0.5));
+// −8 ≤ Fix < 8, so the answer 12.5 wraps to −3.5
+assert_eq!(Fix::from_num(-7.5).wrapping_rem_euclid_int(20), Fix::from_num(-3.5));
+",
+                },
+                "```
+";
+                #[inline]
+                pub fn wrapping_rem_euclid_int(self, rhs: $Inner) -> $Fixed<Frac> {
+                    self.overflowing_rem_euclid_int(rhs).0
+                }
+            }
+
+            comment! {
                 "Overflowing multiplication.
 
 Returns a [tuple] of the product and a [`bool`] indicating whether an
@@ -854,6 +921,76 @@ assert_eq!(Fix::min_value().overflowing_div_euclid_int(-1), (wrapped, true));
                 }
             }
 
+            comment! {
+                "Remainder for Euclidean division by an integer.
+
+Returns a [tuple] of the remainder and ",
+                if_signed_unsigned! {
+                    $Signedness,
+                    "a [`bool`] indicating whether an overflow has
+occurred. On overflow, the wrapped value is returned.
+
+Note that while remainder for Euclidean division cannot be negative,
+the wrapped value can be negative.",
+                    "[`false`][`bool`], as this can never overflow for unsigned values.",
+                },
+                "
+
+# Panics
+
+Panics if the divisor is zero.
+
+# Examples
+
+```rust
+use fixed::{types::extra::U", $s_nbits_m4, ", ", $s_fixed, "};
+type Fix = ", $s_fixed, "<U", $s_nbits_m4, ">;
+assert_eq!(Fix::from_num(7.5).overflowing_rem_euclid_int(2), (Fix::from_num(1.5), false));
+",
+                if_signed_else_empty_str! {
+                    $Signedness,
+                    "assert_eq!(Fix::from_num(-7.5).overflowing_rem_euclid_int(2), (Fix::from_num(0.5), false));
+// −8 ≤ Fix < 8, so the answer 12.5 wraps to −3.5
+assert_eq!(Fix::from_num(-7.5).overflowing_rem_euclid_int(20), (Fix::from_num(-3.5), true));
+",
+                },
+                "```
+
+[`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+[tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
+";
+                #[inline]
+                pub fn overflowing_rem_euclid_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
+                    if_signed! {
+                        $Signedness;
+                        let rem = self % rhs;
+                        if rem >= 0 {
+                            return (rem, false);
+                        }
+                        // Work in unsigned.
+                        // Answer required is |rhs| - |rem|, but rhs is int, rem is fixed.
+                        // INT_NBITS == 0 is a special case, as fraction can be negative.
+                        if Self::INT_NBITS == 0 {
+                            // -0.5 <= rem < 0, so euclidean remainder is in the range
+                            // 0.5 <= answer < 1, which does not fit.
+                            return (rem, true);
+                        }
+                        let rhs_abs = rhs.wrapping_abs() as $UInner;
+                        let remb = rem.to_bits();
+                        let remb_abs = remb.wrapping_neg() as $UInner;
+                        let rem_int_abs = remb_abs >> Self::FRAC_NBITS;
+                        let rem_frac = remb & Self::FRAC_MASK;
+                        let ans_int = rhs_abs - rem_int_abs - if rem_frac > 0 { 1 } else { 0 };
+                        let (ans, overflow) = Self::overflowing_from_num(ans_int);
+                        (ans | Self::from_bits(rem_frac), overflow)
+                    }
+                    if_unsigned! {
+                        $Signedness;
+                        (self % rhs, false)
+                    }
+                }
+            }
+
             /// Remainder for division by an integer.
             ///
             /// # Panics
@@ -874,28 +1011,6 @@ assert_eq!(Fix::min_value().overflowing_div_euclid_int(-1), (wrapped, true));
             #[inline]
             pub fn overflowing_rem_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
                 (self % rhs, false)
-            }
-
-            /// Remainder for Euclidean division by an integer.
-            ///
-            /// # Panics
-            ///
-            /// Panics if the divisor is zero.
-            #[deprecated(since = "0.5.3", note = "cannot overflow, use `rem_euclid_int` instead")]
-            #[inline]
-            pub fn wrapping_rem_euclid_int(self, rhs: $Inner) -> $Fixed<Frac> {
-                self.rem_euclid_int(rhs)
-            }
-
-            /// Remainder for Euclidean division by an integer.
-            ///
-            /// # Panics
-            ///
-            /// Panics if the divisor is zero.
-            #[deprecated(since = "0.5.3", note = "cannot overflow, use `rem_euclid_int` instead")]
-            #[inline]
-            pub fn overflowing_rem_euclid_int(self, rhs: $Inner) -> ($Fixed<Frac>, bool) {
-                (self.rem_euclid_int(rhs), false)
             }
         }
     };

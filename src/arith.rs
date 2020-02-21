@@ -805,7 +805,7 @@ mod tests {
 
     #[test]
     fn rem_int() {
-        use crate::types::I16F16;
+        use crate::types::{I0F32, I16F16, I1F31};
         check_rem_int(-0x8000, -0x8000);
         check_rem_int(-0x8000, -0x7fff);
         check_rem_int(-0x8000, 0x7fff);
@@ -819,9 +819,71 @@ mod tests {
         check_rem_int(0x7fff, 0x7fff);
         check_rem_int(0x7fff, 0x8000);
 
+        fn i1(f: f32) -> I1F31 {
+            I1F31::from_num(f)
+        }
+        fn i0(f: f32) -> I0F32 {
+            I0F32::from_num(f)
+        }
+
         assert_eq!(I16F16::min_value() % -1, 0);
         assert_eq!(I16F16::min_value().checked_rem_int(-1).unwrap(), 0);
         assert_eq!(I16F16::min_value().rem_euclid_int(-1), 0);
         assert_eq!(I16F16::min_value().checked_rem_euclid_int(-1).unwrap(), 0);
+
+        assert_eq!(i1(-1.0) % 1, i1(0.0));
+        assert_eq!(i1(-1.0).rem_euclid_int(1), i1(0.0));
+
+        assert_eq!(i1(-0.75) % 1, i1(-0.75));
+        assert_eq!(i1(-0.75).rem_euclid_int(1), i1(0.25));
+
+        assert_eq!(i1(-0.5) % 1, i1(-0.5));
+        assert_eq!(i1(-0.5).rem_euclid_int(1), i1(0.5));
+
+        assert_eq!(i1(-0.5) % 3, i1(-0.5));
+        assert_eq!(i1(-0.5).checked_rem_euclid_int(3), None);
+        assert_eq!(i1(-0.5).wrapping_rem_euclid_int(3), i1(0.5));
+        assert_eq!(i1(-0.5).overflowing_rem_euclid_int(3), (i1(0.5), true));
+
+        assert_eq!(i1(-0.25) % 1, i1(-0.25));
+        assert_eq!(i1(-0.25).rem_euclid_int(1), i1(0.75));
+
+        assert_eq!(i1(-0.25) % 3, i1(-0.25));
+        assert_eq!(i1(-0.25).checked_rem_euclid_int(3), None);
+        assert_eq!(i1(-0.25).wrapping_rem_euclid_int(3), i1(0.75));
+        assert_eq!(i1(-0.25).overflowing_rem_euclid_int(3), (i1(0.75), true));
+
+        assert_eq!(i1(0.0) % 1, i1(0.0));
+        assert_eq!(i1(0.0).rem_euclid_int(1), i1(0.0));
+
+        assert_eq!(i1(0.25) % 1, i1(0.25));
+        assert_eq!(i1(0.25).rem_euclid_int(1), i1(0.25));
+
+        assert_eq!(i1(0.5) % 1, i1(0.5));
+        assert_eq!(i1(0.5).rem_euclid_int(1), i1(0.5));
+
+        assert_eq!(i1(0.75) % 1, i1(0.75));
+        assert_eq!(i1(0.75).rem_euclid_int(1), i1(0.75));
+
+        assert_eq!(i0(-0.5) % 1, i0(-0.5));
+        assert_eq!(i0(-0.5).checked_rem_euclid_int(1), None);
+        assert_eq!(i0(-0.5).wrapping_rem_euclid_int(1), i0(-0.5));
+        assert_eq!(i0(-0.5).overflowing_rem_euclid_int(1), (i0(-0.5), true));
+
+        assert_eq!(i0(-0.375) % 1, i0(-0.375));
+        assert_eq!(i0(-0.375).checked_rem_euclid_int(1), None);
+        assert_eq!(i0(-0.375).wrapping_rem_euclid_int(1), i0(-0.375));
+        assert_eq!(i0(-0.375).overflowing_rem_euclid_int(1), (i0(-0.375), true));
+
+        assert_eq!(i0(-0.25) % 1, i0(-0.25));
+        assert_eq!(i0(-0.25).checked_rem_euclid_int(1), None);
+        assert_eq!(i0(-0.25).wrapping_rem_euclid_int(1), i0(-0.25));
+        assert_eq!(i0(-0.25).overflowing_rem_euclid_int(1), (i0(-0.25), true));
+
+        assert_eq!(i0(0.0) % 1, i0(0.0));
+        assert_eq!(i0(0.0).rem_euclid_int(1), i0(0.0));
+
+        assert_eq!(i0(0.25) % 1, i0(0.25));
+        assert_eq!(i0(0.25).rem_euclid_int(1), i0(0.25));
     }
 }

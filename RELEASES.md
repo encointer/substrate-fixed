@@ -5,7 +5,7 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
-Version 0.5.4 (unreleased)
+Version 0.5.4 (2020-02-21)
 ==========================
 
   * Bug fix: `rem_euclid_int` and its checked versions were handling

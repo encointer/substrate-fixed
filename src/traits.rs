@@ -210,7 +210,8 @@ depending on the crate’s [optional features].
 pub trait Fixed
 where
     Self: Copy + Default + Hash + Ord,
-    Self: Debug + Display + Binary + Octal + LowerHex + UpperHex + FromStr,
+    Self: Debug + Display + Binary + Octal + LowerHex + UpperHex,
+    Self: FromStr<Err = ParseFixedError>,
     Self: FromFixed + ToFixed,
     Self: Add<Output = Self> + AddAssign + Sub<Output = Self> + SubAssign,
     Self: Mul<Output = Self> + MulAssign + Div<Output = Self> + DivAssign,

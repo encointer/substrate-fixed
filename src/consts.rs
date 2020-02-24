@@ -148,8 +148,11 @@ pub const LN_10: U2F126 = U2F126::from_bits(0x935D_8DDD_AAA8_AC16_EA56_D62B_82D3
 #[cfg(test)]
 #[allow(clippy::cognitive_complexity, clippy::float_cmp)]
 mod tests {
-    use crate::{consts::*, traits::FromFixed};
-    use core::{f32, f64};
+    use crate::{
+        consts::*,
+        traits::{Fixed, FromFixed},
+    };
+    use core::{convert::TryFrom, f32, f64};
 
     #[cfg(feature = "f16")]
     #[test]
@@ -293,5 +296,46 @@ mod tests {
         assert_eq!(f64::from_fixed(LOG10_E), f64::consts::LOG10_E);
         assert_eq!(f64::from_fixed(LN_2), f64::consts::LN_2);
         assert_eq!(f64::from_fixed(LN_10), f64::consts::LN_10);
+    }
+
+    fn compare_parse<F: Fixed>(f: F, s: &str)
+    where
+        F::Bits: TryFrom<u8>,
+    {
+        let sf = F::from_str(s).unwrap();
+        let one = F::Bits::try_from(1).ok().unwrap();
+        assert!(f <= sf && sf < f + F::from_bits(one));
+    }
+
+    #[test]
+    fn cmp_parse() {
+        compare_parse(TAU, "6.283185307179586476925286766559005768394");
+        compare_parse(FRAC_TAU_2, "3.141592653589793238462643383279502884197");
+        compare_parse(FRAC_TAU_3, "2.094395102393195492308428922186335256131");
+        compare_parse(FRAC_TAU_4, "1.570796326794896619231321691639751442098");
+        compare_parse(FRAC_TAU_6, "1.047197551196597746154214461093167628065");
+        compare_parse(FRAC_TAU_8, "0.7853981633974483096156608458198757210492");
+        compare_parse(FRAC_TAU_12, "0.5235987755982988730771072305465838140328");
+        compare_parse(FRAC_1_TAU, "0.1591549430918953357688837633725143620344");
+        compare_parse(FRAC_2_TAU, "0.3183098861837906715377675267450287240689");
+        compare_parse(FRAC_4_TAU, "0.6366197723675813430755350534900574481378");
+        compare_parse(PI, "3.141592653589793238462643383279502884197");
+        compare_parse(FRAC_PI_2, "1.570796326794896619231321691639751442098");
+        compare_parse(FRAC_PI_3, "1.047197551196597746154214461093167628065");
+        compare_parse(FRAC_PI_4, "0.7853981633974483096156608458198757210492");
+        compare_parse(FRAC_PI_6, "0.5235987755982988730771072305465838140328");
+        compare_parse(FRAC_PI_8, "0.3926990816987241548078304229099378605246");
+        compare_parse(FRAC_1_PI, "0.3183098861837906715377675267450287240689");
+        compare_parse(FRAC_2_PI, "0.6366197723675813430755350534900574481378");
+        compare_parse(FRAC_2_SQRT_PI, "1.128379167095512573896158903121545171688");
+        compare_parse(SQRT_2, "1.414213562373095048801688724209698078569");
+        compare_parse(FRAC_1_SQRT_2, "0.7071067811865475244008443621048490392848");
+        compare_parse(E, "2.718281828459045235360287471352662497757");
+        compare_parse(LOG2_10, "3.321928094887362347870319429489390175864");
+        compare_parse(LOG2_E, "1.442695040888963407359924681001892137426");
+        compare_parse(LOG10_2, "0.3010299956639811952137388947244930267681");
+        compare_parse(LOG10_E, "0.4342944819032518276511289189166050822943");
+        compare_parse(LN_2, "0.6931471805599453094172321214581765680755");
+        compare_parse(LN_10, "2.302585092994045684017991454684364207601");
     }
 }

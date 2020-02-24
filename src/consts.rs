@@ -303,8 +303,8 @@ mod tests {
         F::Bits: TryFrom<u8>,
     {
         let sf = F::from_str(s).unwrap();
-        let one = F::Bits::try_from(1).ok().unwrap();
-        assert!(f <= sf && sf < f + F::from_bits(one));
+        let f_plus = f + F::from_bits(F::Bits::try_from(1).ok().unwrap());
+        assert!(f <= sf && sf <= f_plus);
     }
 
     #[test]

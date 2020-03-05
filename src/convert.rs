@@ -39,6 +39,10 @@ macro_rules! convert {
             $DstBits: Sub<FracDst>,
             Diff<$SrcBits, FracSrc>: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
+            /// Converts a fixed-pint number.
+            ///
+            /// This conversion never fails (infallible) and does not
+            /// lose any precision (lossless).
             #[inline]
             fn from(src: $SrcU<FracSrc>) -> Self {
                 let unshifted = Self::from_bits(src.to_bits().into()).to_bits();
@@ -54,6 +58,10 @@ macro_rules! convert {
             $DstBits: Sub<FracDst>,
             Diff<$SrcBits, FracSrc>: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
+            /// Converts a fixed-pint number.
+            ///
+            /// This conversion never fails (infallible) and does not
+            /// lose any precision (lossless).
             #[inline]
             fn from(src: $SrcI<FracSrc>) -> Self {
                 let unshifted = Self::from_bits(src.to_bits().into()).to_bits();
@@ -69,6 +77,10 @@ macro_rules! convert {
             $DstBitsM1: Sub<FracDst>,
             Diff<$SrcBits, FracSrc>: IsLessOrEqual<Diff<$DstBitsM1, FracDst>, Output = True>,
         {
+            /// Converts a fixed-pint number.
+            ///
+            /// This conversion never fails (infallible) and does not
+            /// lose any precision (lossless).
             #[inline]
             fn from(src: $SrcU<FracSrc>) -> Self {
                 let unshifted = Self::from_bits(src.to_bits().into()).to_bits();
@@ -89,6 +101,12 @@ macro_rules! convert_lossy {
             $DstBits: Sub<FracDst>,
             Diff<$SrcBits, FracSrc>: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
+            /// Converts a fixed-pint number.
+            ///
+            /// This conversion never fails (infallible) but may lose
+            /// precision (lossy). Any fractional bits in the source
+            /// that cannot be represented in the destination are
+            /// truncated.
             #[inline]
             fn lossy_from(src: $SrcU<FracSrc>) -> Self {
                 src.to_num()
@@ -101,6 +119,12 @@ macro_rules! convert_lossy {
             $DstBits: Sub<FracDst>,
             Diff<$SrcBits, FracSrc>: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
+            /// Converts a fixed-pint number.
+            ///
+            /// This conversion never fails (infallible) but may lose
+            /// precision (lossy). Any fractional bits in the source
+            /// that cannot be represented in the destination are
+            /// truncated.
             #[inline]
             fn lossy_from(src: $SrcI<FracSrc>) -> Self {
                 src.to_num()
@@ -113,6 +137,12 @@ macro_rules! convert_lossy {
             $DstBitsM1: Sub<FracDst>,
             Diff<$SrcBits, FracSrc>: IsLessOrEqual<Diff<$DstBitsM1, FracDst>, Output = True>,
         {
+            /// Converts a fixed-pint number.
+            ///
+            /// This conversion never fails (infallible) but may lose
+            /// precision (lossy). Any fractional bits in the source
+            /// that cannot be represented in the destination are
+            /// truncated.
             #[inline]
             fn lossy_from(src: $SrcU<FracSrc>) -> Self {
                 src.to_num()
@@ -161,22 +191,22 @@ convert_lossy! { FixedU128, FixedI128, U128, LeEqU128 }
 macro_rules! lossy {
     ($Src:ty) => {
         impl LossyFrom<$Src> for $Src {
+            /// Converts a number.
+            ///
+            /// This conversion never fails (infallible) and does not
+            /// lose any precision, so it is actually lossless.
             #[inline]
             fn lossy_from(src: $Src) -> Self {
                 src
             }
         }
     };
-    ($Src:ty as $Dst:ty) => {
-        impl LossyFrom<$Src> for $Dst {
-            #[inline]
-            fn lossy_from(src: $Src) -> Self {
-                src as Self
-            }
-        }
-    };
     ($Src:ty: Into $($Dst:ty),*) => { $(
         impl LossyFrom<$Src> for $Dst {
+            /// Converts a number.
+            ///
+            /// This conversion never fails (infallible) and does not
+            /// lose any precision, so it is actually lossless.
             #[inline]
             fn lossy_from(src: $Src) -> Self {
                 src.into()
@@ -195,6 +225,10 @@ macro_rules! int_to_fixed {
             $DstBits: Sub<FracDst>,
             $SrcBits: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
+            /// Converts an integer to a fixed-point number.
+            ///
+            /// This conversion never fails (infallible) and cannot
+            /// lose any fractional bits, so it is actually lossless.
             #[inline]
             fn from(src: $SrcU) -> Self {
                 let unshifted = Self::from_bits(src.into()).to_bits();
@@ -208,6 +242,10 @@ macro_rules! int_to_fixed {
             $DstBits: Sub<FracDst>,
             $SrcBits: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
+            /// Converts an integer to a fixed-point number.
+            ///
+            /// This conversion never fails (infallible) and cannot
+            /// lose any fractional bits, so it is actually lossless.
             #[inline]
             fn from(src: $SrcI) -> Self {
                 let unshifted = Self::from_bits(src.into()).to_bits();
@@ -221,6 +259,10 @@ macro_rules! int_to_fixed {
             $DstBitsM1: Sub<FracDst>,
             $SrcBits: IsLessOrEqual<Diff<$DstBitsM1, FracDst>, Output = True>,
         {
+            /// Converts an integer to a fixed-point number.
+            ///
+            /// This conversion never fails (infallible) and cannot
+            /// lose any fractional bits, so it is actually lossless.
             #[inline]
             fn from(src: $SrcU) -> Self {
                 let unshifted = Self::from_bits(src.into()).to_bits();
@@ -234,6 +276,10 @@ macro_rules! int_to_fixed {
             $DstBits: Sub<FracDst>,
             $SrcBits: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
+            /// Converts an integer to a fixed-point number.
+            ///
+            /// This conversion never fails (infallible) and cannot
+            /// lose any fractional bits, so it is actually lossless.
             #[inline]
             fn lossy_from(src: $SrcU) -> Self {
                 src.into()
@@ -245,6 +291,10 @@ macro_rules! int_to_fixed {
             $DstBits: Sub<FracDst>,
             $SrcBits: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
+            /// Converts an integer to a fixed-point number.
+            ///
+            /// This conversion never fails (infallible) and cannot
+            /// lose any fractional bits, so it is actually lossless.
             #[inline]
             fn lossy_from(src: $SrcI) -> Self {
                 src.into()
@@ -256,6 +306,10 @@ macro_rules! int_to_fixed {
             $DstBitsM1: Sub<FracDst>,
             $SrcBits: IsLessOrEqual<Diff<$DstBitsM1, FracDst>, Output = True>,
         {
+            /// Converts an integer to a fixed-point number.
+            ///
+            /// This conversion never fails (infallible) and cannot
+            /// lose any fractional bits, so it is actually lossless.
             #[inline]
             fn lossy_from(src: $SrcU) -> Self {
                 src.into()
@@ -265,6 +319,10 @@ macro_rules! int_to_fixed {
 
     (($SrcU:ident, $SrcI:ident) -> ($DstU:ident, $DstI:ident)) => {
         impl From<$SrcU> for $DstU<U0> {
+            /// Converts an integer to a fixed-point number.
+            ///
+            /// This conversion never fails (infallible) and cannot
+            /// lose any fractional bits (lossless).
             #[inline]
             fn from(src: $SrcU) -> Self {
                 Self::from_bits(src)
@@ -272,6 +330,10 @@ macro_rules! int_to_fixed {
         }
 
         impl From<$SrcI> for $DstI<U0> {
+            /// Converts an integer to a fixed-point number.
+            ///
+            /// This conversion never fails (infallible) and cannot
+            /// lose any fractional bits (lossless).
             #[inline]
             fn from(src: $SrcI) -> Self {
                 Self::from_bits(src)
@@ -310,6 +372,12 @@ macro_rules! bool_to_fixed {
             $DstBits: Sub<FracDst>,
             U1: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
+            /// Converts a [`bool`] to a fixed-point number.
+            ///
+            /// This conversion never fails (infallible) and cannot
+            /// lose any fractional bits (lossless).
+            ///
+            /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
             #[inline]
             fn from(src: bool) -> Self {
                 let unshifted = Self::from_bits(src.into()).to_bits();
@@ -323,6 +391,12 @@ macro_rules! bool_to_fixed {
             $DstBitsM1: Sub<FracDst>,
             U1: IsLessOrEqual<Diff<$DstBitsM1, FracDst>, Output = True>,
         {
+            /// Converts a [`bool`] to a fixed-point number.
+            ///
+            /// This conversion never fails (infallible) and cannot
+            /// lose any fractional bits (lossless).
+            ///
+            /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
             #[inline]
             fn from(src: bool) -> Self {
                 let unshifted = Self::from_bits(src.into()).to_bits();
@@ -336,6 +410,12 @@ macro_rules! bool_to_fixed {
             $DstBits: Sub<FracDst>,
             U1: IsLessOrEqual<Diff<$DstBits, FracDst>, Output = True>,
         {
+            /// Converts a [`bool`] to a fixed-point number.
+            ///
+            /// This conversion never fails (infallible) and cannot
+            /// lose any fractional bits, so it is actually lossless.
+            ///
+            /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
             #[inline]
             fn lossy_from(src: bool) -> Self {
                 src.into()
@@ -347,6 +427,12 @@ macro_rules! bool_to_fixed {
             $DstBitsM1: Sub<FracDst>,
             U1: IsLessOrEqual<Diff<$DstBitsM1, FracDst>, Output = True>,
         {
+            /// Converts a [`bool`] to a fixed-point number.
+            ///
+            /// This conversion never fails (infallible) and cannot
+            /// lose any fractional bits, so it is actually lossless.
+            ///
+            /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
             #[inline]
             fn lossy_from(src: bool) -> Self {
                 src.into()
@@ -364,6 +450,10 @@ bool_to_fixed! { FixedU128, FixedI128, U128, U127, LeEqU128 }
 macro_rules! fixed_to_int {
     (($SrcU:ident, $SrcI:ident) -> ($DstU:ident, $DstI:ident)) => {
         impl From<$SrcU<U0>> for $DstU {
+            /// Converts a fixed-point number with no fractional bits to an integer.
+            ///
+            /// This conversion never fails (infallible) and cannot
+            /// lose any fractional bits (lossless).
             #[inline]
             fn from(src: $SrcU<U0>) -> Self {
                 src.to_bits().into()
@@ -371,6 +461,10 @@ macro_rules! fixed_to_int {
         }
 
         impl From<$SrcI<U0>> for $DstI {
+            /// Converts a fixed-point number with no fractional bits to an integer.
+            ///
+            /// This conversion never fails (infallible) and cannot
+            /// lose any fractional bits (lossless).
             #[inline]
             fn from(src: $SrcI<U0>) -> Self {
                 src.to_bits().into()
@@ -381,6 +475,10 @@ macro_rules! fixed_to_int {
         fixed_to_int! { ($SrcU, $SrcI) -> ($DstU, $DstI) }
 
         impl From<$SrcU<U0>> for $DstI {
+            /// Converts a fixed-point number with no fractional bits to an integer.
+            ///
+            /// This conversion never fails (infallible) and cannot
+            /// lose any fractional bits (lossless).
             #[inline]
             fn from(src: $SrcU<U0>) -> Self {
                 src.to_bits().into()
@@ -421,6 +519,11 @@ macro_rules! fixed_to_int_lossy {
             $SrcBits: Sub<FracSrc>,
             Diff<$SrcBits, FracSrc>: IsLessOrEqual<$DstBits, Output = True>,
         {
+            /// Converts a fixed-point number to an integer.
+            ///
+            /// This conversion never fails (infallible) but may lose
+            /// precision (lossy). Any fractional bits in the source
+            /// are truncated.
             #[inline]
             fn lossy_from(src: $SrcU<FracSrc>) -> Self {
                 src.to_num()
@@ -432,6 +535,11 @@ macro_rules! fixed_to_int_lossy {
             $SrcBits: Sub<FracSrc>,
             Diff<$SrcBits, FracSrc>: IsLessOrEqual<$DstBits, Output = True>,
         {
+            /// Converts a fixed-point number to an integer.
+            ///
+            /// This conversion never fails (infallible) but may lose
+            /// precision (lossy). Any fractional bits in the source
+            /// are truncated.
             #[inline]
             fn lossy_from(src: $SrcI<FracSrc>) -> Self {
                 src.to_num()
@@ -443,6 +551,11 @@ macro_rules! fixed_to_int_lossy {
             $SrcBits: Sub<FracSrc>,
             Diff<$SrcBits, FracSrc>: IsLessOrEqual<$DstBitsM1, Output = True>,
         {
+            /// Converts a fixed-point number to an integer.
+            ///
+            /// This conversion never fails (infallible) but may lose
+            /// precision (lossy). Any fractional bits in the source
+            /// are truncated.
             #[inline]
             fn lossy_from(src: $SrcU<FracSrc>) -> Self {
                 src.to_num()
@@ -480,6 +593,10 @@ fixed_to_int_lossy! { FixedU128, FixedI128, U128, LeEqU128 }
 macro_rules! fixed_to_float {
     ($Fixed:ident($LeEqU:ident) -> $Float:ident) => {
         impl<Frac: $LeEqU> From<$Fixed<Frac>> for $Float {
+            /// Converts a fixed-point number to a floating-point number.
+            ///
+            /// This conversion never fails (infallible) and does not
+            /// lose any precision (lossless).
             #[inline]
             fn from(src: $Fixed<Frac>) -> $Float {
                 src.to_num()
@@ -506,6 +623,11 @@ fixed_to_float! { FixedU32(LeEqU32) -> f64 }
 macro_rules! fixed_to_float_lossy {
     ($Fixed:ident($LeEqU:ident) -> $Float:ident) => {
         impl<Frac: $LeEqU> LossyFrom<$Fixed<Frac>> for $Float {
+            /// Converts a fixed-point number to a floating-point number.
+            ///
+            /// This conversion never fails (infallible) but may lose
+            /// precision (lossy). Rounding is to the nearest, with
+            /// ties rounded to even.
             #[inline]
             fn lossy_from(src: $Fixed<Frac>) -> $Float {
                 src.to_num()
@@ -533,37 +655,73 @@ fixed_to_float_lossy! { FixedU32(LeEqU32) }
 fixed_to_float_lossy! { FixedU64(LeEqU64) }
 fixed_to_float_lossy! { FixedU128(LeEqU128) }
 
-macro_rules! int_to_float_lossy {
-    ($Int:ident -> $Float:ident) => {
-        impl LossyFrom<$Int> for $Float {
-            #[inline]
-            fn lossy_from(src: $Int) -> $Float {
-                src.to_repr_fixed().to_num()
+macro_rules! int_to_float_lossy_lossless {
+    ($Int:ident -> $($Lossy:ident)*; $($Lossless:ident)*) => {
+        $(
+            impl LossyFrom<$Int> for $Lossy {
+                /// Converts an integer to a floating-point number.
+                ///
+                /// This conversion never fails (infallible) but may
+                /// lose precision (lossy). Rounding is to the
+                /// nearest, with ties rounded to even.
+                #[inline]
+                fn lossy_from(src: $Int) -> $Lossy {
+                    src.to_repr_fixed().to_num()
+                }
             }
-        }
-    };
-    ($Int:ident) => {
-        #[cfg(feature = "f16")]
-        int_to_float_lossy! { $Int -> f16 }
-        #[cfg(feature = "f16")]
-        int_to_float_lossy! { $Int -> bf16 }
-        int_to_float_lossy! { $Int -> f32 }
-        int_to_float_lossy! { $Int -> f64 }
+        )*
+        $(
+            impl LossyFrom<$Int> for $Lossless {
+                /// Converts an integer to a floating-point number.
+                ///
+                /// This conversion never fails (infallible) and does
+                /// not lose precision (lossless).
+                #[inline]
+                fn lossy_from(src: $Int) -> $Lossless {
+                    src.to_repr_fixed().to_num()
+                }
+            }
+        )*
     };
 }
 
-int_to_float_lossy! { i8 }
-int_to_float_lossy! { i16 }
-int_to_float_lossy! { i32 }
-int_to_float_lossy! { i64 }
-int_to_float_lossy! { i128 }
-int_to_float_lossy! { isize }
-int_to_float_lossy! { u8 }
-int_to_float_lossy! { u16 }
-int_to_float_lossy! { u32 }
-int_to_float_lossy! { u64 }
-int_to_float_lossy! { u128 }
-int_to_float_lossy! { usize }
+#[cfg(feature = "f16")]
+int_to_float_lossy_lossless! { i8 -> bf16; f16 }
+int_to_float_lossy_lossless! { i8 -> ; f32 f64 }
+#[cfg(feature = "f16")]
+int_to_float_lossy_lossless! { i16 -> bf16 f16; }
+int_to_float_lossy_lossless! { i16 -> ; f32 f64 }
+#[cfg(feature = "f16")]
+int_to_float_lossy_lossless! { i32 -> bf16 f16; }
+int_to_float_lossy_lossless! { i32 -> f32; f64 }
+#[cfg(feature = "f16")]
+int_to_float_lossy_lossless! { i64 -> bf16 f16; }
+int_to_float_lossy_lossless! { i64 -> f32 f64; }
+#[cfg(feature = "f16")]
+int_to_float_lossy_lossless! { i128 -> bf16 f16; }
+int_to_float_lossy_lossless! { i128 -> f32 f64; }
+#[cfg(feature = "f16")]
+int_to_float_lossy_lossless! { isize -> bf16 f16; }
+int_to_float_lossy_lossless! { isize -> f32 f64; }
+
+#[cfg(feature = "f16")]
+int_to_float_lossy_lossless! { u8 -> bf16; f16 }
+int_to_float_lossy_lossless! { u8 -> ; f32 f64 }
+#[cfg(feature = "f16")]
+int_to_float_lossy_lossless! { u16 -> bf16 f16; }
+int_to_float_lossy_lossless! { u16 -> ; f32 f64 }
+#[cfg(feature = "f16")]
+int_to_float_lossy_lossless! { u32 -> bf16 f16; }
+int_to_float_lossy_lossless! { u32 -> f32; f64 }
+#[cfg(feature = "f16")]
+int_to_float_lossy_lossless! { u64 -> bf16 f16; }
+int_to_float_lossy_lossless! { u64 -> f32 f64; }
+#[cfg(feature = "f16")]
+int_to_float_lossy_lossless! { u128 -> bf16 f16; }
+int_to_float_lossy_lossless! { u128 -> f32 f64; }
+#[cfg(feature = "f16")]
+int_to_float_lossy_lossless! { usize -> bf16 f16; }
+int_to_float_lossy_lossless! { usize -> f32 f64; }
 
 lossy! { bool }
 lossy! { bool: Into i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize }
@@ -593,6 +751,11 @@ lossy! { f16 }
 #[cfg(feature = "f16")]
 impl LossyFrom<f16> for bf16 {
     #[inline]
+    /// Converts a number.
+    ///
+    /// This conversion never fails (infallible) but may lose
+    /// precision (lossy). Rounding is to the nearest, with ties
+    /// rounded to even.
     fn lossy_from(src: f16) -> bf16 {
         bf16::from_f32(src.into())
     }
@@ -605,6 +768,11 @@ lossy! { f16: Into f64 }
 #[cfg(feature = "f16")]
 impl LossyFrom<bf16> for f16 {
     #[inline]
+    /// Converts a number.
+    ///
+    /// This conversion never fails (infallible) but may lose
+    /// precision (lossy). Rounding is to the nearest, with ties
+    /// rounded to even.
     fn lossy_from(src: bf16) -> f16 {
         f16::from_f32(src.into())
     }
@@ -619,6 +787,11 @@ lossy! { bf16: Into f64 }
 #[cfg(feature = "f16")]
 impl LossyFrom<f32> for f16 {
     #[inline]
+    /// Converts a number.
+    ///
+    /// This conversion never fails (infallible) but may lose
+    /// precision (lossy). Rounding is to the nearest, with ties
+    /// rounded to even.
     fn lossy_from(src: f32) -> Self {
         f16::from_f32(src)
     }
@@ -626,6 +799,11 @@ impl LossyFrom<f32> for f16 {
 #[cfg(feature = "f16")]
 impl LossyFrom<f32> for bf16 {
     #[inline]
+    /// Converts a number.
+    ///
+    /// This conversion never fails (infallible) but may lose
+    /// precision (lossy). Rounding is to the nearest, with ties
+    /// rounded to even.
     fn lossy_from(src: f32) -> Self {
         bf16::from_f32(src)
     }
@@ -636,6 +814,11 @@ lossy! { f32: Into f64 }
 #[cfg(feature = "f16")]
 impl LossyFrom<f64> for f16 {
     #[inline]
+    /// Converts a number.
+    ///
+    /// This conversion never fails (infallible) but may lose
+    /// precision (lossy). Rounding is to the nearest, with ties
+    /// rounded to even.
     fn lossy_from(src: f64) -> Self {
         f16::from_f64(src)
     }
@@ -643,11 +826,26 @@ impl LossyFrom<f64> for f16 {
 #[cfg(feature = "f16")]
 impl LossyFrom<f64> for bf16 {
     #[inline]
+    /// Converts a number.
+    ///
+    /// This conversion never fails (infallible) but may lose
+    /// precision (lossy). Rounding is to the nearest, with ties
+    /// rounded to even.
     fn lossy_from(src: f64) -> Self {
         bf16::from_f64(src)
     }
 }
-lossy! { f64 as f32 }
+impl LossyFrom<f64> for f32 {
+    /// Converts a number.
+    ///
+    /// This conversion never fails (infallible) but may lose
+    /// precision (lossy). Rounding is to the nearest, with ties
+    /// rounded to even.
+    #[inline]
+    fn lossy_from(src: f64) -> Self {
+        src as f32
+    }
+}
 lossy! { f64 }
 
 /// These are doc tests that should not appear in the docs, but are

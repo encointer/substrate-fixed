@@ -262,7 +262,9 @@ impl<F: Fixed> Wrapping<F> {
         Dst::wrapping_from_fixed(self.0)
     }
 
-    /// Converts a string slice containing binary digits to a fixed-point number.
+    /// Parses a string slice containing binary digits to return a fixed-point number.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     ///
     /// # Examples
     ///
@@ -276,7 +278,9 @@ impl<F: Fixed> Wrapping<F> {
         F::wrapping_from_str_binary(src).map(Wrapping)
     }
 
-    /// Converts a string slice containing octal digits to a fixed-point number.
+    /// Parses a string slice containing octal digits to return a fixed-point number.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     ///
     /// # Examples
     ///
@@ -290,7 +294,9 @@ impl<F: Fixed> Wrapping<F> {
         F::wrapping_from_str_octal(src).map(Wrapping)
     }
 
-    /// Converts a string slice containing hexadecimal digits to a fixed-point number.
+    /// Parses a string slice containing hexadecimal digits to return a fixed-point number.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     ///
     /// # Examples
     ///
@@ -749,6 +755,7 @@ impl<F: Fixed> Display for Wrapping<F> {
 }
 
 impl<F: Fixed> From<F> for Wrapping<F> {
+    /// Wraps a fixed-point number.
     #[inline]
     fn from(src: F) -> Wrapping<F> {
         Wrapping(src)
@@ -757,6 +764,9 @@ impl<F: Fixed> From<F> for Wrapping<F> {
 
 impl<F: Fixed> FromStr for Wrapping<F> {
     type Err = ParseFixedError;
+    /// Parses a string slice containing decimal digits to return a fixed-point number.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         F::wrapping_from_str(s).map(Wrapping)

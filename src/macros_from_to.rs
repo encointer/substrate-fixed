@@ -864,7 +864,9 @@ assert_eq!(one_point_625.overflowing_to_num::<f32>(), (1.625f32, false));
         }
 
         comment! {
-            "Converts a string slice containing binary digits to a fixed-point number.
+            "Parses a string slice containing binary digits to return a fixed-point number.
+
+Rounding is to the nearest, with ties rounded to even.
 
 # Examples
 
@@ -891,7 +893,9 @@ assert_eq!(neg, Ok(-check));
         }
 
         comment! {
-            "Converts a string slice containing octal digits to a fixed-point number.
+            "Parses a string slice containing octal digits to return a fixed-point number.
+
+Rounding is to the nearest, with ties rounded to even.
 
 # Examples
 
@@ -918,7 +922,9 @@ assert_eq!(neg, Ok(-check));
         }
 
         comment! {
-            "Converts a string slice containing hexadecimal digits to a fixed-point number.
+            "Parses a string slice containing hexadecimal digits to return a fixed-point number.
+
+Rounding is to the nearest, with ties rounded to even.
 
 # Examples
 
@@ -945,8 +951,10 @@ assert_eq!(neg, Ok(-check));
         }
 
         comment! {
-            "Converts a string slice containing decimal digits to a fixed-point number,
+            "Parses a string slice containing decimal digits to return a fixed-point number,
 saturating on overflow.
+
+Rounding is to the nearest, with ties rounded to even.
 
 # Examples
 
@@ -972,8 +980,10 @@ assert_eq!(U8F8::saturating_from_str(\"-1\"), Ok(U8F8::from_num(0)));
         }
 
         comment! {
-            "Converts a string slice containing binary digits to a fixed-point number,
+            "Parses a string slice containing binary digits to return a fixed-point number,
 saturating on overflow.
+
+Rounding is to the nearest, with ties rounded to even.
 
 # Examples
 
@@ -999,8 +1009,10 @@ assert_eq!(U8F8::saturating_from_str_binary(\"-1\"), Ok(U8F8::from_num(0)));
         }
 
         comment! {
-            "Converts a string slice containing octal digits to a fixed-point number,
+            "Parses a string slice containing octal digits to return a fixed-point number,
 saturating on overflow.
+
+Rounding is to the nearest, with ties rounded to even.
 
 # Examples
 
@@ -1026,8 +1038,10 @@ assert_eq!(U8F8::saturating_from_str_octal(\"-1\"), Ok(U8F8::from_num(0)));
         }
 
         comment! {
-            "Converts a string slice containing hexadecimal digits to a fixed-point number,
+            "Prases a string slice containing hexadecimal digits to return a fixed-point number,
 saturating on overflow.
+
+Rounding is to the nearest, with ties rounded to even.
 
 # Examples
 
@@ -1053,8 +1067,10 @@ assert_eq!(U8F8::saturating_from_str_hex(\"-1\"), Ok(U8F8::from_num(0)));
         }
 
         comment! {
-            "Converts a string slice containing decimal digits to a fixed-point number,
+            "Parses a string slice containing decimal digits to return a fixed-point number,
 wrapping on overflow.
+
+Rounding is to the nearest, with ties rounded to even.
 
 # Examples
 
@@ -1082,8 +1098,10 @@ assert_eq!(U8F8::wrapping_from_str(\"-9999.5\"), Ok(U8F8::from_num(240.5)));
         }
 
         comment! {
-            "Converts a string slice containing binary digits to a fixed-point number,
+            "Parses a string slice containing binary digits to return a fixed-point number,
 wrapping on overflow.
+
+Rounding is to the nearest, with ties rounded to even.
 
 # Examples
 
@@ -1111,8 +1129,10 @@ assert_eq!(U8F8::wrapping_from_str_binary(\"-101100111000.1\"), Ok(check.wrappin
         }
 
         comment! {
-            "Converts a string slice containing octal digits to a fixed-point number,
+            "Parses a string slice containing octal digits to return a fixed-point number,
 wrapping on overflow.
+
+Rounding is to the nearest, with ties rounded to even.
 
 # Examples
 
@@ -1140,8 +1160,10 @@ assert_eq!(U8F8::wrapping_from_str_octal(\"-7165.4\"), Ok(check.wrapping_neg()))
         }
 
         comment! {
-            "Converts a string slice containing hexadecimal digits to a fixed-point number,
+            "Parses a string slice containing hexadecimal digits to return a fixed-point number,
 wrapping on overflow.
+
+Rounding is to the nearest, with ties rounded to even.
 
 # Examples
 
@@ -1169,11 +1191,13 @@ assert_eq!(U8F8::wrapping_from_str_hex(\"-C0F.FE\"), Ok(check.wrapping_neg()));
         }
 
         comment! {
-            "Converts a string slice containing decimal digits to a fixed-point number.
+            "Parses a string slice containing decimal digits to return a fixed-point number.
 
 Returns a [tuple] of the fixed-point number and a [`bool`] indicating
 whether an overflow has occurred. On overflow, the wrapped value is
 returned.
+
+Rounding is to the nearest, with ties rounded to even.
 
 # Examples
 
@@ -1206,11 +1230,13 @@ assert_eq!(U8F8::overflowing_from_str(\"9999.5\"), Ok((U8F8::from_num(15.5), tru
         }
 
         comment! {
-            "Converts a string slice containing binary digits to a fixed-point number.
+            "Parses a string slice containing binary digits to return a fixed-point number.
 
 Returns a [tuple] of the fixed-point number and a [`bool`] indicating
 whether an overflow has occurred. On overflow, the wrapped value is
 returned.
+
+Rounding is to the nearest, with ties rounded to even.
 
 # Examples
 
@@ -1243,11 +1269,13 @@ assert_eq!(U8F8::overflowing_from_str_binary(\"101100111000.1\"), Ok((check, tru
         }
 
         comment! {
-            "Converts a string slice containing octal digits to a fixed-point number.
+            "Parses a string slice containing octal digits to return a fixed-point number.
 
 Returns a [tuple] of the fixed-point number and a [`bool`] indicating
 whether an overflow has occurred. On overflow, the wrapped value is
 returned.
+
+Rounding is to the nearest, with ties rounded to even.
 
 # Examples
 
@@ -1280,11 +1308,13 @@ assert_eq!(U8F8::overflowing_from_str_octal(\"7165.4\"), Ok((check, true)));
         }
 
         comment! {
-            "Converts a string slice containing hexadecimal digits to a fixed-point number.
+            "Parses a string slice containing hexadecimal digits to return a fixed-point number.
 
 Returns a [tuple] of the fixed-point number and a [`bool`] indicating
 whether an overflow has occurred. On overflow, the wrapped value is
 returned.
+
+Rounding is to the nearest, with ties rounded to even.
 
 # Examples
 

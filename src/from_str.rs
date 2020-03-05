@@ -652,6 +652,9 @@ macro_rules! impl_from_str_traits {
     ($Fixed:ident($Bits:ident), $LeEqU:ident; fn $from:ident) => {
         impl<Frac: $LeEqU> FromStr for $Fixed<Frac> {
             type Err = ParseFixedError;
+            /// Parses a string slice to return a fixed-point number.
+            ///
+            /// Rounding is to the nearest, with ties rounded to even.
             #[inline]
             fn from_str(s: &str) -> Result<Self, Self::Err> {
                 Self::from_str_radix(s, 10)

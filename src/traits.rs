@@ -368,86 +368,116 @@ where
     /// [`overflowing_from_fixed`]: trait.FromFixed.html#tymethod.overflowing_from_fixed
     fn overflowing_to_num<Dst: FromFixed>(self) -> (Dst, bool);
 
-    /// Converts a string slice containing binary digits to a fixed-point number.
+    /// Parses a string slice containing binary digits to return a fixed-point number.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     fn from_str_binary(src: &str) -> Result<Self, ParseFixedError>;
 
-    /// Converts a string slice containing octal digits to a fixed-point number.
+    /// Parses a string slice containing octal digits to return a fixed-point number.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     fn from_str_octal(src: &str) -> Result<Self, ParseFixedError>;
 
-    /// Converts a string slice containing hexadecimal digits to a fixed-point number.
+    /// Parses a string slice containing hexadecimal digits to return a fixed-point number.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     fn from_str_hex(src: &str) -> Result<Self, ParseFixedError>;
 
-    /// Converts a string slice containing decimal digits to a
+    /// Parses a string slice containing decimal digits to return a
     /// fixed-point number, saturating on overflow.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     fn saturating_from_str(src: &str) -> Result<Self, ParseFixedError>;
 
-    /// Converts a string slice containing binary digits to a
+    /// Parses a string slice containing binary digits to return a
     /// fixed-point number, saturating on overflow.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     fn saturating_from_str_binary(src: &str) -> Result<Self, ParseFixedError>;
 
-    /// Converts a string slice containing octal digits to a
+    /// Parses a string slice containing octal digits to return a
     /// fixed-point number, saturating on overflow.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     fn saturating_from_str_octal(src: &str) -> Result<Self, ParseFixedError>;
 
-    /// Converts a string slice containing hexadecimal digits to a
+    /// Parses a string slice containing hexadecimal digits to return a
     /// fixed-point number, saturating on overflow.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     fn saturating_from_str_hex(src: &str) -> Result<Self, ParseFixedError>;
 
-    /// Converts a string slice containing decimal digits to a
+    /// Parses a string slice containing decimal digits to return a
     /// fixed-point number, wrapping on overflow.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     fn wrapping_from_str(src: &str) -> Result<Self, ParseFixedError>;
 
-    /// Converts a string slice containing binary digits to a
+    /// Parses a string slice containing binary digits to return a
     /// fixed-point number, wrapping on overflow.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     fn wrapping_from_str_binary(src: &str) -> Result<Self, ParseFixedError>;
 
-    /// Converts a string slice containing octal digits to a
+    /// Parses a string slice containing octal digits to return a
     /// fixed-point number, wrapping on overflow.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     fn wrapping_from_str_octal(src: &str) -> Result<Self, ParseFixedError>;
 
-    /// Converts a string slice containing hexadecimal digits to a
+    /// Parses a string slice containing hexadecimal digits to return a
     /// fixed-point number, wrapping on overflow.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     fn wrapping_from_str_hex(src: &str) -> Result<Self, ParseFixedError>;
 
-    /// Converts a string slice containing decimal digits to a
+    /// Parses a string slice containing decimal digits to return a
     /// fixed-point number.
     ///
     /// Returns a [tuple] of the fixed-point number and a [`bool`],
     /// indicating whether an overflow has occurred. On overflow, the
     /// wrapped value is returned.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     ///
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
     fn overflowing_from_str(src: &str) -> Result<(Self, bool), ParseFixedError>;
 
-    /// Converts a string slice containing binary digits to a
+    /// Parses a string slice containing binary digits to return a
     /// fixed-point number.
     ///
     /// Returns a [tuple] of the fixed-point number and a [`bool`],
     /// indicating whether an overflow has occurred. On overflow, the
     /// wrapped value is returned.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     ///
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
     fn overflowing_from_str_binary(src: &str) -> Result<(Self, bool), ParseFixedError>;
 
-    /// Converts a string slice containing octal digits to a
+    /// Parses a string slice containing octal digits to return a
     /// fixed-point number.
     ///
     /// Returns a [tuple] of the fixed-point number and a [`bool`],
     /// indicating whether an overflow has occurred. On overflow, the
     /// wrapped value is returned.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     ///
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
     fn overflowing_from_str_octal(src: &str) -> Result<(Self, bool), ParseFixedError>;
 
-    /// Converts a string slice containing hexadecimal digits to a
+    /// Parses a string slice containing hexadecimal digits to return a
     /// fixed-point number.
     ///
     /// Returns a [tuple] of the fixed-point number and a [`bool`],
     /// indicating whether an overflow has occurred. On overflow, the
     /// wrapped value is returned.
+    ///
+    /// Rounding is to the nearest, with ties rounded to even.
     ///
     /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
@@ -1272,7 +1302,7 @@ pub trait ToFixed {
     /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
     fn wrapping_to_fixed<F: Fixed>(self) -> F;
 
-    /// Converts from a fixed-point number.
+    /// Converts to a fixed-point number.
     ///
     /// Returns a [tuple] of the fixed-point number and a [`bool`]
     /// indicating whether an overflow has occurred. On overflow, the
@@ -1291,22 +1321,56 @@ pub trait ToFixed {
 }
 
 impl ToFixed for bool {
+    /// Converts a [`bool`] to a fixed-point number.
+    ///
+    /// # Panics
+    ///
+    /// When debug assertions are enabled, panics if the value does
+    /// not fit. When debug assertions are not enabled, the wrapped
+    /// value can be returned, but it is not considered a breaking
+    /// change if in the future it panics; if wrapping is required use
+    /// [`wrapping_to_fixed`] instead.
+    ///
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    /// [`wrapping_to_fixed`]: #method.wrapping_to_fixed
     #[inline]
     fn to_fixed<F: Fixed>(self) -> F {
         ToFixed::to_fixed(self as u8)
     }
+
+    /// Converts a [`bool`] to a fixed-point number if it fits, otherwise returns [`None`].
+    ///
+    /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     #[inline]
     fn checked_to_fixed<F: Fixed>(self) -> Option<F> {
         ToFixed::checked_to_fixed(self as u8)
     }
+
+    /// Convert a [`bool`] to a fixed-point number, saturating if it does not fit.
+    ///
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     #[inline]
     fn saturating_to_fixed<F: Fixed>(self) -> F {
         ToFixed::saturating_to_fixed(self as u8)
     }
+
+    /// Converts a [`bool`] to a fixed-point number, wrapping if it does not fit.
+    ///
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
     #[inline]
     fn wrapping_to_fixed<F: Fixed>(self) -> F {
         ToFixed::wrapping_to_fixed(self as u8)
     }
+
+    /// Converts a [`bool`] to a fixed-point number.
+    ///
+    /// Returns a [tuple] of the fixed-point number and a [`bool`]
+    /// indicating whether an overflow has occurred. On overflow, the
+    /// wrapped value is returned.
+    ///
+    /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+    /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
     #[inline]
     fn overflowing_to_fixed<F: Fixed>(self) -> (F, bool) {
         ToFixed::overflowing_to_fixed(self as u8)
@@ -1316,22 +1380,61 @@ impl ToFixed for bool {
 macro_rules! impl_int {
     ($Int:ident) => {
         impl FromFixed for $Int {
+            /// Converts a fixed-point number to an integer.
+            ///
+            /// Any fractional bits are truncated.
+            ///
+            /// # Panics
+            ///
+            /// When debug assertions are enabled, panics if the value
+            /// does not fit. When debug assertions are not enabled,
+            /// the wrapped value can be returned, but it is not
+            /// considered a breaking change if in the future it
+            /// panics; if wrapping is required use
+            /// [`wrapping_from_fixed`] instead.
+            ///
+            /// [`wrapping_from_fixed`]: #method.wrapping_from_fixed
             #[inline]
             fn from_fixed<F: Fixed>(src: F) -> Self {
                 $Int::from_repr_fixed(FromFixed::from_fixed(src))
             }
+
+            /// Converts a fixed-point number to an integer if it fits, otherwise returns [`None`].
+            ///
+            /// Any fractional bits are truncated.
+            ///
+            /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
             #[inline]
             fn checked_from_fixed<F: Fixed>(src: F) -> Option<Self> {
                 FromFixed::checked_from_fixed(src).map($Int::from_repr_fixed)
             }
+
+            /// Converts a fixed-point number to an integer, saturating if it does not fit.
+            ///
+            /// Any fractional bits are truncated.
             #[inline]
             fn saturating_from_fixed<F: Fixed>(src: F) -> Self {
                 $Int::from_repr_fixed(FromFixed::saturating_from_fixed(src))
             }
+
+            /// Converts a fixed-point number to an integer, wrapping if it does not fit.
+            ///
+            /// Any fractional bits are truncated.
             #[inline]
             fn wrapping_from_fixed<F: Fixed>(src: F) -> Self {
                 $Int::from_repr_fixed(FromFixed::wrapping_from_fixed(src))
             }
+
+            /// Converts a fixed-point number to an integer.
+            ///
+            /// Returns a [tuple] of the value and a [`bool`] indicating whether
+            /// an overflow has occurred. On overflow, the wrapped value is
+            /// returned.
+            ///
+            /// Any fractional bits are truncated.
+            ///
+            /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+            /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
             #[inline]
             fn overflowing_from_fixed<F: Fixed>(src: F) -> (Self, bool) {
                 let (repr_fixed, overflow) = FromFixed::overflowing_from_fixed(src);
@@ -1340,22 +1443,51 @@ macro_rules! impl_int {
         }
 
         impl ToFixed for $Int {
+            /// Converts an integer to a fixed-point number.
+            ///
+            /// # Panics
+            ///
+            /// When debug assertions are enabled, panics if the value
+            /// does not fit. When debug assertions are not enabled,
+            /// the wrapped value can be returned, but it is not
+            /// considered a breaking change if in the future it
+            /// panics; if wrapping is required use
+            /// [`wrapping_to_fixed`] instead.
+            ///
+            /// [`wrapping_to_fixed`]: #method.wrapping_to_fixed
             #[inline]
             fn to_fixed<F: Fixed>(self) -> F {
                 ToFixed::to_fixed(self.to_repr_fixed())
             }
+
+            /// Converts an integer to a fixed-point number if it fits, otherwise returns [`None`].
+            ///
+            /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
             #[inline]
             fn checked_to_fixed<F: Fixed>(self) -> Option<F> {
                 ToFixed::checked_to_fixed(self.to_repr_fixed())
             }
+
+            /// Converts an integer to a fixed-point number, saturating if it does not fit.
             #[inline]
             fn saturating_to_fixed<F: Fixed>(self) -> F {
                 ToFixed::saturating_to_fixed(self.to_repr_fixed())
             }
+
+            /// Converts an integer to a fixed-point number, wrapping if it does not fit.
             #[inline]
             fn wrapping_to_fixed<F: Fixed>(self) -> F {
                 ToFixed::wrapping_to_fixed(self.to_repr_fixed())
             }
+
+            /// Converts an integer to a fixed-point number.
+            ///
+            /// Returns a [tuple] of the fixed-point number and a [`bool`]
+            /// indicating whether an overflow has occurred. On overflow, the
+            /// wrapped value is returned.
+            ///
+            /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+            /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
             #[inline]
             fn overflowing_to_fixed<F: Fixed>(self) -> (F, bool) {
                 ToFixed::overflowing_to_fixed(self.to_repr_fixed())
@@ -1380,23 +1512,65 @@ impl_int! { usize }
 macro_rules! impl_float {
     ($Float:ty) => {
         impl FromFixed for $Float {
+            /// Converts a fixed-point number to a floating-point number.
+            ///
+            /// Rounding is to the nearest, with ties rounded to even.
+            ///
+            /// # Panics
+            ///
+            /// When debug assertions are enabled, panics if the value
+            /// does not fit. When debug assertions are not enabled,
+            /// the wrapped value can be returned, but it is not
+            /// considered a breaking change if in the future it
+            /// panics; if wrapping is required use
+            /// [`wrapping_from_fixed`] instead.
+            ///
+            /// [`wrapping_from_fixed`]: #method.wrapping_from_fixed
             #[inline]
             fn from_fixed<F: Fixed>(src: F) -> Self {
                 let helper = src.private_to_float_helper();
                 FloatHelper::from_to_float_helper(helper, F::frac_nbits(), F::int_nbits())
             }
+
+            /// Converts a fixed-point number to a floating-point
+            /// number if it fits, otherwise returns [`None`].
+            ///
+            /// Rounding is to the nearest, with ties rounded to even.
+            ///
+            /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
             #[inline]
             fn checked_from_fixed<F: Fixed>(src: F) -> Option<Self> {
                 Some(FromFixed::from_fixed(src))
             }
+
+            /// Converts a fixed-point number to a floating-point
+            /// number, saturating if it does not fit.
+            ///
+            /// Rounding is to the nearest, with ties rounded to even.
             #[inline]
             fn saturating_from_fixed<F: Fixed>(src: F) -> Self {
                 FromFixed::from_fixed(src)
             }
+
+            /// Converts a fixed-point number to a floating-point
+            /// number, wrapping if it does not fit.
+            ///
+            /// Rounding is to the nearest, with ties rounded to even.
             #[inline]
             fn wrapping_from_fixed<F: Fixed>(src: F) -> Self {
                 FromFixed::from_fixed(src)
             }
+
+            /// Converts a fixed-point number to a floating-point number.
+            ///
+            /// Returns a [tuple] of the value and a [`bool`]
+            /// indicating whether an overflow has occurred. On
+            /// overflow, the wrapped value is returned.
+            ///
+            /// Rounding is to the nearest, with ties rounded to even.
+            ///
+            /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+            /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
             #[inline]
             fn overflowing_from_fixed<F: Fixed>(src: F) -> (Self, bool) {
                 (FromFixed::from_fixed(src), false)
@@ -1404,6 +1578,23 @@ macro_rules! impl_float {
         }
 
         impl ToFixed for $Float {
+            /// Converts a floating-point number to a fixed-point number.
+            ///
+            /// Rounding is to the nearest, with ties rounded to even.
+            ///
+            /// # Panics
+            ///
+            /// Panics if `self` is not [finite].
+            ///
+            /// When debug assertions are enabled, also panics if the
+            /// value does not fit. When debug assertions are not
+            /// enabled, the wrapped value can be returned, but it is
+            /// not considered a breaking change if in the future it
+            /// panics; if wrapping is required use
+            /// [`wrapping_to_fixed`] instead.
+            ///
+            /// [`wrapping_to_fixed`]: #method.wrapping_to_fixed
+            /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
             #[inline]
             fn to_fixed<F: Fixed>(self) -> F {
                 let (wrapped, overflow) = ToFixed::overflowing_to_fixed(self);
@@ -1411,6 +1602,13 @@ macro_rules! impl_float {
                 let _ = overflow;
                 wrapped
             }
+
+            /// Converts a floating-point number to a fixed-point
+            /// number if it fits, otherwise returns [`None`].
+            ///
+            /// Rounding is to the nearest, with ties rounded to even.
+            ///
+            /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
             #[inline]
             fn checked_to_fixed<F: Fixed>(self) -> Option<F> {
                 let kind = self.to_float_kind(F::frac_nbits(), F::int_nbits());
@@ -1425,17 +1623,55 @@ macro_rules! impl_float {
                     _ => None,
                 }
             }
+
+            /// Converts a floating-point number to a fixed-point
+            /// number, saturating if it does not fit.
+            ///
+            /// Rounding is to the nearest, with ties rounded to even.
+            ///
+            /// # Panics
+            ///
+            /// Panics if `self` is [NaN].
+            ///
+            /// [NaN]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_nan
             #[inline]
             fn saturating_to_fixed<F: Fixed>(self) -> F {
                 let kind = self.to_float_kind(F::frac_nbits(), F::int_nbits());
                 let helper = FromFloatHelper { kind };
                 F::private_saturating_from_float_helper(helper)
             }
+
+            /// Converts a floating-point number to a fixed-point
+            /// number, wrapping if it does not fit.
+            ///
+            /// Rounding is to the nearest, with ties rounded to even.
+            ///
+            /// # Panics
+            ///
+            /// Panics if `self` is not [finite].
+            ///
+            /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
             #[inline]
             fn wrapping_to_fixed<F: Fixed>(self) -> F {
                 let (wrapped, _) = ToFixed::overflowing_to_fixed(self);
                 wrapped
             }
+
+            /// Converts a floating-point number to a fixed-point number.
+            ///
+            /// Returns a [tuple] of the fixed-point number and a [`bool`]
+            /// indicating whether an overflow has occurred. On overflow, the
+            /// wrapped value is returned.
+            ///
+            /// Rounding is to the nearest, with ties rounded to even.
+            ///
+            /// # Panics
+            ///
+            /// Panics if `self` is not [finite].
+            ///
+            /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+            /// [finite]: https://doc.rust-lang.org/nightly/std/primitive.f64.html#method.is_finite
+            /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
             #[inline]
             fn overflowing_to_fixed<F: Fixed>(self) -> (F, bool) {
                 let kind = self.to_float_kind(F::frac_nbits(), F::int_nbits());
@@ -1631,6 +1867,9 @@ macro_rules! impl_fixed {
         }
 
         impl<Frac: $LeEqU> FromFixed for $Fixed<Frac> {
+            /// Converts a fixed-point number.
+            ///
+            /// Any extra fractional bits are truncated.
             #[inline]
             fn from_fixed<F: Fixed>(src: F) -> Self {
                 let (wrapped, overflow) = FromFixed::overflowing_from_fixed(src);
@@ -1638,6 +1877,12 @@ macro_rules! impl_fixed {
                 let _ = overflow;
                 wrapped
             }
+
+            /// Converts a fixed-point number if it fits, otherwise returns [`None`].
+            ///
+            /// Any extra fractional bits are truncated.
+            ///
+            /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
             #[inline]
             fn checked_from_fixed<F: Fixed>(src: F) -> Option<Self> {
                 match FromFixed::overflowing_from_fixed(src) {
@@ -1645,6 +1890,10 @@ macro_rules! impl_fixed {
                     (wrapped, false) => Some(wrapped),
                 }
             }
+
+            /// Converts a fixed-point number, saturating if it does not fit.
+            ///
+            /// Any extra fractional bits are truncated.
             #[inline]
             fn saturating_from_fixed<F: Fixed>(src: F) -> Self {
                 let conv = src.private_to_fixed_helper(Self::FRAC_NBITS, Self::INT_NBITS);
@@ -1675,11 +1924,26 @@ macro_rules! impl_fixed {
                 };
                 Self::from_bits(bits)
             }
+
+            /// Converts a fixed-point number, wrapping if it does not fit.
+            ///
+            /// Any extra fractional bits are truncated.
             #[inline]
             fn wrapping_from_fixed<F: Fixed>(src: F) -> Self {
                 let (wrapped, _) = FromFixed::overflowing_from_fixed(src);
                 wrapped
             }
+
+            /// Converts a fixed-point number.
+            ///
+            /// Returns a [tuple] of the value and a [`bool`]
+            /// indicating whether an overflow has occurred. On
+            /// overflow, the wrapped value is returned.
+            ///
+            /// Any extra fractional bits are truncated.
+            ///
+            /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+            /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
             #[inline]
             fn overflowing_from_fixed<F: Fixed>(src: F) -> (Self, bool) {
                 let conv = src.private_to_fixed_helper(Self::FRAC_NBITS, Self::INT_NBITS);
@@ -1708,22 +1972,50 @@ macro_rules! impl_fixed {
         }
 
         impl<Frac: $LeEqU> ToFixed for $Fixed<Frac> {
+            /// Converts a fixed-point number.
+            ///
+            /// Any extra fractional bits are truncated.
             #[inline]
             fn to_fixed<F: Fixed>(self) -> F {
                 FromFixed::from_fixed(self)
             }
+
+            /// Converts a fixed-point number if it fits, otherwise returns [`None`].
+            ///
+            /// Any extra fractional bits are truncated.
+            ///
+            /// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
             #[inline]
             fn checked_to_fixed<F: Fixed>(self) -> Option<F> {
                 FromFixed::checked_from_fixed(self)
             }
+
+            /// Converts a fixed-point number, saturating if it does not fit.
+            ///
+            /// Any extra fractional bits are truncated.
             #[inline]
             fn saturating_to_fixed<F: Fixed>(self) -> F {
                 FromFixed::saturating_from_fixed(self)
             }
+
+            /// Converts a fixed-point number, wrapping if it does not fit.
+            ///
+            /// Any extra fractional bits are truncated.
             #[inline]
             fn wrapping_to_fixed<F: Fixed>(self) -> F {
                 FromFixed::wrapping_from_fixed(self)
             }
+
+            /// Converts a fixed-point number.
+            ///
+            /// Returns a [tuple] of the value and a [`bool`]
+            /// indicating whether an overflow has occurred. On
+            /// overflow, the wrapped value is returned.
+            ///
+            /// Any extra fractional bits are truncated.
+            ///
+            /// [`bool`]: https://doc.rust-lang.org/nightly/std/primitive.bool.html
+            /// [tuple]: https://doc.rust-lang.org/nightly/std/primitive.tuple.html
             #[inline]
             fn overflowing_to_fixed<F: Fixed>(self) -> (F, bool) {
                 FromFixed::overflowing_from_fixed(self)

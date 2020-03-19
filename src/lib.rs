@@ -264,10 +264,10 @@ mod int_helper;
 #[cfg(feature = "serde")]
 mod serdeize;
 pub mod traits;
+pub mod transcendental;
 pub mod types;
 mod wide_div;
 mod wrapping;
-pub mod math;
 
 use crate::{
     arith::MulDivOverflow,
@@ -311,7 +311,7 @@ mod macros_no_frac;
 #[macro_use]
 mod macros_frac;
 
-use codec::{Encode, Decode};
+use codec::{Decode, Encode};
 macro_rules! fixed {
     (
         $description:expr,
@@ -487,11 +487,11 @@ fixed! {
 }
 
 #[cfg(test)]
-#[allow(clippy::cognitive_complexity)]
-
 #[macro_use]
 extern crate approx;
 
+#[cfg(test)]
+#[allow(clippy::cognitive_complexity)]
 mod tests {
     use crate::types::{I0F32, I16F16, I1F31, U0F32, U16F16};
 

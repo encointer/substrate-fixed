@@ -3,7 +3,6 @@
 use criterion::{
     black_box, criterion_group, criterion_main, Bencher, Benchmark, Criterion, Throughput,
 };
-use substrate_fixed::{traits::Fixed, types::*};
 use num_traits::{One, Zero};
 use rand::{
     distributions::{Distribution, Standard},
@@ -11,6 +10,7 @@ use rand::{
 };
 use rand_xoshiro::{rand_core::SeedableRng, Xoshiro256Plus};
 use std::convert::TryInto;
+use substrate_fixed::{traits::Fixed, types::*};
 
 const SEED: u64 = 42_069;
 const DATASET_SIZE: usize = 10_000;

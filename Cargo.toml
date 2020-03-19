@@ -6,7 +6,7 @@
 # without any warranty.
 
 [package]
-name = "fixed"
+name = "substrate-fixed"
 version = "0.5.4"
 authors = ["Trevor Spiteri <tspiteri@ieee.org>"]
 description = "Fixed-point numbers"
@@ -29,6 +29,12 @@ typenum = "1.10"
 az = { version = "0.3", optional = true }
 half = { version = "1.4", optional = true }
 serde = { version = "1.0.60", default-features = false, optional = true }
+
+[dependencies.codec]
+default-features = false
+package = "parity-scale-codec"
+features = ["derive"]
+version = "1.0.0"
 
 [dev-dependencies]
 rand = { version = "0.7", default-features = false }

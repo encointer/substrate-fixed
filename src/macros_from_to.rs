@@ -43,7 +43,7 @@ it panics; if wrapping is required use [`wrapping_from_num`] instead.
 # Examples
 
 ```rust
-use fixed::{types::extra::U4, types::I16F16, ", $s_fixed, "};
+use substrate_fixed::{types::extra::U4, types::I16F16, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
 
 // 1.75 is 1.11 in binary
@@ -124,7 +124,7 @@ it panics; if wrapping is required use [`wrapping_to_num`] instead.
 # Examples
 
 ```rust
-use fixed::{types::extra::U4, types::I30F2, ", $s_fixed, "};
+use substrate_fixed::{types::extra::U4, types::I30F2, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
 
 // 1.75 is 1.11 in binary
@@ -203,7 +203,7 @@ The other number can be:
 # Examples
 
 ```rust
-use fixed::{
+use substrate_fixed::{
     types::extra::{U2, U4},
     types::I16F16,
     ", $s_fixed, ",
@@ -290,7 +290,7 @@ The other number can be:
 # Examples
 
 ```rust
-use fixed::{
+use substrate_fixed::{
     types::extra::{U0, U4, U6},
     types::I16F16,
     ", $s_fixed, ",
@@ -380,7 +380,7 @@ This method panics if the value is a floating-point [NaN].
 # Examples
 
 ```rust
-use fixed::{
+use substrate_fixed::{
     types::extra::{U2, U4},
     types::I16F16,
     ", $s_fixed, ",
@@ -465,7 +465,7 @@ The other number can be:
 # Examples
 
 ```rust
-use fixed::{
+use substrate_fixed::{
     types::extra::{U0, U4, U6},
     types::I16F16,
     ", $s_fixed, ",
@@ -550,7 +550,7 @@ For floating-point numbers, panics if the value is not [finite].
 # Examples
 
 ```rust
-use fixed::{
+use substrate_fixed::{
     types::extra::{U0, U4},
     types::I16F16,
     ", $s_fixed, ",
@@ -627,7 +627,7 @@ The other number can be:
 # Examples
 
 ```rust
-use fixed::{
+use substrate_fixed::{
     types::extra::{U0, U4, U6},
     types::I16F16,
     ", $s_fixed, ",
@@ -715,7 +715,7 @@ For floating-point numbers, panics if the value is not [finite].
 # Examples
 
 ```rust
-use fixed::{
+use substrate_fixed::{
     types::extra::{U0, U4},
     types::I16F16,
     ", $s_fixed, ",
@@ -798,7 +798,7 @@ The other number can be:
 # Examples
 
 ```rust
-use fixed::{
+use substrate_fixed::{
     types::extra::{U0, U4, U6},
     types::I16F16,
     ", $s_fixed, ",
@@ -871,7 +871,7 @@ Rounding is to the nearest, with ties rounded to even.
 # Examples
 
 ```rust
-use fixed::{types::extra::U4, ", $s_fixed, "};
+use substrate_fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
 // 1.75 is 1.11 in binary
 let f = Fix::from_str_binary(\"1.11\");
@@ -900,7 +900,7 @@ Rounding is to the nearest, with ties rounded to even.
 # Examples
 
 ```rust
-use fixed::{types::extra::U4, ", $s_fixed, "};
+use substrate_fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
 // 1.75 is 1.11 in binary, 1.6 in octal
 let f = Fix::from_str_octal(\"1.6\");
@@ -929,7 +929,7 @@ Rounding is to the nearest, with ties rounded to even.
 # Examples
 
 ```rust
-use fixed::{types::extra::U4, ", $s_fixed, "};
+use substrate_fixed::{types::extra::U4, ", $s_fixed, "};
 type Fix = ", $s_fixed, "<U4>;
 // 1.75 is 1.11 in binary, 1.C in hexadecimal
 let f = Fix::from_str_hex(\"1.C\");
@@ -962,11 +962,11 @@ Rounding is to the nearest, with ties rounded to even.
 ",
             if_signed_unsigned! {
                 $Signedness,
-                "use fixed::types::I8F8;
+                "use substrate_fixed::types::I8F8;
 assert_eq!(I8F8::saturating_from_str(\"9999\"), Ok(I8F8::max_value()));
 assert_eq!(I8F8::saturating_from_str(\"-9999\"), Ok(I8F8::min_value()));
 ",
-                "use fixed::types::U8F8;
+                "use substrate_fixed::types::U8F8;
 assert_eq!(U8F8::saturating_from_str(\"9999\"), Ok(U8F8::max_value()));
 assert_eq!(U8F8::saturating_from_str(\"-1\"), Ok(U8F8::from_num(0)));
 ",
@@ -991,11 +991,11 @@ Rounding is to the nearest, with ties rounded to even.
 ",
             if_signed_unsigned! {
                 $Signedness,
-                "use fixed::types::I8F8;
+                "use substrate_fixed::types::I8F8;
 assert_eq!(I8F8::saturating_from_str_binary(\"101100111000\"), Ok(I8F8::max_value()));
 assert_eq!(I8F8::saturating_from_str_binary(\"-101100111000\"), Ok(I8F8::min_value()));
 ",
-                "use fixed::types::U8F8;
+                "use substrate_fixed::types::U8F8;
 assert_eq!(U8F8::saturating_from_str_binary(\"101100111000\"), Ok(U8F8::max_value()));
 assert_eq!(U8F8::saturating_from_str_binary(\"-1\"), Ok(U8F8::from_num(0)));
 ",
@@ -1020,11 +1020,11 @@ Rounding is to the nearest, with ties rounded to even.
 ",
             if_signed_unsigned! {
                 $Signedness,
-                "use fixed::types::I8F8;
+                "use substrate_fixed::types::I8F8;
 assert_eq!(I8F8::saturating_from_str_octal(\"7777\"), Ok(I8F8::max_value()));
 assert_eq!(I8F8::saturating_from_str_octal(\"-7777\"), Ok(I8F8::min_value()));
 ",
-                "use fixed::types::U8F8;
+                "use substrate_fixed::types::U8F8;
 assert_eq!(U8F8::saturating_from_str_octal(\"7777\"), Ok(U8F8::max_value()));
 assert_eq!(U8F8::saturating_from_str_octal(\"-1\"), Ok(U8F8::from_num(0)));
 ",
@@ -1049,11 +1049,11 @@ Rounding is to the nearest, with ties rounded to even.
 ",
             if_signed_unsigned! {
                 $Signedness,
-                "use fixed::types::I8F8;
+                "use substrate_fixed::types::I8F8;
 assert_eq!(I8F8::saturating_from_str_hex(\"FFFF\"), Ok(I8F8::max_value()));
 assert_eq!(I8F8::saturating_from_str_hex(\"-FFFF\"), Ok(I8F8::min_value()));
 ",
-                "use fixed::types::U8F8;
+                "use substrate_fixed::types::U8F8;
 assert_eq!(U8F8::saturating_from_str_hex(\"FFFF\"), Ok(U8F8::max_value()));
 assert_eq!(U8F8::saturating_from_str_hex(\"-1\"), Ok(U8F8::from_num(0)));
 ",
@@ -1078,12 +1078,12 @@ Rounding is to the nearest, with ties rounded to even.
 ",
             if_signed_unsigned! {
                 $Signedness,
-                "use fixed::types::I8F8;
+                "use substrate_fixed::types::I8F8;
 // 9999.5 = 15.5 + 256 × n
 assert_eq!(I8F8::wrapping_from_str(\"9999.5\"), Ok(I8F8::from_num(15.5)));
 assert_eq!(I8F8::wrapping_from_str(\"-9999.5\"), Ok(I8F8::from_num(-15.5)));
 ",
-                "use fixed::types::U8F8;
+                "use substrate_fixed::types::U8F8;
 // 9999.5 = 15.5 + 256 × n
 assert_eq!(U8F8::wrapping_from_str(\"9999.5\"), Ok(U8F8::from_num(15.5)));
 assert_eq!(U8F8::wrapping_from_str(\"-9999.5\"), Ok(U8F8::from_num(240.5)));
@@ -1109,12 +1109,12 @@ Rounding is to the nearest, with ties rounded to even.
 ",
             if_signed_unsigned! {
                 $Signedness,
-                "use fixed::types::I8F8;
+                "use substrate_fixed::types::I8F8;
 let check = I8F8::from_bits(0b1110001 << (8 - 1));
 assert_eq!(I8F8::wrapping_from_str_binary(\"101100111000.1\"), Ok(check));
 assert_eq!(I8F8::wrapping_from_str_binary(\"-101100111000.1\"), Ok(-check));
 ",
-                "use fixed::types::U8F8;
+                "use substrate_fixed::types::U8F8;
 let check = U8F8::from_bits(0b1110001 << (8 - 1));
 assert_eq!(U8F8::wrapping_from_str_binary(\"101100111000.1\"), Ok(check));
 assert_eq!(U8F8::wrapping_from_str_binary(\"-101100111000.1\"), Ok(check.wrapping_neg()));
@@ -1140,12 +1140,12 @@ Rounding is to the nearest, with ties rounded to even.
 ",
             if_signed_unsigned! {
                 $Signedness,
-                "use fixed::types::I8F8;
+                "use substrate_fixed::types::I8F8;
 let check = I8F8::from_bits(0o1654 << (8 - 3));
 assert_eq!(I8F8::wrapping_from_str_octal(\"7165.4\"), Ok(check));
 assert_eq!(I8F8::wrapping_from_str_octal(\"-7165.4\"), Ok(-check));
 ",
-                "use fixed::types::U8F8;
+                "use substrate_fixed::types::U8F8;
 let check = U8F8::from_bits(0o1654 << (8 - 3));
 assert_eq!(U8F8::wrapping_from_str_octal(\"7165.4\"), Ok(check));
 assert_eq!(U8F8::wrapping_from_str_octal(\"-7165.4\"), Ok(check.wrapping_neg()));
@@ -1171,12 +1171,12 @@ Rounding is to the nearest, with ties rounded to even.
 ",
             if_signed_unsigned! {
                 $Signedness,
-                "use fixed::types::I8F8;
+                "use substrate_fixed::types::I8F8;
 let check = I8F8::from_bits(0xFFE);
 assert_eq!(I8F8::wrapping_from_str_hex(\"C0F.FE\"), Ok(check));
 assert_eq!(I8F8::wrapping_from_str_hex(\"-C0F.FE\"), Ok(-check));
 ",
-                "use fixed::types::U8F8;
+                "use substrate_fixed::types::U8F8;
 let check = U8F8::from_bits(0xFFE);
 assert_eq!(U8F8::wrapping_from_str_hex(\"C0F.FE\"), Ok(check));
 assert_eq!(U8F8::wrapping_from_str_hex(\"-C0F.FE\"), Ok(check.wrapping_neg()));
@@ -1205,12 +1205,12 @@ Rounding is to the nearest, with ties rounded to even.
 ",
             if_signed_unsigned! {
                 $Signedness,
-                "use fixed::types::I8F8;
+                "use substrate_fixed::types::I8F8;
 assert_eq!(I8F8::overflowing_from_str(\"99.5\"), Ok((I8F8::from_num(99.5), false)));
 // 9999.5 = 15.5 + 256 × n
 assert_eq!(I8F8::overflowing_from_str(\"-9999.5\"), Ok((I8F8::from_num(-15.5), true)));
 ",
-                "use fixed::types::U8F8;
+                "use substrate_fixed::types::U8F8;
 assert_eq!(U8F8::overflowing_from_str(\"99.5\"), Ok((U8F8::from_num(99.5), false)));
 // 9999.5 = 15.5 + 256 × n
 assert_eq!(U8F8::overflowing_from_str(\"9999.5\"), Ok((U8F8::from_num(15.5), true)));
@@ -1244,12 +1244,12 @@ Rounding is to the nearest, with ties rounded to even.
 ",
             if_signed_unsigned! {
                 $Signedness,
-                "use fixed::types::I8F8;
+                "use substrate_fixed::types::I8F8;
 let check = I8F8::from_bits(0b1110001 << (8 - 1));
 assert_eq!(I8F8::overflowing_from_str_binary(\"111000.1\"), Ok((check, false)));
 assert_eq!(I8F8::overflowing_from_str_binary(\"-101100111000.1\"), Ok((-check, true)));
 ",
-                "use fixed::types::U8F8;
+                "use substrate_fixed::types::U8F8;
 let check = U8F8::from_bits(0b1110001 << (8 - 1));
 assert_eq!(U8F8::overflowing_from_str_binary(\"111000.1\"), Ok((check, false)));
 assert_eq!(U8F8::overflowing_from_str_binary(\"101100111000.1\"), Ok((check, true)));
@@ -1283,12 +1283,12 @@ Rounding is to the nearest, with ties rounded to even.
 ",
             if_signed_unsigned! {
                 $Signedness,
-                "use fixed::types::I8F8;
+                "use substrate_fixed::types::I8F8;
 let check = I8F8::from_bits(0o1654 << (8 - 3));
 assert_eq!(I8F8::overflowing_from_str_octal(\"165.4\"), Ok((check, false)));
 assert_eq!(I8F8::overflowing_from_str_octal(\"-7165.4\"), Ok((-check, true)));
 ",
-                "use fixed::types::U8F8;
+                "use substrate_fixed::types::U8F8;
 let check = U8F8::from_bits(0o1654 << (8 - 3));
 assert_eq!(U8F8::overflowing_from_str_octal(\"165.4\"), Ok((check, false)));
 assert_eq!(U8F8::overflowing_from_str_octal(\"7165.4\"), Ok((check, true)));
@@ -1322,12 +1322,12 @@ Rounding is to the nearest, with ties rounded to even.
 ",
             if_signed_unsigned! {
                 $Signedness,
-                "use fixed::types::I8F8;
+                "use substrate_fixed::types::I8F8;
 let check = I8F8::from_bits(0xFFE);
 assert_eq!(I8F8::overflowing_from_str_hex(\"F.FE\"), Ok((check, false)));
 assert_eq!(I8F8::overflowing_from_str_hex(\"-C0F.FE\"), Ok((-check, true)));
 ",
-                "use fixed::types::U8F8;
+                "use substrate_fixed::types::U8F8;
 let check = U8F8::from_bits(0xFFE);
 assert_eq!(U8F8::overflowing_from_str_hex(\"F.FE\"), Ok((check, false)));
 assert_eq!(U8F8::overflowing_from_str_hex(\"C0F.FE\"), Ok((check, true)));

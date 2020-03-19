@@ -138,7 +138,7 @@ Details on other releases can be found in [*RELEASES.md*].
 ## Quick examples
 
 ```rust
-use fixed::types::I20F12;
+use substrate_fixed::types::I20F12;
 
 // 19/3 = 6 1/3
 let six_and_third = I20F12::from_num(19) / 3;
@@ -158,7 +158,7 @@ combinations of integer and fractional bits adding up to a total of
 eight, 16, 32, 64 or 128 bits.
 
 ```rust
-use fixed::types::{I4F4, I4F12};
+use substrate_fixed::types::{I4F4, I4F12};
 
 // −8 ≤ I4F4 < 8 with steps of 1/16 (~0.06)
 let a = I4F4::from_num(1);

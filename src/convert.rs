@@ -854,7 +854,7 @@ lossy! { f64 }
 /// The first snippet succeeds, and acts as a control.
 ///
 /// ```rust
-/// use fixed::{traits::LossyFrom, types::*};
+/// use substrate_fixed::{traits::LossyFrom, types::*};
 /// let _ = I8F8::from(I4F4::default());
 /// let _ = I8F8::from(U7F1::default());
 /// let _ = U8F8::from(U4F4::default());
@@ -869,69 +869,69 @@ lossy! { f64 }
 /// The rest of the tests should all fail compilation.
 ///
 /// ```compile_fail
-/// use fixed::types::*;
+/// use substrate_fixed::types::*;
 /// let _ = I8F8::from(I7F9::default());
 /// ```
 /// ```compile_fail
-/// use fixed::types::*;
+/// use substrate_fixed::types::*;
 /// let _ = I8F8::from(I9F7::default());
 /// ```
 ///
 /// ```compile_fail
-/// use fixed::types::*;
+/// use substrate_fixed::types::*;
 /// let _ = I8F8::from(U8F0::default());
 /// ```
 ///
 /// ```compile_fail
-/// use fixed::types::*;
+/// use substrate_fixed::types::*;
 /// let _ = U8F8::from(U7F9::default());
 /// ```
 /// ```compile_fail
-/// use fixed::types::*;
+/// use substrate_fixed::types::*;
 /// let _ = U8F8::from(U9F7::default());
 /// ```
 /// ```compile_fail
-/// use fixed::types::*;
+/// use substrate_fixed::types::*;
 /// let _ = U8F8::from(I4F4::default());
 /// ```
 ///
 /// ```compile_fail
-/// use fixed::{traits::LossyFrom, types::*};
+/// use substrate_fixed::{traits::LossyFrom, types::*};
 /// let _ = I8F8::lossy_from(I9F55::default());
 /// ```
 ///
 /// ```compile_fail
-/// use fixed::{traits::LossyFrom, types::*};
+/// use substrate_fixed::{traits::LossyFrom, types::*};
 /// let _ = I8F8::lossy_from(U8F56::default());
 /// ```
 ///
 /// ```compile_fail
-/// use fixed::{traits::LossyFrom, types::*};
+/// use substrate_fixed::{traits::LossyFrom, types::*};
 /// let _ = U8F8::lossy_from(U9F55::default());
 /// ```
 /// ```compile_fail
-/// use fixed::{traits::LossyFrom, types::*};
+/// use substrate_fixed::{traits::LossyFrom, types::*};
 /// let _ = U8F8::lossy_from(I4F4::default());
 /// ```
 ///
 /// ```compile_fail
-/// use fixed::types::*;
+/// use substrate_fixed::types::*;
 /// let _ = usize::from(U16F16::default());
 /// ```
 /// ```compile_fail
-/// use fixed::types::*;
+/// use substrate_fixed::types::*;
 /// let _ = usize::from(I16F0::default());
 /// ```
 /// ```compile_fail
-/// use fixed::types::*;
+/// use substrate_fixed::types::*;
 /// let _ = isize::from(I16F16::default());
 /// ```
 /// ```compile_fail
-/// use fixed::types::*;
+/// use substrate_fixed::types::*;
 /// let _ = isize::from(U16F0::default());
 /// ```
 /// ```compile_fail
-/// use fixed::types::*;
+/// use substrate_fixed::types::*;
 /// let _ = usize::from(I8F0::default());
 /// ```
 fn _compile_fail_tests() {}

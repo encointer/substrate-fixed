@@ -106,7 +106,7 @@ depending on the crate’s [optional features].
 /// # Examples
 ///
 /// ```rust
-/// use fixed::{
+/// use substrate_fixed::{
 ///     traits::Fixed,
 ///     types::{I8F8, I16F16},
 /// };
@@ -126,7 +126,7 @@ depending on the crate’s [optional features].
 /// infer that 500 in the `checked_mul_int` call is of type `F::Bits`.
 ///
 /// ```compile_fail
-/// use fixed::traits::Fixed;
+/// use substrate_fixed::traits::Fixed;
 ///
 /// fn checked_add_times_500<F: Fixed>(lhs: F, rhs: F) -> Option<F> {
 ///     rhs.checked_mul_int(500)?.checked_add(lhs)
@@ -137,7 +137,7 @@ depending on the crate’s [optional features].
 /// [`u16`] (which can represent 500) can be converted into `F::Bits`.
 ///
 /// ```rust
-/// use fixed::{traits::Fixed, types::U12F4};
+/// use substrate_fixed::{traits::Fixed, types::U12F4};
 ///
 /// fn checked_add_times_500<F: Fixed>(lhs: F, rhs: F) -> Option<F>
 /// where
@@ -155,7 +155,7 @@ depending on the crate’s [optional features].
 /// following example would fail to compile.
 ///
 /// ```compile_fail
-/// use fixed::{traits::Fixed, types::I12F4};
+/// use substrate_fixed::{traits::Fixed, types::I12F4};
 ///
 /// fn checked_add_times_500<F: Fixed>(lhs: F, rhs: F) -> Option<F>
 /// where
@@ -175,7 +175,7 @@ depending on the crate’s [optional features].
 /// is [`u8`] or [`i8`].)
 ///
 /// ```rust
-/// use fixed::{traits::Fixed, types::I12F4};
+/// use substrate_fixed::{traits::Fixed, types::I12F4};
 /// use core::convert::TryInto;
 ///
 /// fn checked_add_times_500<F: Fixed>(lhs: F, rhs: F) -> Option<F>
@@ -1113,8 +1113,8 @@ pub trait FixedUnsigned: Fixed {
 /// # Examples
 ///
 /// ```rust
-/// use fixed::traits::LossyFrom;
-/// use fixed::types::{I12F4, I4F60};
+/// use substrate_fixed::traits::LossyFrom;
+/// use substrate_fixed::types::{I12F4, I4F60};
 /// // original is 0x1.234
 /// let original = I4F60::from_bits(0x1234i64 << (60 - 12));
 /// let lossy = I12F4::lossy_from(original);
@@ -1135,8 +1135,8 @@ pub trait LossyFrom<Src> {
 /// # Examples
 ///
 /// ```rust
-/// use fixed::traits::LossyInto;
-/// use fixed::types::{I12F4, I4F12};
+/// use substrate_fixed::traits::LossyInto;
+/// use substrate_fixed::types::{I12F4, I4F12};
 /// // original is 0x1.234
 /// let original = I4F12::from_bits(0x1234);
 /// let lossy: I12F4 = original.lossy_into();
@@ -1168,8 +1168,8 @@ where
 /// # Examples
 ///
 /// ```rust
-/// use fixed::traits::FromFixed;
-/// use fixed::types::U8F8;
+/// use substrate_fixed::traits::FromFixed;
+/// use substrate_fixed::types::U8F8;
 /// // 0x87.65
 /// let f = U8F8::from_bits(0x8765);
 /// assert_eq!(f32::from_fixed(f), f32::from(0x8765u16) / 256.0);
@@ -1239,8 +1239,8 @@ pub trait FromFixed {
 /// # Examples
 ///
 /// ```rust
-/// use fixed::traits::ToFixed;
-/// use fixed::types::{U8F8, U16F16};
+/// use substrate_fixed::traits::ToFixed;
+/// use substrate_fixed::types::{U8F8, U16F16};
 /// let f: U8F8 = 13.5f32.to_fixed();
 /// assert_eq!(f, U8F8::from_bits((13 << 8) | (1 << 7)));
 /// // 0x1234.5678 is too large and can be wrapped to 0x34.56

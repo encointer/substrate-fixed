@@ -3,7 +3,7 @@
 use criterion::{
     black_box, criterion_group, criterion_main, Bencher, Benchmark, Criterion, Throughput,
 };
-use fixed::{traits::Fixed, types::*};
+use substrate_fixed::{traits::Fixed, types::*};
 use num_traits::{One, Zero};
 use rand::{
     distributions::{Distribution, Standard},

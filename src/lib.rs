@@ -267,6 +267,7 @@ pub mod traits;
 pub mod types;
 mod wide_div;
 mod wrapping;
+pub mod math;
 
 use crate::{
     arith::MulDivOverflow,
@@ -487,6 +488,10 @@ fixed! {
 
 #[cfg(test)]
 #[allow(clippy::cognitive_complexity)]
+
+#[macro_use]
+extern crate approx;
+
 mod tests {
     use crate::types::{I0F32, I16F16, I1F31, U0F32, U16F16};
 

@@ -41,6 +41,7 @@ rand = { version = "0.7", default-features = false }
 rand_xoshiro = "0.4"
 criterion = "0.3"
 num-traits = { version = "0.2", default-features = false }
+approx = "0.3.0"
 
 [package.metadata.docs.rs]
 features = ["az", "f16", "serde", "std"]

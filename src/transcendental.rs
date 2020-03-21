@@ -17,7 +17,7 @@ This module contains transcendental functions.
 */
 use crate::consts;
 use crate::traits::{Fixed, FixedSigned, LossyFrom, ToFixed};
-use crate::types::{I9F23, U0F128};
+use crate::types::{I9F23, I9F55, U0F128};
 use core::ops::{AddAssign, BitOrAssign, ShlAssign};
 
 type ConstType = I9F23;
@@ -45,12 +45,12 @@ pub const E: I9F23 = I9F23::from_bits((consts::E.to_bits() >> 103) as i32);
 
 // generate with
 // ```matlab
-// for i = [0:31]
+// for i = [0:63]
 //   disp(["0x", dec2hex(round(atan(2^(-i)) * 2^128),32)])
 // end
 // ```
 /// arctan(2^-i) lookup table for cordic
-const ARCTAN_ANGLES: [U0F128; 32] = [
+const ARCTAN_ANGLES: [U0F128; 64] = [
     U0F128::from_bits(0xC90FDAA22168C0000000000000000000),
     U0F128::from_bits(0x76B19C1586ED3C000000000000000000),
     U0F128::from_bits(0x3EB6EBF25901BA000000000000000000),
@@ -83,6 +83,38 @@ const ARCTAN_ANGLES: [U0F128; 32] = [
     U0F128::from_bits(0x00000008000000000000000000000000),
     U0F128::from_bits(0x00000004000000000000000000000000),
     U0F128::from_bits(0x00000002000000000000000000000000),
+    U0F128::from_bits(0x00000001000000000000000000000000),
+    U0F128::from_bits(0x00000000800000000000000000000000),
+    U0F128::from_bits(0x00000000400000000000000000000000),
+    U0F128::from_bits(0x00000000200000000000000000000000),
+    U0F128::from_bits(0x00000000100000000000000000000000),
+    U0F128::from_bits(0x00000000080000000000000000000000),
+    U0F128::from_bits(0x00000000040000000000000000000000),
+    U0F128::from_bits(0x00000000020000000000000000000000),
+    U0F128::from_bits(0x00000000010000000000000000000000),
+    U0F128::from_bits(0x00000000008000000000000000000000),
+    U0F128::from_bits(0x00000000004000000000000000000000),
+    U0F128::from_bits(0x00000000002000000000000000000000),
+    U0F128::from_bits(0x00000000001000000000000000000000),
+    U0F128::from_bits(0x00000000000800000000000000000000),
+    U0F128::from_bits(0x00000000000400000000000000000000),
+    U0F128::from_bits(0x00000000000200000000000000000000),
+    U0F128::from_bits(0x00000000000100000000000000000000),
+    U0F128::from_bits(0x00000000000080000000000000000000),
+    U0F128::from_bits(0x00000000000040000000000000000000),
+    U0F128::from_bits(0x00000000000020000000000000000000),
+    U0F128::from_bits(0x00000000000010000000000000000000),
+    U0F128::from_bits(0x00000000000008000000000000000000),
+    U0F128::from_bits(0x00000000000004000000000000000000),
+    U0F128::from_bits(0x00000000000002000000000000000000),
+    U0F128::from_bits(0x00000000000001000000000000000000),
+    U0F128::from_bits(0x00000000000000800000000000000000),
+    U0F128::from_bits(0x00000000000000400000000000000000),
+    U0F128::from_bits(0x00000000000000200000000000000000),
+    U0F128::from_bits(0x00000000000000100000000000000000),
+    U0F128::from_bits(0x00000000000000080000000000000000),
+    U0F128::from_bits(0x00000000000000040000000000000000),
+    U0F128::from_bits(0x00000000000000020000000000000000),
 ];
 
 /// right-shift with rounding
@@ -372,11 +404,11 @@ where
     }
 
     //FIXME: find correction factor for constant iterations
+    // now this is optimized for I32F32 type
     // x0= 1/K with K ~ 1.647 for infinite iterations
-
-    // dec2hex(round(1 / 1.6467607021331787 * 2^23),8)
-    let x = T::lossy_from(I9F23::from_bits(0x004DBA75));
-
+    // dec2hex(round(1 / 1.6467602578923106 * 2^128),32)
+    let x = T::lossy_from(U0F128::from_bits(0x9B74EDA8A01E20000000000000000000));
+    //let x = T::from_num(1);
     let (_x, y) = cordic_rotation(x, T::from_num(0), angle);
     y
 }
@@ -387,7 +419,7 @@ where
     T: FixedSigned
         + PartialOrd<ConstType>
         + LossyFrom<ConstType>
-        + LossyFrom<I9F23>
+        + LossyFrom<I9F55>
         + LossyFrom<U0F128>,
 {
     sin(angle + T::lossy_from(FRAC_PI_2))
@@ -399,7 +431,7 @@ where
     T: FixedSigned
         + PartialOrd<ConstType>
         + LossyFrom<ConstType>
-        + LossyFrom<I9F23>
+        + LossyFrom<I9F55>
         + LossyFrom<U0F128>,
 {
     angle *= T::from_num(2);
@@ -571,13 +603,17 @@ mod tests {
 
     #[test]
     fn sin_works() {
-        let result: f64 = sin(I32F32::from_num(0)).lossy_into();
-        assert_relative_eq!(result, 0.0, epsilon = 1.0e-5);
+        // for correction factor reference
+        let result: f64 = sin(I32F32::lossy_from(FRAC_PI_2)).lossy_into();
+        assert_relative_eq!(result, 1.0, epsilon = 1.0e-5);
 
-        let result: f64 = sin(I9F23::from_num(0)).lossy_into();
-        assert_relative_eq!(result, 0.0, epsilon = 1.0e-5);
         let result: f64 = sin(FRAC_PI_2).lossy_into();
         assert_relative_eq!(result, 1.0, epsilon = 1.0e-5);
+
+        let result: f64 = sin(I32F32::from_num(0)).lossy_into();
+        assert_relative_eq!(result, 0.0, epsilon = 1.0e-5);
+        let result: f64 = sin(I9F23::from_num(0)).lossy_into();
+        assert_relative_eq!(result, 0.0, epsilon = 1.0e-5);
         let result: f64 = sin(PI).lossy_into();
         assert_relative_eq!(result, 0.0, epsilon = 1.0e-5);
         let result: f64 = sin(PI + FRAC_PI_2).lossy_into();

@@ -283,9 +283,12 @@ where
 }
 
 /// CORDIC in rotation mode.
-fn cordic_rotation(mut x: I9F23, mut y: I9F23, mut z: I9F23) -> (I9F23, I9F23) {
+fn cordic_rotation<T>(mut x: T, mut y: T, mut z: T) -> (T, T)
+where
+    T: FixedSigned + PartialOrd<ConstType> + LossyFrom<U0F128>,
+{
     for (angle, i) in ARCTAN_ANGLES.iter().cloned().zip(0..) {
-        let angle = I9F23::lossy_from(angle);
+        let angle = T::lossy_from(angle);
         //if z == ZERO {
         //    break;
         //};
@@ -307,46 +310,67 @@ fn cordic_rotation(mut x: I9F23, mut y: I9F23, mut z: I9F23) -> (I9F23, I9F23) {
 }
 
 /// sine function in radians
-pub fn sin(mut angle: I9F23) -> I9F23 {
+pub fn sin<T>(mut angle: T) -> T
+where
+    T: FixedSigned
+        + PartialOrd<ConstType>
+        + LossyFrom<ConstType>
+        + LossyFrom<I9F23>
+        + LossyFrom<U0F128>,
+{
     //wraparound
     while angle > PI {
-        angle -= TWO_PI;
+        angle -= T::lossy_from(TWO_PI);
     }
     while angle < -PI {
-        angle += TWO_PI;
+        angle += T::lossy_from(TWO_PI);
     }
     //mirror
     if angle > FRAC_PI_2 {
-        angle = FRAC_PI_2 - (angle - FRAC_PI_2);
+        angle = T::lossy_from(FRAC_PI_2) - (angle - T::lossy_from(FRAC_PI_2));
     }
     if angle < -FRAC_PI_2 {
-        angle = -FRAC_PI_2 - (angle + FRAC_PI_2);
+        angle = -T::lossy_from(FRAC_PI_2) - (angle + T::lossy_from(FRAC_PI_2));
     }
 
     //FIXME: find correction factor for constant iterations
     // x0= 1/K with K ~ 1.647 for infinite iterations
 
     // dec2hex(round(1 / 1.6467607021331787 * 2^23),8)
-    let x = I9F23::from_bits(0x004DBA75); //ONE;//float_to_fixed(0.607253_f64);
+    let x = T::lossy_from(I9F23::from_bits(0x004DBA75));
 
-    let (_x, y) = cordic_rotation(x, ZERO, angle);
+    let (_x, y) = cordic_rotation(x, T::from_num(0), angle);
     y
 }
 
 /// cosine function in radians
-pub fn cos(angle: I9F23) -> I9F23 {
-    sin(angle + FRAC_PI_2)
+pub fn cos<T>(angle: T) -> T
+where
+    T: FixedSigned
+        + PartialOrd<ConstType>
+        + LossyFrom<ConstType>
+        + LossyFrom<I9F23>
+        + LossyFrom<U0F128>,
+{
+    sin(angle + T::lossy_from(FRAC_PI_2))
 }
 
 /// tangent function in radians
-pub fn tan(mut angle: I9F23) -> I9F23 {
-    angle *= TWO;
-    sin(angle) / (ONE + cos(angle))
+pub fn tan<T>(mut angle: T) -> T
+where
+    T: FixedSigned
+        + PartialOrd<ConstType>
+        + LossyFrom<ConstType>
+        + LossyFrom<I9F23>
+        + LossyFrom<U0F128>,
+{
+    angle *= T::from_num(2);
+    sin(angle) / (T::from_num(1) + cos(angle))
 }
 
 /// arcsine function in radians
 //FIXME: only valid for very small angles
-pub fn asin(angle: I9F23) -> I9F23 {
+pub fn asin<T>(angle: T) -> T {
     angle
 }
 

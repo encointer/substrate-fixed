@@ -257,14 +257,16 @@ where
 {
     // TODO: dynamic typing depending on input
     //type I = FixedI128<U64>; // internal
-
-    if exponent == S::from_num(0) {
-        return Ok(D::from(operand));
-    };
-    // FIXME
-    if exponent < S::from_num(0) {
+    if operand == S::from_num(0) {
         return Ok(D::from_num(0));
     };
+    if exponent == S::from_num(0) {
+        return Ok(D::from_num(1));
+    };
+    if exponent == S::from_num(1) {
+        return Ok(D::from(operand));
+    };
+
     let r = if let Some(r) = ln::<S, D>(operand)?.checked_mul(exponent.into()) {
         r
     } else {
@@ -280,6 +282,42 @@ where
         return Err(());
     };
     Ok(result)
+}
+
+/// power with integer exponend
+pub fn powi<S, D>(operand: S, exponent: i32) -> Result<D, ()>
+where
+    S: FixedSigned + PartialOrd<ConstType>,
+    D: FixedSigned + PartialOrd<ConstType> + From<S> + From<ConstType>,
+    D::Bits: Copy + ToFixed + AddAssign + BitOrAssign + ShlAssign,
+{
+    if operand == S::from_num(0) {
+        return Ok(D::from_num(0));
+    };
+    if exponent == 0 {
+        return Ok(D::from_num(1));
+    };
+    if exponent == 1 {
+        return Ok(D::from(operand));
+    };
+    let operand = D::from(operand);
+    let mut r = operand;
+
+    for _i in 1..exponent.abs() {
+        r = if let Some(r) = r.checked_mul(operand) {
+            r
+        } else {
+            return Err(());
+        };
+    }
+    if exponent < 0 {
+        r = if let Some(r) = D::from_num(1).checked_div(r) {
+            r
+        } else {
+            return Err(());
+        };
+    }
+    Ok(r)
 }
 
 /// CORDIC in rotation mode.
@@ -378,22 +416,22 @@ pub fn asin<T>(angle: T) -> T {
 mod tests {
     use super::*;
     use crate::traits::LossyInto;
-    use crate::types::I32F32;
+    use crate::types::{I32F32, I64F64};
 
     #[test]
     fn sqrt_works() {
         type S = I9F23;
         type D = I9F23;
 
-        assert_eq!(sqrt::<D, D>(S::from_num(4)).unwrap(), TWO);
+        assert_eq!(sqrt::<S, D>(S::from_num(4)).unwrap(), TWO);
 
-        let result: f64 = sqrt::<D, D>(S::from_num(1)).unwrap().lossy_into();
+        let result: f64 = sqrt::<S, D>(S::from_num(1)).unwrap().lossy_into();
         assert_relative_eq!(result, 1.0, epsilon = 1.0e-6);
-        let result: f64 = sqrt::<D, D>(S::from_num(0)).unwrap().lossy_into();
+        let result: f64 = sqrt::<S, D>(S::from_num(0)).unwrap().lossy_into();
         assert_relative_eq!(result, 0.0, epsilon = 1.0e-6);
-        let result: f64 = sqrt::<D, D>(S::from_num(0.1_f32)).unwrap().lossy_into();
+        let result: f64 = sqrt::<S, D>(S::from_num(0.1_f32)).unwrap().lossy_into();
         assert_relative_eq!(result, 0.316228, epsilon = 1.0e-4);
-        let result: f64 = sqrt::<D, D>(S::from_num(10)).unwrap().lossy_into();
+        let result: f64 = sqrt::<S, D>(S::from_num(10)).unwrap().lossy_into();
         assert_relative_eq!(result, 3.16228, epsilon = 1.0e-4);
     }
 
@@ -452,6 +490,8 @@ mod tests {
         assert_relative_eq!(result, 1.0, epsilon = 1.0e-4);
         let result: f64 = ln::<S, D>(S::from_num(10)).unwrap().lossy_into();
         assert_relative_eq!(result, 2.30259, epsilon = 1.0e-4);
+        let result: f64 = ln::<S, D>(S::from_num(0.00001)).unwrap().lossy_into();
+        assert_relative_eq!(result, -11.5129, epsilon = 1.0e-1);
     }
 
     #[test]
@@ -467,12 +507,21 @@ mod tests {
 
         let result: f64 = exp::<S, D>(S::from_num(5.0)).unwrap().lossy_into();
         assert_relative_eq!(result, 148.413159, epsilon = 1.0e-1);
+        // overflow if type too small
+        assert!(exp::<S, D>(S::from_num(-23)).is_err());
+        // same is fine with larger destination type
+        let result: f64 = exp::<S, I64F64>(S::from_num(-23)).unwrap().lossy_into();
+        assert_relative_eq!(result, 102.619e-12, epsilon = 1.0e-12);
     }
 
     #[test]
     fn pow_works() {
         type S = I9F23;
         type D = I32F32;
+
+        let result: D = pow(ZERO, TWO).unwrap();
+        let result: f64 = result.lossy_into();
+        assert_eq!(result, 0.0);
 
         let result: D = pow(ONE, TWO).unwrap();
         let result: f64 = result.lossy_into();
@@ -487,13 +536,44 @@ mod tests {
         let result: D = pow(S::from_num(2.9), S::from_num(3.1)).unwrap();
         let result: f64 = result.lossy_into();
         assert_relative_eq!(result, 27.129, epsilon = 1.0e-2);
-        let result: D = pow(S::from_num(0.001), S::from_num(2)).unwrap();
+        let result: D = pow(S::from_num(0.0001), S::from_num(2)).unwrap();
         let result: f64 = result.lossy_into();
-        assert_relative_eq!(result, 0.000001, epsilon = 1.0e-2);
+        assert_relative_eq!(result, 0.00000001, epsilon = 1.0e-9);
+
+        // this would lead a complex result due to computation method
+        assert!(pow::<S, D>(S::from_num(-0.0001), S::from_num(2)).is_err());
+    }
+
+    #[test]
+    fn powi_works() {
+        type D = I32F32;
+
+        let result: D = powi(ZERO, 2).unwrap();
+        let result: f64 = result.lossy_into();
+        assert_eq!(result, 0.0);
+
+        let result: D = powi(ONE, 2).unwrap();
+        let result: f64 = result.lossy_into();
+        assert_eq!(result, 1.0);
+
+        let result: D = powi(TWO, 2).unwrap();
+        let result: f64 = result.lossy_into();
+        assert_relative_eq!(result, 4.0, epsilon = 1.0e-3);
+
+        let result: D = powi(TWO, -2).unwrap();
+        let result: f64 = result.lossy_into();
+        assert_relative_eq!(result, 1.0 / 4.0, epsilon = 1.0e-4);
+
+        let result: D = powi(TWO, 3).unwrap();
+        let result: f64 = result.lossy_into();
+        assert_relative_eq!(result, 8.0, epsilon = 1.0e-3);
     }
 
     #[test]
     fn sin_works() {
+        let result: f64 = sin(I32F32::from_num(0)).lossy_into();
+        assert_relative_eq!(result, 0.0, epsilon = 1.0e-5);
+
         let result: f64 = sin(I9F23::from_num(0)).lossy_into();
         assert_relative_eq!(result, 0.0, epsilon = 1.0e-5);
         let result: f64 = sin(FRAC_PI_2).lossy_into();
@@ -531,5 +611,13 @@ mod tests {
 
         let result: f64 = tan(ONE).lossy_into();
         assert_relative_eq!(result, 1.55741, epsilon = 1.0e-5);
+    }
+
+    #[test]
+    fn asin_works() {
+        let result: f64 = asin(I9F23::from_num(0)).lossy_into();
+        assert_relative_eq!(result, 0.0, epsilon = 1.0e-5);
+        let result: f64 = asin(I9F23::from_num(0.01)).lossy_into();
+        assert_relative_eq!(result, 0.01, epsilon = 1.0e-5);
     }
 }

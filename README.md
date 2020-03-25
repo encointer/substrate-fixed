@@ -8,7 +8,7 @@ as-is, without any warranty. -->
 # Fixed-point numbers for substrate
 This crate ist ported from `fixed = 0.5.4`. It has been adapted to be usable within [substrate](https://github.com/paritytech/substrate) runtimes. Additionally, transcendental functions have been added (log, exp, pow, trigonometry).
 
-The [*fixed* crate] provides fixed-point numbers.
+The [*substrate-fixed* crate] provides fixed-point numbers.
 
   * [`FixedI8`] and [`FixedU8`] are eight-bit fixed-point numbers.
   * [`FixedI16`] and [`FixedU16`] are 16-bit fixed-point numbers.
@@ -36,21 +36,6 @@ The main features are
   * Display as decimal, binary, octal and hexadecimal.
   * Arithmetic and logic operations.
 
-This crate does *not* provide general analytic functions.
-
-  * No algebraic functions are provided, for example no `sqrt` or
-    `pow`.
-  * No trigonometric functions are provided, for example no `sin` or
-    `cos`.
-  * No other transcendental functions are provided, for example no
-    `log` or `exp`.
-
-These functions are not provided because different implementations can
-have different trade-offs, for example trading some correctness for
-speed. Implementations can be provided in other crates.
-
-  * The [*fixed-sqrt* crate] provides the square root operation.
-
 The conversions supported cover the following cases.
 
   * Infallible lossless conversions between fixed-point numbers and
@@ -73,64 +58,7 @@ The conversions supported cover the following cases.
     [`Binary`], [`Octal`], [`LowerHex`] and [`UpperHex`]. The output
     is rounded to the nearest, with ties rounded to even.
 
-## What’s new
-
-### Version 0.5.4 news (2020-02-21)
-
-  * Bug fix: [`rem_euclid_int`] and its checked versions were handling
-    overflow incorrectly.
-
-### Version 0.5.3 news (2020-02-13)
-
-  * Bug fix: [`round_to_zero`] was returning incorrect results for
-    negative whole number operands.
-  * Bug fix: all remainder operations with a fixed-point LHS and an
-    integer RHS were giving an incorrect answer ([issue 13]).
-  * Bug fix: Euclidean division operations by integers were giving an
-    incorrect answer.
-  * [`Rem`] and [`RemAssign`] were implemented for fixed-point
-    numbers.
-  * The following methods were added to all fixed-point types and to
-    the [`Fixed`] trait:
-	  * [`checked_rem`]
-	  * [`div_euclid`], [`rem_euclid`]
-	  * [`checked_div_euclid`], [`checked_rem_euclid`]
-	  * [`saturating_div_euclid`]
-	  * [`wrapping_div_euclid`]
-      * [`overflowing_div_euclid`]
-  * The following methods were added to the [`Wrapping`] wrapper:
-	  * [`div_euclid`][wde], [`rem_euclid`][wre]
-	  * [`div_euclid_int`][wdei], [`rem_euclid_int`][wrei]
-  * The following methods were deprecated:
-      * [`wrapping_rem_int`], [`overflowing_rem_int`]
-
-### Version 0.5.2 news (2020-02-02)
-
-  * [`Wrapping`] now supports serialization. (Thanks: Shane Pearman)
-
-[`Fixed`]: https://docs.rs/fixed/0.5.4/fixed/traits/trait.Fixed.html
-[`RemAssign`]: https://doc.rust-lang.org/nightly/core/ops/trait.RemAssign.html
-[`Rem`]: https://doc.rust-lang.org/nightly/core/ops/trait.Rem.html
-[`Wrapping`]: https://docs.rs/fixed/0.5.4/fixed/struct.Wrapping.html
-[`checked_div_euclid`]: https://docs.rs/fixed/0.5.4/fixed/struct.FixedI32.html#method.checked_div_euclid
-[`checked_rem_euclid`]: https://docs.rs/fixed/0.5.4/fixed/struct.FixedI32.html#method.checked_rem_euclid
-[`checked_rem`]: https://docs.rs/fixed/0.5.4/fixed/struct.FixedI32.html#method.checked_rem
-[`div_euclid`]: https://docs.rs/fixed/0.5.4/fixed/struct.FixedI32.html#method.div_euclid
-[`overflowing_div_euclid`]: https://docs.rs/fixed/0.5.4/fixed/struct.FixedI32.html#method.overflowing_div_euclid
-[`overflowing_rem_int`]: https://docs.rs/fixed/0.5.4/fixed/struct.FixedI32.html#method.overflowing_rem_int
-[`rem_euclid_int`]: https://docs.rs/fixed/0.5.4/fixed/struct.FixedI32.html#method.rem_euclid_int
-[`rem_euclid`]: https://docs.rs/fixed/0.5.4/fixed/struct.FixedI32.html#method.rem_euclid
-[`round_to_zero`]: https://docs.rs/fixed/0.5.4/fixed/struct.FixedI32.html#method.round_to_zero
-[`saturating_div_euclid`]: https://docs.rs/fixed/0.5.4/fixed/struct.FixedI32.html#method.saturating_div_euclid
-[`wrapping_div_euclid`]: https://docs.rs/fixed/0.5.4/fixed/struct.FixedI32.html#method.wrapping_div_euclid
-[`wrapping_rem_int`]: https://docs.rs/fixed/0.5.4/fixed/struct.FixedI32.html#method.wrapping_rem_int
-[issue 13]: https://gitlab.com/tspiteri/fixed/issues/13
-[wde]: https://docs.rs/fixed/0.5.4/fixed/struct.Wrapping.html#method.div_euclid
-[wdei]: https://docs.rs/fixed/0.5.4/fixed/struct.Wrapping.html#method.div_euclid_int
-[wre]: https://docs.rs/fixed/0.5.4/fixed/struct.Wrapping.html#method.rem_euclid
-[wrei]: https://docs.rs/fixed/0.5.4/fixed/struct.Wrapping.html#method.rem_euclid_int
-
-### Other releases
+### Upstream releases
 
 Details on other releases can be found in [*RELEASES.md*].
 
@@ -191,17 +119,19 @@ number of fractional bits. Converting from [`I4F12`] to [`I4F4`]
 cannot use [`From`] as we have less fractional bits, so we use
 [`from_num`] instead.
 
-## Using the *fixed* crate
+## Using the *substrate-fixed* crate
 
-The *fixed* crate is available on [crates.io][*fixed* crate]. To use
-it in your crate, add it as a dependency inside [*Cargo.toml*]:
+The *substrate-fixed* crate isn't  available on [crates.io] yet. To use
+it in your crate, add it as a *git* dependency inside [*Cargo.toml*]:
 
 ```toml
-[dependencies]
-fixed = "0.5.4"
+[dependencies.fixed]
+default-features = false
+git = "https://github.com/encointer/substrate-fixed"
+package = "substrate-fixed"
 ```
 
-The *fixed* crate requires rustc version 1.39.0 or later.
+The *substrate-fixed* crate requires rustc version 1.39.0 or later.
 
 ## Optional features
 
@@ -223,7 +153,9 @@ To enable features, you can add the dependency like this to
 
 ```toml
 [dependencies.fixed]
-version = "0.5.4"
+default-features = false
+git = "https://github.com/encointer/substrate-fixed"
+package = "substrate-fixed"
 features = ["f16", "serde"]
 ```
 

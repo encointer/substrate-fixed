@@ -17,7 +17,7 @@ This module contains transcendental functions.
 */
 use crate::consts;
 use crate::traits::{Fixed, FixedSigned, LossyFrom, ToFixed};
-use crate::types::{I9F23, I9F55, U0F128};
+use crate::types::{I9F23, I9F55, U0F128, U64F64};
 use core::ops::{AddAssign, BitOrAssign, ShlAssign};
 
 type ConstType = I9F23;
@@ -131,8 +131,8 @@ where
 /// square root
 pub fn sqrt<S, D>(operand: S) -> Result<D, ()>
 where
-    S: FixedSigned + PartialOrd<ConstType>,
-    D: FixedSigned + PartialOrd<ConstType> + From<S>,
+    S: Fixed + PartialOrd<ConstType>,
+    D: Fixed + PartialOrd<ConstType> + From<S>,
 {
     let mut invert = false;
     if operand < ZERO {
@@ -317,10 +317,10 @@ where
 }
 
 /// power with integer exponend
-pub fn powi<S, D>(operand: S, exponent: i32) -> Result<D, ()>
+pub fn powi<S,D>(operand: S, exponent: i32) -> Result<D, ()>
 where
-    S: FixedSigned + PartialOrd<ConstType>,
-    D: FixedSigned + PartialOrd<ConstType> + From<S> + From<ConstType>,
+    S: Fixed + PartialOrd<ConstType>,
+    D: Fixed + PartialOrd<ConstType> + From<S> + From<ConstType>,
     D::Bits: Copy + ToFixed + AddAssign + BitOrAssign + ShlAssign,
 {
     if operand == S::from_num(0) {
@@ -452,19 +452,27 @@ mod tests {
 
     #[test]
     fn sqrt_works() {
-        type S = I9F23;
-        type D = I9F23;
+        {
+            type S = I9F23;
+            type D = I9F23;
 
-        assert_eq!(sqrt::<S, D>(S::from_num(4)).unwrap(), TWO);
+            assert_eq!(sqrt::<S, D>(S::from_num(4)).unwrap(), TWO);
 
-        let result: f64 = sqrt::<S, D>(S::from_num(1)).unwrap().lossy_into();
-        assert_relative_eq!(result, 1.0, epsilon = 1.0e-6);
-        let result: f64 = sqrt::<S, D>(S::from_num(0)).unwrap().lossy_into();
-        assert_relative_eq!(result, 0.0, epsilon = 1.0e-6);
-        let result: f64 = sqrt::<S, D>(S::from_num(0.1_f32)).unwrap().lossy_into();
-        assert_relative_eq!(result, 0.316228, epsilon = 1.0e-4);
-        let result: f64 = sqrt::<S, D>(S::from_num(10)).unwrap().lossy_into();
-        assert_relative_eq!(result, 3.16228, epsilon = 1.0e-4);
+            let result: f64 = sqrt::<S, D>(S::from_num(1)).unwrap().lossy_into();
+            assert_relative_eq!(result, 1.0, epsilon = 1.0e-6);
+            let result: f64 = sqrt::<S, D>(S::from_num(0)).unwrap().lossy_into();
+            assert_relative_eq!(result, 0.0, epsilon = 1.0e-6);
+            let result: f64 = sqrt::<S, D>(S::from_num(0.1_f32)).unwrap().lossy_into();
+            assert_relative_eq!(result, 0.316228, epsilon = 1.0e-4);
+            let result: f64 = sqrt::<S, D>(S::from_num(10)).unwrap().lossy_into();
+            assert_relative_eq!(result, 3.16228, epsilon = 1.0e-4);
+        }
+        {
+            type S = U64F64;
+            type D = U64F64;
+            let result: f64 = sqrt::<S, D>(S::from_num(1)).unwrap().lossy_into();
+            assert_relative_eq!(result, 1.0, epsilon = 1.0e-6);
+        }
     }
 
     #[test]

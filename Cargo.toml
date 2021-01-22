@@ -7,7 +7,7 @@
 
 [package]
 name = "substrate-fixed"
-version = "0.5.4"
+version = "0.5.5"
 authors = ["Trevor Spiteri <tspiteri@ieee.org>"]
 description = "Fixed-point numbers"
 documentation = "https://docs.rs/fixed"

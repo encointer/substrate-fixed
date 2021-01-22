@@ -17,7 +17,7 @@ This module contains transcendental functions.
 */
 use crate::consts;
 use crate::traits::{Fixed, FixedSigned, LossyFrom, ToFixed};
-use crate::types::{I9F23, I9F55, U0F128, U64F64};
+use crate::types::{I9F23, I9F55, U0F128};
 use core::ops::{AddAssign, BitOrAssign, ShlAssign};
 
 type ConstType = I9F23;
@@ -448,7 +448,7 @@ pub fn asin<T>(angle: T) -> T {
 mod tests {
     use super::*;
     use crate::traits::LossyInto;
-    use crate::types::{I32F32, I64F64};
+    use crate::types::{I32F32, I64F64, U64F64};
 
     #[test]
     fn sqrt_works() {

@@ -129,14 +129,14 @@ where
 }
 
 /// square root
-pub fn sqrt<S, D>(operand: S) -> Result<D, ()>
+pub fn sqrt<S, D>(operand: S) -> Result<D, &'static str>
 where
     S: Fixed + PartialOrd<ConstType>,
     D: Fixed + PartialOrd<ConstType> + From<S>,
 {
     let mut invert = false;
     if operand < ZERO {
-        return Err(());
+        return Err("Can't calculate sqrt from negative numbers.");
     };
 
     let mut operand = D::from(operand);
@@ -148,7 +148,7 @@ where
         operand = if let Some(r) = D::from_num(1).checked_div(operand) {
             r
         } else {
-            return Err(());
+            return Err("Overflow inverting operand.");
         };
     }
     // Newton iterations
@@ -160,7 +160,7 @@ where
         l = if let Some(r) = D::from_num(1).checked_div(l) {
             r
         } else {
-            return Err(());
+            return Err("Overflow un-inverting operand.");
         };
     }
     Ok(l)
@@ -473,6 +473,21 @@ mod tests {
             let result: f64 = sqrt::<S, D>(S::from_num(1)).unwrap().lossy_into();
             assert_relative_eq!(result, 1.0, epsilon = 1.0e-6);
         }
+    }
+
+    #[test]
+    fn sqrt_check_lower_bound_of_working_values() {
+        // Todo: This could be done for other types too.
+        type S = I32F32;
+        type D = I32F32;
+
+        // this works
+        let result: f64 = sqrt::<S, D>(S::from_num(5.8208e-10)).unwrap().lossy_into();
+        assert_relative_eq!(result, 0.0000261, epsilon = 1.0e-6);
+
+        // slightly below lower bound that produces an overflow
+        let res = sqrt::<S, D>(S::from_num(5.8205e-10));
+        assert_eq!(res.unwrap_err(), "Overflow inverting operand.")
     }
 
     #[test]

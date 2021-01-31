@@ -8,6 +8,8 @@ as-is, without any warranty. -->
 # Fixed-point numbers for substrate
 This crate ist ported from `fixed = 0.5.4`. It has been adapted to be usable within [substrate](https://github.com/paritytech/substrate) runtimes. Additionally, transcendental functions have been added (log, exp, pow, trigonometry).
 
+Please also have a look at [our encointer-js libraries](https://github.com/encointer/encointer-js/tree/master/packages/util) to learn how to parse fixpoint values for javascript UIs.
+
 The [*substrate-fixed* crate] provides fixed-point numbers.
 
   * [`FixedI8`] and [`FixedU8`] are eight-bit fixed-point numbers.

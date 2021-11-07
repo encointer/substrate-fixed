@@ -608,7 +608,7 @@ macro_rules! mul_div_fallback {
                     let col01 = ll_rl as <$Single as FallbackHelper>::Unsigned;
                     let (col01_hi, col01_lo) = col01.hi_lo();
                     let partial_col12 = lh_rl + col01_hi as $Single;
-                    let (col12, carry_col3) = partial_col12.carrying_add(ll_rh);
+                    let (col12, carry_col3) = <$Single as FallbackHelper>::carrying_add(partial_col12, ll_rh);
                     let (col12_hi, col12_lo) = col12.hi_lo();
                     let ans01 = col12_lo.shift_lo_up_unsigned() + col01_lo;
                     let ans23 = lh_rh + col12_hi + carry_col3.shift_lo_up();

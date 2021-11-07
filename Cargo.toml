@@ -22,19 +22,19 @@ autobenches = false
 [features]
 f16 = ["half"]
 fail-on-warnings = []
-std = []
+std = [
+    "codec/std",
+    "serde/std",
+    "scale-info/std",
+]
 
 [dependencies]
-typenum = "1.10"
+typenum = { version = "1.14.0", features = ["derive_scale_info"], git = "https://github.com/encointer/typenum" }
 az = { version = "0.3", optional = true }
 half = { version = "1.4", optional = true }
 serde = { version = "1.0.60", default-features = false, optional = true }
-
-[dependencies.codec]
-default-features = false
-package = "parity-scale-codec"
-features = ["derive"]
-version = "2.0.0"
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "2.3.1", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
 rand = { version = "0.7", default-features = false }

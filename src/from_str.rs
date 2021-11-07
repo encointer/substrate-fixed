@@ -502,7 +502,7 @@ fn div_tie(dividend_hi: u128, dividend_lo: u128, divisor: u128) -> (u128, bool) 
     (lo, rem == 0)
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, scale_info::TypeInfo)]
 struct Parse<'a> {
     neg: bool,
     int: &'a [u8],
@@ -525,12 +525,12 @@ let error: ParseFixedError = match s.parse::<I16F16>() {
 println!("Parse error: {}", error);
 ```
 */
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, scale_info::TypeInfo)]
 pub struct ParseFixedError {
     kind: ParseErrorKind,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, scale_info::TypeInfo)]
 enum ParseErrorKind {
     InvalidDigit,
     NoDigits,

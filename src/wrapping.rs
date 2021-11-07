@@ -47,7 +47,7 @@ use core::{
 /// assert_eq!(I16F16::min_value(), (max + delta).0);
 /// ```
 #[repr(transparent)]
-#[derive(Clone, Copy, Default, Hash, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Copy, Default, Hash, Debug, Eq, PartialEq, Ord, PartialOrd, scale_info::TypeInfo)]
 pub struct Wrapping<F>(pub F);
 
 impl<F: Fixed> Wrapping<F> {

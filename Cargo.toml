@@ -29,7 +29,7 @@ std = [
 ]
 
 [dependencies]
-typenum = { version = "1.14.0", features = ["derive_scale_info"], git = "https://github.com/encointer/typenum", branch = "cl-derive-scale-info" }
+typenum = { version = "1.14.0", features = ["derive_scale_info"], git = "https://github.com/encointer/typenum" }
 az = { version = "0.3", optional = true }
 half = { version = "1.4", optional = true }
 serde = { version = "1.0.60", default-features = false, optional = true }

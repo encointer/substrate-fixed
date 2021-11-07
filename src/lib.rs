@@ -493,7 +493,14 @@ extern crate approx;
 #[cfg(test)]
 #[allow(clippy::cognitive_complexity)]
 mod tests {
-    use crate::types::{I0F32, I16F16, I1F31, U0F32, U16F16};
+    use crate::types::{I0F32, I16F16, I1F31, U0F32, U16F16, I64F64};
+    use scale_info::TypeInfo;
+
+    #[test]
+    fn scale_info_works() {
+        // suffices if this test compiles
+        I64F64::type_info();
+    }
 
     #[test]
     fn rounding_signed() {

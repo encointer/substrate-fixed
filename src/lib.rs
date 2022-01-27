@@ -311,7 +311,7 @@ mod macros_no_frac;
 #[macro_use]
 mod macros_frac;
 
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 macro_rules! fixed {
     (
         $description:expr,
@@ -361,7 +361,7 @@ assert_eq!(two_point_75.to_string(), \"2.8\");
 [typenum crate]: https://crates.io/crates/typenum
 ";
             #[repr(transparent)]
-            #[derive(Encode, Decode, scale_info::TypeInfo)]
+            #[derive(Encode, Decode, scale_info::TypeInfo, MaxEncodedLen)]
             pub struct $Fixed<Frac> {
                 bits: $Inner,
                 phantom: PhantomData<Frac>,

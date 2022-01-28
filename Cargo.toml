@@ -29,12 +29,12 @@ std = [
 ]
 
 [dependencies]
-typenum = { version = "1.14.0", features = ["derive_scale_info"], git = "https://github.com/encointer/typenum" }
+typenum = { tag = "v1.15.0", features = ["derive_scale"], git = "https://github.com/encointer/typenum" }
 az = { version = "0.3", optional = true }
 half = { version = "1.4", optional = true }
 serde = { version = "1.0.60", default-features = false, optional = true }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
-codec = { package = "parity-scale-codec", version = "2.3.1", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "2.3.1", default-features = false, features = ["derive", "max-encoded-len"] }
 
 [dev-dependencies]
 rand = { version = "0.7", default-features = false }
@@ -49,3 +49,6 @@ features = ["az", "f16", "serde", "std"]
 [[bench]]
 name = "bench_main"
 harness = false
+
+#[patch."https://github.com/encointer/typenum"]
+#typenum = { path = "../typenum"}

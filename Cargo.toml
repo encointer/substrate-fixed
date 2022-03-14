@@ -29,7 +29,7 @@ std = [
 ]
 
 [dependencies]
-typenum = { tag = "v1.15.0", features = ["derive_scale"], git = "https://github.com/encointer/typenum" }
+typenum = { branch = "polkadot-v0.9.17", features = ["derive_scale"], git = "https://github.com/encointer/typenum" }
 az = { version = "0.3", optional = true }
 half = { version = "1.4", optional = true }
 serde = { version = "1.0.60", default-features = false, optional = true }

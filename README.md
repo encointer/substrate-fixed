@@ -5,6 +5,8 @@ modification, are permitted in any medium without royalty provided the
 copyright notice and this notice are preserved. This file is offered
 as-is, without any warranty. -->
 
+[![crates.io](https://img.shields.io/crates/v/substrate-typenum.svg)](https://crates.io/crates/substrate-typenum)
+
 # Fixed-point numbers for substrate
 This crate ist ported from `fixed = 0.5.4`. It has been adapted to be usable within [substrate](https://github.com/paritytech/substrate) runtimes. Additionally, transcendental functions have been added (log, exp, pow, trigonometry).
 

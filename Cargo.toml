@@ -8,10 +8,13 @@
 [package]
 name = "substrate-fixed"
 version = "0.5.9"
-authors = ["Trevor Spiteri <tspiteri@ieee.org>"]
+authors = [
+  "Trevor Spiteri <tspiteri@ieee.org>",
+  "Encointer Association <info@encointer.org>",
+]
 description = "Fixed-point numbers"
 documentation = "https://docs.rs/fixed"
-repository = "https://gitlab.com/tspiteri/fixed"
+repository = "https://github.com/encointer/substrate-fixed"
 readme = "README.md"
 keywords = ["mathematics", "numerics"]
 categories = ["algorithms", "data-structures", "no-std", "science"]
@@ -22,19 +25,22 @@ autobenches = false
 [features]
 f16 = ["half"]
 fail-on-warnings = []
-std = [
-    "codec/std",
-    "serde/std",
-    "scale-info/std",
-]
+std = ["codec/std", "serde/std", "scale-info/std"]
 
 [dependencies]
-typenum = { tag = "polkadot-v1.0.0", features = ["derive_scale"], git = "https://github.com/encointer/typenum" }
+typenum = { package = "substrate-typenum", version = "1.16.0", features = [
+  "derive_scale",
+] }
 az = { version = "0.3", optional = true }
 half = { version = "1.4", optional = true }
 serde = { version = "1.0.60", default-features = false, optional = true }
-scale-info = { version = "2.5.0", default-features = false, features = ["derive"] }
-codec = { package = "parity-scale-codec", version = "3.6.1", default-features = false, features = ["derive", "max-encoded-len"] }
+scale-info = { version = "2.5.0", default-features = false, features = [
+  "derive",
+] }
+codec = { package = "parity-scale-codec", version = "3.6.1", default-features = false, features = [
+  "derive",
+  "max-encoded-len",
+] }
 
 [dev-dependencies]
 rand = { version = "0.7", default-features = false }

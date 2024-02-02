@@ -125,7 +125,7 @@ cannot use [`From`] as we have less fractional bits, so we use
 
 ## Using the *substrate-fixed* crate
 
-The *substrate-fixed* is  available on [crates.io](https://crates.io/crates/substrate-fixed).
+The *substrate-fixed* is available on [crates.io](https://crates.io/crates/substrate-fixed).
 
 ## Optional features
 

@@ -125,17 +125,7 @@ cannot use [`From`] as we have less fractional bits, so we use
 
 ## Using the *substrate-fixed* crate
 
-The *substrate-fixed* crate isn't  available on [crates.io] yet. To use
-it in your crate, add it as a *git* dependency inside [*Cargo.toml*]:
-
-```toml
-[dependencies.fixed]
-default-features = false
-git = "https://github.com/encointer/substrate-fixed"
-package = "substrate-fixed"
-```
-
-The *substrate-fixed* crate requires rustc version 1.39.0 or later.
+The *substrate-fixed* is available on [crates.io](https://crates.io/crates/substrate-fixed).
 
 ## Optional features
 

@@ -210,7 +210,7 @@ where
 
     let operand = D::from(operand);
     if operand < D::from_num(1) {
-        let inverse = D::from_num(1).checked_div(operand).unwrap();
+        let inverse = D::from_num(1).checked_div(operand).ok_or(())?;
         return Ok(-log2_inner::<D, D>(inverse));
     };
     return Ok(log2_inner::<D, D>(operand));
@@ -240,11 +240,15 @@ where
     };
     let neg = operand < ZERO;
     if neg {
-        operand = -operand;
+        operand = operand.checked_neg().ok_or(())?;
     };
 
     let operand = D::from(operand);
-    let mut result = operand + D::from_num(1);
+    let mut result = if let Some(r) = operand.checked_add(D::from_num(1)) {
+        r
+    } else {
+        return Err(());
+    };
     let mut term = operand;
 
     for i in 2..D::frac_nbits() {
@@ -317,7 +321,7 @@ where
 }
 
 /// power with integer exponend
-pub fn powi<S,D>(operand: S, exponent: i32) -> Result<D, ()>
+pub fn powi<S, D>(operand: S, exponent: i32) -> Result<D, ()>
 where
     S: Fixed + PartialOrd<ConstType>,
     D: Fixed + PartialOrd<ConstType> + From<S> + From<ConstType>,

@@ -244,11 +244,7 @@ where
     };
 
     let operand = D::from(operand);
-    let mut result = if let Some(r) = operand.checked_add(D::from_num(1)) {
-        r
-    } else {
-        return Err(());
-    };
+    let mut result = operand.checked_add(D::from_num(1)).ok_or(())?;
     let mut term = operand;
 
     for i in 2..D::frac_nbits() {

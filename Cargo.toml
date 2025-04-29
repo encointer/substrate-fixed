@@ -28,7 +28,7 @@ fail-on-warnings = []
 std = ["codec/std", "serde/std", "scale-info/std"]
 
 [dependencies]
-typenum = { package = "substrate-typenum", version = "1.16.0", features = [
+typenum = { package = "substrate-typenum", version = "1.17.0", features = [
   "derive_scale",
 ] }
 az = { version = "0.3", optional = true }

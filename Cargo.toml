@@ -7,7 +7,7 @@
 
 [package]
 name = "substrate-fixed"
-version = "0.5.10"
+version = "0.5.9"
 authors = [
   "Trevor Spiteri <tspiteri@ieee.org>",
   "Encointer Association <info@encointer.org>",

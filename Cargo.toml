@@ -57,4 +57,4 @@ name = "bench_main"
 harness = false
 
 #[patch.crates-io]
-#typenum = { package = "substrate-typenum", path = "../typenum"}
+#substrate-typenum = { path = "../typenum"}

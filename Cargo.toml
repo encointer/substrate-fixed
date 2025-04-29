@@ -56,5 +56,5 @@ features = ["az", "f16", "serde", "std"]
 name = "bench_main"
 harness = false
 
-#[patch."https://github.com/encointer/typenum"]
-#typenum = { path = "../typenum"}
+#[patch.crates-io]
+#typenum = { package = "substrate-typenum", path = "../typenum"}
